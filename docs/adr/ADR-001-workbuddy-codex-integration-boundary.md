@@ -1,139 +1,92 @@
 # ADR-001：WorkBuddy 与 Codex CLI 的集成边界
 
-- Status: proposed
+- Status: superseded-in-part
 - Date: 2026-09-09
-- Deciders: 研发中心负责人、研发流程负责人、信息安全负责人（待确认）
-- Related: [研发中心 AI 数字员工研发流程规划](../../研发中心AI数字员工研发流程规划.md)
+- Scope: 当 WorkBuddy 作为办公入口、Codex CLI 作为工程 Runtime 时的集成边界
+- Superseded by: `ADR-003-provider-neutral-ai-rd-target-architecture.md`（总体 Provider 绑定部分）
+- Retained principle: 办公/协作入口与工程执行 Runtime 通过结构化 Contract 松耦合，不直接把办公入口变成个人开发机控制面
+- Related: `../../研发中心AI数字员工研发流程规划.md`
 
 ## Context
 
-### 业务背景
+本 ADR 最初用于比较三种 WorkBuddy ↔ Codex 集成方式：
 
-研发中心已确定使用 WorkBuddy 企业版作为 PC 端 AI 办公入口，研发流程运行在飞书，团队同时使用飞书知识库；WeKnora 计划在内网私有部署；嵌入式软件开发使用 Codex CLI。需要决定 WorkBuddy 是直接启动、编排和管控 Codex CLI，还是仅治理进入 Codex 的需求输入与 Codex 产生的交付物输出。
+1. WorkBuddy 直接启动/遥控个人开发机 Codex CLI；
+2. WorkBuddy 生成结构化任务输入，工程师在目标仓启动 Codex，Codex 输出结构化回执；
+3. 建设隔离 Runner/执行网关，由 WorkBuddy 调用受控工程执行环境。
 
-### 技术约束
+后续架构审查确认：WorkBuddy 不是唯一办公入口，Codex 也不是唯一 Engineering Agent Runtime。Claude Code、IDE Agent、内部 Agent 或其他 Runtime 都可能存在。因此，本 ADR 不再承担“总体平台选型”职责，只保留其**执行边界原则**。
 
-- Codex CLI 必须从真实代码仓和正确目录运行，遵循仓库级 `AGENTS.md`、工具链、dirty worktree 和权限边界。
-- 嵌入式交付需区分源码分析、Host/SIL、交叉构建、制品身份、部署、Board/HIL 和发布审批。
-- 飞书工作项、Git、CI/构建、制品库和 HIL 证据分别拥有不同的权威事实。
-- WorkBuddy 企业版可以通过连接器和 Skill 调用外部能力，但不能因此获得开发机的无限制 Shell 权限。
-- WeKnora 同步飞书内容时，必须验证源权限、更新和删除能否正确映射到检索结果。
+## Decision retained
 
-### 非目标
+当任何 Office / Interaction Provider 与个人开发环境或 Engineering Agent Runtime 协作时，默认采用：
 
-- 不在一期实现无人值守代码开发。
-- 不由 WorkBuddy 自动提交、推送、合并、烧录、部署或发布。
-- 不以 WorkBuddy 或 WeKnora 会话状态替代飞书工作项状态。
-- 不让 AI 自动将未审查内容发布为正式知识。
+> **输入/输出 Contract 松耦合，而不是办公入口直接获得个人开发机、设备和发布控制权。**
 
-### 成功标准
+稳定主链：
 
-- 一个飞书研发工作项能够生成结构化需求包，供工程师在目标仓中启动 Codex CLI。
-- Codex 输出可机器校验的交付回执，并回填或关联到原飞书工作项。
-- 输入、输出、知识引用、源码版本和验证状态可追溯。
-- WorkBuddy 不持有开发机全局终端权限，Codex 不越过人工审批和 HIL 门禁。
+```text
+Interaction / Work Item Provider
+        -> task-brief
+        -> Expert / Governance
+        -> engineering-task-package
+        -> Engineer + Engineering Agent Runtime
+        -> delivery-receipt
+        -> Verification / Review
+        -> Work Item / Collaboration Provider
+```
 
-## Decision
+具体 Runtime 可以是 Codex、Claude Code、IDE Agent、受控 Runner 或其他实现。
 
-一期选择“契约式松耦合”：
+## Why direct desktop control is not the default
 
-1. WorkBuddy 管控 Codex CLI 的输入和输出，不直接编排个人开发机上的 Codex CLI。
-2. WorkBuddy 根据飞书工作项和 WeKnora 检索结果生成 `task-brief`，经需求或研发负责人确认后交给工程师。
-3. 工程师在目标仓启动 Codex CLI；Codex 读取仓库规则、`task-brief` 和受权知识，完成分析、修改及可执行验证。
-4. Codex 输出 `delivery-receipt`，记录 repo、base commit、变更、验证、制品、未验证项和阻塞。
-5. WorkBuddy 负责呈现、检查字段完整性和推动飞书流程，不根据自然语言总结自动升级交付状态。
-6. 二期仅在一期指标通过后评估受控执行网关。网关应使用隔离 Runner 或 Git worktree、任务队列、短期身份、工具白名单、人工审批和可取消执行，不直接复用个人桌面会话。
+直接把办公 Agent 变成个人开发机控制面会放大以下问题：
 
-## Decision Matrix
+- repo root / branch / exact base / dirty baseline 不确定；
+- 个人凭证、SSH、设备权限和生产密钥边界模糊；
+- 会话超时、取消、重复执行和恢复难以审计；
+- Host / build / device / HIL / release 状态容易混淆；
+- 办公身份与工程身份可能不是同一安全主体；
+- Agent Provider 更换时控制链会整体重构。
 
-评分为 1–5，5 为最优。
+## Decision Matrix retained as historical rationale
 
-| 维度 | 权重 | A：直接串联个人 CLI | B：输入/输出契约松耦合 | C：受控执行网关 |
-|---|---:|---:|---:|---:|
-| 一期实现复杂度 | 15% | 3 | 5 | 1 |
-| 权限与安全边界 | 25% | 1 | 5 | 4 |
-| 可审计与可恢复 | 20% | 2 | 4 | 5 |
-| 嵌入式现场适配 | 15% | 2 | 5 | 3 |
-| 用户体验与自动化 | 10% | 5 | 3 | 5 |
-| 长期可扩展性 | 15% | 2 | 4 | 5 |
-| **加权总分** | **100%** | **2.15** | **4.55** | **3.70** |
+原比较结论仍有效地支持“Contract 松耦合优先”：
 
-## Alternatives
+|维度|直接控制个人 CLI|Contract 松耦合|受控执行网关|
+|---|---:|---:|---:|
+|一期复杂度|中|低|高|
+|权限边界|弱|强|强|
+|审计/恢复|弱|中-强|强|
+|嵌入式现场适配|中|强|中|
+|长期自动化|高但风险大|中|高|
 
-### 方案 A：WorkBuddy 直接调用个人开发机 Codex CLI
+当前阶段默认选择 Contract 松耦合；受控执行网关是否建设，由真实 Pilot 和 Runtime PoC 决定。
 
-WorkBuddy 通过 CLI + Skill 或本地命令直接启动 Codex，负责传入提示词并读取结果。
+## Provider-neutral interpretation
 
-- 优势：交互顺滑、演示效果直接、开发量相对有限。
-- 劣势：难以稳定确认仓库、分支、dirty 状态、会话上下文和设备权限；长任务恢复、并发隔离及个人凭证治理复杂。
-- 适用边界：仅适合无敏感数据、无设备写操作、无共享账号的个人实验，不作为研发中心默认方案。
+ADR-003 生效后，本 ADR 中的专有名词应按下列方式理解：
 
-### 方案 B：输入/输出契约松耦合
+- WorkBuddy → `Interaction / Office Agent Provider` 的一个候选；
+- Codex CLI → `Engineering Agent Runtime` 的一个候选；
+- 飞书 → `Work Item / Collaboration Provider` 的一个候选；
+- WeKnora → `Knowledge Provider` 的一个候选。
 
-WorkBuddy 生成标准需求包，工程师在正确仓库中启动 Codex，Codex输出标准交付回执。
+因此，任何新 Provider 不需要复制一套新 ADR，只要遵守同样的 Contract / Action / Evidence 边界即可。
 
-- 优势：职责清楚、实施成本低、保留工程师控制、适合嵌入式多仓和HIL场景。
-- 劣势：一期仍有人工交接，体验不如全自动；需要制定统一 Schema 和状态映射。
-- 适用边界：研发中心一期默认方案。
+## Invariants
 
-### 方案 C：受控执行网关
+- 办公入口默认不持有开发机全局 Shell；
+- Runtime 修改代码前必须确认 repo root / exact base / dirty baseline；
+- A6 Device Write 与 A7 Release 保持人工审批；
+- Host/Cross-build/HIL/Release 状态不得互相推导；
+- `blocked`、`unverified_items`、risk 不得被入口层隐藏；
+- Provider 更换不得改变 `task-brief` / `delivery-receipt` 的工程语义。
 
-WorkBuddy 调用内部网关，由网关在隔离 Runner/worktree 中非交互执行 Codex。
+## Revisit triggers
 
-- 优势：自动化、审计、隔离和规模化能力最好。
-- 劣势：需建设身份、队列、Runner、凭证、取消、重试、成本和证据体系；不能天然覆盖板端人工操作。
-- 适用边界：一期验证通过后的二期能力，不替代HIL和发布审批。
-
-## Rejected Options + Reasons
-
-- 方案 A 作为企业默认方案被拒绝：它把办公入口扩大成个人开发机控制面，权限、目录、会话和设备状态无法形成稳定企业契约。
-- 方案 C 作为一期方案被拒绝：在工作项 Schema、交付回执和权限模型尚未验证前先建平台，容易自动化错误流程并扩大投入。
-- “飞书知识库与 WeKnora 各自人工维护一套正式知识”被拒绝：双写会产生版本、删除和权限漂移。
-
-## Consequences
-
-### 短期收益
-
-- 能在不改造 Codex CLI 核心运行方式的前提下启动真实试点。
-- WorkBuddy 聚焦需求质量、流程推进和交付呈现，符合办公入口定位。
-- Codex 保持对仓库、工具链和本地验证环境的直接访问。
-- 可先验证业务价值，再决定是否投资自动执行网关。
-
-### 长期债务
-
-- 需要维护 `task-brief`、`delivery-receipt` 的 schema 版本和显式迁移规则，而不是长期保留并行兼容副本。
-- 人工交接会造成一定操作成本，需要用模板、命令和插件逐步降低。
-- 如果未来建设网关，需要重新设计服务身份、执行环境和凭证生命周期。
-
-### 重评触发条件
-
-- 每月稳定产生大量同类、低风险、可复跑任务，人工启动成为主要瓶颈。
-- `task-brief` 字段完整率和 `delivery-receipt` 合格率连续两个迭代达到 90% 以上。
-- 已具备隔离 Runner、短期身份、任务取消、幂等、审计和成本配额。
-- WorkBuddy 企业版提供经过本组织安全评审的 Codex 原生集成能力。
-- 需要无人值守夜间构建、批量修复或大规模代码审查。
-
-## Verification Plan
-
-### 验证时间窗
-
-以 8–12 周一期试点为建议时间窗。
-
-### 验证指标
-
-- 至少完成 3 个真实嵌入式工作项的端到端闭环。
-- `task-brief` 必填字段完整率达到 90% 以上。
-- `delivery-receipt` 能区分已验证、未验证和阻塞，合格率达到 90% 以上。
-- 飞书工作项、Git commit、构建结果和 HIL 证据可通过同一工作项 ID 关联。
-- 未发生未授权命令执行、知识越权、自动提交/推送或设备误操作。
-- 与试点前基线相比，需求澄清和交付汇总人工耗时降低 30% 以上。
-
-## Rollback Trigger
-
-出现以下任一情况，停止 WorkBuddy 到 Codex 的自动化扩展，回退到人工任务包：
-
-- 无法确认执行使用的 repo、base commit 或用户身份；
-- 任务重复执行、无法取消或输出无法关联原工作项；
-- 凭证、源码或受限知识进入不允许的数据边界；
-- WorkBuddy 将 Host/构建通过误标为 Board/HIL 或发布通过；
-- 自动化操作越过人工审批、Git保护或设备安全门禁。
+- 组织建设统一受控 Agent Runtime Gateway；
+- 某办公平台获得经企业安全评审的工程执行能力；
+- 真实 Pilot 证明人工 handoff 成为主要瓶颈；
+- 需要夜间无人值守批量任务；
+- 现有 Contract 无法覆盖新的工程 Runtime。
