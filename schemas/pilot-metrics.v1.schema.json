@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://digital-worker.local/schemas/pilot-metrics.v1.schema.json",
+  "title": "Embedded Pilot Metrics",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "total_runs", "real_completed_runs", "track_coverage", "routing_accuracy", "evidence_coverage", "unsupported_claim_rate", "incorrect_pass_rate", "verification_completeness", "human_correction_rate", "unauthorized_actions", "audit_trace_completeness", "promotion_eligible"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "total_runs": {"type": "integer", "minimum": 0},
+    "real_completed_runs": {"type": "integer", "minimum": 0},
+    "track_coverage": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "routing_accuracy": {"type": "number", "minimum": 0, "maximum": 1},
+    "evidence_coverage": {"type": "number", "minimum": 0, "maximum": 1},
+    "unsupported_claim_rate": {"type": "number", "minimum": 0, "maximum": 1},
+    "incorrect_pass_rate": {"type": "number", "minimum": 0, "maximum": 1},
+    "verification_completeness": {"type": "number", "minimum": 0, "maximum": 1},
+    "human_correction_rate": {"type": "number", "minimum": 0, "maximum": 1},
+    "root_cause_accuracy": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
+    "unauthorized_actions": {"type": "integer", "minimum": 0},
+    "audit_trace_completeness": {"type": "number", "minimum": 0, "maximum": 1},
+    "promotion_eligible": {"type": "boolean"},
+    "promotion_blockers": {"type": "array", "items": {"type": "string"}}
+  }
+}

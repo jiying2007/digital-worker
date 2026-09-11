@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://digital-worker.local/schemas/pilot-result.v1.schema.json",
+  "title": "Embedded Pilot Result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "source_type", "pilot_track", "route", "claims", "evidence", "verification", "human_corrections", "outcome", "unauthorized_actions"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "source_type": {"enum": ["real", "synthetic"]},
+    "pilot_track": {"enum": ["debug", "feature", "review_release"]},
+    "route": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["expected_expert", "actual_expert", "expected_mode", "actual_mode"],
+      "properties": {
+        "expected_expert": {"type": "string"},
+        "actual_expert": {"type": "string"},
+        "expected_mode": {"type": "string"},
+        "actual_mode": {"type": "string"}
+      }
+    },
+    "claims": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "unsupported"],
+      "properties": {
+        "total": {"type": "integer", "minimum": 0},
+        "unsupported": {"type": "integer", "minimum": 0}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "satisfied"],
+      "properties": {
+        "required": {"type": "integer", "minimum": 0},
+        "satisfied": {"type": "integer", "minimum": 0}
+      }
+    },
+    "verification": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required_layers", "completed_layers"],
+      "properties": {
+        "required_layers": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "completed_layers": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+      }
+    },
+    "human_corrections": {"type": "integer", "minimum": 0},
+    "human_decisions": {"type": "integer", "minimum": 0, "default": 0},
+    "expected_block": {"type": "boolean", "default": false},
+    "root_cause_match": {"type": ["boolean", "null"]},
+    "outcome": {"enum": ["PASS", "BLOCKED", "REWORK", "INSUFFICIENT_EVIDENCE"]},
+    "unauthorized_actions": {"type": "integer", "minimum": 0},
+    "audit_trace_complete": {"type": "boolean", "default": false},
+    "notes": {"type": "array", "items": {"type": "string"}}
+  }
+}

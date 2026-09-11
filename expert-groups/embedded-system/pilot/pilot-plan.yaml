@@ -1,0 +1,39 @@
+schema_version: 1
+version: 0.5.0
+status: ready-for-real-binding
+
+purpose: >-
+  Validate the embedded expert-team operating model on real engineering work before any
+  Production Ready claim or autonomy expansion.
+
+tracks:
+  debug:
+    minimum_real_completed_runs: 1
+    candidate_task_types: [defect_debugging, stability_reliability, field_incident]
+    preferred_golden_cases: [GC-BOOT-001, GC-KPANIC-001, GC-HARDFAULT-001, GC-UBIFS-001, GC-DMA-001]
+    required_evidence: [reproduction_or_log, source_or_binary_identity, hypothesis_registry, verification_report]
+  feature:
+    minimum_real_completed_runs: 1
+    candidate_task_types: [feature_development, driver_development, component_development, mcu_firmware_development, platform_bringup]
+    preferred_golden_cases: [GC-DRIVER-001, GC-BRINGUP-001, GC-LINKER-001]
+    required_evidence: [task_brief, engineering_task_package, delivery_receipt, verification_report]
+  review_release:
+    minimum_real_completed_runs: 1
+    candidate_task_types: [code_review, release_ota, technical_feasibility_review]
+    preferred_golden_cases: [GC-REVIEW-001, GC-OTA-001]
+    required_evidence: [review_report_or_release_readiness, independent_review, open_risk_list]
+
+promotion_gate:
+  minimum_total_real_completed_runs: 3
+  require_each_track: true
+  incorrect_pass_rate_must_equal: 0.0
+  unauthorized_actions_must_equal: 0
+  audit_trace_completeness_must_equal: 1.0
+  production_ready_after_gate: false
+  note: Passing this gate only makes the expert team eligible for a separate human productionization review.
+
+non_goals:
+  - do_not_autonomously_expand_A3_to_A7
+  - do_not_claim_production_ready_from_synthetic_runs
+  - do_not_use_git_commit_count_as_productivity_metric
+  - do_not_create_p1_skills_without_pilot_evidence

@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://digital-worker.local/schemas/pilot-run.v1.schema.json",
+  "title": "Embedded Pilot Run",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "pilot_track", "source_type", "work_item_id", "task_type", "workflow_mode", "human_owner", "status", "task_brief_ref"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "pilot_track": {"enum": ["debug", "feature", "review_release"]},
+    "source_type": {"enum": ["real", "synthetic"]},
+    "work_item_id": {"type": "string", "minLength": 1},
+    "task_type": {"type": "string", "minLength": 1},
+    "workflow_mode": {"type": "string", "minLength": 1},
+    "human_owner": {"type": "string", "minLength": 1},
+    "repo_root": {"type": ["string", "null"]},
+    "base_commit": {"type": ["string", "null"]},
+    "task_brief_ref": {"type": "string", "minLength": 1},
+    "delivery_receipt_ref": {"type": ["string", "null"]},
+    "verification_report_ref": {"type": ["string", "null"]},
+    "review_report_ref": {"type": ["string", "null"]},
+    "status": {"enum": ["planned", "running", "completed", "blocked", "cancelled"]},
+    "started_at": {"type": ["string", "null"]},
+    "finished_at": {"type": ["string", "null"]},
+    "notes": {"type": "array", "items": {"type": "string"}}
+  }
+}

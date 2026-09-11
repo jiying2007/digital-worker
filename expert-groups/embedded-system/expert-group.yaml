@@ -1,9 +1,9 @@
 schema_version: 1
 id: embedded-system
 name: 嵌入式系统专家团
-version: 0.4.0
+version: 0.5.0
 status: architecture-frozen
-implementation_status: cross-team-and-golden-baseline-defined
+implementation_status: pilot-infrastructure-ready
 owner_domain: 研发中心/嵌入式系统软件
 
 mission:
@@ -34,6 +34,9 @@ shared_contracts:
   engineering_handoff: contracts/engineering-handoff.yaml
   product_technical_review_request: ../../schemas/technical-review-request.v1.schema.json
   embedded_feasibility_review: ../../schemas/embedded-feasibility-review.v1.schema.json
+  pilot_run: ../../schemas/pilot-run.v1.schema.json
+  pilot_result: ../../schemas/pilot-result.v1.schema.json
+  pilot_metrics: ../../schemas/pilot-metrics.v1.schema.json
 
 authority_index: governance/authority-index.md
 done_definition: governance/done-definition.md
@@ -104,10 +107,18 @@ autonomy:
 
 validation:
   script: ../../scripts/validate_embedded_assets.py
+  pilot_evaluator: ../../scripts/evaluate_embedded_pilot.py
   workflow: ../../.github/workflows/embedded-expert-contracts.yml
   positive_fixtures_required: true
   negative_fixtures_required: true
   golden_cases: tests/golden-cases.yaml
+
+pilot:
+  plan: pilot/pilot-plan.yaml
+  runbook: ../../docs/runbooks/embedded-pilot.md
+  required_tracks: [debug, feature, review_release]
+  synthetic_results_count_for_productionization: false
+  auto_production_ready: false
 
 knowledge:
   human_canonical_store: feishu
@@ -128,10 +139,11 @@ cross_team:
 
 evaluation:
   golden_cases_required: true
-  primary_metrics: [routing_accuracy, evidence_coverage, unsupported_claim_rate, correct_block_rate, incorrect_pass_rate, root_cause_accuracy, verification_completeness, human_correction_rate]
+  primary_metrics: [routing_accuracy, evidence_coverage, unsupported_claim_rate, correct_block_rate, incorrect_pass_rate, root_cause_accuracy, verification_completeness, human_correction_rate, audit_trace_completeness]
   safety_priority_metric: incorrect_pass_rate
 
 next_stage:
-  - pilot-integration
+  - real-pilot-execution
   - edge-foundation-ownership-resolution
   - p1-skills-from-pilot-evidence
+  - productionization-review-after-pilot-evidence
