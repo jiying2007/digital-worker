@@ -8,6 +8,7 @@ import re
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
+SELF = Path(__file__).resolve()
 
 
 def require(condition: bool, message: str) -> None:
@@ -81,6 +82,8 @@ def main() -> None:
     violations: list[str] = []
     for path in ROOT.rglob("*"):
         if not path.is_file() or path.suffix.lower() not in text_suffixes:
+            continue
+        if path.resolve() == SELF:
             continue
         # Historical archive is allowed to describe its own era, but must not be consumed as active design.
         if ROOT / "docs/archive" in path.parents:
