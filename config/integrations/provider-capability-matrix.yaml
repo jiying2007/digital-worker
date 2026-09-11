@@ -1,0 +1,70 @@
+schema_version: 1
+status: evidence-in-progress
+provider_selection: not_frozen
+
+roles:
+  knowledge_control_plane:
+    candidate: knowledge-hub
+    repository: jiying2007/knowledge-hub
+    evidence:
+      contract: registry/integrations/digital-worker.json
+      pinned_commit: 8541d5f0a40263536179ea44764bca2baa063731
+      current_validation: BLOCKED_CI_TRANSPORT
+    capabilities:
+      registry: native
+      context_preflight: native
+      evidence_pack: native
+      action_check: native
+      proposal_lifecycle: native
+      owner_review: native
+      source_acl_provenance: native
+      digital_worker_project_route: pending-governed-registration
+    decision: candidate-not-default
+
+  agent_asset_control_plane:
+    candidate: agent-dev-kit
+    repository: jiying2007/agent-dev-kit
+    evidence:
+      contract: manifests/integrations/digital-worker.json
+      pinned_commit: 9ab5b2a6047f9afb8460d9e985abfa44cd909947
+      current_validation: CORE_CI_PASS_PROMOTION_JOB_UNAVAILABLE
+    capabilities:
+      agent_asset_ssot: native
+      skill_asset_ssot: native
+      profiles: native
+      embedded_fullstack_profile: native
+      target_export_install_rollback: native
+      runtime_specific_live_write: controlled-external-chain
+    decision: preferred-candidate-for-pilot
+
+  runtime_practice_eval:
+    candidate: llm_agent
+    repository: jiying2007/llm_agent
+    evidence:
+      contract: manifests/digital_worker_runtime_pilot.json
+      pinned_commit: cb80e5ad15e783e627736d52f8d67ad5a445c2fc
+      current_validation: JOB_LEVEL_CI_FAILURE_REQUIRES_RERUN
+    capabilities:
+      external_practice_intake: native
+      runtime_target_health: native
+      loop_readiness: native
+      runtime_comparison: contract-ready
+      production_runtime: unsupported-by-design
+    decision: candidate-evaluation-lab
+
+  engineering_runtime:
+    candidates:
+      - {id: codex-home, evidence_owner: llm_agent, status: existing-target}
+      - {id: claude-code, evidence_owner: agent-dev-kit/llm_agent, status: experimental-pending-real-health}
+    decision: not_frozen
+
+  engineering_fact_sources:
+    candidates: [git, ci, hil, artifact-store]
+    authority: source-system
+    decision: stable-principle
+
+rules:
+  no_poc_evidence_no_pass: true
+  selected_integration_does_not_freeze_architecture: true
+  provider_failure_is_not_pass: true
+  fallback_exit_plan_required_before_default: true
