@@ -1,221 +1,87 @@
 # 11 Workflow、Gate 与工程交接
 
+> 同步基线：`v0.7.0 / provider-neutral`
+
 ## 1. 设计目标
 
-Workflow 的价值不是把所有任务都拉长，而是确保不同风险/类型的任务走**最小正确链路**，并让每个关键状态有机器可读 artifact。
+Workflow 确保不同风险任务走**最小正确链路**，并让关键状态有机器可读 artifact；它不绑定某个 Interaction、Knowledge 或 Engineering Runtime Provider。
 
-权威文件：
-
-- `config/task-modes.yaml`
-- `config/workflow.yaml`
-- `config/gate-policy.yaml`
-- `config/material-requirements.yaml`
-- `contracts/engineering-handoff.yaml`
-
----
+权威文件：`task-modes.yaml / workflow.yaml / gate-policy.yaml / material-requirements.yaml / engineering-handoff.yaml`。
 
 ## 2. Mode Path
 
-### full_chain
+- full/short/diagnostic/bringup：K → M → 0 → Triage → Analysis → T → E → Execution → V → R → C；
+- review_only：K → M → 0 → Triage → Analysis → T → R → C；
+- release_chain：K → M → 0 → Triage → Analysis → T → V → R → C；
+- single_expert：K → M → 0 → Triage → Analysis → T → C。
+
+`review_only` 禁止隐式 Execution；`single_expert` 不自动扩链；release 需要代码修改时显式扩 mode。
+
+## 3. Gate K / M / 0
+
+- K：所需知识 source 是否可信、可定位、版本/权限是否满足；
+- M：repo/base/board/SDK/schematic/firmware/log/device identity 是否足够；
+- 0：goal/scope/boundary/constraints/acceptance 是否清楚。
+
+三个 Gate 可以在 UI 合并呈现，但底层风险语义保持分离。
+
+## 4. Gate T
+
+输出 solution、impact、dependency、risk、verification plan、rollback、unresolved items。
+
+## 5. Gate E：Engineering Handoff
 
 ```text
-K → M → 0 → Triage → Analysis → T → E → Execution → V → R → C
+Expert Team
+  → engineering-task-package
+  → Engineer + Engineering Agent Runtime
+  → delivery-receipt
 ```
 
-### short_chain
+Runtime Provider 为 `selectable`。Codex、Claude Code、IDE Agent、内部 Agent 都只是候选实现。
 
-与 full_chain stage 类似，但专家数量与分析深度按任务范围裁剪。
+Handoff 的稳定约束：
 
-### diagnostic_chain
+- exact repo/base；
+- work item identity；
+- acceptance；
+- action ceiling；
+- required verification；
+- evidence / blocker / unverified items；
+- runtime/provider 更换不得改变上述语义。
 
-强制 Hypothesis Registry，适用于 defect/stability/field incident。
+办公/协作入口不得因“能调用工具”就直接获得开发机、设备或 Release 控制权；任何自动执行都必须进入相同 Action Policy 与审计链。
 
-### bringup_chain
+## 6. Delivery Receipt 的含义
 
-强调 material readiness、board/platform identity、Device/HIL evidence。
+Receipt 记录“执行发生了什么”，至少涵盖 executor identity、base、change、commands、build/test status、artifact/hash、evidence、blocker、risk、next action。
 
-### review_only
+它不是 Verification Report。当前 `executor_identity` 仍是轻量字段；是否拆成 runtime/provider/model/version，由 #18 Multi-runtime Pilot 的真实需求决定。
 
-```text
-K → M → 0 → Triage → Analysis → T → R → C
-```
+## 7. Gate V / R / C
 
-**禁止隐式进入 Execution。**
+- V：按 implemented/host/cross-build/SIL/device/HIL/release 分层验证；
+- R：独立审查风险和放行充分性；
+- C：manifest 完整、blocker resolved/accepted、状态未夸大才收口。
 
-### release_chain
+## 8. Recovery
 
-```text
-K → M → 0 → Triage → Analysis → T → V → R → C
-```
+缺信息回 `needs_information`；Verification/Review 失败返回 precise responsible stage；run-state + gate-ledger 支持断点恢复，禁止无意义整链重跑。
 
-默认做 readiness；需要改代码时必须显式扩展 mode。
-
-### single_expert
-
-```text
-K → M → 0 → Triage → Analysis → T → C
-```
-
-不自动扩链。
-
----
-
-## 3. Gate K：Knowledge Readiness
-
-回答“我们是否拥有足够可信的知识输入”。
-
-可包括：
-
-- datasheet/TRM；
-- schematic；
-- protocol/standard；
-- coding/design rules；
-- historical RCA；
-- platform notes。
-
-决策：PASS / BLOCKED / DEGRADED_WITH_APPROVAL / NOT_APPLICABLE。
-
-## 4. Gate M：Engineering Material Readiness
-
-回答“我们是否知道自己在分析哪个系统”。
-
-重点：
-
-- repo；
-- exact base；
-- board revision；
-- SoC/MCU；
-- SDK/kernel/toolchain；
-- schematic revision；
-- firmware/image identity；
-- log/reproduction；
-- device identity。
-
-这是嵌入式任务与普通软件任务的重要差异。
-
-## 5. Gate 0：Intake Clarity
-
-五维：
-
-- goal；
-- scope；
-- boundary；
-- constraints；
-- acceptance。
-
-不清楚就不进入“看起来很专业”的分析。
-
-## 6. Analysis
-
-由 routed expert 产出 `technical-analysis`。调试类额外维护 `hypothesis-registry`。
-
-## 7. Gate T：Technical Decision
-
-至少包含：
-
-- solution；
-- impact；
-- dependency；
-- risks；
-- verification plan；
-- rollback；
-- unresolved items。
-
-## 8. Gate E：Engineering Handoff
-
-这是 AI 专家团与工程执行的正式边界。
-
-### 上游
-
-Expert Team 形成 `engineering-task-package`。
-
-### 执行
-
-Engineer + Codex 按 package 执行，不由 WorkBuddy 直接遥控个人 Codex。
-
-### 下游
-
-返回 `delivery-receipt`：
-
-- executor identity；
-- exact base；
-- change/patch；
-- commands；
-- build/test status；
-- artifact/hash；
-- evidence；
-- blocker；
-- risk；
-- next action。
-
-`delivery-receipt` 只能证明“执行发生了什么”，不能替代 Verification。
-
----
-
-## 9. Gate V：Verification
-
-独立判断层级状态；未跑=未验证，不能被默认 PASS。
-
-## 10. Gate R：Independent Review
-
-在 Verification 之后独立审查结论、风险和放行充分性。
-
-## 11. Gate C：Closure
-
-收口条件：
-
-- deliverable manifest；
-- blocker resolved/accepted；
-- verification 未夸大；
-- risk/unverified item 保留；
-- knowledge candidate / next action 可追踪。
-
----
-
-## 12. Transition / Recovery
-
-### Missing Information
-
-K/M/0 缺信息 → needs_information，不自动填空。
-
-### Verification Fail
-
-回到 precise failed stage，不整链重跑。
-
-### Review Fail
-
-回责任 stage；cross-stage reflow 自动最多一次，之后要求人工决策。
-
-### Resume
-
-`team-run-state + gate-ledger` 是恢复基线。
-
----
-
-## 13. Engineering Handoff 的设计意义
-
-如果让专家团直接在用户本机无限制执行，会造成：
-
-- 企业编排层与开发机强耦合；
-- 权限难以审计；
-- repo/device identity 漂移；
-- AI 分析、执行、验证混在一起；
-- 高风险动作难管。
-
-因此一期使用 Contract 边界：
+## 9. Provider-neutral 的稳定点
 
 ```text
 Expert Team = 判断/方案/约束
-Engineer + Codex = 受控执行
+Engineering Agent Runtime = 受控工程执行
 Verification = 独立证据判断
 Review = 独立放行审查
 ```
 
-这是当前架构最重要的稳定点之一。
+Runtime 可换，Contract/Gate/Evidence 不换。这是当前最重要的稳定接口之一。
 
-## 14. 评审重点
+## 10. 评审重点
 
-- K/M/0 三个前置 Gate 是否可以合并显示、但底层仍分开？
-- short_chain 是否需要更短路径？
-- review_only 是否应该允许生成 patch proposal 但禁止写 worktree？当前 A2 已支持生成建议。
-- Gate V/R 在低风险任务是否允许简化？建议可裁剪内容，但不取消职责独立性。
+- 是否至少维持两个可替换 Runtime；
+- Runtime fallback / cancel / retry 如何纳入 receipt；
+- 是否需要独立 `agent-runtime-receipt`；
+- short_chain 是否还能进一步缩短而不削弱 V/R 安全边界。
