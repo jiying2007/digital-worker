@@ -1,450 +1,491 @@
 # 研发中心 AI 数字员工研发流程规划
 
-- 文档版本：2
+- 文档版本：3
 - 文档状态：proposed
-- 日期：2026-09-09
-- 适用范围：研发中心办公协同与嵌入式软件研发流程
-- 版本关系：本文件是当前唯一活动提案；上一版草案归档于 `docs/archive/研发中心AI数字员工研发流程规划_V1.md`。后续修订继续更新本路径，不再新增 `_V3/_V4` 兼容副本。
-- 已确认条件：WorkBuddy 企业版、飞书研发流程、飞书知识库、WeKnora 内网私有部署、Codex CLI 嵌入式研发
-- 待确认责任方：研发中心负责人、研发流程负责人、IT、信息安全、知识库负责人、试点产品负责人
-- 核心决策：[ADR-001：WorkBuddy 与 Codex CLI 的集成边界](docs/adr/ADR-001-workbuddy-codex-integration-boundary.md)
+- 日期：2026-09-11
+- 适用范围：研发中心办公协同、知识访问、AI Agent 与嵌入式研发流程
+- 版本关系：本文件是当前唯一活动总体提案；历史草案位于 `docs/archive/`，后续继续更新稳定路径。
+- 已确认目标：提升研发效率与质量；让知识、历史经验、工程证据和专家能力可复用；保证源码、设备、发布等高风险边界可审计、可回退、人工可控。
+- 尚未冻结：总体产品组合、知识库/检索方案、唯一办公入口、唯一 Agent Runtime、统一执行网关。
+- 核心决策：
+  - [ADR-001：WorkBuddy 与 Codex CLI 的集成边界](docs/adr/ADR-001-workbuddy-codex-integration-boundary.md)
+  - [ADR-002：嵌入式系统专家团架构与落地边界](docs/adr/ADR-002-embedded-system-expert-team-architecture.md)
+  - [ADR-003：Provider-neutral AI R&D Target Architecture](docs/adr/ADR-003-provider-neutral-ai-rd-target-architecture.md)
 
-## 1. 决策摘要
+## 1. 当前判断
 
-推荐采用：
+当前不应该先决定“WorkBuddy + 飞书 + WeKnora + Codex”这一产品组合，而应先冻结**能力架构、Contract、Evidence 和安全边界**。
 
-> **飞书承载协作流程与人工知识主库，WeKnora作为内网AI检索层，WorkBuddy作为PC端数字员工入口，Codex CLI作为工程师控制的仓库执行端。**
+以下均视为候选 Provider / Source，而不是总体架构前提：
 
-一期不要求 WorkBuddy 直接启动或遥控 Codex CLI。WorkBuddy 重点管控：
+- 飞书、飞书知识库；
+- WorkBuddy 或其他办公 Agent/入口；
+- NAS 上的 Datasheet/TRM/SDK/供应商资料/测试报告/历史项目资料；
+- Git、Issue/PR、CI、制品库、HIL/测试系统；
+- WeKnora 或其他搜索/RAG/知识平台；
+- Codex、Claude Code、IDE Agent、内部 Agent 或未来其他 Engineering Agent Runtime。
 
-- 输入侧：需求完整性、目标、非目标、平台/板卡、代码仓、验收标准、权限和知识引用；
-- 输出侧：变更范围、代码/patch、验证结果、制品身份、未验证项、阻塞、风险和下一步；
-- 流程侧：将输入和输出关联回同一个飞书工作项，推动人工确认和状态转换。
+稳定原则：
 
-Codex CLI 仍由研发人员从真实仓库启动，按项目规则完成分析、修改和验证。二期才评估隔离 Runner 上的受控自动执行。
+> **Provider 可替换，Contract 稳定；统一访问，不强制统一存储；Expert 身份与 Agent Runtime 解耦。**
 
-## 2. 为什么不建议 WorkBuddy 一期直接串联 CLI
-
-“能够启动 CLI”不等于“能够可靠管控嵌入式研发”。直接串联还需要解决：
-
-- 当前目录是否是真实目标 repo root；
-- 当前分支、base commit 和 dirty worktree 是否正确；
-- WorkBuddy 与 Codex 是否使用同一员工身份和权限；
-- 任务中断、超时、重复启动和恢复如何处理；
-- Codex能否访问正确工具链、SDK、构建容器和设备；
-- SSH、ADB、串口、烧录器、OTA和板卡动作由谁批准；
-- Host、交叉构建、部署、HIL和发布状态如何避免混淆；
-- 源码、密钥、客户材料和日志是否越过数据边界。
-
-一期采用“需求包 + 交付回执”可以先解决流程质量和可追溯性，同时保留工程师对真实环境的控制。它也为以后建设执行网关提供稳定接口。
-
-## 3. 目标架构
+## 2. 目标架构
 
 ```text
-员工/主管
-   │
-   ├────────────── 飞书 ──────────────────────────┐
-   │     工作项、负责人、状态、审批、会议、通知     │
-   │                     │                         │
-   │                     ▼                         │
-   │                WorkBuddy企业版                │
-   │       需求受理、知识查询、任务包、结果展示      │
-   │             │                    │             │
-   │             │检索                │输入/输出契约 │
-   │             ▼                    ▼             │
-   │   WeKnora内网私有部署       工程师 + Codex CLI │
-   │   AI检索、引用、评测         真实代码仓中执行   │
-   │             ▲                    │             │
-   │             │知识候选            │交付回执      │
-   │             └───────── 人工审核 ──┘             │
-   │                                                │
-   └─ 飞书知识库：面向人的内容主库 ◄── 受控同步 ─────┘
-
-Git / CI / 制品库 / HIL证据：分别保存工程与产品权威事实
+研发人员 / 主管 / 测试 / 产品
+          │
+          ├──────── Interaction & Collaboration ────────┐
+          │  Feishu / WorkBuddy / Web / IDE / CLI      │
+          │                                              │
+          ▼                                              │
+     Work Item / Task Contract                           │
+          │                                              │
+          ▼                                              │
+     digital-worker Governance                           │
+ Expert Team / Routing / Gate / Policy / Evaluation      │
+          │                                              │
+   ┌──────┼───────────┬──────────────┬──────────────────┤
+   │      │           │              │                  │
+   ▼      ▼           ▼              ▼                  ▼
+Context  Agent      Action        Engineering        Evidence /
+&Knowledge Runtime  Policy        Execution          Identity/Audit
+   │      │           │              │                  │
+   │   Codex/Claude    │        Git/CI/Runner/HIL        │
+   │   IDE/Other       │        Device/Artifact          │
+   │                   │                                 │
+   └──── Knowledge Sources ──────────────────────────────┘
+        Feishu / NAS / Git / Docs / CI / HIL / Other
 ```
 
-## 4. 系统职责与事实源
+总体分为七个逻辑 Plane：
 
-| 对象 | 权威事实源 | WorkBuddy职责 | WeKnora职责 | Codex职责 |
-|---|---|---|---|---|
-| 研发工作项 | 飞书 | 创建草稿、补齐、展示、推动审批 | 提供规范和案例 | 消费已确认任务 |
-| 人工协作文档 | 飞书知识库 | 搜索、总结、生成候选 | 同步索引和检索 | 读取受权引用 |
-| 当前源码 | Git | 展示链接 | 不复制为源码主库 | 读取、分析和修改 |
-| 构建/测试 | CI或本地受控入口 | 汇总状态 | 沉淀审核后的Runbook | 执行并生成证据 |
-| 发布制品 | 制品库 | 展示版本与状态 | 只存说明和引用 | 生成或核验身份信息 |
-| 板级验证 | 测试/HIL证据库 | 展示和推动人工确认 | 沉淀验证方法和案例 | 辅助执行，不自动放行 |
-| 正式研发知识 | 飞书原文 + WeKnora受控索引 | 使用和提交候选 | 检索、引用、评测 | 使用和提交候选 |
+1. Interaction & Collaboration；
+2. Work Item / State；
+3. Digital Worker Governance；
+4. Context & Knowledge；
+5. Agent Runtime；
+6. Action & Engineering Execution；
+7. Evidence / Identity / Audit。
 
-## 5. 飞书知识库与 WeKnora 的关系
+## 3. digital-worker 的职责
 
-### 5.1 推荐方案：飞书主库，WeKnora检索层
+`digital-worker` 是研发中心 AI R&D Operating Model 主仓，负责：
 
-飞书知识库继续用于：
+- Task Contract；
+- Expert Team / Skill / Workflow；
+- Routing / Gate；
+- Action Policy；
+- Evidence / Verification / Review；
+- Cross-team Handoff；
+- Evaluation / Pilot / Productionization Gate；
+- Provider Adapter 需要遵守的稳定接口。
 
-- 人工编写和协作；
-- 评论、通知和审批；
-- 组织成员日常浏览；
-- 文档原文、owner和人工变更。
+它不是某个办公 Agent、知识平台或 Coding Agent 的配置仓。
 
-WeKnora用于：
+## 4. Work Item / Collaboration
 
-- 内网文档解析和分块；
-- 混合检索、RAG问答和来源引用；
-- 为WorkBuddy和Codex提供统一机器接口；
-- 检索质量评测、失败样本和查询审计；
-- 按知识域隔离不同产品、平台和团队。
+总体架构不要求唯一入口。不同角色可以使用不同入口：
 
-不得让团队在飞书和WeKnora中各自编辑一套正式正文。WeKnora内的同步副本应标记来源、外部文档ID、更新时间和同步状态。
+- 管理/协作：飞书、WorkBuddy、Web；
+- 研发：IDE、CLI、Coding Agent；
+- 测试/验证：测试平台、HIL、Web；
+- 评审：飞书、Git PR、Review Portal 等。
 
-### 5.2 是否存在更好的方案
-
-候选方案对比如下：
-
-| 方案 | 优点 | 风险 | 建议 |
-|---|---|---|---|
-| 仅用飞书知识库 | 体系最简单、权限和协作集中 | Codex接入、复杂检索、评测和内网模型适配能力可能不足 | 可作最小基线 |
-| 飞书主库 + WeKnora检索层 | 保留协作习惯，同时为AI提供统一RAG/MCP | 需要同步、ACL映射和运维 | **推荐** |
-| WeKnora替代飞书知识库 | AI能力集中、内网可控 | 改变全员习惯，协作与流程迁移成本高 | 暂不推荐 |
-| 飞书和WeKnora双写 | 表面灵活 | 版本、权限、删除和owner漂移 | 拒绝 |
-
-WeKnora官方实现支持飞书数据源、增量/全量同步和删除同步，因此可用于“飞书主库 + WeKnora检索层”。但不能只根据“同步成功”推断源文档权限已经逐文档继承；必须对实际部署版本进行权限负向测试。
-
-### 5.3 权限安全门禁
-
-一期建议：
-
-- 只同步权限相对同质的飞书知识空间；
-- 按部门、产品线或密级拆分WeKnora知识库；
-- 不把包含混合文档权限的飞书空间整体同步给广泛可见的WeKnora知识库；
-- 删除、撤权和人员离职必须触发同步/缓存失效验证；
-- WorkBuddy和Codex使用员工个人身份或短期令牌，不共用管理员API Key；
-- 检索回执记录用户、知识库、文档、来源、时间和权限决策；
-- 高敏源码、密钥、证书、客户数据和原始现场日志默认不进入知识库。
-
-如果无法验证权限继承，应回退为：
-
-1. WorkBuddy按飞书原生权限直接访问飞书内容；
-2. WeKnora只同步全员可见或明确同权限的技术资料；
-3. Codex按具体工作项获得经人工选择的知识引用或脱敏附件。
-
-## 6. WorkBuddy 的数字员工角色
-
-一期建议配置四个角色，不建立一个无边界的“万能研发Agent”。
-
-### 6.1 研发需求助理
-
-- 从飞书消息、会议和工作项中提取需求；
-- 补齐产品、平台、板卡、版本、接口和验收标准；
-- 从WeKnora查找现行规范和历史案例；
-- 输出 `task-brief` 草稿；
-- 信息不足时停在 `needs-information`。
-
-### 6.2 研发交付助理
-
-- 接收或读取Codex的 `delivery-receipt`；
-- 校验必填字段和证据链接；
-- 区分已实现、已验证、未验证和阻塞；
-- 生成面向项目经理、测试和评审人的摘要；
-- 不擅自把状态升级为“完成”或“可发布”。
-
-### 6.3 知识治理助理
-
-- 将需求决策、排障结论和Runbook整理为知识候选；
-- 检查owner、适用产品、版本、来源和证据；
-- 提交人工审核；
-- 审核通过后进入飞书主库，再由WeKnora同步。
-
-### 6.4 项目汇总助理
-
-- 从飞书工作项和交付回执生成周报、风险和阻塞；
-- 只按明确字段汇总，不从Git提交量推断个人绩效；
-- 明确外部owner、未验证项和等待中的HIL事项。
-
-## 7. 输入契约：task-brief v1
-
-建议采用Markdown供人阅读、JSON供系统校验，两者使用同一字段模型。
-
-```yaml
-schema_version: 1
-work_item_id:
-title:
-type: requirement | defect | investigation | refactor
-priority:
-requester:
-owner:
-project_id:
-product_id:
-target_platform:
-target_board:
-target_os:
-repo_roots: []
-base_branch_or_commit:
-goal:
-non_goals: []
-current_behavior:
-expected_behavior:
-acceptance_criteria: []
-constraints: []
-interfaces: []
-knowledge_refs: []
-required_verification:
-  host: required | optional | not_applicable
-  cross_build: required | optional | not_applicable
-  sil: required | optional | not_applicable
-  hil: required | optional | not_applicable
-  release: required | optional | not_applicable
-allowed_actions: []
-forbidden_actions: []
-approval_policy:
-blocker_policy:
-```
-
-进入Codex前的强制字段：
+稳定要求不是“入口一致”，而是所有入口最终能关联到同一个：
 
 - `work_item_id`；
-- `owner`；
-- `repo_roots`；
-- `goal`和`non_goals`；
-- `acceptance_criteria`；
-- `required_verification`；
-- `allowed_actions`和`forbidden_actions`；
-- `blocker_policy`。
+- owner / requester；
+- state；
+- approval / decision；
+- task contract；
+- evidence / artifact link；
+- audit history。
 
-缺少目标仓、owner或验收标准时，WorkBuddy只能生成草稿，不能标记为 `ready-for-development`。
+飞书是重要候选 Work Item / Collaboration Provider，但当前不把“飞书必须是唯一状态 SSOT”冻结为不可替换架构决策。
 
-## 8. 输出契约：delivery-receipt v1
+## 5. 知识与上下文架构
+
+### 5.1 Source of Truth stays at source
+
+不同事实保留最合适的权威源：
+
+|对象|典型 Source of Truth|
+|---|---|
+|当前源码 / 配置|Git|
+|PR / Issue / Review|Git 平台或研发协作系统|
+|构建 / 测试|CI / 测试平台|
+|发布制品|Artifact Store|
+|设备 / HIL 结果|HIL / 测试证据系统|
+|组织流程 / 决策文档|飞书或其他协作系统|
+|Datasheet / TRM / SDK / 供应商资料|NAS / DMS / 供应商源|
+|AI 搜索索引|WeKnora 或其他 Knowledge Provider（不是原文 SSOT）|
+
+原则：**不要为了 RAG 把所有东西搬成第二份正式正文。**
+
+### 5.2 Knowledge Registry
+
+需要建立知识地图，而不是先建大而全知识库。
+
+建议记录：
 
 ```yaml
-schema_version: 1
-work_item_id:
-execution_id:
-executor_identity:
-started_at:
-finished_at:
-repo_root:
-base_commit:
-result_commit_or_patch:
-dirty_baseline:
-changed_files: []
-outcomes: []
-decisions: []
-validation:
-  host: not_run | pass | fail | blocked
-  cross_build: not_run | pass | fail | blocked
-  sil: not_run | pass | fail | blocked
-  hil: not_run | pass | fail | blocked
-  release: not_run | pass | fail | blocked
-commands: []
-artifact_refs: []
-artifact_hashes: []
-knowledge_refs: []
-evidence_refs: []
-unverified_items: []
-blockers: []
-risks: []
-next_actions: []
-approval_required: []
+knowledge_id:
+type:
+authority:
+source_provider:
+source_ref:
+owner:
+version_or_revision:
+acl_policy:
+freshness:
+indexed_by: []
 ```
 
-WorkBuddy只能根据结构化字段更新飞书：
+### 5.3 Knowledge Gateway
 
-- `pass`只代表对应验证层通过；
-- `host=pass`不能推导出`hil=pass`；
-- `cross_build=pass`不能推导出设备已部署；
-- 没有制品hash和设备身份，不能声称板端运行的是本次构建；
-- `blocked`和`unverified_items`必须原样展示，不能在周报中省略。
-
-## 9. 端到端流程
+向 Agent 提供稳定访问接口：
 
 ```text
-1. 飞书产生需求/缺陷/会议行动项
-2. WorkBuddy创建研发工作项草稿
-3. WorkBuddy经WeKnora检索规范与历史案例
-4. WorkBuddy生成task-brief，人确认目标和验收
-5. 飞书状态进入ready-for-development
-6. 工程师在目标仓启动Codex CLI
-7. Codex读取AGENTS.md、task-brief和受权知识
-8. Codex分析/修改/验证，生成delivery-receipt
-9. WorkBuddy校验回执并关联回飞书工作项
-10. 代码评审、交叉构建、制品身份核验
-11. 经授权部署，执行Board/HIL
-12. 发布负责人审批，飞书工作项关闭
-13. WorkBuddy生成知识候选
-14. 人工审核后写入飞书知识库
-15. WeKnora同步并完成检索回归
+search(query, scope, identity)
+get(ref, identity)
+cite(ref)
+resolve_authority(subject)
 ```
 
-## 10. 飞书状态建议
+背后可以有 Feishu / NAS / Git / WeKnora / HIL 等 Adapter。
+
+### 5.4 Context Broker
+
+Context Broker 根据：
+
+- task / work_item；
+- user identity；
+- project / product；
+- repo / platform / board；
+- ACL / data boundary；
+
+组装**最小必要上下文**，并携带 source/version/ACL/evidence provenance。
+
+目标是避免把整库权限和大量无关上下文直接交给 Agent。
+
+### 5.5 WeKnora 的当前定位
+
+WeKnora 是候选 Knowledge Provider，可用于索引、检索、RAG、引用与评测；是否成为默认 Provider 由 PoC 决定。
+
+它当前不被定义为：
+
+- 企业唯一知识 SSOT；
+- 所有 NAS/Git/飞书材料必须迁入的中央仓；
+- 所有 Agent 唯一知识入口。
+
+## 6. Agent Runtime 架构
+
+Expert Role 与 Agent Runtime 解耦。
 
 ```text
-draft
-  → needs-information
-  → ready-for-analysis
-  → ready-for-development
-  → in-development
-  → ready-for-review
-  → ready-for-build
-  → ready-for-hil
-  → ready-for-release
-  → closed
+Embedded Expert / Workflow
+          │
+          ▼
+ engineering-task-package + context
+          │
+   ┌──────┼─────────┐
+   ▼      ▼         ▼
+ Codex  Claude    Other Agent
+   │      │         │
+   └──────┼─────────┘
+          ▼
+ delivery-receipt + evidence
 ```
 
-异常状态：
+Engineering Agent Runtime 可以同时存在多个。选择依据包括：
 
-- `blocked`；
-- `needs-rework`；
-- `rejected`；
-- `cancelled`。
+- 任务类型；
+- repo/toolchain；
+- 模型能力；
+- 企业权限与数据边界；
+- 成本；
+- 可取消/恢复/审计能力；
+- Contract adherence；
+- Evidence 产出能力。
 
-飞书是状态SSOT。WorkBuddy会话、Codex会话、WeKnora会话都不得单独改变最终状态。
+任何 Runtime 都不能因为“模型更强”绕过工程 Contract 和验证门禁。
 
-## 11. Codex CLI 项目治理
+## 7. 工程执行边界
 
-每个试点代码仓至少具备：
-
-- 根目录和必要子目录的 `AGENTS.md`；
-- 明确的repo root和独立子仓边界；
-- 可复跑的Host/单元测试入口；
-- 交叉构建入口和工具链说明；
-- 格式、静态检查和代码评审规则；
-- 设备连接、部署和HIL Runbook；
-- 禁止自动执行的命令和目录；
-- 交付回执生成方式。
-
-Codex可直接通过只读MCP访问WeKnora。首期工具白名单建议限定为：
-
-- 列出授权知识库；
-- 混合检索；
-- 读取指定文档；
-- 返回带引用的问答。
-
-知识创建、修改和删除工具不进入Codex默认工具集。
-
-## 12. 分阶段计划
-
-### 阶段0：边界与基线，2周
-
-- 确认飞书工作项形态和API能力；
-- 确认WorkBuddy企业版连接器、Skill和管理员策略；
-- 确认WeKnora实际版本、部署拓扑、备份和监控；
-- 选定一个产品线、2–3个代码仓和10–20名试点用户；
-- 冻结 `task-brief v1`、`delivery-receipt v1`和飞书状态映射；
-- 建立试点前耗时和质量基线。
-
-### 阶段1：知识接入，3–4周
-
-- 飞书指定空间单向同步到WeKnora；
-- 验证增量、删除、撤权和失败重试；
-- WorkBuddy只读接入WeKnora；
-- Codex CLI只读接入WeKnora；
-- 建立20–50条检索评测题和越权测试。
-
-门禁：权限、版本和删除同步未通过，不扩展到敏感知识空间。
-
-### 阶段2：人工闭环，4–6周
-
-- WorkBuddy生成任务包；
-- 工程师人工启动Codex；
-- Codex生成交付回执；
-- WorkBuddy回填飞书；
-- 完成至少3个真实嵌入式工作项；
-- 至少一个工作项覆盖真实Board/HIL。
-
-门禁：输入完整率、回执合格率或安全指标未达标，不建设自动执行网关。
-
-### 阶段3：受控自动化评估，2周
-
-- 统计人工启动耗时和任务重复度；
-- 识别可自动化的只读分析、批量审查和Host测试；
-- 评估隔离Runner、worktree、服务身份、任务取消和成本；
-- 形成是否建设执行网关的二次ADR。
-
-## 13. 一期验收标准
-
-| ID | 验收标准 | Required Evidence |
-|---|---|---|
-| AC1 | 飞书工作项能生成完整task-brief | Schema校验和真实样例 |
-| AC2 | WorkBuddy和Codex均能检索WeKnora并返回来源 | 检索回执、文档ID和版本 |
-| AC3 | 未授权用户无法检索受限知识 | 负向权限测试和审计日志 |
-| AC4 | 飞书更新和删除能反映到WeKnora | 增量、删除同步测试 |
-| AC5 | Codex执行绑定真实repo root和base commit | delivery-receipt |
-| AC6 | dirty基线和用户既有改动不被覆盖 | 执行前后Git状态证据 |
-| AC7 | Host、交叉构建、HIL和发布状态分开记录 | 分层验证回执 |
-| AC8 | 一个工作项能关联需求、变更、构建和HIL | 端到端追溯演示 |
-| AC9 | AI知识候选未经审核不能进入正式飞书知识库 | 审核流测试 |
-| AC10 | 未发生自动提交、推送、烧录、部署或发布 | 权限与操作审计 |
-| AC11 | task-brief和delivery-receipt合格率≥90% | 试点统计 |
-| AC12 | 需求澄清和交付汇总耗时下降≥30% | 试点前后基线对比 |
-
-## 14. Blocker Policy
-
-出现以下情况时停止推进对应环节：
-
-- 飞书工作项缺少owner、目标、验收或目标仓：不得进入开发；
-- WeKnora无法证明用户或知识库隔离：不得接入受限知识；
-- 飞书撤权/删除不能可靠同步：不得把WeKnora结果当现行权威；
-- Codex无法确认repo root、base commit或dirty基线：不得修改；
-- 构建结果未绑定源码版本和配置：不得进入部署；
-- 制品未绑定hash和设备运行身份：不得声明Board/HIL有效；
-- 设备操作缺少人工批准、安全条件或回退：不得执行；
-- 缺少发布责任人或外部依赖证据：不得宣称可发布。
-
-## 15. Artifact Paths
-
-当前主仓按以下稳定路径组织；历史草案与原始输入不再与活动设计平铺：
+稳定主链：
 
 ```text
-digital-worker/
-├── README.md
-├── 研发中心AI数字员工研发流程规划.md   # 当前唯一活动提案
-├── docs/
-│   ├── adr/
-│   ├── archive/                    # 历史草案，仅供追溯
-│   ├── runbooks/
-│   └── source-materials/           # 原始 docx 等输入，不是 SSOT
-├── expert-groups/
-│   └── embedded-system/            # 嵌入式专家团机器资产 SSOT
-├── schemas/                        # 跨专家团共享 schema
-├── scripts/
-├── tests/
-├── 产品专家团-核心参考/
-└── 嵌入式系统专家团-核心参考/
+Work Item / Interaction Provider
+    -> task-brief
+    -> Expert Team
+    -> engineering-task-package
+    -> Engineer + Engineering Agent Runtime
+    -> delivery-receipt
+    -> Verification
+    -> Independent Review
+    -> Work Item / Collaboration Provider
 ```
 
-新一代文档直接更新稳定路径；历史版本通过 Git history 与 `docs/archive/` 追溯，不再创建 `_V3/_V4` 兼容副本。
+办公入口默认不直接获得：
 
-## 16. 非目标
+- 开发机任意 Shell；
+- Git push/merge；
+- 设备写；
+- OTA；
+- OTP/Fuse；
+- Release。
 
-- 一期不建设无人值守的自动编码平台；
-- 不让WorkBuddy拥有开发机全局Shell权限；
-- 不用WeKnora替代飞书工作项或Git；
-- 不人工双写飞书知识库和WeKnora；
-- 不根据Git提交量、WorkBuddy使用量或Codex会话量直接评价个人绩效；
-- 不用Host或交叉构建结果替代部署和HIL证据；
-- 不自动提交、推送、合并、烧录、OTA或发布；
-- 不将聊天全文、原始日志、core、binary、密钥和客户敏感数据直接归档为知识。
+这些动作统一由 Action Policy / Approval 管理。
 
-## 17. 待确认事项
+## 8. Action Policy
 
-| 问题 | 建议Owner | 是否阻塞一期 |
-|---|---|---|
-| 飞书研发流程使用多维表格、项目还是审批 | 研发流程负责人 | 是 |
-| 飞书工作项是否有稳定API和唯一ID | IT/飞书管理员 | 是 |
-| WorkBuddy企业版连接器是否支持内网MCP访问 | WorkBuddy管理员/IT | 是 |
-| WorkBuddy、飞书、WeKnora如何映射同一员工身份 | IT/信息安全 | 是 |
-| WeKnora实际版本是否支持飞书增量与删除同步 | WeKnora平台Owner | 是 |
-| 源文档权限是否可安全映射到WeKnora检索 | 信息安全/平台Owner | 是 |
-| 首个试点产品、板卡和代码仓 | 研发负责人 | 是 |
-| HIL证据保存在哪个系统 | 测试负责人 | 是 |
-| 是否允许WorkBuddy移动端远程触发PC任务 | 信息安全 | 否，一期建议关闭 |
-| 何时评估执行网关 | 研发中心负责人 | 否，阶段2后评估 |
+沿用 A0-A7：
 
-## 18. 当前状态
+- A0 READ；
+- A1 ANALYZE；
+- A2 GENERATE；
+- A3 MODIFY_WORKTREE；
+- A4 BUILD_TEST；
+- A5 DEVICE_READ；
+- A6 DEVICE_WRITE；
+- A7 RELEASE。
 
-- 需求分类：跨系统新能力建设。
-- 优先级：P1。
-- 方案状态：proposed。
-- 架构充分性：可进入PoC设计，不可直接宣布集成完成。
-- Done-when：完成阶段0决策、3个真实工作项闭环和12项一期验收。
-- Required Evidence：身份映射、权限负向测试、同步测试、结构化任务包、交付回执、Git/构建/HIL关联证据和试点指标。
-- 核心阻塞：身份映射、飞书工作项API、WeKnora文档权限继承、首个试点范围尚未确认。
+权限判断依据：
+
+> action + identity + work item + environment + approval + evidence
+
+而不是“这个请求来自 WorkBuddy/Codex/Claude，所以允许”。
+
+## 9. 稳定 Contract
+
+现阶段继续使用：
+
+### 9.1 `task-brief v1`
+
+核心字段：
+
+- work_item_id；
+- owner / requester；
+- repo_roots；
+- base branch / commit；
+- goal / non_goals；
+- acceptance criteria；
+- required verification；
+- allowed / forbidden actions；
+- blocker policy；
+- knowledge refs。
+
+缺 owner、目标仓、验收或必要边界时只能保持草稿/needs-information。
+
+### 9.2 `engineering-task-package`
+
+由 Expert Team 把技术判断转成工程可执行输入：
+
+- exact repo/base；
+- implementation plan；
+- acceptance；
+- risk；
+- allowed / forbidden actions；
+- required verification；
+- evidence / knowledge refs。
+
+### 9.3 `delivery-receipt v1`
+
+任何 Engineering Agent Runtime 都必须记录：
+
+- executor identity/runtime；
+- repo / base commit；
+- changed files / patch / result identity；
+- commands；
+- artifact refs / hashes；
+- evidence refs；
+- host / cross-build / SIL / HIL / release 独立状态；
+- blockers / risks / unverified items；
+- approval required。
+
+### 9.4 验证与审查
+
+`delivery-receipt` 不是最终 PASS。
+
+必须继续经过：
+
+- Verification；
+- Independent Review；
+- Closure。
+
+## 10. Knowledge Candidate 沉淀
+
+AI 生成的排障总结、Runbook、FAQ、Decision 只能先成为 `knowledge-candidate`。
+
+正式知识提升至少需要：
+
+- source / evidence；
+- owner；
+- applicable product/platform/version；
+- review；
+- canonical destination；
+- expiry/freshness policy（如适用）。
+
+不得把聊天总结或 Agent 自述直接视为正式知识。
+
+## 11. Provider Capability Matrix
+
+每个候选产品进入默认架构前必须回答：
+
+|维度|需要回答|
+|---|---|
+|Capability|支持哪些必要能力|
+|Identity|如何映射员工/服务身份|
+|ACL|权限如何继承/过滤/审计|
+|Data boundary|哪些数据会离开源系统/内网|
+|Freshness|更新/删除/撤权如何传播|
+|Evidence|是否可输出可追溯证据|
+|Recovery|失败、取消、重试如何处理|
+|Fallback|Provider 不可用如何降级|
+|Ops/Cost|运维、成本、容量|
+|PoC evidence|真实验证结果|
+
+## 12. 推荐 PoC，不先做平台迁移
+
+### PoC-A：Knowledge
+
+至少覆盖：
+
+1. 飞书/协作文档；
+2. NAS PDF/SDK/供应商资料；
+3. Git Markdown/ADR/Runbook；
+4. 历史 RCA / Issue（条件允许时）。
+
+比较：集中式、联邦式、混合式三种方案。
+
+关键指标：
+
+- retrieval quality；
+- citation correctness；
+- ACL negative tests；
+- update/delete propagation；
+- latency；
+- ops cost；
+- source freshness；
+- cross-source authority resolution。
+
+### PoC-B：Engineering Agent Runtime
+
+至少选择两个 Runtime，用同一个真实任务和同一 Contract 比较：
+
+- route/context consumption；
+- code change quality；
+- cross-build/host evidence；
+- recovery/cancel；
+- human correction；
+- unsupported claims；
+- security/audit；
+- cost/latency。
+
+不要求两个 Runtime 都成为默认方案；目的是证明架构可替换。
+
+### PoC-C：Interaction / Work Item
+
+验证候选入口是否能稳定提供：
+
+- work_item_id；
+- owner/state；
+- task-brief；
+- approval；
+- delivery/evidence link；
+- audit history。
+
+## 13. 分阶段推进
+
+### Phase 0：Architecture & Inventory
+
+- 冻结 ADR-003 原则；
+- 建 Knowledge Source Inventory；
+- 建 Provider Capability Matrix；
+- 确定首批真实 Pilot；
+- 建身份/ACL/数据边界清单。
+
+### Phase 1：Read-only Knowledge PoC
+
+- 接入飞书/协作文档、NAS、Git；
+- Knowledge Gateway 只读；
+- 做权限负向测试；
+- 不迁移 canonical source。
+
+### Phase 2：Multi-runtime Engineering Pilot
+
+- 用统一 Contract 跑至少两个 Engineering Agent Runtime；
+- 完成真实 Debug / Feature / Review-Release Pilot；
+- 对比 evidence、纠正率、错误 PASS、成本和恢复能力。
+
+### Phase 3：Provider Selection
+
+- 根据 PoC 选择默认/备用 Provider；
+- 用 ADR 固化具体选型；
+- 仍保留 Provider adapter boundary。
+
+### Phase 4：Controlled Automation Evaluation
+
+只有前序 evidence 充分后才评估：
+
+- Agent Runtime Gateway；
+- Context Broker 自动组包；
+- isolated Runner；
+- Action Gateway；
+- 更高 A3-A7 自动化等级。
+
+## 14. 验收标准
+
+当前架构阶段的验收不是“某产品接通”，而是：
+
+|ID|验收标准|
+|---|---|
+|A1|任务 Contract 不依赖具体 WorkBuddy/Codex/Claude 名称|
+|A2|至少三类 Knowledge Source 可被受控访问|
+|A3|权限负向测试能阻止不应访问的知识|
+|A4|同一工程 Contract 能被至少两种 Runtime 消费|
+|A5|Runtime 切换不改变 Verification / Review 语义|
+|A6|Host/Cross-build/HIL/Release 仍分层记录|
+|A7|设备写和 Release 仍有人工 Gate|
+|A8|Knowledge Provider 不被当作原始事实唯一 SSOT|
+|A9|所有关键结论可追溯到 source/evidence|
+|A10|Provider capability matrix 有真实 PoC evidence|
+
+## 15. Blocker Policy
+
+出现以下情况停止扩大范围：
+
+- 无法确认用户/服务身份；
+- Knowledge Provider 无法证明 ACL 隔离；
+- Source 更新/删除/撤权无法可靠反映；
+- Runtime 无法确认 repo root / exact base / dirty baseline；
+- 构建或 HIL 未绑定源码/制品 identity；
+- Agent 把未验证输出上推为 PASS；
+- Provider 切换导致 Contract 字段或验证语义丢失；
+- 高风险动作缺审批和 rollback；
+- 数据边界无法被审计。
+
+## 16. 当前待决问题
+
+|问题|当前状态|
+|---|---|
+|默认 Work Item / Collaboration Provider|未冻结；飞书是重要候选|
+|WorkBuddy 定位|未冻结；候选 Interaction/Office Agent Provider|
+|知识 SSOT|不统一；按 Source 类型分别确定|
+|默认 Knowledge Provider|未冻结；WeKnora 是候选|
+|NAS 接入方式|待 Inventory + PoC|
+|默认 Engineering Agent Runtime|未冻结；Codex/Claude/其他均候选|
+|Agent Runtime Gateway|暂不建设，先验证 Contract 可替换|
+|Context Broker|概念接受，是否产品化待 PoC|
+|Action Gateway|暂不建设，沿用现有 Action Policy + 人工 Gate|
+|Production Ready|禁止声明，需真实 Pilot + productionization review|
+
+## 17. 当前状态
+
+- 目标：已确定；
+- 总体能力架构：`proposed-for-review`；
+- Provider 选型：`not-frozen`；
+- 知识方案：`not-frozen`；
+- 嵌入式专家团：`pilot-operations-ready`；
+- 真实 Pilot：待绑定/执行；
+- 下一步：Architecture Review + Knowledge Inventory/PoC + Multi-runtime Pilot。
