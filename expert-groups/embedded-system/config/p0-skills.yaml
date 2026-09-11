@@ -1,0 +1,32 @@
+schema_version: 1
+version: 0.3.0
+status: implemented-baseline
+rules:
+  max_default_action_level: A2_GENERATE
+  skill_must_be_registered: true
+  unregistered_skill_invocation_forbidden: true
+  skill_output_must_be_consumed_or_declared_terminal: true
+skills:
+  - {id: embedded-task-classifier, owner: embedded-system-team-lead, path: skills/embedded-task-classifier/SKILL.md, output: routing-decision}
+  - {id: embedded-material-readiness, owner: embedded-system-team-lead, path: skills/embedded-material-readiness/SKILL.md, output: engineering-material-manifest}
+  - {id: embedded-evidence-normalizer, owner: embedded-system-team-lead, path: skills/embedded-evidence-normalizer/SKILL.md, output: evidence-ref-set}
+  - {id: architecture-impact-analysis, owner: embedded-architecture-expert, path: skills/architecture-impact-analysis/SKILL.md, output: technical-analysis}
+  - {id: interface-contract-review, owner: embedded-architecture-expert, path: skills/interface-contract-review/SKILL.md, output: interface-review}
+  - {id: boot-chain-analysis, owner: linux-bsp-expert, path: skills/boot-chain-analysis/SKILL.md, output: technical-analysis}
+  - {id: device-tree-review, owner: linux-bsp-expert, path: skills/device-tree-review/SKILL.md, output: technical-analysis}
+  - {id: irq-dma-analysis, owner: linux-bsp-expert, path: skills/irq-dma-analysis/SKILL.md, output: technical-analysis}
+  - {id: storage-filesystem-analysis, owner: linux-bsp-expert, path: skills/storage-filesystem-analysis/SKILL.md, output: technical-analysis}
+  - {id: mcu-startup-analysis, owner: mcu-rtos-expert, path: skills/mcu-startup-analysis/SKILL.md, output: technical-analysis}
+  - {id: linker-map-analysis, owner: mcu-rtos-expert, path: skills/linker-map-analysis/SKILL.md, output: technical-analysis}
+  - {id: rtos-concurrency-analysis, owner: mcu-rtos-expert, path: skills/rtos-concurrency-analysis/SKILL.md, output: technical-analysis}
+  - {id: driver-integration-review, owner: driver-component-expert, path: skills/driver-integration-review/SKILL.md, output: technical-analysis}
+  - {id: log-triage, owner: debug-reliability-expert, path: skills/log-triage/SKILL.md, output: diagnostic-evidence}
+  - {id: crash-hardfault-analysis, owner: debug-reliability-expert, path: skills/crash-hardfault-analysis/SKILL.md, output: hypothesis-registry}
+  - {id: memory-corruption-analysis, owner: debug-reliability-expert, path: skills/memory-corruption-analysis/SKILL.md, output: hypothesis-registry}
+  - {id: performance-analysis, owner: debug-reliability-expert, path: skills/performance-analysis/SKILL.md, output: technical-analysis}
+  - {id: verification-plan-builder, owner: verification-expert, path: skills/verification-plan-builder/SKILL.md, output: verification-plan}
+  - {id: regression-scope-analysis, owner: verification-expert, path: skills/regression-scope-analysis/SKILL.md, output: regression-scope}
+  - {id: build-evidence-check, owner: verification-expert, path: skills/build-evidence-check/SKILL.md, output: verification-evidence}
+  - {id: device-evidence-check, owner: verification-expert, path: skills/device-evidence-check/SKILL.md, output: verification-evidence}
+  - {id: hil-evidence-check, owner: verification-expert, path: skills/hil-evidence-check/SKILL.md, output: verification-evidence}
+  - {id: release-readiness-check, owner: embedded-review-governor, path: skills/release-readiness-check/SKILL.md, output: review-report}
