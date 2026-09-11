@@ -94,7 +94,7 @@ verification_layers:
   - device_verified
   - hil_verified
   - release_verified
-  forbid_cross_layer_inference: true
+forbid_cross_layer_inference: true
 
 independence:
   implementation_may_self_approve_final_verification: false
