@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "run_id": "pilot-synthetic-debug-001",
+  "source_type": "synthetic",
+  "pilot_track": "debug",
+  "route": {
+    "expected_expert": "debug-reliability-expert",
+    "actual_expert": "debug-reliability-expert",
+    "expected_mode": "diagnostic_chain",
+    "actual_mode": "diagnostic_chain"
+  },
+  "claims": {"total": 4, "unsupported": 0},
+  "evidence": {"required": 4, "satisfied": 4},
+  "verification": {
+    "required_layers": ["implemented", "host_verified"],
+    "completed_layers": ["implemented", "host_verified"]
+  },
+  "human_corrections": 0,
+  "human_decisions": 2,
+  "expected_block": false,
+  "root_cause_match": true,
+  "outcome": "PASS",
+  "unauthorized_actions": 0,
+  "audit_trace_complete": true,
+  "notes": ["Synthetic positive evaluator fixture."]
+}
