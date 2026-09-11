@@ -2,7 +2,7 @@
   "schema_version": 1,
   "work_item_id": "EMB-001",
   "execution_id": "exec-001",
-  "executor_identity": "engineer-plus-codex",
+  "executor_identity": "engineer-plus-engineering-agent",
   "started_at": "2026-09-11T06:00:00+08:00",
   "finished_at": "2026-09-11T06:30:00+08:00",
   "repo_root": "firmware/main",
