@@ -1,0 +1,35 @@
+schema_version: 1
+status: candidate-integration
+provider: agent-dev-kit
+provider_commit: 9ab5b2a6047f9afb8460d9e985abfa44cd909947
+rule: "Expert/domain semantics stay in digital-worker; reusable execution method belongs in ADK when equivalent evidence exists."
+
+decisions:
+  - {id: emb-task-clarify, decision: KEEP_DOMAIN_CONTRACT, reason: work-item intake semantics}
+  - {id: emb-scope-freeze, decision: KEEP_DOMAIN_CONTRACT, reason: domain scope/gate semantics}
+  - {id: emb-material-gap-analysis, decision: KEEP_DOMAIN_CONTRACT, reason: Material Manifest and Gate K semantics}
+  - {id: emb-evidence-anchor, decision: KEEP_DOMAIN_CONTRACT, reason: digital-worker evidence semantics}
+  - {id: emb-fact-uncertainty-label, decision: KEEP_DOMAIN_CONTRACT, reason: observed/inferred/confirmed semantics}
+  - {id: emb-structured-delivery, decision: WRAP_ADK, adk_candidate: adk-context-compress-handoff, binding_status: candidate-needs-real-pilot}
+  - {id: emb-requirement-to-architecture, decision: ADK_REUSE_CANDIDATE, adk_candidate: adk-adr-writer, binding_status: semantic-review-required}
+  - {id: emb-system-boundary-analysis, decision: ADK_REUSE_CANDIDATE, adk_candidate_category: design, binding_status: needs-evidence}
+  - {id: emb-interface-impact-analysis, decision: ADK_REUSE_CANDIDATE, adk_candidate: adk-component-api-stability, binding_status: candidate-needs-real-pilot}
+  - {id: emb-resource-budget-analysis, decision: ADK_REUSE_CANDIDATE, adk_candidate_category: design, binding_status: needs-evidence}
+  - {id: linux-boot-chain-analysis, decision: WRAP_ADK, adk_candidate: adk-bsp-analysis, binding_status: candidate-needs-real-pilot}
+  - {id: linux-device-tree-review, decision: WRAP_ADK, adk_candidate: adk-bsp-analysis, binding_status: candidate-needs-real-pilot}
+  - {id: mcu-startup-interrupt-analysis, decision: ADK_REUSE_CANDIDATE, adk_candidate_category: embedded-fullstack, binding_status: needs-evidence}
+  - {id: mcu-rtos-resource-audit, decision: ADK_REUSE_CANDIDATE, adk_candidate_category: embedded-fullstack, binding_status: needs-evidence}
+  - {id: drv-contract-analysis, decision: WRAP_ADK, adk_candidate: adk-component-api-stability, binding_status: candidate-needs-real-pilot}
+  - {id: drv-change-impact, decision: WRAP_ADK, adk_candidate: adk-component-api-stability, binding_status: candidate-needs-real-pilot}
+  - {id: dbg-hypothesis-led-diagnosis, decision: KEEP_DOMAIN_CONTRACT, reason: shared Hypothesis Registry is a digital-worker invariant}
+  - {id: dbg-reliability-risk-assessment, decision: ADK_REUSE_CANDIDATE, adk_candidate_category: debugging, binding_status: needs-evidence}
+  - {id: ver-verification-strategy, decision: ADK_REUSE_CANDIDATE, adk_candidate_category: verification, binding_status: needs-evidence}
+  - {id: ver-evidence-coverage-assessment, decision: KEEP_DOMAIN_CONTRACT, reason: Acceptance-to-Evidence semantics}
+  - {id: rev-implementation-evidence-review, decision: WRAP_ADK, adk_candidate: adk-code-review-loop, binding_status: candidate-needs-real-pilot}
+  - {id: rev-change-scope-review, decision: WRAP_ADK, adk_candidate: adk-commit-pr-quality-gate, binding_status: candidate-needs-real-pilot}
+  - {id: rev-rollback-risk-analysis, decision: ADK_REUSE_CANDIDATE, adk_candidate_category: release_closure, binding_status: needs-evidence}
+
+promotion_rule:
+  require_real_pilot_evidence: true
+  auto_remove_domain_skill: false
+  auto_promote_adk_binding: false
