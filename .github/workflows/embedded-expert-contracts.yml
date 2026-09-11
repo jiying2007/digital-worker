@@ -6,7 +6,9 @@ on:
       - 'expert-groups/embedded-system/**'
       - 'schemas/**'
       - 'scripts/validate_embedded_assets.py'
+      - 'scripts/validate_pilot_operations.py'
       - 'scripts/evaluate_embedded_pilot.py'
+      - 'scripts/embedded_pilot.py'
       - 'tests/fixtures/**'
       - 'docs/runbooks/embedded-pilot.md'
       - '.github/ISSUE_TEMPLATE/embedded-pilot.yml'
@@ -17,7 +19,9 @@ on:
       - 'expert-groups/embedded-system/**'
       - 'schemas/**'
       - 'scripts/validate_embedded_assets.py'
+      - 'scripts/validate_pilot_operations.py'
       - 'scripts/evaluate_embedded_pilot.py'
+      - 'scripts/embedded_pilot.py'
       - 'tests/fixtures/**'
       - 'docs/runbooks/embedded-pilot.md'
       - '.github/ISSUE_TEMPLATE/embedded-pilot.yml'
@@ -35,8 +39,10 @@ jobs:
         run: python -m pip install --disable-pip-version-check PyYAML jsonschema
       - name: Validate expert-team contracts
         run: python scripts/validate_embedded_assets.py
+      - name: Validate pilot operational contracts
+        run: python scripts/validate_pilot_operations.py
       - name: Evaluate synthetic pilot fixture
-        run: python scripts/evaluate_embedded_pilot.py tests/fixtures/pilot-result.valid.json --output /tmp/pilot-metrics.json
+        run: python scripts/evaluate_embedded_pilot.py tests/fixtures/pilot-result.valid.json --output /tmp/pilot-metrics.json --markdown-output /tmp/pilot-metrics.md
       - name: Prove incorrect PASS is fail-closed
         shell: bash
         run: |
@@ -48,3 +54,30 @@ jobs:
             echo "expected evaluator safety exit=2, got $status"
             exit 1
           fi
+      - name: Smoke pilot operational CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$(mktemp -d)"
+          python scripts/embedded_pilot.py init \
+            --run-id CI-PILOT-001 \
+            --track feature \
+            --source-type synthetic \
+            --task-type feature_development \
+            --workflow-mode short_chain \
+            --human-owner ci \
+            --task-brief tests/fixtures/task-brief.valid.json \
+            --repo-root firmware/main \
+            --base-commit 0123456789abcdef0123456789abcdef01234567 \
+            --output-root "$root"
+          python scripts/embedded_pilot.py status "$root/CI-PILOT-001" running --note "CI operational smoke"
+          python scripts/embedded_pilot.py complete "$root/CI-PILOT-001" \
+            --engineering-task-package tests/fixtures/engineering-task-package.valid.json \
+            --delivery-receipt tests/fixtures/delivery-receipt.valid.json \
+            --verification-report tests/fixtures/verification-report.valid.json \
+            --review-report tests/fixtures/review-report.valid.json \
+            --pilot-result tests/fixtures/pilot-result.feature.valid.json
+          python scripts/embedded_pilot.py validate "$root/CI-PILOT-001"
+          python scripts/embedded_pilot.py bundle "$root/CI-PILOT-001" --fail-incomplete
+          python scripts/embedded_pilot.py summary "$root" --output /tmp/pilot-status.json
+          python scripts/evaluate_embedded_pilot.py "$root/CI-PILOT-001/pilot-result.json" --output /tmp/pilot-ops-metrics.json
