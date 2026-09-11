@@ -7,6 +7,7 @@
 - [嵌入式系统专家团当前阶段终版设计 V1](docs/architecture/embedded-system-expert-team-v1.md)：冻结嵌入式专家团架构基线。
 - [ADR-002：嵌入式系统专家团架构与落地边界](docs/adr/ADR-002-embedded-system-expert-team-architecture.md)：记录 digital-worker SSOT、1+7、契约式交接和独立验证等核心决策。
 - [嵌入式系统专家团目录](expert-groups/embedded-system/README.md)：当前已具备 Governance、1+7 Core Experts、23 个 P0 Skills、Engineering Handoff、跨团队 Contract、Golden Cases、Pilot Operations 和自动 CI。
+- [嵌入式系统专家团-核心参考（内部评审版）](嵌入式系统专家团-核心参考/)：对齐“产品专家团-核心参考”的人工可读解释层，覆盖总体架构、1+7 专家工作逻辑、23 个 Skill、Workflow/Gate/Contract、Evidence/Autonomy、Pilot/Evaluation、跨专家团边界和内部评审拍板清单；当前状态 `review-draft`。
 - [嵌入式系统专家团真实 Pilot Runbook](docs/runbooks/embedded-pilot.md)：真实试点初始化、收口、证据打包、指标和生产化资格门槛。
 
 ## 历史与参考材料
@@ -21,6 +22,7 @@
 
 - 研发中心研发流程 V2 与 ADR-001 当前仍为 `proposed`。
 - 嵌入式系统专家团架构为 `architecture-frozen`；实现状态为 `pilot-operations-ready`。真实 Pilot 的 init/complete/validate/evidence bundle/metrics 工具链已经机器化，但 #6/#7/#8 仍待绑定真实研发任务，因此不是 Production Ready。
+- `嵌入式系统专家团-核心参考/` 当前仅用于内部讨论与评审；它不是第二套 SSOT，若与运行资产冲突，以 `expert-groups/embedded-system/governance/authority-index.md` 的权威顺序裁决。
 - 嵌入式系统专家团正式资产以本仓为 SSOT；其他外部仓库仅作参考或未来可选集成。
 
 下一步只需要把真实 Debug、Feature、Review/Release 工作项分别绑定到 #6/#7/#8 并按 Runbook 执行；通过安全门槛后也只能进入单独的人工 productionization review。
