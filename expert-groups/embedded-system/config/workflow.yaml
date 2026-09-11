@@ -1,6 +1,7 @@
 schema_version: 1
-version: 0.2.1
+version: 0.3.0
 status: governance-skeleton-defined
+architecture_model: provider-neutral
 
 states:
   - draft
@@ -40,6 +41,7 @@ stages:
     owner: embedded-system-team-lead
     output: knowledge-readiness
     schema: ../schemas/knowledge-readiness.schema.json
+    provider_neutral: true
     decisions: [PASS, BLOCKED, DEGRADED_WITH_APPROVAL, NOT_APPLICABLE]
 
   - id: gate.m
@@ -89,15 +91,17 @@ stages:
     owner: embedded-system-team-lead
     output: engineering-task-package
     schema: ../schemas/engineering-task-package.schema.json
-    execution_boundary: engineer-plus-codex
+    execution_boundary: engineer-plus-engineering-agent
+    runtime_provider: selectable
 
   - id: phase.execution
     phase: 6
     name: Engineering Execution
-    owner: engineer-plus-codex
+    owner: engineer-plus-engineering-agent
     input: engineering-task-package
     output: delivery-receipt
-    direct_workbuddy_control: false
+    runtime_provider: selectable
+    interaction_provider_direct_control: forbidden_by_default
 
   - id: gate.v
     phase: 7
