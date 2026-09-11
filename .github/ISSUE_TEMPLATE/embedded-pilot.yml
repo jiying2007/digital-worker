@@ -1,8 +1,12 @@
 name: Embedded Expert Pilot
-description: Register a real embedded-system expert-team pilot task
+description: Register a real Embedded Domain Closed Loop V1 pilot task
 title: "[Embedded Pilot] "
 labels: []
 body:
+  - type: markdown
+    attributes:
+      value: |
+        Real Pilot only. Bind a stable work item, exact Git identity, shared System Context, acceptance criteria and evidence. Synthetic fixtures cannot close a real Pilot issue.
   - type: dropdown
     id: pilot_track
     attributes:
@@ -17,7 +21,7 @@ body:
     id: work_item_id
     attributes:
       label: Work item ID
-      description: Stable Feishu/project/work-item identifier
+      description: Stable project/work-item identifier; provider-specific IDs are allowed but must remain stable.
     validations:
       required: true
   - type: input
@@ -35,7 +39,15 @@ body:
   - type: input
     id: base_commit
     attributes:
-      label: Base branch or exact commit
+      label: Exact base commit SHA
+      description: Exact immutable Git SHA. A drifting branch name such as main/dev is not sufficient for a real run.
+    validations:
+      required: true
+  - type: textarea
+    id: system_context
+    attributes:
+      label: Known System Context
+      description: Product/platform, board revision, SoC/MCU, SDK/kernel/RTOS/toolchain, firmware/device/test environment. Mark unknown items explicitly; do not guess.
     validations:
       required: true
   - type: textarea
@@ -49,13 +61,21 @@ body:
     id: acceptance
     attributes:
       label: Acceptance criteria
+      description: Criteria must later map to a concrete verification layer, exact identity and evidence reference.
+    validations:
+      required: true
+  - type: textarea
+    id: knowledge
+    attributes:
+      label: Known knowledge / source refs
+      description: Existing Registry IDs, NAS/Feishu/Git/CI-HIL/RCA refs, or NONE. Source authority/version/ACL must be checked at use time.
     validations:
       required: true
   - type: textarea
     id: evidence
     attributes:
       label: Existing evidence
-      description: Logs, code refs, board/firmware identity, reproductions, design docs, CI/HIL refs.
+      description: Logs, code refs, board/firmware/device identity, reproductions, design docs, CI/HIL refs.
     validations:
       required: true
   - type: checkboxes
@@ -63,7 +83,11 @@ body:
     attributes:
       label: Safety acknowledgement
       options:
+        - label: Exact source/artifact/device/test identity gaps will be BLOCKED or explicitly recorded, not guessed.
+          required: true
         - label: No Production Ready claim will be made from this single pilot.
           required: true
         - label: Device write / OTA / Release actions still require the configured human gates.
+          required: true
+        - label: Completed runs must include material_manifest, acceptance_evidence_matrix and knowledge_harvest; Debug also requires one shared hypothesis_registry.
           required: true

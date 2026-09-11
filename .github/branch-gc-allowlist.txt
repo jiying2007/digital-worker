@@ -1,4 +1,4 @@
 # Approved merged task branches for Branch GC.
 # One branch per line. `main` is forbidden by the workflow and validator.
 # Historical branches already deleted by prior GC runs are intentionally removed from this live allowlist.
-feat/embedded-domain-closed-loop-v1
+feat/embedded-closed-loop-ops-v1

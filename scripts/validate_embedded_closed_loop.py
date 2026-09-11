@@ -14,6 +14,9 @@ EMB = ROOT / "expert-groups" / "embedded-system"
 STRATEGY = ROOT / "docs" / "strategy" / "embedded-domain-closed-loop-v1.md"
 REGISTRY = EMB / "knowledge" / "registry.yaml"
 REQUIREMENTS = EMB / "pilot" / "artifact-requirements.yaml"
+QUICKSTART = ROOT / "docs" / "runbooks" / "embedded-closed-loop-quickstart.md"
+SCAFFOLD = ROOT / "scripts" / "embedded_pilot_scaffold.py"
+KNOWLEDGE_CLI = ROOT / "scripts" / "embedded_knowledge.py"
 
 
 def assert_true(condition: bool, message: str):
@@ -91,7 +94,19 @@ def main():
     assert_true(re.search(r"\|\s*PASS\s*\|", matrix_fixture) is not None, "matrix fixture must demonstrate evidence-mapped PASS")
     assert_true("CI-PILOT-001" in harvest_fixture and "NO_KNOWLEDGE_DELTA" in harvest_fixture, "knowledge harvest fixture invalid")
 
-    print(f"embedded closed-loop V1 validation PASS: 7 must-haves, {len(entries)} registry entries, 3 closed-loop artifacts")
+    for path in [SCAFFOLD, KNOWLEDGE_CLI, QUICKSTART]:
+        assert_true(path.is_file(), f"closed-loop operational helper missing: {path.relative_to(ROOT)}")
+    scaffold_text = SCAFFOLD.read_text(encoding="utf-8")
+    for token in ["missing_critical", '"BLOCKED"', "acceptance-evidence-matrix.md", "knowledge-harvest.md", "hypothesis-registry.json"]:
+        assert_true(token in scaffold_text, f"scaffold helper missing fail-safe behavior: {token}")
+    knowledge_text = KNOWLEDGE_CLI.read_text(encoding="utf-8")
+    for token in ["Candidate list only", "source ACL/version/provenance", "missing_git_sources", "query"]:
+        assert_true(token in knowledge_text, f"knowledge helper missing governance behavior: {token}")
+    quickstart = QUICKSTART.read_text(encoding="utf-8")
+    for token in ["embedded_pilot_scaffold.py", "embedded_knowledge.py verify", "exact immutable base commit SHA", "NO_KNOWLEDGE_DELTA"]:
+        assert_true(token in quickstart, f"closed-loop quickstart missing token: {token}")
+
+    print(f"embedded closed-loop V1 validation PASS: 7 must-haves, {len(entries)} registry entries, 3 closed-loop artifacts, operational helpers guarded")
 
 
 if __name__ == "__main__":

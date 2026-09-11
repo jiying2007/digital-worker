@@ -4,6 +4,8 @@ Pilot 的目标是验证 Expert Team Operating Model 与 Embedded Domain Closed 
 
 当前阶段策略基线：`docs/strategy/embedded-domain-closed-loop-v1.md`。
 
+快速执行入口：`docs/runbooks/embedded-closed-loop-quickstart.md`。
+
 ## 1. 绑定真实任务
 
 先形成 `task-brief v1`。真实 Pilot 必须有 human owner、repo root、**exact Git base SHA**、验收和所需验证层级。只提供 `main/dev` 等漂移分支名时不得开始 real run。
@@ -25,9 +27,37 @@ python scripts/embedded_pilot.py init \
   --base-commit <exact-sha>
 ```
 
+然后生成 V1 working artifacts：
+
+```bash
+python scripts/embedded_pilot_scaffold.py \
+  expert-groups/embedded-system/pilot/runs/<run-id>
+```
+
+Scaffold 不会替工程师猜测上下文：未知设备、测试环境、复现条件等会保持 `missing`，Material Manifest 可因此保持 `BLOCKED`，直到可信 Source 补齐。
+
 然后用 `status ... running` 开始记录。
 
-## 3. 执行
+## 3. Knowledge 候选解析
+
+当前 Registry：`expert-groups/embedded-system/knowledge/registry.yaml`。
+
+先校验 Registry：
+
+```bash
+python scripts/embedded_knowledge.py verify
+```
+
+再按任务查询候选：
+
+```bash
+python scripts/embedded_knowledge.py query --text "<task terms>" --limit 10
+python scripts/embedded_knowledge.py query --domain <domain> --limit 10
+```
+
+查询结果只是候选 Knowledge，不自动升级为任务事实；实际使用时仍需检查 Source authority / version / ACL / provenance。
+
+## 4. 执行
 
 Expert Team 默认 A0-A2。代码修改/构建经：
 
@@ -44,19 +74,19 @@ Runtime Provider 可替换，但 Contract / Action Policy 不变。设备写和 
 
 Feature 若涉及多个仓库，优先采用 `One Run -> Multiple Engineering Packages`，每个 Package 保持自己的 exact base / scope / delivery identity；不要把多个仓库硬塞进一个巨型 Package。
 
-## 4. Embedded Domain Closed Loop V1 运行产物
+## 5. Embedded Domain Closed Loop V1 运行产物
 
 每条真实 Pilot 轨道在收口时都必须附加：
 
 1. `material_manifest`：复用现有 Material Manifest，作为共享 System Context Snapshot；
-2. `acceptance_evidence_matrix`：使用 `expert-groups/embedded-system/templates/acceptance-evidence-matrix.md`；
-3. `knowledge_harvest`：使用 `expert-groups/embedded-system/templates/knowledge-harvest.md`。
+2. `acceptance_evidence_matrix`：使用 scaffold 生成的 `working/acceptance-evidence-matrix.md`；
+3. `knowledge_harvest`：使用 scaffold 生成的 `working/knowledge-harvest.md`。
 
-Debug 另外必须提供 `hypothesis_registry`。
+Debug 另外必须提供 `working/hypothesis-registry.json`。
 
 Knowledge Harvest 允许 `NO_KNOWLEDGE_DELTA`；不得为了“完成流程”制造无价值知识。
 
-## 5. 收口
+## 6. 收口
 
 使用 `complete` 附加 track 所需结构化产物和 V1 extra artifacts。工具会校验 required artifacts 并生成 `evidence-bundle.json`，对运行产物计算 SHA256。
 
@@ -69,20 +99,20 @@ python scripts/embedded_pilot.py complete <run-dir> \
   --verification-report <verification.json> \
   --review-report <review.json> \
   --pilot-result <pilot-result.json> \
-  --extra material_manifest=<material-manifest.json> \
-  --extra acceptance_evidence_matrix=<acceptance-evidence-matrix.md> \
-  --extra knowledge_harvest=<knowledge-harvest.md>
+  --extra material_manifest=<run-dir>/working/material-manifest.json \
+  --extra acceptance_evidence_matrix=<run-dir>/working/acceptance-evidence-matrix.md \
+  --extra knowledge_harvest=<run-dir>/working/knowledge-harvest.md
 ```
 
 Debug 再增加：
 
 ```text
---extra hypothesis_registry=<hypothesis-registry.json>
+--extra hypothesis_registry=<run-dir>/working/hypothesis-registry.json
 ```
 
 Completed run 缺少任何当前 track 的 required artifact 时必须 fail-closed。
 
-## 6. V1 Review 检查项
+## 7. V1 Review 检查项
 
 Independent Review 除现有 Evidence / Verification 规则外，额外检查：
 
@@ -95,13 +125,11 @@ Independent Review 除现有 Evidence / Verification 规则外，额外检查：
 
 当前不要求新建 Artifact Lineage / Verification Matrix 正式 Schema；这些断点先作为 real Pilot evidence 记录。
 
-## 7. Knowledge Registry
+## 8. Knowledge Registry
 
-当前 Registry：`expert-groups/embedded-system/knowledge/registry.yaml`。
+首版 Registry 是 `internal-seed`，只登记仓库内可核验对象。NAS / 飞书 / CI-HIL / 历史 RCA 等外部 Source 继续通过 #16 逐步接入；Registry 只记录 Source，不复制权威原文形成第二 SSOT。
 
-首版是 `internal-seed`，只登记仓库内可核验对象。NAS / 飞书 / CI-HIL / 历史 RCA 等外部 Source 继续通过 #16 逐步接入；Registry 只记录 Source，不复制权威原文形成第二 SSOT。
-
-## 8. 汇总与评分
+## 9. 汇总与评分
 
 ```bash
 python scripts/embedded_pilot.py summary expert-groups/embedded-system/pilot/runs --output pilot-status.json
@@ -110,7 +138,7 @@ python scripts/evaluate_embedded_pilot.py <pilot-result...> --output pilot-metri
 
 评分门槛从 `pilot-plan.yaml` 读取。Synthetic 只验证工具链，不计入真实 Pilot / Knowledge evidence。
 
-## 9. 当前阶段退出条件
+## 10. 当前阶段退出条件
 
 前三条 real Pilot 的目标不是自动 Production Ready，而是证明至少达到 E2 Engineering Closed Loop，并为 E3 Knowledge Closed Loop 建基础。
 
