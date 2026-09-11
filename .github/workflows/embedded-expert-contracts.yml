@@ -3,27 +3,35 @@ name: Embedded Expert Contracts
 on:
   pull_request:
     paths:
+      - 'README.md'
+      - '研发中心AI数字员工研发流程规划.md'
+      - 'docs/**'
+      - '嵌入式系统专家团-核心参考/**'
       - 'expert-groups/embedded-system/**'
       - 'schemas/**'
+      - 'scripts/validate_repo_layout.py'
       - 'scripts/validate_embedded_assets.py'
       - 'scripts/validate_pilot_operations.py'
       - 'scripts/evaluate_embedded_pilot.py'
       - 'scripts/embedded_pilot.py'
       - 'tests/fixtures/**'
-      - 'docs/runbooks/embedded-pilot.md'
       - '.github/ISSUE_TEMPLATE/embedded-pilot.yml'
       - '.github/workflows/embedded-expert-contracts.yml'
   push:
     branches: [main]
     paths:
+      - 'README.md'
+      - '研发中心AI数字员工研发流程规划.md'
+      - 'docs/**'
+      - '嵌入式系统专家团-核心参考/**'
       - 'expert-groups/embedded-system/**'
       - 'schemas/**'
+      - 'scripts/validate_repo_layout.py'
       - 'scripts/validate_embedded_assets.py'
       - 'scripts/validate_pilot_operations.py'
       - 'scripts/evaluate_embedded_pilot.py'
       - 'scripts/embedded_pilot.py'
       - 'tests/fixtures/**'
-      - 'docs/runbooks/embedded-pilot.md'
       - '.github/ISSUE_TEMPLATE/embedded-pilot.yml'
       - '.github/workflows/embedded-expert-contracts.yml'
 
@@ -37,6 +45,8 @@ jobs:
           python-version: '3.11'
       - name: Install validators
         run: python -m pip install --disable-pip-version-check PyYAML jsonschema
+      - name: Validate repository layout
+        run: python scripts/validate_repo_layout.py
       - name: Validate expert-team contracts
         run: python scripts/validate_embedded_assets.py
       - name: Validate pilot operational contracts

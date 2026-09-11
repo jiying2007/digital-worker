@@ -2,11 +2,11 @@
 
 > **用途：内部讨论与评审。**
 >
-> 文档状态：`review-draft`
+> 文档状态：`review-ready`
 >
-> 同步基线：`digital-worker/main@fba5e1a607619112783fdf89e8bdf0d1b481626f`
+> 实现基线：`expert-groups/embedded-system/` v0.6.0 / `pilot-operations-ready`
 >
-> 当前实现版本：`0.6.0 / pilot-operations-ready`
+> 合入 main 表示“正式评审基线”，**不等于内部评审已经通过**；评审拍板后再升级为 `reviewed-baseline`。
 
 本目录用于把 `expert-groups/embedded-system/` 中已经落地的机器配置、Agent、Contract、Schema、Skill、Pilot 工具，转换为便于研发中心内部阅读、讨论和评审的说明文档。
 
@@ -23,11 +23,12 @@
 7. `schemas/*.schema.json`
 8. `agents/*.md`
 9. `skills/*/SKILL.md`
-10. 本目录说明文档、历史资料与示例
+10. 本目录说明文档
+11. `docs/archive/` 与 `docs/source-materials/` 中的历史/原始输入
 
 上位边界仍受：
 
-- `研发中心AI数字员工研发流程规划_V2.md`
+- `研发中心AI数字员工研发流程规划.md`
 - `docs/adr/ADR-001-workbuddy-codex-integration-boundary.md`
 - `docs/adr/ADR-002-embedded-system-expert-team-architecture.md`
 

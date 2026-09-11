@@ -3,7 +3,7 @@
 - Status: proposed-for-acceptance
 - Date: 2026-09-11
 - Scope: 研发中心 AI 数字员工体系中的嵌入式软件研发专家团
-- Related: `研发中心AI数字员工研发流程规划_V2.md`
+- Related: `研发中心AI数字员工研发流程规划.md`
 - Related: `docs/adr/ADR-001-workbuddy-codex-integration-boundary.md`
 - Reference: `产品专家团-核心参考/`
 
@@ -201,7 +201,7 @@ Product Expert Team
 
 同一能力不得复制两套权威 Agent/Skill。若职责冲突，先更新 ownership map，再调整实现。
 
-### D13. 知识主库沿用 V2，不另建第二套企业知识系统
+### D13. 知识主库沿用研发流程总纲，不另建第二套企业知识系统
 
 正式协作知识继续以飞书原文为人工主库、WeKnora 为 AI 检索层。专家团本地 `knowledge/` 仅保存方法、清单、模板、术语、可信源目录和静态工程规则，不复制企业知识正文。
 
@@ -218,13 +218,13 @@ Product Expert Team
 - cross-team boundary；
 - evaluation contract。
 
-下一阶段才批量建设 P0 Skill 和运行脚本，避免“Skill 数量先行、体系未定”。
+架构冻结后已建设首批 23 个 P0 Skill 与运行脚本；后续 P1 Skill 必须由真实 Pilot 中重复出现的能力缺口驱动，禁止无证据扩张。
 
 ## Consequences
 
 ### 正向影响
 
-- 与现有研发流程 V2 和 ADR-001 一致，不引入第二套总流程；
+- 与现有研发流程总纲和 ADR-001 一致，不引入第二套总流程；
 - 复用产品专家团成熟的工程化组织方法，而非复制其产品领域内容；
 - `digital-worker` 内形成真正可治理、可版本化、可评测的专家团；
 - 后续可替换模型、Codex 运行方式或设备执行层，而不破坏业务契约；
@@ -263,7 +263,7 @@ Product Expert Team
 
 本 ADR 可转 `accepted` 的最低条件：
 
-1. 架构设计文档归档并通过人工评审；
+1. `嵌入式系统专家团-核心参考/` 完成内部评审并转为 `reviewed-baseline`；
 2. `expert-group.yaml`、`task-modes.yaml`、`workflow.yaml` 与文档一致；
 3. 至少建立 10 个真实嵌入式 Golden Case；
 4. P0 核心专家职责没有重叠冲突；

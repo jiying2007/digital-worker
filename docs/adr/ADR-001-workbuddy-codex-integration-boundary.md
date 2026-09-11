@@ -3,7 +3,7 @@
 - Status: proposed
 - Date: 2026-09-09
 - Deciders: 研发中心负责人、研发流程负责人、信息安全负责人（待确认）
-- Related: [研发中心 AI 数字员工研发流程规划 V2](../../研发中心AI数字员工研发流程规划_V2.md)
+- Related: [研发中心 AI 数字员工研发流程规划](../../研发中心AI数字员工研发流程规划.md)
 
 ## Context
 
@@ -101,7 +101,7 @@ WorkBuddy 调用内部网关，由网关在隔离 Runner/worktree 中非交互�
 
 ### 长期债务
 
-- 需要维护 `task-brief`、`delivery-receipt` 和飞书状态映射的版本兼容。
+- 需要维护 `task-brief`、`delivery-receipt` 的 schema 版本和显式迁移规则，而不是长期保留并行兼容副本。
 - 人工交接会造成一定操作成本，需要用模板、命令和插件逐步降低。
 - 如果未来建设网关，需要重新设计服务身份、执行环境和凭证生命周期。
 
