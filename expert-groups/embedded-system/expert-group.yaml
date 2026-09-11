@@ -1,8 +1,9 @@
 schema_version: 1
 id: embedded-system
 name: 嵌入式系统专家团
-version: 0.1.0
+version: 0.2.0
 status: architecture-frozen
+implementation_status: governance-and-core-experts-defined
 owner_domain: 研发中心/嵌入式系统软件
 
 mission:
@@ -26,58 +27,78 @@ upstream_contracts:
   - ../../docs/adr/ADR-001-workbuddy-codex-integration-boundary.md
   - ../../docs/adr/ADR-002-embedded-system-expert-team-architecture.md
 
+authority_index: governance/authority-index.md
+done_definition: governance/done-definition.md
+
 team_lead:
   id: embedded-system-team-lead
   role: orchestrator
+  definition: agents/embedded-system-team-lead.md
+  contract: contracts/experts/team-lead.io.yaml
   may_self_approve_final_verification: false
 
 experts:
   - id: embedded-architecture-expert
     domain: architecture
+    definition: agents/embedded-architecture-expert.md
+    contract: contracts/experts/architecture.io.yaml
   - id: linux-bsp-expert
     domain: linux-bsp
+    definition: agents/linux-bsp-expert.md
+    contract: contracts/experts/linux-bsp.io.yaml
   - id: mcu-rtos-expert
     domain: mcu-rtos
+    definition: agents/mcu-rtos-expert.md
+    contract: contracts/experts/mcu-rtos.io.yaml
   - id: driver-component-expert
     domain: driver-component
+    definition: agents/driver-component-expert.md
+    contract: contracts/experts/driver-component.io.yaml
   - id: debug-reliability-expert
     domain: debug-reliability
+    definition: agents/debug-reliability-expert.md
+    contract: contracts/experts/debug-reliability.io.yaml
   - id: verification-expert
     domain: verification
+    definition: agents/verification-expert.md
+    contract: contracts/experts/verification.io.yaml
   - id: embedded-review-governor
     domain: independent-review
+    definition: agents/embedded-review-governor.md
+    contract: contracts/experts/review-governor.io.yaml
 
 workflow:
   task_modes: config/task-modes.yaml
   state_machine: config/workflow.yaml
+  gate_policy: config/gate-policy.yaml
+  material_requirements: config/material-requirements.yaml
+  action_policy: config/action-policy.yaml
   default_mode: null
   require_task_classification: true
   allow_implicit_full_chain: false
 
-core_gates:
-  - gate.k
-  - gate.m
-  - gate.0
-  - gate.t
-  - gate.e
-  - gate.v
-  - gate.r
-  - gate.c
+core_gates: [gate.k, gate.m, gate.0, gate.t, gate.e, gate.v, gate.r, gate.c]
+
+governance_artifacts:
+  - schemas/evidence-ref.schema.json
+  - schemas/team-run-state.schema.json
+  - schemas/gate-ledger.schema.json
+  - schemas/task-charter.schema.json
+  - schemas/material-manifest.schema.json
+  - schemas/knowledge-readiness.schema.json
+  - schemas/routing-decision.schema.json
+  - schemas/technical-analysis.schema.json
+  - schemas/hypothesis-registry.schema.json
+  - schemas/technical-decision.schema.json
+  - schemas/engineering-task-package.schema.json
+  - schemas/verification-report.schema.json
+  - schemas/review-report.schema.json
+  - schemas/deliverable-manifest.schema.json
 
 evidence:
   required_for_material_claims: true
-  debug_fact_states:
-    - observed
-    - inferred
-    - confirmed
-  confidence_levels:
-    - C0
-    - C1
-    - C2
-    - C3
-    - C4
-    - C5
-    - C6
+  debug_fact_states: [observed, inferred, confirmed]
+  confidence_levels: [C0, C1, C2, C3, C4, C5, C6]
 
 verification_layers:
   - implemented
@@ -94,24 +115,10 @@ independence:
   final_review_role: embedded-review-governor
 
 autonomy:
-  default_allowed:
-    - A0_READ
-    - A1_ANALYZE
-    - A2_GENERATE
-  controlled_execution:
-    - A3_MODIFY_WORKTREE
-    - A4_BUILD_TEST
-  authorization_required:
-    - A5_DEVICE_READ
-  human_approval_required:
-    - A6_DEVICE_WRITE
-    - A7_RELEASE
-  never_default_automatic:
-    - otp_fuse
-    - production_signing_keys
-    - production_ota
-    - irreversible_boot_configuration
-    - destructive_production_data_action
+  default_allowed: [A0_READ, A1_ANALYZE, A2_GENERATE]
+  controlled_execution: [A3_MODIFY_WORKTREE, A4_BUILD_TEST]
+  authorization_required: [A5_DEVICE_READ]
+  human_approval_required: [A6_DEVICE_WRITE, A7_RELEASE]
 
 knowledge:
   human_canonical_store: feishu
@@ -131,12 +138,7 @@ cross_team:
     input: technical-review-request
     output: embedded-feasibility-review
   edge_foundation_team:
-    ownership_model:
-      - OWN
-      - SHARED
-      - CONSUME
-      - PROVIDE
-      - OUT_OF_SCOPE
+    ownership_model: [OWN, SHARED, CONSUME, PROVIDE, OUT_OF_SCOPE]
     require_ownership_map_before_duplicate_capability: true
 
 evaluation:
@@ -151,3 +153,9 @@ evaluation:
     - verification_completeness
     - human_correction_rate
   safety_priority_metric: incorrect_pass_rate
+
+next_stage:
+  - p0-skills
+  - engineering-handoff
+  - cross-team-contracts
+  - golden-cases-and-pilot

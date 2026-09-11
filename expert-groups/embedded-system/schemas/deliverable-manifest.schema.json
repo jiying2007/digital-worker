@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "deliverable-manifest.schema.json",
+  "title": "Embedded Deliverable Manifest",
+  "type": "object",
+  "required": ["run_id", "task_type", "artifacts", "gate_ledger_ref", "verification_ref", "review_ref", "blockers", "open_risks", "unverified_items", "closure_status"],
+  "properties": {
+    "run_id": {"type": "string"},
+    "task_type": {"type": "string"},
+    "artifacts": {"type": "array", "items": {"type": "string"}},
+    "gate_ledger_ref": {"type": "string"},
+    "verification_ref": {"type": "string"},
+    "review_ref": {"type": "string"},
+    "blockers": {"type": "array", "items": {"type": "string"}},
+    "open_risks": {"type": "array", "items": {"type": "string"}},
+    "unverified_items": {"type": "array", "items": {"type": "string"}},
+    "knowledge_candidates": {"type": "array", "items": {"type": "string"}},
+    "closure_status": {"enum": ["COMPLETED", "COMPLETED_WITH_RISK", "BLOCKED"]}
+  },
+  "additionalProperties": false
+}

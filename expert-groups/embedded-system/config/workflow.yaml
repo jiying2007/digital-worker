@@ -1,6 +1,6 @@
 schema_version: 1
-version: 0.1.0
-status: architecture-frozen
+version: 0.2.0
+status: governance-skeleton-defined
 
 states:
   - draft
@@ -23,13 +23,15 @@ stages:
     name: Knowledge Readiness
     owner: embedded-system-team-lead
     output: knowledge-readiness
+    schema: ../schemas/knowledge-readiness.schema.json
     decisions: [PASS, BLOCKED, DEGRADED_WITH_APPROVAL]
 
   - id: gate.m
     phase: 0.5
     name: Engineering Material Readiness
     owner: embedded-system-team-lead
-    output: engineering-material-manifest
+    output: material-manifest
+    schema: ../schemas/material-manifest.schema.json
     decisions: [PASS, BLOCKED, DEGRADED_WITH_APPROVAL]
 
   - id: gate.0
@@ -37,6 +39,7 @@ stages:
     name: Intake Clarity
     owner: embedded-system-team-lead
     output: task-charter
+    schema: ../schemas/task-charter.schema.json
     required_dimensions: [goal, scope, boundary, constraints, acceptance]
 
   - id: phase.triage
@@ -44,17 +47,20 @@ stages:
     name: Technical Triage and Routing
     owner: embedded-system-team-lead
     output: routing-decision
+    schema: ../schemas/routing-decision.schema.json
 
   - id: phase.analysis
     phase: 3
     name: Domain Analysis
     owner: routed-domain-expert
     output: technical-analysis
+    schema: ../schemas/technical-analysis.schema.json
     diagnostic_requirements:
       require_hypothesis_registry_for:
         - defect_debugging
         - stability_reliability
         - field_incident
+      hypothesis_schema: ../schemas/hypothesis-registry.schema.json
       fact_states: [observed, inferred, confirmed]
 
   - id: gate.t
@@ -62,20 +68,14 @@ stages:
     name: Technical Decision Gate
     owner: embedded-system-team-lead
     output: technical-decision
-    required_sections:
-      - solution
-      - impact
-      - dependencies
-      - risks
-      - verification_plan
-      - rollback
-      - unresolved_items
+    schema: ../schemas/technical-decision.schema.json
 
   - id: gate.e
     phase: 5
     name: Engineering Handoff Gate
     owner: embedded-system-team-lead
     output: engineering-task-package
+    schema: ../schemas/engineering-task-package.schema.json
     execution_boundary: engineer-plus-codex
 
   - id: phase.execution
@@ -91,6 +91,7 @@ stages:
     name: Verification Gate
     owner: verification-expert
     output: verification-report
+    schema: ../schemas/verification-report.schema.json
     layers:
       - implemented
       - host_verified
@@ -105,44 +106,37 @@ stages:
     phase: 8
     name: Independent Review Gate
     owner: embedded-review-governor
-    output: review-result
+    output: review-report
+    schema: ../schemas/review-report.schema.json
     independent_from_implementation: true
 
   - id: gate.c
     phase: 9
     name: Closure Gate
     owner: embedded-system-team-lead
-    outputs:
-      - deliverable-manifest
-      - execution-log
-      - open-risk-list
-      - knowledge-candidate
+    output: deliverable-manifest
+    schema: ../schemas/deliverable-manifest.schema.json
 
 transitions:
   missing_information:
     from: [gate.k, gate.m, gate.0]
     to: needs_information
     action: ask_or_request_degradation_approval
-
   engineering_handoff:
     from: gate.e
     to: phase.execution
     condition: engineering_task_package_valid
-
   verification_fail:
     from: gate.v
     to: needs_rework
     action: return_to_precise_failed_stage
-
   review_fail:
     from: gate.r
     to: needs_rework
     action: return_to_responsible_stage
-
   cross_stage_reflow:
     max_automatic_reflows: 1
     after_limit: require_human_decision
-
   completion:
     from: gate.c
     to: completed
@@ -152,13 +146,14 @@ transitions:
       - verification_status_not_overstated
 
 recovery:
-  require_team_run_state: true
-  require_gate_ledger: true
+  team_run_state_schema: ../schemas/team-run-state.schema.json
+  gate_ledger_schema: ../schemas/gate-ledger.schema.json
   resume_from_failed_stage: true
   full_chain_restart_on_single_failure: false
   blocker_requires_resume_instructions: true
 
-autonomy_hooks:
+autonomy:
+  policy: action-policy.yaml
   device_write_requires_human_approval: true
   release_requires_human_approval: true
   otp_fuse_automatic: false

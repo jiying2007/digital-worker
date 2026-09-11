@@ -1,0 +1,69 @@
+schema_version: 1
+version: 0.1.0
+classes:
+  identity:
+    critical:
+      - repo
+      - base_commit
+    contextual:
+      - firmware
+      - device_identity
+  platform:
+    contextual:
+      - board_revision
+      - soc_mcu
+      - sdk
+      - kernel_rtos
+      - toolchain
+  hardware:
+    contextual:
+      - schematic
+      - datasheet_trm
+  diagnosis:
+    contextual:
+      - log
+      - reproduction
+      - test_environment
+rules:
+  feature_development:
+    required: [repo, base_commit]
+    recommended: [soc_mcu, sdk, toolchain]
+  architecture_design:
+    required: []
+    recommended: [soc_mcu, board_revision, schematic]
+  technical_feasibility_review:
+    required: []
+    recommended: [soc_mcu, board_revision, schematic, sdk]
+  platform_bringup:
+    required: [repo, base_commit, board_revision, soc_mcu, sdk, toolchain]
+    recommended: [schematic, datasheet_trm, log, device_identity]
+  bsp_porting:
+    required: [repo, base_commit, board_revision, soc_mcu, sdk, toolchain]
+    recommended: [schematic, datasheet_trm, log]
+  driver_development:
+    required: [repo, base_commit]
+    recommended: [board_revision, soc_mcu, schematic, datasheet_trm]
+  mcu_firmware_development:
+    required: [repo, base_commit, soc_mcu, toolchain]
+    recommended: [board_revision, schematic, datasheet_trm]
+  defect_debugging:
+    required: [repo, base_commit]
+    recommended: [firmware, log, reproduction, device_identity, test_environment]
+  stability_reliability:
+    required: [repo, base_commit]
+    recommended: [firmware, log, reproduction, device_identity, test_environment]
+  field_incident:
+    required: []
+    recommended: [firmware, log, reproduction, device_identity, test_environment]
+  code_review:
+    required: [repo, base_commit]
+    recommended: []
+  release_ota:
+    required: [repo, base_commit, firmware]
+    recommended: [device_identity, test_environment]
+policy:
+  missing_required: BLOCKED
+  missing_recommended: DEGRADED
+  conflicting_version_identity: BLOCKED
+  stale_material: DEGRADED
+  degradation_requires_explicit_record: true
