@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "review-report.schema.json",
+  "title": "Embedded Independent Review Report",
+  "type": "object",
+  "required": ["run_id", "reviewer", "independence_confirmed", "decision", "findings", "evidence_refs"],
+  "properties": {
+    "run_id": {"type": "string"},
+    "reviewer": {"type": "string"},
+    "implementation_owner": {"type": ["string", "null"]},
+    "independence_confirmed": {"type": "boolean"},
+    "decision": {"enum": ["APPROVE", "APPROVE_WITH_RISK", "REQUEST_CHANGES", "BLOCKED"]},
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["severity", "category", "summary"],
+        "properties": {
+          "severity": {"enum": ["P0", "P1", "P2", "P3"]},
+          "category": {"enum": ["architecture", "correctness", "concurrency", "memory", "security", "performance", "reliability", "test", "evidence", "release", "other"]},
+          "summary": {"type": "string"},
+          "evidence_refs": {"type": "array", "items": {"type": "string"}},
+          "required_action": {"type": ["string", "null"]}
+        },
+        "additionalProperties": false
+      }
+    },
+    "evidence_refs": {"type": "array", "items": {"type": "string"}},
+    "residual_risks": {"type": "array", "items": {"type": "string"}},
+    "unverified_items": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

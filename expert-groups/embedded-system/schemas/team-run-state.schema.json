@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "team-run-state.schema.json",
+  "title": "Embedded Team Run State",
+  "type": "object",
+  "required": ["run_id", "task_type", "workflow_mode", "state", "current_stage", "updated_at"],
+  "properties": {
+    "run_id": {"type": "string", "minLength": 1},
+    "work_item_id": {"type": ["string", "null"]},
+    "task_type": {"type": "string"},
+    "workflow_mode": {"type": "string"},
+    "state": {"enum": ["intake", "running", "blocked", "degraded", "awaiting_human", "ready_for_execution", "ready_for_verification", "ready_for_review", "completed", "cancelled"]},
+    "current_stage": {"type": "string"},
+    "current_gate": {"type": ["string", "null"]},
+    "assigned_experts": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "artifact_refs": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "evidence_refs": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "blockers": {"type": "array", "items": {"type": "string"}},
+    "unverified_items": {"type": "array", "items": {"type": "string"}},
+    "resume": {
+      "type": ["object", "null"],
+      "properties": {
+        "resume_stage": {"type": "string"},
+        "resume_step": {"type": ["string", "null"]},
+        "instructions": {"type": "string"}
+      },
+      "required": ["resume_stage", "instructions"],
+      "additionalProperties": false
+    },
+    "updated_at": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}
