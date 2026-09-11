@@ -8,6 +8,8 @@ on:
       - 'docs/**'
       - '嵌入式系统专家团-核心参考/**'
       - 'expert-groups/embedded-system/**'
+      - 'config/integrations/**'
+      - 'contracts/cross-repo/**'
       - 'schemas/**'
       - 'scripts/validate_repo_layout.py'
       - 'scripts/validate_provider_neutral_architecture.py'
@@ -15,6 +17,7 @@ on:
       - 'scripts/validate_review_readiness.py'
       - 'scripts/validate_branch_gc.py'
       - 'scripts/validate_embedded_closed_loop.py'
+      - 'scripts/validate_cross_repo_integration.py'
       - 'scripts/validate_embedded_assets.py'
       - 'scripts/validate_pilot_operations.py'
       - 'scripts/evaluate_embedded_pilot.py'
@@ -34,6 +37,8 @@ on:
       - 'docs/**'
       - '嵌入式系统专家团-核心参考/**'
       - 'expert-groups/embedded-system/**'
+      - 'config/integrations/**'
+      - 'contracts/cross-repo/**'
       - 'schemas/**'
       - 'scripts/validate_repo_layout.py'
       - 'scripts/validate_provider_neutral_architecture.py'
@@ -41,6 +46,7 @@ on:
       - 'scripts/validate_review_readiness.py'
       - 'scripts/validate_branch_gc.py'
       - 'scripts/validate_embedded_closed_loop.py'
+      - 'scripts/validate_cross_repo_integration.py'
       - 'scripts/validate_embedded_assets.py'
       - 'scripts/validate_pilot_operations.py'
       - 'scripts/evaluate_embedded_pilot.py'
@@ -75,17 +81,28 @@ jobs:
         run: python scripts/validate_branch_gc.py
       - name: Validate Embedded Domain Closed Loop V1
         run: python scripts/validate_embedded_closed_loop.py
+      - name: Validate cross-repo AI operating system contract
+        run: python scripts/validate_cross_repo_integration.py
       - name: Validate expert-team contracts
         run: python scripts/validate_embedded_assets.py
       - name: Validate pilot operational contracts
         run: python scripts/validate_pilot_operations.py
-      - name: Verify Knowledge Registry and query candidates
+      - name: Verify Knowledge Registry and adapter fail-closed behavior
         shell: bash
         run: |
           set -euo pipefail
           python scripts/embedded_knowledge.py verify
           python scripts/embedded_knowledge.py query --text "debug evidence" --limit 5 --format json > /tmp/embedded-knowledge-query.json
           test -s /tmp/embedded-knowledge-query.json
+          set +e
+          python scripts/embedded_knowledge.py adapter-status > /tmp/embedded-knowledge-adapter-status.json
+          status=$?
+          set -e
+          if [ "$status" -ne 2 ]; then
+            echo "expected adapter-status without Knowledge Hub checkout to fail closed with exit=2, got $status"
+            exit 1
+          fi
+          grep -q 'BLOCKED' /tmp/embedded-knowledge-adapter-status.json
       - name: Smoke closed-loop scaffold helper
         shell: bash
         run: |
