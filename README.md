@@ -13,6 +13,11 @@
 - [Branch Lifecycle](docs/governance/branch-lifecycle.md)：默认只长期保留 main，任务分支 merge + main CI 后 GC；
 - [真实 Pilot Runbook](docs/runbooks/embedded-pilot.md)。
 
+## 非结论型设计备忘
+
+- [Brainstorm Archive](docs/brainstorm/)：保存有参考价值但尚未形成正式决策的设计思路；不会覆盖 ADR / Contract / Schema / Governance。
+- [企业—研发—嵌入式 AI Digital Thread 头脑风暴](docs/brainstorm/enterprise-ai-rd-embedded-digital-thread.md)：归档 Enterprise Engineering Digital Thread、Business/Engineering/Learning 三闭环、嵌入式上下游、Manufacturing/Field/RCA、企业对象图和候选跨团队 Contract 等方向。
+
 ## 稳定架构原则
 
 > **Provider 可替换，Contract 稳定；Source of Truth stays at source；统一访问，不强制统一存储；Expert 与 Runtime 解耦。**
@@ -32,6 +37,7 @@ digital-worker/
 ├── docs/
 │   ├── adr/
 │   ├── governance/
+│   ├── brainstorm/
 │   ├── archive/
 │   ├── runbooks/
 │   └── source-materials/
@@ -68,7 +74,8 @@ digital-worker/
 3. 核心参考只做解释/评审，不覆盖机器 Contract；
 4. Provider-specific 配置不得反向变成总体架构前提；
 5. 历史草案进 `docs/archive/`，原始输入进 `docs/source-materials/`；
-6. `main` 默认唯一长期分支，任务分支按 Branch Lifecycle 收口。
+6. Brainstorm 归档进 `docs/brainstorm/`，允许保留未验证/互相竞争思路，但不产生架构权威；
+7. `main` 默认唯一长期分支，任务分支按 Branch Lifecycle 收口。
 
 ## 下一步
 
