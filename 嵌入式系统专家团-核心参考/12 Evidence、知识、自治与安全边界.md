@@ -1,175 +1,74 @@
 # 12 Evidence、知识、自治与安全边界
 
-## 1. Evidence 是一等对象
+> 同步基线：`v0.7.0 / provider-neutral`
 
-嵌入式专家团不以“模型说得像”为可信度依据，而以可追溯证据支撑 claim。
+## 1. Evidence-first
 
-典型 evidence：
+关键结论使用：`claim + evidence_refs + fact_state + confidence + verification_status`。
 
-- source code / commit；
-- log / dmesg / UART；
-- core / dump / register；
-- datasheet / TRM；
-- schematic；
-- waveform / measurement；
-- build / CI；
-- binary / artifact hash；
-- device identity；
-- HIL run；
-- test report。
+典型 evidence：source/commit、log/dump/register、datasheet/TRM、schematic、waveform/measurement、build/CI、artifact hash、device identity、HIL/test report。
 
-重要结论建议形成：
+Confidence 不能替代 Verification。
 
-```text
-claim
-+ evidence_refs[]
-+ fact_state
-+ confidence
-+ verification_status
-```
+## 2. Knowledge：统一访问，不强制统一存储
 
-## 2. Fact State 与 Confidence
+当前原则是 **Source of Truth stays at source**。
 
-Debug 三态：Observed / Inferred / Confirmed。
+可能的权威 Source：
 
-Expert Group 还保留 C0-C6 confidence levels。Confidence 只描述证据强弱，不能绕过 Verification layer。
+- 飞书/协作文档：人工协作知识；
+- NAS：Datasheet/TRM/SDK Guide/供应商资料/历史归档；
+- Git：源码、ADR、Runbook、配置；
+- CI/HIL：构建和验证事实；
+- Artifact Store：发布制品与 hash；
+- Issue/RCA：历史问题与决策证据。
 
-例如“C6 认为设备一定通过”仍不能替代真实 device/HIL evidence。
+Knowledge Provider（如 WeKnora 或其他 RAG/Search 实现）负责索引、检索、引用和评测，不自动取得原始 Source 的权威身份。
 
----
+## 3. Knowledge Registry / Gateway / Context Broker
 
-## 3. Knowledge 边界
+建议逐步形成：
 
-研发中心总体方案明确：
+- Registry：记录 knowledge_id、source、owner、revision、ACL、freshness、authority；
+- Gateway：统一 search/get/cite/resolve-authority 接口；
+- Context Broker：按 task/user/project/repo/permission 组装最小必要上下文。
 
-- 飞书：人工正式知识主库；
-- WeKnora：AI 检索层；
-- `digital-worker`：方法论、契约、模板、规则、评测 fixture 的 SSOT。
+Context Broker 当前是候选能力，不等于必须立即建设平台。
 
-本专家团本地不再创建第二个企业知识主库。
+## 4. NAS 治理
 
-本地可存：
+- 静态参考资料可登记后索引；
+- Firmware/BSP/build/config 等强版本敏感资产按 exact path/hash/revision 使用；
+- 不默认“整个 NAS 全量向量化”；
+- ACL、敏感级别、owner、freshness 是 PoC 必测项。
 
-- methodology；
-- checklist；
-- template；
-- terminology；
-- source registry；
-- static engineering rules；
-- evaluation fixtures。
+## 5. A0-A7
 
-项目事实、现场敏感日志、客户资料应留在其权威系统，通过 evidence ref 使用。
+A0 Read / A1 Analyze / A2 Generate 默认允许；A3 Worktree / A4 Build Test 受控；A5 Device Read 授权后；A6 Device Write、A7 Release 需人工审批。
 
----
+**动作权限与 Provider 名称解耦。** Codex、Claude、WorkBuddy 或任何其他 Agent 都不能因品牌/入口不同获得额外 Action Level。
 
-## 4. A0-A7 自治等级
+## 6. 永不默认自动
 
-### A0_READ
+OTP/Fuse、生产签名密钥、Production OTA、不可逆 Boot 配置、破坏性生产数据动作。
 
-读取 repo/docs/log/artifact metadata。
+## 7. Evidence Bundle
 
-### A1_ANALYZE
+真实 Pilot 用结构化 Evidence Bundle 保存 kind/ref/hash/required；原始日志/core/firmware 默认留在受控源系统，`digital-worker` 只保存 Contract 和可审计引用。
 
-技术分析、路由、诊断、评审。
+## 8. Fail-closed
 
-### A2_GENERATE
+包括：未注册 Skill、review_only 隐式执行、real Pilot 非 exact base、artifact 路径逃逸、缺 required artifact、incorrect PASS、unauthorized action、unresolved ownership、Provider-specific machine residue 等均阻断。
 
-生成方案、patch proposal、测试计划、文档，但不直接执行有副作用动作。
+## 9. Secret / Sensitive Data
 
-当前 23 个 P0 Skills 上限为 A2。
+需要明确 log/core 脱敏、客户资料 ACL、HIL 串口上下文边界、firmware retention、生产 key/签名服务隔离。AI 不拥有生产 Secret 管理权。
 
-### A3_MODIFY_WORKTREE
+## 10. 当前评审问题
 
-修改代码/文档 worktree；仅工程执行链受控允许。
-
-### A4_BUILD_TEST
-
-Build/Test；仍必须受 package scope 约束。
-
-### A5_DEVICE_READ
-
-读取串口、状态、设备信息；需授权。
-
-### A6_DEVICE_WRITE
-
-烧录、写配置等；必须人工审批。
-
-### A7_RELEASE
-
-Release/OTA/Promotion；必须人工审批。
-
----
-
-## 5. 永不默认自动的动作
-
-- OTP/Fuse；
-- 生产签名密钥；
-- Production OTA；
-- 不可逆 Boot 配置；
-- destructive production data action。
-
-这些即使未来系统自动化程度提高，也需要单独安全设计。
-
----
-
-## 6. Pilot Evidence Bundle
-
-真实 Pilot 不应把原始日志/core/firmware 一股脑提交进 `digital-worker`。
-
-Pilot CLI 会建立结构化 run directory，并生成 `evidence-bundle.json`：
-
-- artifact kind；
-- path/ref；
-- SHA256；
-- required flag。
-
-`pilot/runs/` 默认 Git ignore。原始敏感证据留在受控存储，只在 repo 中保留契约与引用。
-
----
-
-## 7. 安全 Fail-closed
-
-系统当前有多层 fail-closed：
-
-1. 未注册 Skill 禁止正式调用；
-2. review_only 禁止隐式执行；
-3. real Pilot 必须 exact base SHA；
-4. run artifact 禁止路径逃逸；
-5. completed run 缺 required artifact 拒绝；
-6. incorrect PASS fixture 必须被 evaluator 拒绝；
-7. unauthorized action 阻断 Productionization eligibility；
-8. edge-foundation ownership unresolved 时禁止伪装 resolved。
-
----
-
-## 8. Secret / Sensitive Data
-
-内部评审建议明确以下后续策略：
-
-- log/core 中 token/password/key 脱敏；
-- firmware/binary 的保留周期；
-- customer/project confidential artifact 的 evidence ref 访问控制；
-- HIL/设备串口日志是否允许进入 AI 上下文；
-- 生产 key/签名服务与 AI 永久隔离边界。
-
-当前专家团架构不授权 AI 管理生产 Secret。
-
----
-
-## 9. Main Governance 风险
-
-当前 `Embedded Expert Contracts` CI 已存在并稳定运行，但 main branch protection/required check 仍待管理员配置。
-
-因此“CI 有红灯”在平台层理论上仍可能被人为绕过。
-
-P0 governance Issue 已登记，正式生产化前应关闭此缺口。
-
----
-
-## 10. 评审重点
-
-1. A5 Device Read 是否可以默认授权给部分实验室设备？
-2. A6 Device Write 是否可在专用测试板上引入一次批准/会话授权？
-3. 现场日志进入模型的脱敏与权限由谁负责？
-4. Evidence Bundle 是否应接入制品库而非 repo 目录？
-5. main protection 何时启用、谁是管理员 owner？
+- Knowledge Source Inventory 的 owner 是谁；
+- 默认 Knowledge Provider 是否需要主备；
+- `knowledge_refs` 是否升级为 source/revision/ACL/provenance 对象；
+- Context Broker 的收益是否足以覆盖建设复杂度；
+- Evidence Bundle 是否应接入统一 Evidence/Artifact Store；
+- main protection 何时开启。
