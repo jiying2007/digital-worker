@@ -1,0 +1,20 @@
+schema_version: 1
+expert: embedded-architecture-expert
+consumes:
+  - task-charter
+  - material-manifest
+  - evidence-ref
+  - product-technical-review-request
+produces:
+  - architecture-analysis
+  - feasibility-assessment
+  - architecture-impact
+  - verification-requirements
+hands_off_to:
+  - embedded-system-team-lead
+  - linux-bsp-expert
+  - mcu-rtos-expert
+  - driver-component-expert
+constraints:
+  - evidence-before-platform-fact
+  - inference-is-not-confirmation

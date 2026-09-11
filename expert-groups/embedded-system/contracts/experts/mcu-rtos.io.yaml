@@ -1,0 +1,20 @@
+schema_version: 1
+expert: mcu-rtos-expert
+consumes:
+  - task-charter
+  - material-manifest
+  - evidence-ref
+  - architecture-analysis
+produces:
+  - mcu-rtos-analysis
+  - realtime-risk
+  - implementation-guidance
+  - verification-requirements
+hands_off_to:
+  - embedded-system-team-lead
+  - driver-component-expert
+  - debug-reliability-expert
+  - verification-expert
+constraints:
+  - target-mcu-and-toolchain-required-for-platform-facts
+  - simulated-result-does-not-imply-target-pass

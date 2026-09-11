@@ -1,0 +1,20 @@
+schema_version: 1
+expert: driver-component-expert
+consumes:
+  - task-charter
+  - material-manifest
+  - evidence-ref
+  - architecture-analysis
+  - platform-analysis
+produces:
+  - driver-component-analysis
+  - api-contract-impact
+  - implementation-guidance
+  - test-matrix
+hands_off_to:
+  - embedded-system-team-lead
+  - debug-reliability-expert
+  - verification-expert
+constraints:
+  - platform-specific-behavior-must-be-isolated
+  - reusable-component-claims-require-multi-context-evidence
