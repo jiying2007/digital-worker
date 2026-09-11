@@ -5,7 +5,7 @@
 
 ## 1. 默认模型
 
-`main` 是默认唯一长期分支。`feat/*`、`docs/*`、`design/*`、`refactor/*`、`fix/*` 等均视为任务分支，不作为历史存档。
+`main` 是默认唯一长期分支。`feat/*`、`docs/*`、`design/*`、`refactor/*`、`fix/*`、`chore/*` 等均视为任务分支，不作为历史存档。
 
 ## 2. 创建要求
 
@@ -18,26 +18,62 @@
 1. PR 已 merge；
 2. main push CI 已 success；
 3. 需要保留的 evidence/decision 已进入 main、PR、Issue 或 artifact system；
-4. 没有 open PR/未完成恢复点依赖该分支。
+4. 没有 open PR/未完成恢复点依赖该分支；
+5. 分支不是 protected branch，也不是 `main`。
 
 Git history / merged PR 已提供历史，不通过长期保留任务分支实现归档。
 
-## 4. 长期分支例外
+## 4. 受控 Branch GC Workflow
+
+正式 GC 入口：`.github/workflows/branch-gc.yml`。
+
+治理模型：
+
+- 长期入口仅为手动 `workflow_dispatch`；
+- 允许 `dry_run=true` 只校验不删除；
+- 待删除分支必须先进入 `.github/branch-gc-allowlist.txt`，因此删除范围必须经过 PR review / main history；
+- workflow 使用最小必要权限：`contents: write` + `pull-requests: read`；
+- 每个分支删除前 fail-closed 校验：branch exists、`branch != main`、not protected、open PR = 0、merged PR evidence >= 1；
+- 分支已不存在时幂等跳过；
+- 删除后输出剩余远端分支用于审计。
+
+### Bootstrap 行为
+
+当前首次落地阶段额外允许：当 `.github/workflows/branch-gc.yml` 本身首次/后续通过 PR 合入 `main` 时，以 `push + exact workflow path` 自动触发一次 GC。它仍使用相同 allowlist 与安全校验，不扩大删除范围。
+
+如果后续确认手动模式足够，可单独 PR 移除这个 bootstrap `push` trigger，仅保留 `workflow_dispatch`。
+
+## 5. 长期分支例外
 
 只有 research/release 等确有生命周期需求时才允许长期存在，并必须登记：purpose、owner、exact head、created_at、expiry/review date、GC condition、open PR/issue link。没有这些字段的长期分支视为治理债务。
 
-## 5. 禁止
+## 6. 禁止
 
 - 合并完成后无限期保留任务分支；
 - 以分支替代 release tag / artifact / evidence；
 - 对有 open PR 或未归档 evidence 的分支直接 GC；
+- 把 `main` 放入 GC allowlist；
+- 删除 protected branch；
+- 使用通配/枚举所有远端分支后直接批量删除；
 - force-push `main`；
 - 使用长期漂移分支名代替正式 Pilot 的 exact base identity。
 
-## 6. 当前清理
+## 7. CI 防回归
 
-现有历史残留由 Issue #19 跟踪。当前连接不提供 delete-ref 能力，因此实际删除需要 GitHub UI 或本地 `git push origin --delete <branch>` 完成。
+`scripts/validate_branch_gc.py` 由 `Embedded Expert Contracts` 执行，至少检查：
 
-## 7. Review cadence
+- workflow / allowlist 存在；
+- `workflow_dispatch` 存在；
+- `contents: write` / `pull-requests: read` 权限存在；
+- `main` 明确拒绝；
+- protected/open-PR/merged-PR 校验存在；
+- 删除动作仍限定 Git branch ref；
+- allowlist 不含 `main`、无重复、只允许批准的任务分支前缀。
+
+## 8. 当前清理
+
+当前 merged branch GC 由 Issue #19 跟踪。首次 workflow rollout 的 allowlist 同时包含本次 `chore/branch-gc-workflow`，因此 workflow 合入 main 后可以连同自身 head branch 一并清理。
+
+## 9. Review cadence
 
 建议每次主要阶段收口或至少每月检查远端分支；默认期望状态是 `main` + 少量明确登记的活动分支。
