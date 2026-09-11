@@ -13,6 +13,8 @@
 ## 当前条目
 
 - [企业—研发—嵌入式 AI Digital Thread 头脑风暴](enterprise-ai-rd-embedded-digital-thread.md)
+- [企业 AI / 研发体系循序渐进落地策略](incremental-enterprise-ai-landing-strategy.md)
+- [嵌入式系统内部 Engineering Thread 头脑风暴](embedded-internal-engineering-thread.md)
 
 ## 使用规则
 
