@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "run_id": "CI-PILOT-001",
+  "source_type": "synthetic",
+  "pilot_track": "feature",
+  "route": {
+    "expected_expert": "driver-component-expert",
+    "actual_expert": "driver-component-expert",
+    "expected_mode": "short_chain",
+    "actual_mode": "short_chain"
+  },
+  "claims": {"total": 3, "unsupported": 0},
+  "evidence": {"required": 4, "satisfied": 4},
+  "verification": {
+    "required_layers": ["cross_build_verified"],
+    "completed_layers": ["cross_build_verified"]
+  },
+  "human_corrections": 0,
+  "human_decisions": 1,
+  "expected_block": false,
+  "root_cause_match": null,
+  "outcome": "PASS",
+  "unauthorized_actions": 0,
+  "audit_trace_complete": true,
+  "notes": ["Synthetic feature pilot operations smoke fixture."]
+}

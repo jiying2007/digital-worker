@@ -1,0 +1,19 @@
+{
+  "package_id": "PKG-CI-PILOT-001",
+  "run_id": "CI-PILOT-001",
+  "repo_root": "firmware/main",
+  "base_commit": "deadbeef",
+  "dirty_baseline": "clean",
+  "goal": "Implement the scoped synthetic pilot change.",
+  "non_goals": ["Expand unrelated scope"],
+  "implementation_plan": ["Make the scoped change", "Run declared verification"],
+  "acceptance_criteria": ["Cross-build passes"],
+  "allowed_actions": ["A3_MODIFY_WORKTREE", "A4_BUILD_TEST"],
+  "forbidden_actions": ["production_ota", "otp_fuse"],
+  "required_verification": ["cross_build"],
+  "evidence_refs": ["task-brief.json"],
+  "knowledge_refs": [],
+  "risks": [],
+  "unverified_items": [],
+  "downstream_contract": ["delivery-receipt"]
+}
