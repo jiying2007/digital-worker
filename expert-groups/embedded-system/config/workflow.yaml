@@ -1,0 +1,165 @@
+schema_version: 1
+version: 0.1.0
+status: architecture-frozen
+
+states:
+  - draft
+  - needs_information
+  - ready_for_analysis
+  - in_analysis
+  - ready_for_engineering
+  - in_engineering
+  - ready_for_verification
+  - in_verification
+  - ready_for_review
+  - blocked
+  - needs_rework
+  - completed
+  - cancelled
+
+stages:
+  - id: gate.k
+    phase: 0
+    name: Knowledge Readiness
+    owner: embedded-system-team-lead
+    output: knowledge-readiness
+    decisions: [PASS, BLOCKED, DEGRADED_WITH_APPROVAL]
+
+  - id: gate.m
+    phase: 0.5
+    name: Engineering Material Readiness
+    owner: embedded-system-team-lead
+    output: engineering-material-manifest
+    decisions: [PASS, BLOCKED, DEGRADED_WITH_APPROVAL]
+
+  - id: gate.0
+    phase: 1
+    name: Intake Clarity
+    owner: embedded-system-team-lead
+    output: task-charter
+    required_dimensions: [goal, scope, boundary, constraints, acceptance]
+
+  - id: phase.triage
+    phase: 2
+    name: Technical Triage and Routing
+    owner: embedded-system-team-lead
+    output: routing-decision
+
+  - id: phase.analysis
+    phase: 3
+    name: Domain Analysis
+    owner: routed-domain-expert
+    output: technical-analysis
+    diagnostic_requirements:
+      require_hypothesis_registry_for:
+        - defect_debugging
+        - stability_reliability
+        - field_incident
+      fact_states: [observed, inferred, confirmed]
+
+  - id: gate.t
+    phase: 4
+    name: Technical Decision Gate
+    owner: embedded-system-team-lead
+    output: technical-decision
+    required_sections:
+      - solution
+      - impact
+      - dependencies
+      - risks
+      - verification_plan
+      - rollback
+      - unresolved_items
+
+  - id: gate.e
+    phase: 5
+    name: Engineering Handoff Gate
+    owner: embedded-system-team-lead
+    output: engineering-task-package
+    execution_boundary: engineer-plus-codex
+
+  - id: phase.execution
+    phase: 6
+    name: Engineering Execution
+    owner: engineer-plus-codex
+    input: engineering-task-package
+    output: delivery-receipt
+    direct_workbuddy_control: false
+
+  - id: gate.v
+    phase: 7
+    name: Verification Gate
+    owner: verification-expert
+    output: verification-report
+    layers:
+      - implemented
+      - host_verified
+      - cross_build_verified
+      - sil_verified
+      - device_verified
+      - hil_verified
+      - release_verified
+    forbid_cross_layer_inference: true
+
+  - id: gate.r
+    phase: 8
+    name: Independent Review Gate
+    owner: embedded-review-governor
+    output: review-result
+    independent_from_implementation: true
+
+  - id: gate.c
+    phase: 9
+    name: Closure Gate
+    owner: embedded-system-team-lead
+    outputs:
+      - deliverable-manifest
+      - execution-log
+      - open-risk-list
+      - knowledge-candidate
+
+transitions:
+  missing_information:
+    from: [gate.k, gate.m, gate.0]
+    to: needs_information
+    action: ask_or_request_degradation_approval
+
+  engineering_handoff:
+    from: gate.e
+    to: phase.execution
+    condition: engineering_task_package_valid
+
+  verification_fail:
+    from: gate.v
+    to: needs_rework
+    action: return_to_precise_failed_stage
+
+  review_fail:
+    from: gate.r
+    to: needs_rework
+    action: return_to_responsible_stage
+
+  cross_stage_reflow:
+    max_automatic_reflows: 1
+    after_limit: require_human_decision
+
+  completion:
+    from: gate.c
+    to: completed
+    conditions:
+      - deliverable_manifest_present
+      - blockers_resolved_or_explicitly_accepted
+      - verification_status_not_overstated
+
+recovery:
+  require_team_run_state: true
+  require_gate_ledger: true
+  resume_from_failed_stage: true
+  full_chain_restart_on_single_failure: false
+  blocker_requires_resume_instructions: true
+
+autonomy_hooks:
+  device_write_requires_human_approval: true
+  release_requires_human_approval: true
+  otp_fuse_automatic: false
+  production_ota_automatic: false
