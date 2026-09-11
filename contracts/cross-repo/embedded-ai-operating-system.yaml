@@ -1,0 +1,86 @@
+schema_version: 1
+status: current-stage-baseline
+architecture_provider_selection: not_frozen
+
+planes:
+  digital-worker:
+    role: rd-operating-model
+    owns:
+      - work-item-and-run
+      - expert-identity-and-routing
+      - domain-workflow-and-gates
+      - action-policy
+      - technical-decision
+      - engineering-handoff
+      - engineering-identity-thread
+      - verification
+      - independent-review
+      - domain-pilot-and-maturity
+    must_not_own:
+      - general-knowledge-lifecycle-engine
+      - runtime-specific-agent-exporters
+      - external-practice-adoption-lab
+
+  knowledge-hub:
+    role: knowledge-control-plane
+    owns:
+      - knowledge-registry
+      - knowledge-context-and-evidence-pack
+      - knowledge-lifecycle
+      - owner-review-and-promotion
+      - compatibility-intelligence
+    access: adapter-only
+    write_from_digital_worker: proposal-only
+
+  agent-dev-kit:
+    role: agent-asset-control-plane
+    owns:
+      - reusable-agent-assets
+      - reusable-skills
+      - profiles
+      - workflow-assets
+      - target-export-install-rollback
+      - asset-evaluation-and-release
+    required_profile: embedded-fullstack
+
+  llm_agent:
+    role: practice-and-runtime-evaluation-lab
+    owns:
+      - external-practice-intake
+      - adoption-evidence
+      - runtime-target-health
+      - cross-runtime-comparison-evidence
+      - loop-readiness-evaluation
+    must_not_own:
+      - production-runtime
+      - domain-verification-pass
+
+source_fact_planes:
+  git_ci_hil_artifact_store:
+    owns:
+      - source-sha
+      - build-identity
+      - artifact-hash
+      - device-and-test-facts
+      - release-facts
+
+handoffs:
+  - from: digital-worker
+    to: knowledge-hub
+    contract: knowledge-context/evidence-pack/proposal-route
+    failure: BLOCKED_or_NEEDS_REVIEW
+  - from: digital-worker
+    to: agent-dev-kit
+    contract: profile-and-asset-bundle-request
+    failure: BLOCKED
+  - from: digital-worker
+    to: llm_agent
+    contract: joint-runtime-pilot-evidence
+    failure: NOT_READY_or_BLOCKED
+
+stable_principles:
+  - Provider 可替换，Contract 稳定
+  - Source of Truth stays at source
+  - Expert identity 与 Runtime 解耦
+  - Runtime output 不等于 Verification PASS
+  - Knowledge candidate 不自动 promotion active
