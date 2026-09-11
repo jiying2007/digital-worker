@@ -64,6 +64,14 @@ def main():
     workflow = load_yaml(EMB / "config" / "workflow.yaml")
     skills = load_yaml(EMB / "config" / "p0-skills.yaml")
 
+    assert_true(expert_group.get("architecture_model") == "provider-neutral", "expert group must declare provider-neutral architecture")
+    assert_true(expert_group["ssot"].get("provider_binding") == "not_frozen", "provider binding must remain not_frozen")
+    assert_true("../../docs/adr/ADR-003-provider-neutral-ai-rd-target-architecture.md" in expert_group["upstream_contracts"], "ADR-003 must be an upstream contract")
+    assert_true(expert_group["engineering_runtime"]["execution_role"] == "engineer-plus-engineering-agent", "engineering runtime role must be provider-neutral")
+    assert_true(expert_group["engineering_runtime"]["provider_selection"] == "not_frozen", "engineering runtime provider must not be frozen")
+    assert_true(expert_group["knowledge"]["source_of_truth_policy"] == "stays_at_source", "knowledge source-of-truth policy must stay_at_source")
+    assert_true(expert_group["knowledge"]["provider_selection"] == "not_frozen", "knowledge provider must not be frozen")
+
     expert_ids = {expert_group["team_lead"]["id"]}
     expert_ids.update(item["id"] for item in expert_group["experts"])
     assert_true(len(expert_ids) == 8, f"expected 1+7 expert IDs, got {len(expert_ids)}")
@@ -75,6 +83,7 @@ def main():
     mode_names = set(task_modes["workflow_modes"])
     path_names = set(workflow["mode_paths"])
     assert_true(mode_names == path_names, f"workflow mode mismatch: task_modes={sorted(mode_names)}, workflow={sorted(path_names)}")
+    assert_true(workflow.get("architecture_model") == "provider-neutral", "workflow must be provider-neutral")
 
     stage_ids = {stage["id"] for stage in workflow["stages"]}
     for mode, path in workflow["mode_paths"].items():
@@ -83,12 +92,19 @@ def main():
     assert_true("phase.execution" not in workflow["mode_paths"]["review_only"], "review_only must not execute engineering")
     assert_true("phase.execution" not in workflow["mode_paths"]["single_expert"], "single_expert must not execute engineering")
 
+    execution_stage = None
     for stage in workflow["stages"]:
         owner = stage.get("owner")
-        if owner not in {"routed-domain-expert", "engineer-plus-codex"}:
+        if owner not in {"routed-domain-expert", "engineer-plus-engineering-agent"}:
             assert_true(owner in expert_ids, f"unknown workflow owner: {owner}")
+        if stage["id"] == "phase.execution":
+            execution_stage = stage
         if stage.get("schema"):
             resolve_declared_ref(EMB / "config" / "workflow.yaml", stage["schema"])
+    assert_true(execution_stage is not None, "missing phase.execution")
+    assert_true(execution_stage.get("runtime_provider") == "selectable", "execution runtime provider must be selectable")
+    assert_true(execution_stage.get("interaction_provider_direct_control") == "forbidden_by_default", "interaction provider direct control must be forbidden by default")
+
     for key in ["team_run_state_schema", "gate_ledger_schema"]:
         resolve_declared_ref(EMB / "config" / "workflow.yaml", workflow["recovery"][key])
 
@@ -126,6 +142,10 @@ def main():
 
     handoff = EMB / "contracts" / "engineering-handoff.yaml"
     handoff_doc = load_yaml(handoff)
+    exec_handoff = handoff_doc["stages"]["engineering_execution"]
+    assert_true(exec_handoff.get("executor_role") == "engineer-plus-engineering-agent", "engineering handoff executor must be provider-neutral")
+    assert_true(exec_handoff.get("runtime_provider") == "selectable", "engineering handoff runtime must be selectable")
+    assert_true(exec_handoff.get("interaction_provider_direct_control") == "forbidden_by_default", "engineering handoff must forbid direct interaction-provider control by default")
     for stage in handoff_doc["stages"].values():
         if stage.get("input_schema"):
             resolve_declared_ref(handoff, stage["input_schema"])
@@ -193,7 +213,7 @@ def main():
     Draft202012Validator(load_json(pilot_result_schema)).validate(load_json(ROOT / "tests" / "fixtures" / "pilot-result.valid.json"))
     Draft202012Validator(load_json(pilot_result_schema)).validate(load_json(ROOT / "tests" / "fixtures" / "pilot-result.incorrect-pass.json"))
 
-    print(f"embedded asset validation PASS: {len(expert_ids)} experts, {len(ids)} P0 skills, {len(schemas)} schemas, {len(cases)} golden cases, 3 pilot tracks")
+    print(f"embedded asset validation PASS: {len(expert_ids)} experts, {len(ids)} P0 skills, {len(schemas)} schemas, {len(cases)} golden cases, provider-neutral runtime, 3 pilot tracks")
 
 
 if __name__ == "__main__":
