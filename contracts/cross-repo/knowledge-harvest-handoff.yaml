@@ -1,0 +1,47 @@
+schema_version: 1
+status: current-stage-candidate
+from: digital-worker
+to: knowledge-hub
+purpose: route evidence-backed Knowledge Harvest as an owner-reviewed proposal without direct active mutation
+
+input:
+  required:
+    - work_item_id
+    - run_id
+    - harvest_ref
+    - evidence_refs
+  optional:
+    - knowledge_context_fingerprint
+    - source_refs
+    - candidate_kind
+    - suggested_owner
+
+preconditions:
+  - harvest status is KNOWLEDGE_CANDIDATE
+  - evidence_refs are non-empty and resolvable
+  - source authority/version/ACL/provenance have been checked where applicable
+  - candidate does not copy strong source facts into a second SSOT
+
+adapter:
+  command: scripts/embedded_knowledge.py proposal-route --proposal <proposal.json>
+  provider_surface: tools/knowledge-proposal-route.sh
+  proposal_schema_owner: knowledge-hub
+  digital_worker_must_not_reimplement_provider_schema: true
+
+outcomes:
+  accepted_for_review:
+    digital_worker_state: PROPOSED
+    knowledge_state: reviewing
+  needs_review:
+    digital_worker_state: BLOCKED_OR_PENDING_OWNER
+  rejected:
+    digital_worker_state: REJECTED_KNOWLEDGE_DELTA
+  provider_unavailable:
+    digital_worker_state: BLOCKED
+
+hard_rules:
+  direct_active_write: false
+  auto_promotion: false
+  owner_review_required: true
+  runtime_or_agent_may_not_self_approve: true
+  knowledge_harvest_completion_does_not_imply_knowledge_promotion: true
