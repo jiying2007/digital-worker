@@ -2,7 +2,7 @@
   "package_id": "PKG-CI-PILOT-001",
   "run_id": "CI-PILOT-001",
   "repo_root": "firmware/main",
-  "base_commit": "deadbeef",
+  "base_commit": "0123456789abcdef0123456789abcdef01234567",
   "dirty_baseline": "clean",
   "goal": "Implement the scoped synthetic pilot change.",
   "non_goals": ["Expand unrelated scope"],
