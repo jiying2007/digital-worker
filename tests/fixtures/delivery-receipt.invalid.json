@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "work_item_id": "EMB-001",
+  "execution_id": "exec-bad",
+  "executor_identity": "engineer-plus-codex",
+  "repo_root": "firmware/main",
+  "base_commit": "0123456789abcdef0123456789abcdef01234567",
+  "changed_files": [],
+  "outcomes": [],
+  "validation": {"host": "pass", "cross_build": "pass"},
+  "unverified_items": [],
+  "blockers": [],
+  "risks": [],
+  "next_actions": [],
+  "approval_required": []
+}

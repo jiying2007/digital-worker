@@ -1,8 +1,8 @@
 # 嵌入式系统专家团
 
 - Architecture status: `frozen`
-- Implementation status: `governance-and-core-experts-defined`
-- Version: `0.2.0`
+- Implementation status: `p0-skills-and-engineering-handoff-defined`
+- Version: `0.3.0`
 - Date: 2026-09-11
 - Owner domain: 研发中心 / 嵌入式系统（软件）
 
@@ -20,41 +20,41 @@
 
 ## 2. 当前已落地
 
-### 组织
+### 组织与治理
 
-1+7 核心专家定义已经落入 `agents/`，并为每个专家建立 L1 I/O Contract：
+1+7 核心专家、L1 I/O Contracts、task routing、mode-aware workflow、A0-A7 action policy、Gate policy、material readiness、Evidence、Run State、Gate Ledger、Hypothesis Registry、Verification/Review/Closure 契约均已落地。
 
-- `embedded-system-team-lead`
-- `embedded-architecture-expert`
-- `linux-bsp-expert`
-- `mcu-rtos-expert`
-- `driver-component-expert`
-- `debug-reliability-expert`
-- `verification-expert`
-- `embedded-review-governor`
+### P0 Skills
 
-### Governance Skeleton
+`config/p0-skills.yaml` 注册首批高频 Skills，覆盖接诊/证据、架构、Linux/BSP、MCU/RTOS、驱动、Debug/Reliability、Verification 与 Release Readiness。P0 Skill 默认最大动作等级为 A2，不直接修改代码或设备。
 
-已建立 task routing、workflow、A0-A7 action policy、Gate policy、material readiness、三层 I/O、Evidence、Run State、Gate Ledger、Hypothesis Registry、Engineering Task Package、Verification、Independent Review 和 Closure Manifest 契约。
+### Engineering Handoff
 
-## 3. 运行路径
+共享契约已落地：
+- `../../schemas/task-brief.v1.schema.json`
+- `../../schemas/delivery-receipt.v1.schema.json`
+- `../../schemas/hil-evidence.v1.schema.json`
+- `contracts/engineering-handoff.yaml`
 
-`config/workflow.yaml` 按 `workflow_mode` 明确不同路径；**并非所有任务都进入工程执行**。
-
-- `full_chain / short_chain / diagnostic_chain / bringup_chain`：可进入 Engineering Execution；
-- `review_only`：只分析/审查，不允许隐式进入代码修改；
-- `release_chain`：默认做发布准备度验证，若需代码修改必须显式扩展模式；
-- `single_expert`：完成单领域分析后收口，不自动扩链。
-
-工程执行路径仍遵守 ADR-001：
+工程执行继续遵守 ADR-001：
 
 ```text
-engineering-task-package -> Engineer + Codex -> delivery-receipt
+task-brief
+  -> Expert Team
+  -> engineering-task-package
+  -> Engineer + Codex
+  -> delivery-receipt
+  -> Verification
+  -> Independent Review
 ```
 
 WorkBuddy 当前不直接遥控个人 Codex CLI。
 
-## 4. 不可违反的工程原则
+### 自动校验
+
+`scripts/validate_embedded_assets.py` 对专家/路由/Workflow/Skill registry/Schema/Handoff/正负 fixture 做 fail-closed 校验；`.github/workflows/embedded-expert-contracts.yml` 在相关 PR 和 main push 上自动执行。
+
+## 3. 不可违反的工程原则
 
 1. 先分类再路由，不默认 full chain；
 2. 缺关键硬件/版本证据时 BLOCK 或显式降级；
@@ -65,14 +65,14 @@ WorkBuddy 当前不直接遥控个人 Codex CLI。
 7. 高风险设备写和发布动作保留人工 Gate；
 8. 无 deliverable manifest 不宣称正式闭环；
 9. 跨专家团通过 contract，不依赖自由聊天；
-10. 新增 Agent 前先证明不能由现有 Agent + Skill 承担。
+10. 新增 Agent 或 Skill 前必须通过 SSOT 注册与结构校验。
 
-## 5. 尚未完成
+## 4. 当前状态与下一阶段
 
-当前不是 Production Ready。下一阶段依次为：
+当前已经具备承接真实任务所需的**结构化输入、专家路由、技术分析、工程交接、回执和验证契约基线**，但仍不是 Production Ready。
 
-1. P0 Skills；
-2. Engineering Handoff 与共享 `task-brief/delivery-receipt` schema；
-3. Product Expert / 端侧底座 Cross-Team Contract；
-4. Golden Cases、结构校验脚本与回归；
-5. 真实项目 Pilot。
+下一阶段：
+1. Product Expert / 端侧底座 Cross-Team Contract；
+2. Golden Cases + regression；
+3. 真实项目 Pilot；
+4. 根据 Pilot 证据再决定 P1 Skills、设备实验室网关和更高自治等级。
