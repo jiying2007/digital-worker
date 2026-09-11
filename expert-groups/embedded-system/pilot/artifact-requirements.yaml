@@ -1,18 +1,19 @@
 schema_version: 1
-version: 0.6.0
+version: 0.7.0
 
 common:
   real_run_requires_exact_base_commit: true
   all_refs_must_resolve_inside_run_directory: true
   evidence_bundle_required_for_completed_run: true
+  closed_loop_v1_artifacts: [material_manifest, acceptance_evidence_matrix, knowledge_harvest]
 
 tracks:
   debug:
     required_refs: [task_brief_ref, verification_report_ref, review_report_ref, pilot_result_ref]
-    required_extra_artifacts: [hypothesis_registry]
+    required_extra_artifacts: [hypothesis_registry, material_manifest, acceptance_evidence_matrix, knowledge_harvest]
   feature:
     required_refs: [task_brief_ref, engineering_task_package_ref, delivery_receipt_ref, verification_report_ref, review_report_ref, pilot_result_ref]
-    required_extra_artifacts: []
+    required_extra_artifacts: [material_manifest, acceptance_evidence_matrix, knowledge_harvest]
   review_release:
     required_refs: [task_brief_ref, verification_report_ref, review_report_ref, pilot_result_ref]
-    required_extra_artifacts: []
+    required_extra_artifacts: [material_manifest, acceptance_evidence_matrix, knowledge_harvest]
