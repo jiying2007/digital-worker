@@ -13,12 +13,15 @@ on:
       - 'scripts/validate_provider_neutral_architecture.py'
       - 'scripts/validate_core_reference.py'
       - 'scripts/validate_review_readiness.py'
+      - 'scripts/validate_branch_gc.py'
       - 'scripts/validate_embedded_assets.py'
       - 'scripts/validate_pilot_operations.py'
       - 'scripts/evaluate_embedded_pilot.py'
       - 'scripts/embedded_pilot.py'
       - 'tests/fixtures/**'
+      - '.github/branch-gc-allowlist.txt'
       - '.github/ISSUE_TEMPLATE/embedded-pilot.yml'
+      - '.github/workflows/branch-gc.yml'
       - '.github/workflows/embedded-expert-contracts.yml'
   push:
     branches: [main]
@@ -33,12 +36,15 @@ on:
       - 'scripts/validate_provider_neutral_architecture.py'
       - 'scripts/validate_core_reference.py'
       - 'scripts/validate_review_readiness.py'
+      - 'scripts/validate_branch_gc.py'
       - 'scripts/validate_embedded_assets.py'
       - 'scripts/validate_pilot_operations.py'
       - 'scripts/evaluate_embedded_pilot.py'
       - 'scripts/embedded_pilot.py'
       - 'tests/fixtures/**'
+      - '.github/branch-gc-allowlist.txt'
       - '.github/ISSUE_TEMPLATE/embedded-pilot.yml'
+      - '.github/workflows/branch-gc.yml'
       - '.github/workflows/embedded-expert-contracts.yml'
 
 jobs:
@@ -59,6 +65,8 @@ jobs:
         run: python scripts/validate_core_reference.py
       - name: Validate architecture review readiness
         run: python scripts/validate_review_readiness.py
+      - name: Validate Branch GC safety contract
+        run: python scripts/validate_branch_gc.py
       - name: Validate expert-team contracts
         run: python scripts/validate_embedded_assets.py
       - name: Validate pilot operational contracts
