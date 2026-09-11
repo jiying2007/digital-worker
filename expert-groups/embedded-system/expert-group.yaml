@@ -19,11 +19,11 @@ mission:
 
 ssot:
   repository: jiying2007/digital-worker
-  external_repositories_are_dependencies: false
-  external_repositories_are_reference_only: true
+  external_repositories: reference_only
+  review_reference: ../../嵌入式系统专家团-核心参考/README.md
 
 upstream_contracts:
-  - ../../研发中心AI数字员工研发流程规划_V2.md
+  - ../../研发中心AI数字员工研发流程规划.md
   - ../../docs/adr/ADR-001-workbuddy-codex-integration-boundary.md
   - ../../docs/adr/ADR-002-embedded-system-expert-team-architecture.md
 
