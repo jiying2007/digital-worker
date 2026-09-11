@@ -1,0 +1,33 @@
+schema_version: 1
+version: 0.4.0
+id: embedded-edge-foundation-ownership
+status: evidence-needed
+
+source_reference: ../../../../端侧底座专家团创建.docx
+source_parse_status: binary-source-not-yet-normalized
+
+policy:
+  allowed_ownership: [OWN, SHARED, CONSUME, PROVIDE, OUT_OF_SCOPE]
+  duplicate_capability_before_classification: forbidden
+  unresolved_items_block_duplicate_agent_or_skill: true
+  resolution_requires:
+    - source_scope_evidence
+    - named_owner
+    - input_output_contract
+    - conflict_resolution_rule
+
+candidate_domains:
+  - {domain: boot_and_bsp, ownership: null, status: unresolved}
+  - {domain: linux_kernel_and_device_tree, ownership: null, status: unresolved}
+  - {domain: rtos_and_mcu_runtime, ownership: null, status: unresolved}
+  - {domain: device_drivers, ownership: null, status: unresolved}
+  - {domain: common_middleware, ownership: null, status: unresolved}
+  - {domain: ai_runtime_and_edge_framework, ownership: null, status: unresolved}
+  - {domain: ota_and_device_management, ownership: null, status: unresolved}
+  - {domain: diagnostics_and_observability, ownership: null, status: unresolved}
+  - {domain: hil_and_device_validation, ownership: null, status: unresolved}
+
+note: >-
+  This file intentionally freezes the ownership protocol but not the ownership decisions.
+  Detailed OWN/SHARED/CONSUME/PROVIDE/OUT_OF_SCOPE values must be filled only after the
+  source document is normalized into reviewable text or otherwise evidenced.

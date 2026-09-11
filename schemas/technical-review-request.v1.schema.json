@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://digital-worker.local/schemas/technical-review-request.v1.schema.json",
+  "title": "Technical Review Request v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "work_item_id", "source_team", "product_id", "requirement_refs", "requested_decisions", "constraints", "evidence_refs"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "work_item_id": {"type": "string", "minLength": 1},
+    "source_team": {"const": "product-expert-team"},
+    "product_id": {"type": "string", "minLength": 1},
+    "requirement_refs": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "product_outline_ref": {"type": ["string", "null"]},
+    "performance_targets": {"type": "array", "items": {"type": "string"}},
+    "constraints": {"type": "array", "items": {"type": "string"}},
+    "hardware_assumptions": {"type": "array", "items": {"type": "string"}},
+    "schedule_constraints": {"type": "array", "items": {"type": "string"}},
+    "requested_decisions": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+    "evidence_refs": {"type": "array", "items": {"type": "string"}}
+  }
+}
