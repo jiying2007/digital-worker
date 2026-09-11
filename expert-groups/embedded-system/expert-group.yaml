@@ -1,0 +1,153 @@
+schema_version: 1
+id: embedded-system
+name: 嵌入式系统专家团
+version: 0.1.0
+status: architecture-frozen
+owner_domain: 研发中心/嵌入式系统软件
+
+mission:
+  - embedded-software-technical-analysis
+  - architecture-and-feasibility
+  - linux-bsp-and-kernel
+  - mcu-rtos-and-baremetal
+  - driver-and-component-engineering
+  - debugging-and-reliability
+  - verification-and-hil
+  - independent-review
+  - release-and-field-engineering
+
+ssot:
+  repository: jiying2007/digital-worker
+  external_repositories_are_dependencies: false
+  external_repositories_are_reference_only: true
+
+upstream_contracts:
+  - ../../研发中心AI数字员工研发流程规划_V2.md
+  - ../../docs/adr/ADR-001-workbuddy-codex-integration-boundary.md
+  - ../../docs/adr/ADR-002-embedded-system-expert-team-architecture.md
+
+team_lead:
+  id: embedded-system-team-lead
+  role: orchestrator
+  may_self_approve_final_verification: false
+
+experts:
+  - id: embedded-architecture-expert
+    domain: architecture
+  - id: linux-bsp-expert
+    domain: linux-bsp
+  - id: mcu-rtos-expert
+    domain: mcu-rtos
+  - id: driver-component-expert
+    domain: driver-component
+  - id: debug-reliability-expert
+    domain: debug-reliability
+  - id: verification-expert
+    domain: verification
+  - id: embedded-review-governor
+    domain: independent-review
+
+workflow:
+  task_modes: config/task-modes.yaml
+  state_machine: config/workflow.yaml
+  default_mode: null
+  require_task_classification: true
+  allow_implicit_full_chain: false
+
+core_gates:
+  - gate.k
+  - gate.m
+  - gate.0
+  - gate.t
+  - gate.e
+  - gate.v
+  - gate.r
+  - gate.c
+
+evidence:
+  required_for_material_claims: true
+  debug_fact_states:
+    - observed
+    - inferred
+    - confirmed
+  confidence_levels:
+    - C0
+    - C1
+    - C2
+    - C3
+    - C4
+    - C5
+    - C6
+
+verification_layers:
+  - implemented
+  - host_verified
+  - cross_build_verified
+  - sil_verified
+  - device_verified
+  - hil_verified
+  - release_verified
+  forbid_cross_layer_inference: true
+
+independence:
+  implementation_may_self_approve_final_verification: false
+  final_review_role: embedded-review-governor
+
+autonomy:
+  default_allowed:
+    - A0_READ
+    - A1_ANALYZE
+    - A2_GENERATE
+  controlled_execution:
+    - A3_MODIFY_WORKTREE
+    - A4_BUILD_TEST
+  authorization_required:
+    - A5_DEVICE_READ
+  human_approval_required:
+    - A6_DEVICE_WRITE
+    - A7_RELEASE
+  never_default_automatic:
+    - otp_fuse
+    - production_signing_keys
+    - production_ota
+    - irreversible_boot_configuration
+    - destructive_production_data_action
+
+knowledge:
+  human_canonical_store: feishu
+  ai_retrieval_layer: weknora
+  local_knowledge_scope:
+    - methodology
+    - checklists
+    - templates
+    - terminology
+    - source-registry
+    - static-engineering-rules
+    - evaluation-fixtures
+  forbid_parallel_manual_canonical_copy: true
+
+cross_team:
+  product_expert_team:
+    input: technical-review-request
+    output: embedded-feasibility-review
+  edge_foundation_team:
+    ownership_model:
+      - OWN
+      - SHARED
+      - CONSUME
+      - PROVIDE
+      - OUT_OF_SCOPE
+    require_ownership_map_before_duplicate_capability: true
+
+evaluation:
+  golden_cases_required: true
+  primary_metrics:
+    - routing_accuracy
+    - evidence_coverage
+    - unsupported_claim_rate
+    - correct_block_rate
+    - incorrect_pass_rate
+    - root_cause_accuracy
+    - verification_completeness
+    - human_correction_rate
+  safety_priority_metric: incorrect_pass_rate
