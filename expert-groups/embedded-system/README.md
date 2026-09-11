@@ -1,78 +1,55 @@
 # 嵌入式系统专家团
 
 - Architecture status: `frozen`
-- Implementation status: `p0-skills-and-engineering-handoff-defined`
-- Version: `0.3.0`
+- Implementation status: `cross-team-and-golden-baseline-defined`
+- Version: `0.4.0`
 - Date: 2026-09-11
 - Owner domain: 研发中心 / 嵌入式系统（软件）
 
-## 1. 定位
+## 当前能力
 
-本目录是 `digital-worker` 内嵌入式系统专家团的正式 SSOT。外部 `agent-dev-kit`、`knowledge-hub`、`codex` 等仓库只作参考或未来可选连接，不是当前运行前置依赖。
+当前已经形成可用于真实试点的结构化基线：
 
-权威设计：
-- `../../docs/architecture/embedded-system-expert-team-v1.md`
-- `../../docs/adr/ADR-002-embedded-system-expert-team-architecture.md`
+- 1+7 核心专家 + L1 I/O Contract；
+- mode-aware Workflow、Gate、A0-A7 Action Policy、Material Readiness；
+- Evidence / Run State / Gate Ledger / Hypothesis Registry / Verification / Review / Closure；
+- 23 个 P0 Skills，默认最大 A2；
+- `task-brief -> engineering-task-package -> delivery-receipt` Engineering Handoff；
+- HIL evidence identity contract；
+- Product Expert Team -> Embedded System Team 技术可行性 handoff；
+- 12 个真实嵌入式类型 Golden Cases；
+- fail-closed validator + GitHub Actions CI。
 
-上游总体流程：
-- `../../研发中心AI数字员工研发流程规划_V2.md`
-- `../../docs/adr/ADR-001-workbuddy-codex-integration-boundary.md`
+## Product Expert Team 协作
 
-## 2. 当前已落地
-
-### 组织与治理
-
-1+7 核心专家、L1 I/O Contracts、task routing、mode-aware workflow、A0-A7 action policy、Gate policy、material readiness、Evidence、Run State、Gate Ledger、Hypothesis Registry、Verification/Review/Closure 契约均已落地。
-
-### P0 Skills
-
-`config/p0-skills.yaml` 注册首批高频 Skills，覆盖接诊/证据、架构、Linux/BSP、MCU/RTOS、驱动、Debug/Reliability、Verification 与 Release Readiness。P0 Skill 默认最大动作等级为 A2，不直接修改代码或设备。
-
-### Engineering Handoff
-
-共享契约已落地：
-- `../../schemas/task-brief.v1.schema.json`
-- `../../schemas/delivery-receipt.v1.schema.json`
-- `../../schemas/hil-evidence.v1.schema.json`
-- `contracts/engineering-handoff.yaml`
-
-工程执行继续遵守 ADR-001：
+`contracts/cross-team/product-expert-handoff.yaml` 冻结：
 
 ```text
-task-brief
-  -> Expert Team
-  -> engineering-task-package
-  -> Engineer + Codex
-  -> delivery-receipt
-  -> Verification
-  -> Independent Review
+Product Expert Team
+  -> technical-review-request
+Embedded System Expert Team
+  -> embedded-feasibility-review
+Product Expert Team
 ```
 
-WorkBuddy 当前不直接遥控个人 Codex CLI。
+产品专家团负责 What/Why/优先级/产品范围；嵌入式专家团负责 How/可行性/架构与平台影响/工程风险/验证策略。双方都不能越权替代最终产品 Go/No-Go、Production Release 或不可逆设备动作审批。
 
-### 自动校验
+## 端侧底座边界
 
-`scripts/validate_embedded_assets.py` 对专家/路由/Workflow/Skill registry/Schema/Handoff/正负 fixture 做 fail-closed 校验；`.github/workflows/embedded-expert-contracts.yml` 在相关 PR 和 main push 上自动执行。
+`contracts/cross-team/edge-foundation-ownership.yaml` 已冻结 OWN/SHARED/CONSUME/PROVIDE/OUT_OF_SCOPE 协议，但**尚未填写具体 ownership**。原因是当前权威来源仍是二进制 `端侧底座专家团创建.docx`，尚未规范化为可逐项审查的文本证据。未完成 ownership resolution 前，重叠领域禁止创建重复 Agent/Skill。
 
-## 3. 不可违反的工程原则
+## Golden Cases
 
-1. 先分类再路由，不默认 full chain；
-2. 缺关键硬件/版本证据时 BLOCK 或显式降级；
-3. Debug 区分 Observed / Inferred / Confirmed，并维护 Hypothesis Registry；
-4. 实施者不能给自己的最终验证签 PASS；
-5. Host / cross-build / device / HIL / release 状态分层；
-6. 关键 claim 必须绑定 evidence；
-7. 高风险设备写和发布动作保留人工 Gate；
-8. 无 deliverable manifest 不宣称正式闭环；
-9. 跨专家团通过 contract，不依赖自由聊天；
-10. 新增 Agent 或 Skill 前必须通过 SSOT 注册与结构校验。
+`tests/golden-cases.yaml` 首批覆盖 Boot、Kernel Panic、MCU HardFault、SPI-NAND ECC、UBIFS、DMA Cache、RTOS Deadlock、Linker/ROM-RAM、Driver、Platform Bring-up、Code Review、OTA Release。
 
-## 4. 当前状态与下一阶段
+CI 校验每个 case 的 task type、workflow mode、primary expert、schema 和唯一 ID，作为后续 Agent/Skill/Prompt/Model 变化的 regression baseline。
 
-当前已经具备承接真实任务所需的**结构化输入、专家路由、技术分析、工程交接、回执和验证契约基线**，但仍不是 Production Ready。
+## 当前边界
 
-下一阶段：
-1. Product Expert / 端侧底座 Cross-Team Contract；
-2. Golden Cases + regression；
-3. 真实项目 Pilot；
-4. 根据 Pilot 证据再决定 P1 Skills、设备实验室网关和更高自治等级。
+当前仍不是 Production Ready：Golden Cases 已建立结构基线，但还没有真实项目结果标签、准确率/误报/错放行统计和试点回执。
+
+下一阶段优先进入真实 Pilot，并用 Pilot 证据完成：
+1. Golden Case expected outcome/fixture 丰富；
+2. Routing / Unsupported Claim / Incorrect PASS 等指标实测；
+3. 端侧底座 ownership resolution；
+4. 根据真实缺口决定 P1 Skills，而不是提前堆能力。
