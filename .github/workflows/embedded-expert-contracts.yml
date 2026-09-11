@@ -19,6 +19,8 @@ on:
       - 'scripts/validate_pilot_operations.py'
       - 'scripts/evaluate_embedded_pilot.py'
       - 'scripts/embedded_pilot.py'
+      - 'scripts/embedded_pilot_scaffold.py'
+      - 'scripts/embedded_knowledge.py'
       - 'tests/fixtures/**'
       - '.github/branch-gc-allowlist.txt'
       - '.github/ISSUE_TEMPLATE/embedded-pilot.yml'
@@ -43,6 +45,8 @@ on:
       - 'scripts/validate_pilot_operations.py'
       - 'scripts/evaluate_embedded_pilot.py'
       - 'scripts/embedded_pilot.py'
+      - 'scripts/embedded_pilot_scaffold.py'
+      - 'scripts/embedded_knowledge.py'
       - 'tests/fixtures/**'
       - '.github/branch-gc-allowlist.txt'
       - '.github/ISSUE_TEMPLATE/embedded-pilot.yml'
@@ -75,6 +79,39 @@ jobs:
         run: python scripts/validate_embedded_assets.py
       - name: Validate pilot operational contracts
         run: python scripts/validate_pilot_operations.py
+      - name: Verify Knowledge Registry and query candidates
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/embedded_knowledge.py verify
+          python scripts/embedded_knowledge.py query --text "debug evidence" --limit 5 --format json > /tmp/embedded-knowledge-query.json
+          test -s /tmp/embedded-knowledge-query.json
+      - name: Smoke closed-loop scaffold helper
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$(mktemp -d)"
+          python scripts/embedded_pilot.py init \
+            --run-id CI-SCAFFOLD-001 \
+            --track feature \
+            --source-type synthetic \
+            --task-type feature_development \
+            --workflow-mode short_chain \
+            --human-owner ci \
+            --task-brief tests/fixtures/task-brief.valid.json \
+            --repo-root firmware/main \
+            --base-commit 0123456789abcdef0123456789abcdef01234567 \
+            --output-root "$root"
+          python scripts/embedded_pilot_scaffold.py "$root/CI-SCAFFOLD-001"
+          test -f "$root/CI-SCAFFOLD-001/working/material-manifest.json"
+          test -f "$root/CI-SCAFFOLD-001/working/acceptance-evidence-matrix.md"
+          test -f "$root/CI-SCAFFOLD-001/working/knowledge-harvest.md"
+          python - "$root/CI-SCAFFOLD-001/working/material-manifest.json" <<'PY'
+          import json, sys
+          doc = json.load(open(sys.argv[1], encoding='utf-8'))
+          assert doc['readiness'] == 'BLOCKED', doc
+          assert 'test_environment' in doc['missing_critical'], doc
+          PY
       - name: Evaluate synthetic pilot fixture
         run: python scripts/evaluate_embedded_pilot.py tests/fixtures/pilot-result.valid.json --output /tmp/pilot-metrics.json --markdown-output /tmp/pilot-metrics.md
       - name: Prove incorrect PASS is fail-closed
