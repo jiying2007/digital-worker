@@ -1,0 +1,66 @@
+schema_version: 1
+registry_id: embedded-knowledge-registry-v0
+status: internal-seed
+source_of_truth_policy: stays_at_source
+provider_binding: not_frozen
+scope_note: >-
+  首版仅登记 digital-worker 仓库内可核验的高价值知识/治理对象，
+  用于验证 Registry 机制，不代表 NAS、飞书、供应商资料或 CI/HIL 外部 Source 已接入。
+defaults:
+  source_provider: git
+  product_scope: [all]
+  platform_scope: [all]
+  version: tracked-by-git
+  acl: repository
+  freshness: tracked-by-git
+entries:
+  - {knowledge_id: EKR-001, title: 研发中心AI数字员工研发流程规划, domain: enterprise-architecture, knowledge_type: engineering, authority: canonical, source_ref: 研发中心AI数字员工研发流程规划.md, owner: rd-process-owner, tags: [operating-model, provider-neutral]}
+  - {knowledge_id: EKR-002, title: ADR-001 Interaction/Runtime边界, domain: architecture, knowledge_type: engineering, authority: canonical, source_ref: docs/adr/ADR-001-workbuddy-codex-integration-boundary.md, owner: rd-process-owner, tags: [adr, handoff]}
+  - {knowledge_id: EKR-003, title: ADR-002嵌入式专家团架构, domain: architecture, knowledge_type: engineering, authority: canonical, source_ref: docs/adr/ADR-002-embedded-system-expert-team-architecture.md, owner: embedded-system-team-lead, tags: [adr, expert-team]}
+  - {knowledge_id: EKR-004, title: ADR-003 Provider-neutral总体架构, domain: architecture, knowledge_type: engineering, authority: canonical, source_ref: docs/adr/ADR-003-provider-neutral-ai-rd-target-architecture.md, owner: rd-process-owner, tags: [adr, provider-neutral]}
+  - {knowledge_id: EKR-005, title: 嵌入式专家团机器入口, domain: governance, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/expert-group.yaml, owner: embedded-system-team-lead, tags: [expert-group, ssot]}
+  - {knowledge_id: EKR-006, title: 嵌入式专家团README, domain: governance, knowledge_type: engineering, authority: interpretive, source_ref: expert-groups/embedded-system/README.md, owner: embedded-system-team-lead, tags: [overview, pilot]}
+  - {knowledge_id: EKR-007, title: Workflow状态机, domain: workflow, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/config/workflow.yaml, owner: embedded-system-team-lead, tags: [workflow, state-machine]}
+  - {knowledge_id: EKR-008, title: Task类型与Mode路由, domain: workflow, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/config/task-modes.yaml, owner: embedded-system-team-lead, tags: [routing, task-type]}
+  - {knowledge_id: EKR-009, title: Gate策略, domain: governance, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/config/gate-policy.yaml, owner: embedded-system-team-lead, tags: [gate, fail-closed]}
+  - {knowledge_id: EKR-010, title: Action权限策略, domain: governance, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/config/action-policy.yaml, owner: embedded-system-team-lead, tags: [A0-A7, safety]}
+  - {knowledge_id: EKR-011, title: Material要求, domain: context, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/config/material-requirements.yaml, owner: embedded-system-team-lead, tags: [material, context]}
+  - {knowledge_id: EKR-012, title: P0 Skill注册表, domain: capability, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/config/p0-skills.yaml, owner: embedded-system-team-lead, tags: [skills, p0]}
+  - {knowledge_id: EKR-013, title: Authority Index, domain: governance, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/governance/authority-index.md, owner: embedded-system-team-lead, tags: [authority, conflict]}
+  - {knowledge_id: EKR-014, title: Done Definition, domain: governance, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/governance/done-definition.md, owner: embedded-system-team-lead, tags: [done, acceptance]}
+  - {knowledge_id: EKR-015, title: Pilot Plan, domain: pilot, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/pilot/pilot-plan.yaml, owner: embedded-system-team-lead, tags: [pilot, productionization]}
+  - {knowledge_id: EKR-016, title: Pilot Artifact Requirements, domain: pilot, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/pilot/artifact-requirements.yaml, owner: embedded-system-team-lead, tags: [pilot, artifact]}
+  - {knowledge_id: EKR-017, title: 真实Pilot Runbook, domain: pilot, knowledge_type: operational, authority: procedure, source_ref: docs/runbooks/embedded-pilot.md, owner: embedded-system-team-lead, tags: [runbook, real-pilot]}
+  - {knowledge_id: EKR-018, title: Golden Cases, domain: evaluation, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/tests/golden-cases.yaml, owner: embedded-system-team-lead, tags: [golden-case, evaluation]}
+  - {knowledge_id: EKR-019, title: 核心参考01整体架构, domain: architecture, knowledge_type: engineering, authority: interpretive, source_ref: 嵌入式系统专家团-核心参考/01 嵌入式系统专家团整体架构.md, owner: embedded-system-team-lead, tags: [core-reference, architecture]}
+  - {knowledge_id: EKR-020, title: 核心参考02主理人工作逻辑, domain: orchestration, knowledge_type: engineering, authority: interpretive, source_ref: 嵌入式系统专家团-核心参考/02 主理人专家工作逻辑.md, owner: embedded-system-team-lead, tags: [core-reference, team-lead]}
+  - {knowledge_id: EKR-021, title: 核心参考03架构专家, domain: architecture, knowledge_type: engineering, authority: interpretive, source_ref: 嵌入式系统专家团-核心参考/03 嵌入式架构专家工作逻辑.md, owner: embedded-architecture-expert, tags: [core-reference, architecture]}
+  - {knowledge_id: EKR-022, title: 核心参考04 Linux BSP, domain: linux-bsp, knowledge_type: engineering, authority: interpretive, source_ref: 嵌入式系统专家团-核心参考/04 Linux BSP专家工作逻辑.md, owner: linux-bsp-expert, tags: [core-reference, linux, bsp]}
+  - {knowledge_id: EKR-023, title: 核心参考05 MCU RTOS, domain: mcu-rtos, knowledge_type: engineering, authority: interpretive, source_ref: 嵌入式系统专家团-核心参考/05 MCU RTOS专家工作逻辑.md, owner: mcu-rtos-expert, tags: [core-reference, mcu, rtos]}
+  - {knowledge_id: EKR-024, title: 核心参考06驱动组件, domain: driver-component, knowledge_type: engineering, authority: interpretive, source_ref: 嵌入式系统专家团-核心参考/06 驱动与组件专家工作逻辑.md, owner: driver-component-expert, tags: [core-reference, driver]}
+  - {knowledge_id: EKR-025, title: 核心参考07调试可靠性, domain: debug-reliability, knowledge_type: operational, authority: interpretive, source_ref: 嵌入式系统专家团-核心参考/07 调试与可靠性专家工作逻辑.md, owner: debug-reliability-expert, tags: [core-reference, debug, rca]}
+  - {knowledge_id: EKR-026, title: 核心参考08验证, domain: verification, knowledge_type: engineering, authority: interpretive, source_ref: 嵌入式系统专家团-核心参考/08 验证专家工作逻辑.md, owner: verification-expert, tags: [core-reference, verification]}
+  - {knowledge_id: EKR-027, title: 核心参考09独立审查, domain: independent-review, knowledge_type: engineering, authority: interpretive, source_ref: 嵌入式系统专家团-核心参考/09 独立审查专家工作逻辑.md, owner: embedded-review-governor, tags: [core-reference, review]}
+  - {knowledge_id: EKR-028, title: 核心参考10 Skill清单, domain: capability, knowledge_type: ai_execution, authority: interpretive, source_ref: 嵌入式系统专家团-核心参考/10 全量原子能力（Skill）清单.md, owner: embedded-system-team-lead, tags: [core-reference, skills]}
+  - {knowledge_id: EKR-029, title: 核心参考11 Workflow Gate Handoff, domain: workflow, knowledge_type: engineering, authority: interpretive, source_ref: 嵌入式系统专家团-核心参考/11 Workflow、Gate 与工程交接.md, owner: embedded-system-team-lead, tags: [core-reference, handoff]}
+  - {knowledge_id: EKR-030, title: 核心参考12 Evidence知识自治安全, domain: governance, knowledge_type: engineering, authority: interpretive, source_ref: 嵌入式系统专家团-核心参考/12 Evidence、知识、自治与安全边界.md, owner: embedded-system-team-lead, tags: [core-reference, evidence, knowledge]}
+  - {knowledge_id: EKR-031, title: 核心参考13 Pilot评测生产化, domain: pilot, knowledge_type: engineering, authority: interpretive, source_ref: 嵌入式系统专家团-核心参考/13 Pilot、评测与生产化评审.md, owner: embedded-system-team-lead, tags: [core-reference, pilot]}
+  - {knowledge_id: EKR-032, title: 核心参考14跨专家团边界, domain: cross-team, knowledge_type: engineering, authority: interpretive, source_ref: 嵌入式系统专家团-核心参考/14 跨专家团协作与职责边界.md, owner: embedded-system-team-lead, tags: [core-reference, cross-team]}
+  - {knowledge_id: EKR-033, title: 核心参考15内部评审清单, domain: review, knowledge_type: engineering, authority: interpretive, source_ref: 嵌入式系统专家团-核心参考/15 内部评审问题清单.md, owner: embedded-review-governor, tags: [core-reference, review]}
+  - {knowledge_id: EKR-034, title: 核心参考16 Provider选型评审, domain: architecture, knowledge_type: engineering, authority: interpretive, source_ref: 嵌入式系统专家团-核心参考/16 总体架构与Provider选型评审.md, owner: embedded-system-team-lead, tags: [core-reference, provider]}
+  - {knowledge_id: EKR-035, title: Team Lead Agent定义, domain: orchestration, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/agents/embedded-system-team-lead.md, owner: embedded-system-team-lead, tags: [agent, team-lead]}
+  - {knowledge_id: EKR-036, title: Architecture Agent定义, domain: architecture, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/agents/embedded-architecture-expert.md, owner: embedded-architecture-expert, tags: [agent, architecture]}
+  - {knowledge_id: EKR-037, title: Linux BSP Agent定义, domain: linux-bsp, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/agents/linux-bsp-expert.md, owner: linux-bsp-expert, tags: [agent, linux]}
+  - {knowledge_id: EKR-038, title: MCU RTOS Agent定义, domain: mcu-rtos, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/agents/mcu-rtos-expert.md, owner: mcu-rtos-expert, tags: [agent, mcu]}
+  - {knowledge_id: EKR-039, title: Driver Component Agent定义, domain: driver-component, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/agents/driver-component-expert.md, owner: driver-component-expert, tags: [agent, driver]}
+  - {knowledge_id: EKR-040, title: Debug Reliability Agent定义, domain: debug-reliability, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/agents/debug-reliability-expert.md, owner: debug-reliability-expert, tags: [agent, debug]}
+  - {knowledge_id: EKR-041, title: Verification Agent定义, domain: verification, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/agents/verification-expert.md, owner: verification-expert, tags: [agent, verification]}
+  - {knowledge_id: EKR-042, title: Review Governor Agent定义, domain: independent-review, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/agents/embedded-review-governor.md, owner: embedded-review-governor, tags: [agent, review]}
+  - {knowledge_id: EKR-043, title: Evidence Ref Schema, domain: evidence, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/schemas/evidence-ref.schema.json, owner: embedded-system-team-lead, tags: [schema, evidence]}
+  - {knowledge_id: EKR-044, title: Material Manifest Schema, domain: context, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/schemas/material-manifest.schema.json, owner: embedded-system-team-lead, tags: [schema, context]}
+  - {knowledge_id: EKR-045, title: Knowledge Readiness Schema, domain: knowledge, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/schemas/knowledge-readiness.schema.json, owner: embedded-system-team-lead, tags: [schema, knowledge]}
+  - {knowledge_id: EKR-046, title: Hypothesis Registry Schema, domain: debug-reliability, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/schemas/hypothesis-registry.schema.json, owner: debug-reliability-expert, tags: [schema, hypothesis]}
+  - {knowledge_id: EKR-047, title: Technical Decision Schema, domain: architecture, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/schemas/technical-decision.schema.json, owner: embedded-architecture-expert, tags: [schema, decision]}
+  - {knowledge_id: EKR-048, title: Engineering Task Package Schema, domain: execution, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/schemas/engineering-task-package.schema.json, owner: embedded-system-team-lead, tags: [schema, execution]}
+  - {knowledge_id: EKR-049, title: Verification Report Schema, domain: verification, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/schemas/verification-report.schema.json, owner: verification-expert, tags: [schema, verification]}
+  - {knowledge_id: EKR-050, title: Review Report Schema, domain: independent-review, knowledge_type: ai_execution, authority: canonical, source_ref: expert-groups/embedded-system/schemas/review-report.schema.json, owner: embedded-review-governor, tags: [schema, review]}

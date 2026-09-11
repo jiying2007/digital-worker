@@ -1,0 +1,15 @@
+{
+  "run_id": "CI-PILOT-001",
+  "items": [
+    {"kind": "repo", "required": true, "status": "available", "source": "firmware/main", "version": "fixture", "evidence_ref": "task-brief.json"},
+    {"kind": "base_commit", "required": true, "status": "available", "source": "firmware/main", "version": "0123456789abcdef0123456789abcdef01234567", "evidence_ref": "task-brief.json"},
+    {"kind": "board_revision", "required": true, "status": "available", "source": "fixture-board", "version": "rev-a", "evidence_ref": null},
+    {"kind": "soc_mcu", "required": true, "status": "available", "source": "fixture-soc", "version": "v1", "evidence_ref": null},
+    {"kind": "firmware", "required": true, "status": "available", "source": "fixture-firmware", "version": "sha256:fixture", "evidence_ref": null},
+    {"kind": "device_identity", "required": true, "status": "available", "source": "fixture-device", "version": "CI-DEVICE-001", "evidence_ref": null},
+    {"kind": "test_environment", "required": true, "status": "available", "source": "CI", "version": "synthetic-fixture", "evidence_ref": null}
+  ],
+  "readiness": "READY",
+  "missing_critical": [],
+  "degradation_approved_by": null
+}

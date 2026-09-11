@@ -14,6 +14,7 @@ on:
       - 'scripts/validate_core_reference.py'
       - 'scripts/validate_review_readiness.py'
       - 'scripts/validate_branch_gc.py'
+      - 'scripts/validate_embedded_closed_loop.py'
       - 'scripts/validate_embedded_assets.py'
       - 'scripts/validate_pilot_operations.py'
       - 'scripts/evaluate_embedded_pilot.py'
@@ -37,6 +38,7 @@ on:
       - 'scripts/validate_core_reference.py'
       - 'scripts/validate_review_readiness.py'
       - 'scripts/validate_branch_gc.py'
+      - 'scripts/validate_embedded_closed_loop.py'
       - 'scripts/validate_embedded_assets.py'
       - 'scripts/validate_pilot_operations.py'
       - 'scripts/evaluate_embedded_pilot.py'
@@ -67,6 +69,8 @@ jobs:
         run: python scripts/validate_review_readiness.py
       - name: Validate Branch GC safety contract
         run: python scripts/validate_branch_gc.py
+      - name: Validate Embedded Domain Closed Loop V1
+        run: python scripts/validate_embedded_closed_loop.py
       - name: Validate expert-team contracts
         run: python scripts/validate_embedded_assets.py
       - name: Validate pilot operational contracts
@@ -106,7 +110,10 @@ jobs:
             --delivery-receipt tests/fixtures/delivery-receipt.valid.json \
             --verification-report tests/fixtures/verification-report.valid.json \
             --review-report tests/fixtures/review-report.valid.json \
-            --pilot-result tests/fixtures/pilot-result.feature.valid.json
+            --pilot-result tests/fixtures/pilot-result.feature.valid.json \
+            --extra material_manifest=tests/fixtures/material-manifest.valid.json \
+            --extra acceptance_evidence_matrix=tests/fixtures/acceptance-evidence-matrix.valid.md \
+            --extra knowledge_harvest=tests/fixtures/knowledge-harvest.valid.md
           python scripts/embedded_pilot.py validate "$root/CI-PILOT-001"
           python scripts/embedded_pilot.py bundle "$root/CI-PILOT-001" --fail-incomplete
           python scripts/embedded_pilot.py summary "$root" --output /tmp/pilot-status.json

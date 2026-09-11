@@ -12,6 +12,7 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/branch-gc.yml'
+      - '.github/branch-gc-allowlist.txt'
 
 permissions:
   contents: write

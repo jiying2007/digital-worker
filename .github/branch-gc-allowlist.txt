@@ -1,7 +1,4 @@
 # Approved merged task branches for Branch GC.
 # One branch per line. `main` is forbidden by the workflow and validator.
-docs/core-reference-v07-sync
-docs/archive-enterprise-ai-digital-thread-brainstorm
-docs/archive-embedded-internal-thread-brainstorm
-docs/architecture-review-readiness-pack
-chore/branch-gc-workflow
+# Historical branches already deleted by prior GC runs are intentionally removed from this live allowlist.
+feat/embedded-domain-closed-loop-v1
