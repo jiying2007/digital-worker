@@ -3,10 +3,11 @@
 ## 当前提案
 
 - [研发中心 AI 数字员工研发流程规划 V2](研发中心AI数字员工研发流程规划_V2.md)：结合 WorkBuddy 企业版、飞书、飞书知识库、内网 WeKnora 和 Codex CLI 的总体方案。
-- [ADR-001：WorkBuddy 与 Codex CLI 的集成边界](docs/adr/ADR-001-workbuddy-codex-integration-boundary.md)：记录一期采用输入/输出契约松耦合、暂不直接编排个人 Codex CLI 的决策依据。
-- [嵌入式系统专家团当前阶段终版设计 V1](docs/architecture/embedded-system-expert-team-v1.md)：冻结嵌入式软件专家团的组织、任务分类、Workflow、Gate、Contract、Evidence、自治边界与评测基线。
-- [ADR-002：嵌入式系统专家团架构与落地边界](docs/adr/ADR-002-embedded-system-expert-team-architecture.md)：记录 digital-worker 作为专家团 SSOT、1+7 组织模型、契约式工程交接和独立验证等核心架构决策。
-- [嵌入式系统专家团目录](expert-groups/embedded-system/README.md)：已落地 Governance、1+7 Core Experts、23 个 P0 Skills、Engineering Handoff、Product Cross-Team Contract、12 个 Golden Cases 与自动结构回归 CI。
+- [ADR-001：WorkBuddy 与 Codex CLI 的集成边界](docs/adr/ADR-001-workbuddy-codex-integration-boundary.md)：一期采用输入/输出契约松耦合、暂不直接编排个人 Codex CLI。
+- [嵌入式系统专家团当前阶段终版设计 V1](docs/architecture/embedded-system-expert-team-v1.md)：冻结嵌入式专家团架构基线。
+- [ADR-002：嵌入式系统专家团架构与落地边界](docs/adr/ADR-002-embedded-system-expert-team-architecture.md)：记录 digital-worker SSOT、1+7、契约式交接和独立验证等核心决策。
+- [嵌入式系统专家团目录](expert-groups/embedded-system/README.md)：当前已具备 Governance、1+7 Core Experts、23 个 P0 Skills、Engineering Handoff、跨团队 Contract、Golden Cases、Pilot Contracts/Evaluator 和自动 CI。
+- [嵌入式系统专家团真实 Pilot Runbook](docs/runbooks/embedded-pilot.md)：真实试点接入、证据留存和生产化资格门槛。
 
 ## 历史与参考材料
 
@@ -19,7 +20,7 @@
 ## 状态说明
 
 - 研发中心研发流程 V2 与 ADR-001 当前仍为 `proposed`。
-- 嵌入式系统专家团架构为 `architecture-frozen`；实现状态已推进到 `cross-team-and-golden-baseline-defined`。结构化接单、专家路由、工程交接、产品专家团协作和回归用 Golden Cases 已具备，但尚未通过真实项目 Pilot，因此不是 Production Ready。
+- 嵌入式系统专家团架构为 `architecture-frozen`；实现状态为 `pilot-infrastructure-ready`。这表示真实 Pilot 所需契约、模板、评分和 CI 已具备，但尚无 3 条真实轨道的 completed evidence，因此仍不是 Production Ready。
 - 嵌入式系统专家团正式资产以本仓为 SSOT；其他外部仓库仅作参考或未来可选集成。
 
-下一阶段应直接进入真实 Pilot，并以 Pilot 证据驱动端侧底座 ownership resolution、Golden Case 结果扩充和 P1 Skills，而不是继续无证据扩充专家数量。
+下一步不是继续堆 Agent/Skill，而是绑定真实 Debug、Feature、Review/Release 三类工作项完成 Pilot；通过安全门槛后也只能进入单独的人工 productionization review。

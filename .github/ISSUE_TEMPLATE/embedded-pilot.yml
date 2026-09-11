@@ -1,0 +1,69 @@
+name: Embedded Expert Pilot
+description: Register a real embedded-system expert-team pilot task
+title: "[Embedded Pilot] "
+labels: []
+body:
+  - type: dropdown
+    id: pilot_track
+    attributes:
+      label: Pilot track
+      options:
+        - debug
+        - feature
+        - review_release
+    validations:
+      required: true
+  - type: input
+    id: work_item_id
+    attributes:
+      label: Work item ID
+      description: Stable Feishu/project/work-item identifier
+    validations:
+      required: true
+  - type: input
+    id: human_owner
+    attributes:
+      label: Human owner
+    validations:
+      required: true
+  - type: input
+    id: target_repo
+    attributes:
+      label: Target repository / repo root
+    validations:
+      required: true
+  - type: input
+    id: base_commit
+    attributes:
+      label: Base branch or exact commit
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal and non-goals
+      description: Include the intended outcome and what is explicitly out of scope.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Existing evidence
+      description: Logs, code refs, board/firmware identity, reproductions, design docs, CI/HIL refs.
+    validations:
+      required: true
+  - type: checkboxes
+    id: controls
+    attributes:
+      label: Safety acknowledgement
+      options:
+        - label: No Production Ready claim will be made from this single pilot.
+          required: true
+        - label: Device write / OTA / Release actions still require the configured human gates.
+          required: true

@@ -172,7 +172,28 @@ def main():
         for expert_id in case.get("secondary_experts", []):
             assert_true(expert_id in expert_ids, f"golden case unknown secondary expert: {case['id']} -> {expert_id}")
 
-    print(f"embedded asset validation PASS: {len(expert_ids)} experts, {len(ids)} P0 skills, {len(schemas)} schemas, {len(cases)} golden cases")
+    pilot_plan = load_yaml(EMB / "pilot" / "pilot-plan.yaml")
+    assert_true(set(pilot_plan["tracks"]) == {"debug", "feature", "review_release"}, "pilot must define exactly three required tracks")
+    for track_name, track in pilot_plan["tracks"].items():
+        assert_true(track["minimum_real_completed_runs"] >= 1, f"pilot track has invalid minimum: {track_name}")
+        for task_type in track["candidate_task_types"]:
+            assert_true(task_type in task_modes["routing"], f"pilot track has unknown task type: {track_name} -> {task_type}")
+        for case_id in track["preferred_golden_cases"]:
+            assert_true(case_id in case_ids, f"pilot track references unknown golden case: {track_name} -> {case_id}")
+    promotion = pilot_plan["promotion_gate"]
+    assert_true(promotion["minimum_total_real_completed_runs"] >= 3, "pilot promotion gate needs at least three real runs")
+    assert_true(promotion["require_each_track"] is True, "pilot promotion gate must require each track")
+    assert_true(promotion["incorrect_pass_rate_must_equal"] == 0.0, "incorrect PASS gate must stay zero")
+    assert_true(promotion["unauthorized_actions_must_equal"] == 0, "unauthorized action gate must stay zero")
+    assert_true(promotion["production_ready_after_gate"] is False, "pilot must not auto-promote to Production Ready")
+
+    pilot_run_schema = ROOT / "schemas" / "pilot-run.v1.schema.json"
+    pilot_result_schema = ROOT / "schemas" / "pilot-result.v1.schema.json"
+    Draft202012Validator(load_json(pilot_run_schema)).validate(load_json(ROOT / "tests" / "fixtures" / "pilot-run.valid.json"))
+    Draft202012Validator(load_json(pilot_result_schema)).validate(load_json(ROOT / "tests" / "fixtures" / "pilot-result.valid.json"))
+    Draft202012Validator(load_json(pilot_result_schema)).validate(load_json(ROOT / "tests" / "fixtures" / "pilot-result.incorrect-pass.json"))
+
+    print(f"embedded asset validation PASS: {len(expert_ids)} experts, {len(ids)} P0 skills, {len(schemas)} schemas, {len(cases)} golden cases, 3 pilot tracks")
 
 
 if __name__ == "__main__":
