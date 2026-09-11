@@ -32,9 +32,12 @@ for snippet in required_snippets:
     if snippet not in text:
         fail(f"Branch GC safety contract missing: {snippet!r}")
 
-# Bootstrap execution is intentionally limited to first/update merge of the GC workflow itself.
-if "branches: [main]" not in text or "'.github/workflows/branch-gc.yml'" not in text:
-    fail("bootstrap push trigger must be limited to main + branch-gc.yml path")
+# Automated execution is limited to reviewed changes on main that modify the GC workflow or its allowlist.
+if "branches: [main]" not in text:
+    fail("Branch GC push trigger must stay limited to main")
+for trigger_path in ["'.github/workflows/branch-gc.yml'", "'.github/branch-gc-allowlist.txt'"]:
+    if trigger_path not in text:
+        fail(f"Branch GC audited push trigger missing: {trigger_path}")
 
 branches = []
 for raw in allowlist.read_text(encoding="utf-8").splitlines():
@@ -43,7 +46,7 @@ for raw in allowlist.read_text(encoding="utf-8").splitlines():
         branches.append(line)
 
 if not branches:
-    fail("Branch GC allowlist must not be empty during bootstrap rollout")
+    fail("Branch GC allowlist must contain at least one reviewed branch")
 if "main" in branches:
     fail("main must never appear in Branch GC allowlist")
 if len(branches) != len(set(branches)):
