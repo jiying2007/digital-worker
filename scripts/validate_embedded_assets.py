@@ -134,7 +134,45 @@ def main():
         if stage.get("output_schema"):
             resolve_declared_ref(handoff, stage["output_schema"])
 
-    print(f"embedded asset validation PASS: {len(expert_ids)} experts, {len(ids)} P0 skills, {len(schemas)} schemas")
+    product_handoff = EMB / "contracts" / "cross-team" / "product-expert-handoff.yaml"
+    product_doc = load_yaml(product_handoff)
+    request_schema_path = resolve_declared_ref(product_handoff, product_doc["request"]["schema"])
+    response_schema_path = resolve_declared_ref(product_handoff, product_doc["response"]["schema"])
+    request_fixture = load_json(ROOT / "tests" / "fixtures" / "technical-review-request.valid.json")
+    response_fixture = load_json(ROOT / "tests" / "fixtures" / "embedded-feasibility-review.valid.json")
+    Draft202012Validator(load_json(request_schema_path)).validate(request_fixture)
+    Draft202012Validator(load_json(response_schema_path)).validate(response_fixture)
+    assert_true(request_fixture["work_item_id"] == response_fixture["work_item_id"], "cross-team work_item_id mismatch")
+    assert_true(product_doc["request"]["entry_task_type"] in task_modes["routing"], "cross-team entry task type is not routable")
+    assert_true(product_doc["request"]["workflow_mode"] in mode_names, "cross-team workflow mode is unknown")
+
+    ownership_file = EMB / "contracts" / "cross-team" / "edge-foundation-ownership.yaml"
+    ownership = load_yaml(ownership_file)
+    resolve_declared_ref(ownership_file, ownership["source_reference"])
+    allowed_ownership = set(ownership["policy"]["allowed_ownership"])
+    for item in ownership["candidate_domains"]:
+        if item["status"] == "unresolved":
+            assert_true(item["ownership"] is None, f"unresolved ownership must remain null: {item['domain']}")
+        else:
+            assert_true(item["ownership"] in allowed_ownership, f"invalid ownership decision: {item['domain']}")
+
+    golden_doc = load_yaml(EMB / "tests" / "golden-cases.yaml")
+    golden_schema = load_json(EMB / "schemas" / "golden-case.schema.json")
+    cases = golden_doc["cases"]
+    assert_true(len(cases) >= 10, "golden-case baseline must contain at least 10 cases")
+    case_ids = [case["id"] for case in cases]
+    assert_true(len(case_ids) == len(set(case_ids)), "duplicate golden-case IDs")
+    for case in cases:
+        Draft202012Validator(golden_schema).validate(case)
+        assert_true(case["task_type"] in task_modes["routing"], f"golden case has unknown task type: {case['id']}")
+        route = task_modes["routing"][case["task_type"]]
+        assert_true(case["workflow_mode"] in route["allowed_modes"], f"golden case mode not allowed by task route: {case['id']}")
+        for expert_id in case["expected_primary_experts"]:
+            assert_true(expert_id in route["primary_experts"], f"golden case primary expert disagrees with task route: {case['id']} -> {expert_id}")
+        for expert_id in case.get("secondary_experts", []):
+            assert_true(expert_id in expert_ids, f"golden case unknown secondary expert: {case['id']} -> {expert_id}")
+
+    print(f"embedded asset validation PASS: {len(expert_ids)} experts, {len(ids)} P0 skills, {len(schemas)} schemas, {len(cases)} golden cases")
 
 
 if __name__ == "__main__":

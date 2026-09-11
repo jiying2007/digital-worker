@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "work_item_id": "PROD-EMB-001",
+  "source_team": "product-expert-team",
+  "product_id": "pet-robot",
+  "requirement_refs": ["feishu://prd/req-101"],
+  "product_outline_ref": "feishu://product-outline/v1",
+  "performance_targets": ["boot-to-ready <= 12s"],
+  "constraints": ["existing main SoC retained", "power budget <= baseline + 10%"],
+  "hardware_assumptions": ["board revision B is target"],
+  "schedule_constraints": ["pilot in current quarter"],
+  "requested_decisions": ["technical feasibility", "embedded architecture impact", "verification strategy"],
+  "evidence_refs": ["evidence://product/req-101"]
+}

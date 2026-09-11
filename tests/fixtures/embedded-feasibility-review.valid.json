@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "work_item_id": "PROD-EMB-001",
+  "reviewing_team": "embedded-system",
+  "overall_assessment": "FEASIBLE_WITH_CONDITIONS",
+  "architecture_impact": ["startup path requires one additional service dependency"],
+  "platform_impact": ["no SoC replacement required"],
+  "software_impact": ["boot service and driver initialization sequencing change"],
+  "resource_budget": ["measure boot latency and resident memory before approval"],
+  "dependencies": ["board revision B schematic"],
+  "risks": ["startup latency target not yet measured on target board"],
+  "verification_strategy": ["cross-build", "target boot trace", "HIL cold-boot repetitions"],
+  "open_questions": ["final board revision evidence pending"],
+  "evidence_refs": ["evidence://product/req-101"],
+  "confidence": "C3"
+}

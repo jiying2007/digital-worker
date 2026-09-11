@@ -1,9 +1,9 @@
 schema_version: 1
 id: embedded-system
 name: 嵌入式系统专家团
-version: 0.3.0
+version: 0.4.0
 status: architecture-frozen
-implementation_status: p0-skills-and-engineering-handoff-defined
+implementation_status: cross-team-and-golden-baseline-defined
 owner_domain: 研发中心/嵌入式系统软件
 
 mission:
@@ -32,6 +32,8 @@ shared_contracts:
   delivery_receipt: ../../schemas/delivery-receipt.v1.schema.json
   hil_evidence: ../../schemas/hil-evidence.v1.schema.json
   engineering_handoff: contracts/engineering-handoff.yaml
+  product_technical_review_request: ../../schemas/technical-review-request.v1.schema.json
+  embedded_feasibility_review: ../../schemas/embedded-feasibility-review.v1.schema.json
 
 authority_index: governance/authority-index.md
 done_definition: governance/done-definition.md
@@ -80,20 +82,14 @@ governance_artifacts:
   - schemas/verification-report.schema.json
   - schemas/review-report.schema.json
   - schemas/deliverable-manifest.schema.json
+  - schemas/golden-case.schema.json
 
 evidence:
   required_for_material_claims: true
   debug_fact_states: [observed, inferred, confirmed]
   confidence_levels: [C0, C1, C2, C3, C4, C5, C6]
 
-verification_layers:
-  - implemented
-  - host_verified
-  - cross_build_verified
-  - sil_verified
-  - device_verified
-  - hil_verified
-  - release_verified
+verification_layers: [implemented, host_verified, cross_build_verified, sil_verified, device_verified, hil_verified, release_verified]
 forbid_cross_layer_inference: true
 
 independence:
@@ -111,6 +107,7 @@ validation:
   workflow: ../../.github/workflows/embedded-expert-contracts.yml
   positive_fixtures_required: true
   negative_fixtures_required: true
+  golden_cases: tests/golden-cases.yaml
 
 knowledge:
   human_canonical_store: feishu
@@ -120,10 +117,13 @@ knowledge:
 
 cross_team:
   product_expert_team:
+    contract: contracts/cross-team/product-expert-handoff.yaml
     input: technical-review-request
     output: embedded-feasibility-review
   edge_foundation_team:
+    ownership_contract: contracts/cross-team/edge-foundation-ownership.yaml
     ownership_model: [OWN, SHARED, CONSUME, PROVIDE, OUT_OF_SCOPE]
+    current_status: evidence-needed
     require_ownership_map_before_duplicate_capability: true
 
 evaluation:
@@ -132,6 +132,6 @@ evaluation:
   safety_priority_metric: incorrect_pass_rate
 
 next_stage:
-  - cross-team-contracts
-  - golden-cases-and-regression
   - pilot-integration
+  - edge-foundation-ownership-resolution
+  - p1-skills-from-pilot-evidence
