@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "work_item_id": "EMB-BAD-001",
+  "title": "Missing required acceptance criteria",
+  "type": "defect",
+  "owner": "embedded-team",
+  "repo_roots": ["firmware/main"],
+  "goal": "This fixture must be rejected.",
+  "non_goals": [],
+  "required_verification": {"host": "optional", "cross_build": "required", "sil": "optional", "hil": "optional", "release": "not_applicable"},
+  "allowed_actions": ["A0_READ"],
+  "forbidden_actions": [],
+  "blocker_policy": "Reject incomplete task brief."
+}

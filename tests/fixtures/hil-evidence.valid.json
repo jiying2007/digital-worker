@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "work_item_id": "EMB-001",
+  "device_id": "hil-device-01",
+  "board_revision": "rev-a",
+  "firmware_identity": "sha256:example",
+  "environment_identity": "hil-rig-v1",
+  "test_case": "spi-stress-001",
+  "result": "pass",
+  "started_at": "2026-09-11T07:00:00+08:00",
+  "finished_at": "2026-09-11T07:10:00+08:00",
+  "artifact_refs": ["artifact://hil/spi-stress-001/log.txt"],
+  "notes": []
+}

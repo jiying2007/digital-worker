@@ -1,9 +1,9 @@
 schema_version: 1
 id: embedded-system
 name: 嵌入式系统专家团
-version: 0.2.0
+version: 0.3.0
 status: architecture-frozen
-implementation_status: governance-and-core-experts-defined
+implementation_status: p0-skills-and-engineering-handoff-defined
 owner_domain: 研发中心/嵌入式系统软件
 
 mission:
@@ -27,6 +27,12 @@ upstream_contracts:
   - ../../docs/adr/ADR-001-workbuddy-codex-integration-boundary.md
   - ../../docs/adr/ADR-002-embedded-system-expert-team-architecture.md
 
+shared_contracts:
+  task_brief: ../../schemas/task-brief.v1.schema.json
+  delivery_receipt: ../../schemas/delivery-receipt.v1.schema.json
+  hil_evidence: ../../schemas/hil-evidence.v1.schema.json
+  engineering_handoff: contracts/engineering-handoff.yaml
+
 authority_index: governance/authority-index.md
 done_definition: governance/done-definition.md
 
@@ -38,34 +44,13 @@ team_lead:
   may_self_approve_final_verification: false
 
 experts:
-  - id: embedded-architecture-expert
-    domain: architecture
-    definition: agents/embedded-architecture-expert.md
-    contract: contracts/experts/architecture.io.yaml
-  - id: linux-bsp-expert
-    domain: linux-bsp
-    definition: agents/linux-bsp-expert.md
-    contract: contracts/experts/linux-bsp.io.yaml
-  - id: mcu-rtos-expert
-    domain: mcu-rtos
-    definition: agents/mcu-rtos-expert.md
-    contract: contracts/experts/mcu-rtos.io.yaml
-  - id: driver-component-expert
-    domain: driver-component
-    definition: agents/driver-component-expert.md
-    contract: contracts/experts/driver-component.io.yaml
-  - id: debug-reliability-expert
-    domain: debug-reliability
-    definition: agents/debug-reliability-expert.md
-    contract: contracts/experts/debug-reliability.io.yaml
-  - id: verification-expert
-    domain: verification
-    definition: agents/verification-expert.md
-    contract: contracts/experts/verification.io.yaml
-  - id: embedded-review-governor
-    domain: independent-review
-    definition: agents/embedded-review-governor.md
-    contract: contracts/experts/review-governor.io.yaml
+  - {id: embedded-architecture-expert, domain: architecture, definition: agents/embedded-architecture-expert.md, contract: contracts/experts/architecture.io.yaml}
+  - {id: linux-bsp-expert, domain: linux-bsp, definition: agents/linux-bsp-expert.md, contract: contracts/experts/linux-bsp.io.yaml}
+  - {id: mcu-rtos-expert, domain: mcu-rtos, definition: agents/mcu-rtos-expert.md, contract: contracts/experts/mcu-rtos.io.yaml}
+  - {id: driver-component-expert, domain: driver-component, definition: agents/driver-component-expert.md, contract: contracts/experts/driver-component.io.yaml}
+  - {id: debug-reliability-expert, domain: debug-reliability, definition: agents/debug-reliability-expert.md, contract: contracts/experts/debug-reliability.io.yaml}
+  - {id: verification-expert, domain: verification, definition: agents/verification-expert.md, contract: contracts/experts/verification.io.yaml}
+  - {id: embedded-review-governor, domain: independent-review, definition: agents/embedded-review-governor.md, contract: contracts/experts/review-governor.io.yaml}
 
 workflow:
   task_modes: config/task-modes.yaml
@@ -73,6 +58,7 @@ workflow:
   gate_policy: config/gate-policy.yaml
   material_requirements: config/material-requirements.yaml
   action_policy: config/action-policy.yaml
+  skill_registry: config/p0-skills.yaml
   default_mode: null
   require_task_classification: true
   allow_implicit_full_chain: false
@@ -120,17 +106,16 @@ autonomy:
   authorization_required: [A5_DEVICE_READ]
   human_approval_required: [A6_DEVICE_WRITE, A7_RELEASE]
 
+validation:
+  script: ../../scripts/validate_embedded_assets.py
+  workflow: ../../.github/workflows/embedded-expert-contracts.yml
+  positive_fixtures_required: true
+  negative_fixtures_required: true
+
 knowledge:
   human_canonical_store: feishu
   ai_retrieval_layer: weknora
-  local_knowledge_scope:
-    - methodology
-    - checklists
-    - templates
-    - terminology
-    - source-registry
-    - static-engineering-rules
-    - evaluation-fixtures
+  local_knowledge_scope: [methodology, checklists, templates, terminology, source-registry, static-engineering-rules, evaluation-fixtures]
   forbid_parallel_manual_canonical_copy: true
 
 cross_team:
@@ -143,19 +128,10 @@ cross_team:
 
 evaluation:
   golden_cases_required: true
-  primary_metrics:
-    - routing_accuracy
-    - evidence_coverage
-    - unsupported_claim_rate
-    - correct_block_rate
-    - incorrect_pass_rate
-    - root_cause_accuracy
-    - verification_completeness
-    - human_correction_rate
+  primary_metrics: [routing_accuracy, evidence_coverage, unsupported_claim_rate, correct_block_rate, incorrect_pass_rate, root_cause_accuracy, verification_completeness, human_correction_rate]
   safety_priority_metric: incorrect_pass_rate
 
 next_stage:
-  - p0-skills
-  - engineering-handoff
   - cross-team-contracts
-  - golden-cases-and-pilot
+  - golden-cases-and-regression
+  - pilot-integration
