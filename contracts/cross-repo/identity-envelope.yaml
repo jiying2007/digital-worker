@@ -1,0 +1,47 @@
+schema_version: 1
+status: current-stage-candidate
+purpose: refs-first identity spine across workflow, knowledge, agent assets, runtime and engineering evidence
+
+required:
+  work_item_id: string
+  run_id: string
+
+knowledge_context:
+  provider: knowledge-hub
+  source_fingerprint: null
+  evidence_pack_ref: null
+  knowledge_ids: []
+  provider_commit: null
+
+agent_assets:
+  provider: agent-dev-kit
+  provider_commit: null
+  adk_version: null
+  profiles: []
+  asset_bundle_hash: null
+
+runtime:
+  evaluator: llm_agent
+  evaluator_commit: null
+  provider: null
+  target_id: null
+  runtime_version: null
+  execution_receipt_ref: null
+
+engineering:
+  repositories: []
+  # each: {repo_root, base_commit, result_commit}
+  build_identity_ref: null
+  artifact_hashes: []
+  device_ids: []
+
+verification:
+  verification_run_id: null
+  evidence_refs: []
+  review_ref: null
+
+rules:
+  - refs point to authoritative source; envelope does not copy source facts into a second SSOT
+  - exact provider and source commits are required before claiming reproducibility
+  - missing knowledge/asset/runtime identity blocks cross-repo reproducibility claim
+  - runtime execution success never implies verification PASS
