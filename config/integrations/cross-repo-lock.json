@@ -1,1 +1,41 @@
-{}
+{
+  "schema_version": 1,
+  "status": "candidate-integration",
+  "architecture_provider_selection": "not_frozen",
+  "providers": {
+    "knowledge_control_plane": {
+      "repository": "jiying2007/knowledge-hub",
+      "ref": "master",
+      "commit": "8541d5f0a40263536179ea44764bca2baa063731",
+      "contract": "registry/integrations/digital-worker.json",
+      "contract_version": "1.0",
+      "validation": "BLOCKED_CI_TRANSPORT",
+      "notes": "Interface JSON is present; current Hub quality run is red in existing Python/rtk wrapper transport, so this pin is candidate-only."
+    },
+    "agent_asset_control_plane": {
+      "repository": "jiying2007/agent-dev-kit",
+      "ref": "main",
+      "commit": "9ab5b2a6047f9afb8460d9e985abfa44cd909947",
+      "contract": "manifests/integrations/digital-worker.json",
+      "contract_version": "1.0",
+      "adk_version": "5.0.0-rc.2",
+      "required_profile": "embedded-fullstack",
+      "validation": "CORE_CI_PASS_PROMOTION_JOB_UNAVAILABLE"
+    },
+    "runtime_practice_eval": {
+      "repository": "jiying2007/llm_agent",
+      "ref": "main",
+      "commit": "cb80e5ad15e783e627736d52f8d67ad5a445c2fc",
+      "contract": "manifests/digital_worker_runtime_pilot.json",
+      "contract_version": "1.0",
+      "validation": "CONTRACT_PREVIOUS_PASS_LATEST_JOB_LEVEL_FAILURE"
+    }
+  },
+  "rules": {
+    "exact_commit_required": true,
+    "provider_specific_paths_must_not_enter_domain_contracts": true,
+    "source_of_truth_stays_at_source": true,
+    "provider_failure_must_not_be_reported_as_pass": true,
+    "runtime_output_is_not_verification_pass": true
+  }
+}
