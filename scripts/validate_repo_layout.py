@@ -24,9 +24,11 @@ def main() -> None:
     canonical_workflow = ROOT / "研发中心AI数字员工研发流程规划.md"
     archived_v1 = ROOT / "docs/archive/研发中心AI数字员工研发流程规划_V1.md"
     source_root = ROOT / "docs/source-materials"
+    adr3 = ROOT / "docs/adr/ADR-003-provider-neutral-ai-rd-target-architecture.md"
 
     require(canonical_workflow.is_file(), "missing canonical R&D workflow")
     require(archived_v1.is_file(), "missing archived V1 workflow")
+    require(adr3.is_file(), "missing provider-neutral target architecture ADR-003")
     require((source_root / "研发中心AI数字员工办公体系改造方案（预案）.docx").is_file(), "missing office source material")
     require((source_root / "端侧底座专家团创建.docx").is_file(), "missing edge-foundation source material")
     require((source_root / "硬件电路/硬件电路开发模块（举例）.docx").is_file(), "missing hardware source material")
@@ -43,11 +45,13 @@ def main() -> None:
 
     workflow_text = canonical_workflow.read_text(encoding="utf-8")
     require(workflow_text.startswith("# 研发中心 AI 数字员工研发流程规划\n"), "canonical workflow title must be unversioned")
-    require("- 文档版本：2" in workflow_text, "canonical workflow must carry document version metadata")
-    require("docs/archive/研发中心AI数字员工研发流程规划_V1.md" in workflow_text, "canonical workflow must point historical V1 to archive")
+    require("- 文档版本：3" in workflow_text, "canonical workflow must carry document version 3 metadata")
+    require("docs/archive/" in workflow_text, "canonical workflow must preserve historical archive policy")
+    require("ADR-003" in workflow_text, "canonical workflow must reference ADR-003")
 
     root_readme = read("README.md")
     require("研发中心AI数字员工研发流程规划.md" in root_readme, "root README must link canonical workflow")
+    require("ADR-003" in root_readme, "root README must expose provider-neutral ADR-003")
     require("review-ready" in root_readme, "root README must expose current review-ready status")
     require("review-draft" not in root_readme, "review-draft compatibility status is forbidden in root README")
 
@@ -94,7 +98,7 @@ def main() -> None:
                 violations.append(f"{path.relative_to(ROOT)} -> {token}")
     require(not violations, "stale canonical-path references found: " + "; ".join(violations))
 
-    print("repository layout validation PASS: canonical paths converged, legacy root/version compatibility residue absent")
+    print("repository layout validation PASS: canonical paths converged, architecture baseline v3 present, legacy compatibility residue absent")
 
 
 if __name__ == "__main__":
