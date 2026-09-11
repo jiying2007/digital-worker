@@ -10,6 +10,8 @@
 
 本目录是嵌入式系统专家团机器资产的人类可读解释层，与 `产品专家团-核心参考/` 同类型；不是第二套实现，也不是第二套 SSOT。
 
+正式 Architecture Review 请从 [`docs/review/`](../docs/review/) 开始。`docs/review/` 提供 Pre-read、Decision Matrix、Evidence Gap、RACI 与端到端 Walkthrough；本目录用于需要深入追溯专家团细节时查阅。
+
 ## 当前同步状态
 
 01~16 已统一按 ADR-003 的 Provider-neutral 架构解释：
@@ -35,7 +37,8 @@
 9. `agents/*.md`；
 10. `skills/*/SKILL.md`；
 11. 本目录说明文档；
-12. `docs/archive/` 与 `docs/source-materials/`。
+12. `docs/review/`（评审准备材料，不覆盖上位权威）；
+13. `docs/archive/` 与 `docs/source-materials/`。
 
 ## 文档索引
 
