@@ -1,46 +1,28 @@
 # 嵌入式系统专家团
 
-- Status: `architecture-frozen`
-- Version: `0.1.0`
+- Architecture status: `frozen`
+- Implementation status: `governance-and-core-experts-defined`
+- Version: `0.2.0`
 - Date: 2026-09-11
 - Owner domain: 研发中心 / 嵌入式系统（软件）
 
 ## 1. 定位
 
-本目录是 `digital-worker` 内嵌入式系统专家团的正式落地点。
+本目录是 `digital-worker` 内嵌入式系统专家团的正式 SSOT。外部 `agent-dev-kit`、`knowledge-hub`、`codex` 等仓库只作参考或未来可选连接，不是当前运行前置依赖。
 
 权威设计：
-
 - `../../docs/architecture/embedded-system-expert-team-v1.md`
 - `../../docs/adr/ADR-002-embedded-system-expert-team-architecture.md`
 
 上游总体流程：
-
 - `../../研发中心AI数字员工研发流程规划_V2.md`
 - `../../docs/adr/ADR-001-workbuddy-codex-integration-boundary.md`
 
-主要工程化参考：
+## 2. 当前已落地
 
-- `../../产品专家团-核心参考/`
+### 组织
 
-`agent-dev-kit`、`knowledge-hub`、`codex` 等外部仓库可作为设计与实现参考，但不是本专家团定义的 SSOT，也不是当前阶段运行前置条件。
-
-## 2. 当前冻结范围
-
-当前只冻结架构契约，不宣称专家团生产实现完成：
-
-- 1+7 组织模型；
-- task taxonomy；
-- workflow modes；
-- Gate；
-- evidence-first；
-- 独立 verification/review；
-- autonomy/action boundary；
-- product expert handoff；
-- 端侧底座 capability ownership 原则；
-- evaluation contract。
-
-## 3. 核心专家
+1+7 核心专家定义已经落入 `agents/`，并为每个专家建立 L1 I/O Contract：
 
 - `embedded-system-team-lead`
 - `embedded-architecture-expert`
@@ -51,30 +33,32 @@
 - `verification-expert`
 - `embedded-review-governor`
 
-## 4. 当前机器可读资产
+### Governance Skeleton
 
-- `expert-group.yaml`：顶层身份、成员、能力与治理边界；
-- `config/task-modes.yaml`：task type 与默认路由；
-- `config/workflow.yaml`：阶段、Gate 与主 transition skeleton。
+已建立 task routing、workflow、A0-A7 action policy、Gate policy、material readiness、三层 I/O、Evidence、Run State、Gate Ledger、Hypothesis Registry、Engineering Task Package、Verification、Independent Review 和 Closure Manifest 契约。
 
-后续将继续建设：
+## 3. 运行路径
+
+`config/workflow.yaml` 按 `workflow_mode` 明确不同路径；**并非所有任务都进入工程执行**。
+
+- `full_chain / short_chain / diagnostic_chain / bringup_chain`：可进入 Engineering Execution；
+- `review_only`：只分析/审查，不允许隐式进入代码修改；
+- `release_chain`：默认做发布准备度验证，若需代码修改必须显式扩展模式；
+- `single_expert`：完成单领域分析后收口，不自动扩链。
+
+工程执行路径仍遵守 ADR-001：
 
 ```text
-agents/
-contracts/
-schemas/
-skills/
-references/
-knowledge/
-scripts/
-tests/
+engineering-task-package -> Engineer + Codex -> delivery-receipt
 ```
 
-## 5. 不可违反的工程原则
+WorkBuddy 当前不直接遥控个人 Codex CLI。
+
+## 4. 不可违反的工程原则
 
 1. 先分类再路由，不默认 full chain；
 2. 缺关键硬件/版本证据时 BLOCK 或显式降级；
-3. Debug 区分 Observed / Inferred / Confirmed；
+3. Debug 区分 Observed / Inferred / Confirmed，并维护 Hypothesis Registry；
 4. 实施者不能给自己的最终验证签 PASS；
 5. Host / cross-build / device / HIL / release 状态分层；
 6. 关键 claim 必须绑定 evidence；
@@ -83,13 +67,12 @@ tests/
 9. 跨专家团通过 contract，不依赖自由聊天；
 10. 新增 Agent 前先证明不能由现有 Agent + Skill 承担。
 
-## 6. 下一阶段
+## 5. 尚未完成
 
-按以下顺序推进：
+当前不是 Production Ready。下一阶段依次为：
 
-1. Governance Skeleton；
-2. Core Experts + L1 Contracts；
-3. P0 Skills；
-4. Engineering Handoff；
-5. Product/端侧底座 Cross-Team Contract；
-6. Golden Cases + Pilot。
+1. P0 Skills；
+2. Engineering Handoff 与共享 `task-brief/delivery-receipt` schema；
+3. Product Expert / 端侧底座 Cross-Team Contract；
+4. Golden Cases、结构校验脚本与回归；
+5. 真实项目 Pilot。

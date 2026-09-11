@@ -1,0 +1,16 @@
+schema_version: 1
+expert: verification-expert
+consumes:
+  - task-charter
+  - engineering-task-package
+  - delivery-receipt
+  - evidence-ref
+produces:
+  - verification-report
+hands_off_to:
+  - embedded-system-team-lead
+  - embedded-review-governor
+constraints:
+  - no-cross-layer-pass-inference
+  - implementation-owner-cannot-self-final-verify
+  - unverified-items-must-be-preserved

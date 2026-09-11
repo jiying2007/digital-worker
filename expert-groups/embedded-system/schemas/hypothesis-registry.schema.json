@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "hypothesis-registry.schema.json",
+  "title": "Embedded Diagnostic Hypothesis Registry",
+  "type": "object",
+  "required": ["run_id", "hypotheses"],
+  "properties": {
+    "run_id": {"type": "string"},
+    "hypotheses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["hypothesis_id", "statement", "status", "confidence", "evidence_for", "evidence_against"],
+        "properties": {
+          "hypothesis_id": {"type": "string", "minLength": 1},
+          "statement": {"type": "string", "minLength": 1},
+          "status": {"enum": ["open", "supported", "rejected", "confirmed"]},
+          "confidence": {"enum": ["low", "medium", "high"]},
+          "evidence_for": {"type": "array", "items": {"type": "string"}},
+          "evidence_against": {"type": "array", "items": {"type": "string"}},
+          "experiment": {"type": ["string", "null"]},
+          "experiment_result": {"type": ["string", "null"]},
+          "owner": {"type": ["string", "null"]}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

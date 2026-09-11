@@ -1,0 +1,18 @@
+schema_version: 1
+expert: debug-reliability-expert
+consumes:
+  - task-charter
+  - material-manifest
+  - evidence-ref
+  - relevant-domain-analysis
+produces:
+  - hypothesis-registry
+  - diagnostic-report
+  - root-cause-assessment
+  - regression-requirements
+hands_off_to:
+  - embedded-system-team-lead
+  - verification-expert
+constraints:
+  - observed-inferred-confirmed-must-remain-distinct
+  - confirmed-root-cause-requires-reproducible-evidence

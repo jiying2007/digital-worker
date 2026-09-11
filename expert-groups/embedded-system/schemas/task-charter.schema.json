@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "task-charter.schema.json",
+  "title": "Embedded Task Charter",
+  "type": "object",
+  "required": ["run_id", "task_type", "workflow_mode", "goal", "scope", "boundary", "non_goals", "acceptance_criteria", "required_verification", "action_ceiling"],
+  "properties": {
+    "run_id": {"type": "string", "minLength": 1},
+    "work_item_id": {"type": ["string", "null"]},
+    "task_type": {"type": "string"},
+    "workflow_mode": {"type": "string"},
+    "goal": {"type": "string", "minLength": 1},
+    "scope": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "boundary": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "non_goals": {"type": "array", "items": {"type": "string"}},
+    "constraints": {"type": "array", "items": {"type": "string"}},
+    "acceptance_criteria": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "required_verification": {"type": "array", "items": {"enum": ["host", "cross_build", "sil", "device", "hil", "release"]}, "uniqueItems": true},
+    "action_ceiling": {"enum": ["A0_READ", "A1_ANALYZE", "A2_GENERATE", "A3_MODIFY_WORKTREE", "A4_BUILD_TEST", "A5_DEVICE_READ", "A6_DEVICE_WRITE", "A7_RELEASE"]},
+    "risk_level": {"enum": ["low", "medium", "high", "critical"]},
+    "stop_condition": {"type": ["string", "null"]},
+    "assumptions": {"type": "array", "items": {"type": "string"}},
+    "consumed_refs": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

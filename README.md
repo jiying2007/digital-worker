@@ -6,7 +6,7 @@
 - [ADR-001：WorkBuddy 与 Codex CLI 的集成边界](docs/adr/ADR-001-workbuddy-codex-integration-boundary.md)：记录一期采用输入/输出契约松耦合、暂不直接编排个人 Codex CLI 的决策依据。
 - [嵌入式系统专家团当前阶段终版设计 V1](docs/architecture/embedded-system-expert-team-v1.md)：冻结嵌入式软件专家团的组织、任务分类、Workflow、Gate、Contract、Evidence、自治边界与评测基线。
 - [ADR-002：嵌入式系统专家团架构与落地边界](docs/adr/ADR-002-embedded-system-expert-team-architecture.md)：记录 digital-worker 作为专家团 SSOT、1+7 组织模型、契约式工程交接和独立验证等核心架构决策。
-- [嵌入式系统专家团目录](expert-groups/embedded-system/README.md)：机器可读 manifest、任务路由与 workflow skeleton 的正式落地点。
+- [嵌入式系统专家团目录](expert-groups/embedded-system/README.md)：已落地 Governance Skeleton、1+7 Core Experts、L1 I/O Contracts、Gate/Action/Material policies 与核心机器 Schema。
 
 ## 历史与参考材料
 
@@ -19,7 +19,7 @@
 ## 状态说明
 
 - 研发中心研发流程 V2 与 ADR-001 当前仍为 `proposed`。
-- 嵌入式系统专家团 V1 为 `frozen-for-implementation` / `architecture-frozen`：表示当前阶段架构基线已冻结，可进入实现，不代表生产能力已经完成。
+- 嵌入式系统专家团架构状态仍为 `architecture-frozen`；当前实现状态已推进到 `governance-and-core-experts-defined`，表示治理骨架和 1+7 核心专家定义已落地，但尚未达到 Production Ready。
 - 嵌入式系统专家团的 Agent、Skill、Workflow、Schema 等正式资产以本仓为 SSOT；其他外部仓库仅作参考或未来可选集成，不构成当前运行前置依赖。
 
-完成身份映射、知识权限、飞书工作项接口和试点产品范围确认后，再由决策人评审研发流程 V2/ADR-001 是否转为 `accepted`。嵌入式专家团后续按 Governance Skeleton → Core Experts → P0 Skills → Engineering Handoff → Cross-Team Contract → Golden Cases/Pilot 顺序推进。
+完成身份映射、知识权限、飞书工作项接口和试点产品范围确认后，再由决策人评审研发流程 V2/ADR-001 是否转为 `accepted`。嵌入式专家团下一阶段按 P0 Skills → Engineering Handoff → Cross-Team Contract → Golden Cases/结构校验 → Pilot 顺序推进。

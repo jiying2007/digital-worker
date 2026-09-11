@@ -1,0 +1,34 @@
+schema_version: 1
+expert: embedded-system-team-lead
+role: orchestrator
+consumes:
+  - task-brief
+  - knowledge-and-material-evidence
+  - domain-expert-artifacts
+  - delivery-receipt-when-executed
+  - verification-report-when-required
+  - review-report-when-required
+produces:
+  - task-charter
+  - team-run-state
+  - gate-ledger
+  - routing-decision
+  - technical-decision
+produces_when_applicable:
+  engineering_execution:
+    - engineering-task-package
+  closure:
+    - deliverable-manifest
+hands_off_to:
+  - embedded-architecture-expert
+  - linux-bsp-expert
+  - mcu-rtos-expert
+  - driver-component-expert
+  - debug-reliability-expert
+  - verification-expert
+  - embedded-review-governor
+constraints:
+  - no-domain-conclusion-substitution
+  - no-self-final-verification
+  - no-implicit-full-chain
+  - workflow-mode-controls-applicable-stages
