@@ -5,15 +5,20 @@ consumes:
   - task-brief
   - knowledge-and-material-evidence
   - domain-expert-artifacts
-  - delivery-receipt
-  - verification-report
-  - review-report
+  - delivery-receipt-when-executed
+  - verification-report-when-required
+  - review-report-when-required
 produces:
   - task-charter
   - team-run-state
   - gate-ledger
-  - engineering-task-package
-  - closure-summary
+  - routing-decision
+  - technical-decision
+produces_when_applicable:
+  engineering_execution:
+    - engineering-task-package
+  closure:
+    - deliverable-manifest
 hands_off_to:
   - embedded-architecture-expert
   - linux-bsp-expert
@@ -26,3 +31,4 @@ constraints:
   - no-domain-conclusion-substitution
   - no-self-final-verification
   - no-implicit-full-chain
+  - workflow-mode-controls-applicable-stages

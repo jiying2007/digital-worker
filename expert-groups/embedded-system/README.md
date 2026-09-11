@@ -11,12 +11,10 @@
 本目录是 `digital-worker` 内嵌入式系统专家团的正式 SSOT。外部 `agent-dev-kit`、`knowledge-hub`、`codex` 等仓库只作参考或未来可选连接，不是当前运行前置依赖。
 
 权威设计：
-
 - `../../docs/architecture/embedded-system-expert-team-v1.md`
 - `../../docs/adr/ADR-002-embedded-system-expert-team-architecture.md`
 
 上游总体流程：
-
 - `../../研发中心AI数字员工研发流程规划_V2.md`
 - `../../docs/adr/ADR-001-workbuddy-codex-integration-boundary.md`
 
@@ -37,36 +35,24 @@
 
 ### Governance Skeleton
 
-已建立：
+已建立 task routing、workflow、A0-A7 action policy、Gate policy、material readiness、三层 I/O、Evidence、Run State、Gate Ledger、Hypothesis Registry、Engineering Task Package、Verification、Independent Review 和 Closure Manifest 契约。
 
-- `config/task-modes.yaml`：task type 与路由；
-- `config/workflow.yaml`：阶段/Gate/恢复；
-- `config/action-policy.yaml`：A0-A7 动作边界；
-- `config/gate-policy.yaml`：Gate 判定契约；
-- `config/material-requirements.yaml`：材料就绪矩阵；
-- `contracts/io-layering.md`：三层 I/O 规则；
-- `contracts/experts/`：专家 L1 契约；
-- `schemas/`：证据、运行态、门禁、诊断、交接、验证、审查、收口机器契约；
-- `governance/authority-index.md`：权威来源顺序；
-- `governance/done-definition.md`：完成声明边界。
+## 3. 运行路径
 
-## 3. 当前核心运行链
+`config/workflow.yaml` 按 `workflow_mode` 明确不同路径；**并非所有任务都进入工程执行**。
+
+- `full_chain / short_chain / diagnostic_chain / bringup_chain`：可进入 Engineering Execution；
+- `review_only`：只分析/审查，不允许隐式进入代码修改；
+- `release_chain`：默认做发布准备度验证，若需代码修改必须显式扩展模式；
+- `single_expert`：完成单领域分析后收口，不自动扩链。
+
+工程执行路径仍遵守 ADR-001：
 
 ```text
-task-brief
-  -> Gate K / Gate M / Gate 0
-  -> Technical Triage
-  -> Domain Analysis
-  -> Gate T
-  -> Gate E / engineering-task-package
-  -> Engineer + Codex
-  -> delivery-receipt
-  -> Gate V / Verification Expert
-  -> Gate R / Review Governor
-  -> Gate C / deliverable-manifest
+engineering-task-package -> Engineer + Codex -> delivery-receipt
 ```
 
-当前仍遵守 ADR-001：WorkBuddy 不直接遥控个人 Codex CLI。
+WorkBuddy 当前不直接遥控个人 Codex CLI。
 
 ## 4. 不可违反的工程原则
 

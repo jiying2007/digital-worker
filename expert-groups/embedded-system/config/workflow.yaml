@@ -1,5 +1,5 @@
 schema_version: 1
-version: 0.2.0
+version: 0.2.1
 status: governance-skeleton-defined
 
 states:
@@ -17,6 +17,22 @@ states:
   - completed
   - cancelled
 
+mode_paths:
+  full_chain: [gate.k, gate.m, gate.0, phase.triage, phase.analysis, gate.t, gate.e, phase.execution, gate.v, gate.r, gate.c]
+  short_chain: [gate.k, gate.m, gate.0, phase.triage, phase.analysis, gate.t, gate.e, phase.execution, gate.v, gate.r, gate.c]
+  diagnostic_chain: [gate.k, gate.m, gate.0, phase.triage, phase.analysis, gate.t, gate.e, phase.execution, gate.v, gate.r, gate.c]
+  bringup_chain: [gate.k, gate.m, gate.0, phase.triage, phase.analysis, gate.t, gate.e, phase.execution, gate.v, gate.r, gate.c]
+  review_only: [gate.k, gate.m, gate.0, phase.triage, phase.analysis, gate.t, gate.r, gate.c]
+  release_chain: [gate.k, gate.m, gate.0, phase.triage, phase.analysis, gate.t, gate.v, gate.r, gate.c]
+  single_expert: [gate.k, gate.m, gate.0, phase.triage, phase.analysis, gate.t, gate.c]
+
+path_rules:
+  gates_may_be_not_applicable_only_when_mode_and_task_policy_allow: true
+  review_only_forbids_phase_execution: true
+  single_expert_forbids_implicit_mode_expansion: true
+  release_chain_execution_requires_explicit_mode_expansion: true
+  adding_phase_execution_requires_action_ceiling_at_least: A3_MODIFY_WORKTREE
+
 stages:
   - id: gate.k
     phase: 0
@@ -24,7 +40,7 @@ stages:
     owner: embedded-system-team-lead
     output: knowledge-readiness
     schema: ../schemas/knowledge-readiness.schema.json
-    decisions: [PASS, BLOCKED, DEGRADED_WITH_APPROVAL]
+    decisions: [PASS, BLOCKED, DEGRADED_WITH_APPROVAL, NOT_APPLICABLE]
 
   - id: gate.m
     phase: 0.5
@@ -32,7 +48,7 @@ stages:
     owner: embedded-system-team-lead
     output: material-manifest
     schema: ../schemas/material-manifest.schema.json
-    decisions: [PASS, BLOCKED, DEGRADED_WITH_APPROVAL]
+    decisions: [PASS, BLOCKED, DEGRADED_WITH_APPROVAL, NOT_APPLICABLE]
 
   - id: gate.0
     phase: 1
@@ -56,10 +72,7 @@ stages:
     output: technical-analysis
     schema: ../schemas/technical-analysis.schema.json
     diagnostic_requirements:
-      require_hypothesis_registry_for:
-        - defect_debugging
-        - stability_reliability
-        - field_incident
+      require_hypothesis_registry_for: [defect_debugging, stability_reliability, field_incident]
       hypothesis_schema: ../schemas/hypothesis-registry.schema.json
       fact_states: [observed, inferred, confirmed]
 
@@ -92,14 +105,7 @@ stages:
     owner: verification-expert
     output: verification-report
     schema: ../schemas/verification-report.schema.json
-    layers:
-      - implemented
-      - host_verified
-      - cross_build_verified
-      - sil_verified
-      - device_verified
-      - hil_verified
-      - release_verified
+    layers: [implemented, host_verified, cross_build_verified, sil_verified, device_verified, hil_verified, release_verified]
     forbid_cross_layer_inference: true
 
   - id: gate.r

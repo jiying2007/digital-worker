@@ -1,29 +1,15 @@
 schema_version: 1
-version: 0.1.0
+version: 0.1.1
 classes:
   identity:
-    critical:
-      - repo
-      - base_commit
-    contextual:
-      - firmware
-      - device_identity
+    critical: [repo, base_commit]
+    contextual: [firmware, device_identity]
   platform:
-    contextual:
-      - board_revision
-      - soc_mcu
-      - sdk
-      - kernel_rtos
-      - toolchain
+    contextual: [board_revision, soc_mcu, sdk, kernel_rtos, toolchain]
   hardware:
-    contextual:
-      - schematic
-      - datasheet_trm
+    contextual: [schematic, datasheet_trm]
   diagnosis:
-    contextual:
-      - log
-      - reproduction
-      - test_environment
+    contextual: [log, reproduction, test_environment]
 rules:
   feature_development:
     required: [repo, base_commit]
@@ -43,9 +29,15 @@ rules:
   driver_development:
     required: [repo, base_commit]
     recommended: [board_revision, soc_mcu, schematic, datasheet_trm]
+  component_development:
+    required: [repo, base_commit]
+    recommended: [soc_mcu, sdk, toolchain]
   mcu_firmware_development:
     required: [repo, base_commit, soc_mcu, toolchain]
     recommended: [board_revision, schematic, datasheet_trm]
+  performance_optimization:
+    required: [repo, base_commit]
+    recommended: [firmware, log, reproduction, device_identity, test_environment]
   defect_debugging:
     required: [repo, base_commit]
     recommended: [firmware, log, reproduction, device_identity, test_environment]
