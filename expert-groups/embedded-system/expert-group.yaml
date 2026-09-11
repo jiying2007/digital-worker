@@ -1,9 +1,10 @@
 schema_version: 1
 id: embedded-system
 name: 嵌入式系统专家团
-version: 0.6.0
+version: 0.7.0
 status: architecture-frozen
 implementation_status: pilot-operations-ready
+architecture_model: provider-neutral
 owner_domain: 研发中心/嵌入式系统软件
 
 mission:
@@ -21,11 +22,13 @@ ssot:
   repository: jiying2007/digital-worker
   external_repositories: reference_only
   review_reference: ../../嵌入式系统专家团-核心参考/README.md
+  provider_binding: not_frozen
 
 upstream_contracts:
   - ../../研发中心AI数字员工研发流程规划.md
   - ../../docs/adr/ADR-001-workbuddy-codex-integration-boundary.md
   - ../../docs/adr/ADR-002-embedded-system-expert-team-architecture.md
+  - ../../docs/adr/ADR-003-provider-neutral-ai-rd-target-architecture.md
 
 shared_contracts:
   task_brief: ../../schemas/task-brief.v1.schema.json
@@ -91,6 +94,7 @@ governance_artifacts:
 
 evidence:
   required_for_material_claims: true
+  source_of_truth_stays_at_source: true
   debug_fact_states: [observed, inferred, confirmed]
   confidence_levels: [C0, C1, C2, C3, C4, C5, C6]
 
@@ -106,6 +110,13 @@ autonomy:
   controlled_execution: [A3_MODIFY_WORKTREE, A4_BUILD_TEST]
   authorization_required: [A5_DEVICE_READ]
   human_approval_required: [A6_DEVICE_WRITE, A7_RELEASE]
+
+engineering_runtime:
+  execution_role: engineer-plus-engineering-agent
+  provider_selection: not_frozen
+  provider_examples: [codex, claude_code, ide_agent, internal_agent, other]
+  runtime_must_preserve_contract_semantics: true
+  interaction_provider_direct_control: forbidden_by_default
 
 validation:
   script: ../../scripts/validate_embedded_assets.py
@@ -129,10 +140,15 @@ pilot:
   auto_production_ready: false
 
 knowledge:
-  human_canonical_store: feishu
-  ai_retrieval_layer: weknora
+  source_of_truth_policy: stays_at_source
+  access_model: federated_or_hybrid
+  provider_selection: not_frozen
+  knowledge_gateway_status: conceptual
+  context_broker_status: conceptual
+  source_classes: [collaboration_docs, nas_documents, git, ci_hil_evidence, artifact_store, other]
   local_knowledge_scope: [methodology, checklists, templates, terminology, source-registry, static-engineering-rules, evaluation-fixtures]
   forbid_parallel_manual_canonical_copy: true
+  require_source_version_acl_provenance: true
 
 cross_team:
   product_expert_team:
@@ -151,6 +167,9 @@ evaluation:
   safety_priority_metric: incorrect_pass_rate
 
 next_stage:
+  - architecture-review-adr-003
+  - knowledge-source-inventory-and-poc
+  - multi-runtime-real-pilot
   - bind-and-execute-real-pilot-issues-6-7-8
   - edge-foundation-ownership-resolution
   - p1-skills-from-pilot-evidence
