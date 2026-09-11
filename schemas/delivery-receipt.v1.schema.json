@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://digital-worker.local/schemas/delivery-receipt.v1.schema.json",
+  "title": "Delivery Receipt v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "work_item_id", "execution_id", "executor_identity", "repo_root", "base_commit", "changed_files", "outcomes", "validation", "unverified_items", "blockers", "risks", "next_actions", "approval_required"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "work_item_id": {"type": "string", "minLength": 1},
+    "execution_id": {"type": "string", "minLength": 1},
+    "executor_identity": {"type": "string", "minLength": 1},
+    "started_at": {"type": ["string", "null"]},
+    "finished_at": {"type": ["string", "null"]},
+    "repo_root": {"type": "string", "minLength": 1},
+    "base_commit": {"type": "string", "minLength": 1},
+    "result_commit_or_patch": {"type": ["string", "null"]},
+    "dirty_baseline": {"type": ["string", "null"]},
+    "changed_files": {"type": "array", "items": {"type": "string"}},
+    "outcomes": {"type": "array", "items": {"type": "string"}},
+    "decisions": {"type": "array", "items": {"type": "string"}},
+    "validation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["host", "cross_build", "sil", "hil", "release"],
+      "properties": {
+        "host": {"enum": ["not_run", "pass", "fail", "blocked"]},
+        "cross_build": {"enum": ["not_run", "pass", "fail", "blocked"]},
+        "sil": {"enum": ["not_run", "pass", "fail", "blocked"]},
+        "hil": {"enum": ["not_run", "pass", "fail", "blocked"]},
+        "release": {"enum": ["not_run", "pass", "fail", "blocked"]}
+      }
+    },
+    "commands": {"type": "array", "items": {"type": "string"}},
+    "artifact_refs": {"type": "array", "items": {"type": "string"}},
+    "artifact_hashes": {"type": "array", "items": {"type": "string"}},
+    "knowledge_refs": {"type": "array", "items": {"type": "string"}},
+    "evidence_refs": {"type": "array", "items": {"type": "string"}},
+    "unverified_items": {"type": "array", "items": {"type": "string"}},
+    "blockers": {"type": "array", "items": {"type": "string"}},
+    "risks": {"type": "array", "items": {"type": "string"}},
+    "next_actions": {"type": "array", "items": {"type": "string"}},
+    "approval_required": {"type": "array", "items": {"type": "string"}}
+  }
+}

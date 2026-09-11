@@ -1,0 +1,50 @@
+schema_version: 1
+version: 0.3.0
+id: embedded-engineering-handoff
+status: implemented-baseline
+
+purpose: >-
+  Bind the研发工作项输入、嵌入式专家团技术决策、Engineer+Codex工程执行和验证回执，
+  without allowing WorkBuddy to directly control a personal Codex CLI session.
+
+stages:
+  intake:
+    input_schema: ../../../schemas/task-brief.v1.schema.json
+    owner: embedded-system-team-lead
+    gate: gate.0
+  expert_decision:
+    output_schema: ../schemas/engineering-task-package.schema.json
+    owner: embedded-system-team-lead
+    gate: gate.e
+  engineering_execution:
+    executor: engineer-plus-codex
+    direct_workbuddy_control: false
+    output_schema: ../../../schemas/delivery-receipt.v1.schema.json
+  verification:
+    owner: verification-expert
+    input_schemas:
+      - ../../../schemas/delivery-receipt.v1.schema.json
+      - ../schemas/engineering-task-package.schema.json
+    output_schema: ../schemas/verification-report.schema.json
+  independent_review:
+    owner: embedded-review-governor
+    output_schema: ../schemas/review-report.schema.json
+
+invariants:
+  - task_brief_work_item_id_must_match_delivery_receipt
+  - execution_repo_must_be_one_of_task_brief_repo_roots
+  - base_commit_must_be_explicit
+  - validation_layers_must_not_be_inferred_from_each_other
+  - blocked_and_unverified_items_must_not_be_suppressed
+  - device_or_hil_pass_requires_firmware_identity
+  - release_pass_requires_explicit_release_evidence
+  - implementation_actor_cannot_self_approve_final_review
+
+fail_closed:
+  - missing_work_item_id
+  - missing_owner
+  - missing_repo_root
+  - missing_acceptance_criteria
+  - unknown_base_commit_before_modification
+  - required_verification_not_declared
+  - forbidden_action_requested
