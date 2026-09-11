@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://digital-worker.local/schemas/pilot-evidence-bundle.v1.schema.json",
+  "title": "Embedded Pilot Evidence Bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "run_id", "work_item_id", "source_type", "generated_at", "artifacts", "complete", "missing_required"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "work_item_id": {"type": "string", "minLength": 1},
+    "source_type": {"enum": ["real", "synthetic"]},
+    "generated_at": {"type": "string", "minLength": 1},
+    "artifacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["kind", "path", "sha256", "required"],
+        "properties": {
+          "kind": {"type": "string", "minLength": 1},
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "required": {"type": "boolean"}
+        }
+      }
+    },
+    "complete": {"type": "boolean"},
+    "missing_required": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+  }
+}

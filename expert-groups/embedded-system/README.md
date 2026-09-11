@@ -1,53 +1,45 @@
 # 嵌入式系统专家团
 
 - Architecture status: `frozen`
-- Implementation status: `pilot-infrastructure-ready`
-- Version: `0.5.0`
+- Implementation status: `pilot-operations-ready`
+- Version: `0.6.0`
 - Date: 2026-09-11
 - Owner domain: 研发中心 / 嵌入式系统（软件）
 
-## 当前已落地
+## 当前能力
 
-专家团已经从“架构/契约基线”推进到“真实 Pilot 可接入”的阶段：
+当前已经具备从结构化接单到真实 Pilot 操作的完整基础设施：1+7 核心专家、23 个 P0 Skills、Gate/Action/Material 治理、Engineering Handoff、Product Cross-Team Contract、12 个 Golden Cases、Pilot Run/Result/Metrics，以及 fail-closed CI。
 
-- 1+7 核心专家 + L1 I/O Contract；
-- mode-aware Workflow、Gate、A0-A7、Material Readiness；
-- Evidence / Run State / Gate Ledger / Hypothesis / Verification / Independent Review；
-- 23 个 P0 Skills（默认最大 A2）；
-- Engineering Handoff：`task-brief -> engineering-task-package -> Engineer + Codex -> delivery-receipt`；
-- Product Expert Team 技术可行性跨团队契约；
-- 端侧底座 ownership fail-closed 协议；
-- 12 个 Golden Cases；
-- fail-closed validator + PR/main CI；
-- Pilot Run / Result / Metrics 三套共享 Schema；
-- 三轨 Pilot Plan、真实 Pilot Runbook、指标聚合器与安全自测 fixture。
+本阶段新增 `scripts/embedded_pilot.py`，统一真实 Pilot 的 `init -> running/blocked -> complete -> evidence bundle -> validate -> summary`。完成态不再依赖人工拼 JSON；每条轨道必须满足 `pilot/artifact-requirements.yaml`。
 
-## Pilot 状态
+## 真实 Pilot 关键规则
 
-`pilot-infrastructure-ready` 只表示基础设施具备，**真实 Pilot 目前还没有在本仓形成 completed evidence**。
+- `real` run 必须绑定 `repo_root + exact base_commit`，不能只写漂移分支名；
+- 所有运行期 artifact ref 必须位于当前 run directory 内，禁止路径逃逸；
+- completed run 必须生成带 SHA256 的 `evidence-bundle.json`；
+- `debug` 必须包含 Hypothesis Registry；
+- `feature` 必须包含 engineering-task-package、delivery-receipt、verification、independent review 和 pilot-result；
+- `review_release` 必须包含 verification/review/pilot-result；
+- 原始现场日志、core、固件等默认不提交到本仓，保留受控系统中的权威引用。
 
-真实 Pilot 至少覆盖：
+## 操作示例
 
-1. `debug`：真实 Bug / Crash / HardFault / UBIFS / DMA / 长稳任务；
-2. `feature`：真实 Feature / Driver / Component / MCU / Bring-up；
-3. `review_release`：真实 Code Review / Feasibility / OTA Release Readiness。
+```bash
+python scripts/embedded_pilot.py init \
+  --run-id PILOT-DEBUG-001 \
+  --track debug --source-type real \
+  --task-type defect_debugging --workflow-mode diagnostic_chain \
+  --human-owner <owner> --task-brief <task-brief.json> \
+  --repo-root <repo-root> --base-commit <exact-sha>
 
-详见 `pilot/README.md` 与 `../../docs/runbooks/embedded-pilot.md`。
+python scripts/embedded_pilot.py status expert-groups/embedded-system/pilot/runs/PILOT-DEBUG-001 running
+python scripts/embedded_pilot.py validate expert-groups/embedded-system/pilot/runs/PILOT-DEBUG-001
+```
 
-## Pilot 安全门槛
+收口时使用 `complete` 附加对应 track 的结构化产物；工具自动生成 Evidence Bundle 并做 fail-closed 验证。
 
-三个轨道各至少 1 个真实 completed run，且：
+## Pilot 生产化边界
 
-- `incorrect_pass_rate = 0`；
-- `unauthorized_actions = 0`；
-- `audit_trace_completeness = 1.0`。
+真实 Pilot 仍要求 debug / feature / review_release 三轨各至少 1 个 completed run，`incorrect_pass_rate=0`、`unauthorized_actions=0`、`audit_trace_completeness=1.0`。评分器现在直接读取 `pilot-plan.yaml`，避免配置与代码门槛漂移。
 
-通过这些门槛也**不会自动改为 Production Ready**，只允许进入单独的人工生产化评审。Synthetic fixtures 永远不计入真实 Pilot 数量。
-
-## 跨团队边界
-
-产品专家团已经有正式 technical review handoff。端侧底座目前只冻结 ownership 协议，具体 ownership 仍为 unresolved；在权威原文未规范化并裁决前，不创建重复 Agent/Skill。
-
-## 下一阶段
-
-不再继续无证据扩张专家数量。下一步是绑定 3 个真实研发工作项，跑完整 Pilot，采集 Routing / Evidence / Unsupported Claim / Incorrect PASS / Verification / Human Correction 等指标，再决定 P1 Skills 和 productionization 是否值得推进。
+即使满足所有门槛，也只允许进入独立人工 productionization review，不自动成为 Production Ready。

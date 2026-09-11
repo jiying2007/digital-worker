@@ -1,52 +1,39 @@
-# 嵌入式系统专家团 Pilot Runbook
+# 嵌入式系统专家团 Pilot Operations
 
-当前状态：`pilot-infrastructure-ready`。这表示真实试点所需契约、记录格式和评分工具已具备，**不表示真实 Pilot 已完成**。
+当前状态：`pilot-operations-ready`。真实 Pilot 的契约、操作 CLI、证据打包、指标聚合和安全门禁已具备；**三条真实 Pilot 尚未完成**。
 
-## 1. 三条 Pilot 轨道
+## 目录与 SSOT
 
-至少完成三条互补轨道，各 1 个真实任务：
+- `pilot-plan.yaml`：三轨 Pilot 与 promotion gate；
+- `artifact-requirements.yaml`：各 track completed run 的最小 artifact 集；
+- `runs/`：本地/受控运行目录，默认 Git ignore；
+- `../../../../scripts/embedded_pilot.py`：init/status/complete/bundle/validate/summary；
+- `../../../../scripts/evaluate_embedded_pilot.py`：指标聚合，直接读取 Pilot Plan。
 
-1. `debug`：Boot / Crash / HardFault / UBIFS / DMA / 长稳等；
-2. `feature`：Feature / Driver / Component / MCU / Platform Bring-up；
-3. `review_release`：Code Review / Technical Feasibility / OTA Release Readiness。
+## 运行生命周期
 
-任务必须来自真实工作项，synthetic/golden fixture 只用于测试工具，不计入生产化资格。
-
-## 2. 每个真实 Pilot 必须留什么
-
-- `pilot-run`：任务身份、轨道、owner、repo/base、task-brief、状态；
-- `task-brief`；
-- 必要时 `engineering-task-package` 与 `delivery-receipt`；
-- `verification-report` / `review-report`；
-- `pilot-result`：路由、证据、claim、验证、人工修正、越权动作、最终 outcome；
-- 可回溯的 Git/CI/HIL/日志/制品引用。
-
-不允许用聊天总结替代上述结构化证据。
-
-## 3. 评分
-
-使用：
-
-```bash
-python scripts/evaluate_embedded_pilot.py pilot-results/*.json --output pilot-metrics.json
+```text
+Issue / task-brief
+  -> init(planned)
+  -> status running
+  -> Expert Team / Engineering Handoff
+  -> complete(structured artifacts)
+  -> evidence-bundle(SHA256)
+  -> pilot-result
+  -> evaluator / metrics
 ```
 
-主要指标：Routing Accuracy、Evidence Coverage、Unsupported Claim Rate、Incorrect PASS Rate、Verification Completeness、Human Correction Rate、Root Cause Accuracy、Audit Trace Completeness。
+`complete` 是 fail-closed：缺 track 必需产物时不会进入 completed。
 
-其中 `Incorrect PASS Rate` 与 `Unauthorized Actions` 是安全硬指标。
+## 证据存储原则
 
-## 4. Productionization Gate
+`digital-worker` 保存契约、结构化 Pilot 记录与证据哈希/引用。大体积或敏感原始日志、core、dump、固件、客户材料仍保存在其权威受控系统；不要因为 Pilot 将其直接提交到本仓。
 
-满足以下条件只代表“可进入生产化人工评审”，并不自动成为 Production Ready：
+## 当前真实轨道
 
-- 3 条轨道各至少 1 个真实 completed run；
-- real completed run 总数 >= 3；
-- `incorrect_pass_rate = 0`；
-- `unauthorized_actions = 0`；
-- `audit_trace_completeness = 1.0`。
+- #6 Debug
+- #7 Feature
+- #8 Review/Release
+- #9 rollout tracker
 
-样本量很小时，Routing / Unsupported Claim / Human Correction 等只能作为方向指标，不能被包装成稳定性能结论。
-
-## 5. Pilot 后怎么迭代
-
-每个缺口必须先归类为：Routing / Contract / Knowledge / Skill / Workflow / Verification / Human Gate。只有多次真实任务证明存在稳定复用需求时，才增加 P1 Skill 或新 Agent。
+以上 Issue 仍需绑定实际 work item/repo/base 后才能运行，synthetic fixture 不可用于关闭。

@@ -1,29 +1,55 @@
 # 嵌入式系统专家团真实 Pilot 执行说明
 
-本 Runbook 用于将真实嵌入式研发任务接入已经冻结的 Expert Team Contract。Pilot 的目标是发现运行模型问题，不是证明 AI 永远正确。
+Pilot 的目标是验证 Expert Team Operating Model，而不是证明 AI 永远正确。当前基础设施状态为 `pilot-operations-ready`，真实三轨证据仍待执行。
 
-## 入口
+## 1. 绑定真实任务
 
-真实任务先形成 `task-brief v1`，再登记 `pilot-run v1`。缺 owner、repo/base、验收或验证层级时，不进入执行。
+先形成 `task-brief v1`。真实 Pilot 必须有 human owner、repo root、**exact Git base SHA**、验收和所需验证层级。只提供 `main/dev` 等分支名时不得开始 real run。
 
-## 推荐首批三个真实任务
+## 2. 初始化
 
-- Debug：Boot / UBIFS / HardFault / DMA / 长稳中的一个真实缺陷；
-- Feature：一个真实 Driver/Component/MCU/Bring-up 变更；
-- Review/Release：一个真实 Code Review、技术可行性或 OTA Release Readiness。
+```bash
+python scripts/embedded_pilot.py init \
+  --run-id <run-id> \
+  --track <debug|feature|review_release> \
+  --source-type real \
+  --task-type <task-type> \
+  --workflow-mode <mode> \
+  --human-owner <owner> \
+  --task-brief <task-brief.json> \
+  --repo-root <repo-root> \
+  --base-commit <exact-sha>
+```
 
-优先选择已有人工结论或可验证结果的任务，便于对比 AI route、claim、root cause 和 verification。
+然后用 `status ... running` 开始记录。
 
-## 执行边界
+## 3. 执行
 
-- Expert Team 默认 A0-A2；
-- 代码修改和构建继续经 Engineering Handoff 交给 Engineer + Codex；
-- 设备写与 Release 仍需人工 Gate；
-- 任何未验证层不得被上推成 PASS；
-- 人工纠正必须记录，不能在最终报告中隐藏。
+Expert Team 默认 A0-A2。代码修改/构建经 Engineering Handoff -> Engineer + Codex；设备写和 Release 保留人工 Gate。Debug 强制 Observed/Inferred/Confirmed + Hypothesis Registry。
 
-## 收口
+## 4. 收口
 
-每个 Pilot 生成 `pilot-result v1`，然后用 `evaluate_embedded_pilot.py` 聚合。Synthetic fixture 只验证工具链，绝不计入 real completed runs。
+使用 `complete` 附加 track 所需结构化产物。工具会校验 work_item、run_id、repo/base、独立 verification/review，并生成 `evidence-bundle.json`，对所有结构化 artifact 计算 SHA256。
 
-Productionization eligibility 只代表可以提交一次单独的人工评审；仓库不会因为指标过门自动把状态改成 Production Ready。
+```bash
+python scripts/embedded_pilot.py complete <run-dir> \
+  --verification-report <verification.json> \
+  --review-report <review.json> \
+  --pilot-result <pilot-result.json> \
+  ...
+```
+
+Feature 还必须提供 engineering-task-package 与 delivery-receipt；Debug 还必须通过 `--extra hypothesis_registry=<file>` 提供 Hypothesis Registry。
+
+## 5. 汇总与评分
+
+```bash
+python scripts/embedded_pilot.py summary expert-groups/embedded-system/pilot/runs --output pilot-status.json
+python scripts/evaluate_embedded_pilot.py <pilot-result...> --output pilot-metrics.json --markdown-output pilot-metrics.md
+```
+
+评分门槛从 `pilot-plan.yaml` 读取。Synthetic 只验证工具链，不计入真实 Pilot。
+
+## 6. 生产化门禁
+
+三轨真实 completed run 和安全指标满足后，也仅能提交 productionization 人工评审；仓库不会自动扩大 A3-A7，也不会自动标记 Production Ready。

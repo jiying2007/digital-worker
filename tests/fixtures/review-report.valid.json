@@ -1,0 +1,11 @@
+{
+  "run_id": "CI-PILOT-001",
+  "reviewer": "embedded-review-governor",
+  "implementation_owner": "engineer-plus-codex",
+  "independence_confirmed": true,
+  "decision": "APPROVE",
+  "findings": [],
+  "evidence_refs": ["verification-report.json"],
+  "residual_risks": [],
+  "unverified_items": []
+}

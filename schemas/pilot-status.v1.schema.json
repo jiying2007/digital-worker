@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://digital-worker.local/schemas/pilot-status.v1.schema.json",
+  "title": "Embedded Pilot Operational Status",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "total_runs", "real_runs", "synthetic_runs", "by_status", "by_track", "invalid_runs"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "total_runs": {"type": "integer", "minimum": 0},
+    "real_runs": {"type": "integer", "minimum": 0},
+    "synthetic_runs": {"type": "integer", "minimum": 0},
+    "by_status": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "by_track": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+    "invalid_runs": {"type": "array", "items": {"type": "string"}}
+  }
+}

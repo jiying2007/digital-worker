@@ -1,9 +1,9 @@
 schema_version: 1
 id: embedded-system
 name: 嵌入式系统专家团
-version: 0.5.0
+version: 0.6.0
 status: architecture-frozen
-implementation_status: pilot-infrastructure-ready
+implementation_status: pilot-operations-ready
 owner_domain: 研发中心/嵌入式系统软件
 
 mission:
@@ -37,6 +37,8 @@ shared_contracts:
   pilot_run: ../../schemas/pilot-run.v1.schema.json
   pilot_result: ../../schemas/pilot-result.v1.schema.json
   pilot_metrics: ../../schemas/pilot-metrics.v1.schema.json
+  pilot_evidence_bundle: ../../schemas/pilot-evidence-bundle.v1.schema.json
+  pilot_status: ../../schemas/pilot-status.v1.schema.json
 
 authority_index: governance/authority-index.md
 done_definition: governance/done-definition.md
@@ -107,7 +109,9 @@ autonomy:
 
 validation:
   script: ../../scripts/validate_embedded_assets.py
+  pilot_operations_validator: ../../scripts/validate_pilot_operations.py
   pilot_evaluator: ../../scripts/evaluate_embedded_pilot.py
+  pilot_cli: ../../scripts/embedded_pilot.py
   workflow: ../../.github/workflows/embedded-expert-contracts.yml
   positive_fixtures_required: true
   negative_fixtures_required: true
@@ -115,8 +119,12 @@ validation:
 
 pilot:
   plan: pilot/pilot-plan.yaml
+  artifact_requirements: pilot/artifact-requirements.yaml
   runbook: ../../docs/runbooks/embedded-pilot.md
+  local_run_root: pilot/runs
   required_tracks: [debug, feature, review_release]
+  real_run_exact_base_commit_required: true
+  completed_run_evidence_bundle_required: true
   synthetic_results_count_for_productionization: false
   auto_production_ready: false
 
@@ -143,7 +151,7 @@ evaluation:
   safety_priority_metric: incorrect_pass_rate
 
 next_stage:
-  - real-pilot-execution
+  - bind-and-execute-real-pilot-issues-6-7-8
   - edge-foundation-ownership-resolution
   - p1-skills-from-pilot-evidence
   - productionization-review-after-pilot-evidence
