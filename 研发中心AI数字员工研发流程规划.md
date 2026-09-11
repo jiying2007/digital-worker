@@ -1,9 +1,10 @@
-# 研发中心 AI 数字员工研发流程规划 V2
+# 研发中心 AI 数字员工研发流程规划
 
+- 文档版本：2
 - 文档状态：proposed
 - 日期：2026-09-09
 - 适用范围：研发中心办公协同与嵌入式软件研发流程
-- 版本关系：在 `研发中心AI数字员工研发流程规划_V1.md` 基础上结合已确认系统现状形成；评审时以本文件为当前提案，V1保留作历史草案
+- 版本关系：本文件是当前唯一活动提案；上一版草案归档于 `docs/archive/研发中心AI数字员工研发流程规划_V1.md`。后续修订继续更新本路径，不再新增 `_V3/_V4` 兼容副本。
 - 已确认条件：WorkBuddy 企业版、飞书研发流程、飞书知识库、WeKnora 内网私有部署、Codex CLI 嵌入式研发
 - 待确认责任方：研发中心负责人、研发流程负责人、IT、信息安全、知识库负责人、试点产品负责人
 - 核心决策：[ADR-001：WorkBuddy 与 Codex CLI 的集成边界](docs/adr/ADR-001-workbuddy-codex-integration-boundary.md)
@@ -390,36 +391,27 @@ Codex可直接通过只读MCP访问WeKnora。首期工具白名单建议限定�
 
 ## 15. Artifact Paths
 
-建议后续在数字员工方案仓中形成：
+当前主仓按以下稳定路径组织；历史草案与原始输入不再与活动设计平铺：
 
 ```text
-数字员工/
-├── 研发中心AI数字员工研发流程规划_V2.md
+digital-worker/
+├── README.md
+├── 研发中心AI数字员工研发流程规划.md   # 当前唯一活动提案
 ├── docs/
 │   ├── adr/
-│   │   └── ADR-001-workbuddy-codex-integration-boundary.md
-│   ├── architecture/
-│   │   └── system-context.md
-│   ├── governance/
-│   │   ├── knowledge-governance.md
-│   │   └── permission-model.md
-│   └── runbooks/
-│       ├── workbuddy-user-guide.md
-│       ├── codex-handoff.md
-│       └── weknora-feishu-sync.md
-├── schemas/
-│   ├── task-brief.v1.schema.json
-│   ├── delivery-receipt.v1.schema.json
-│   └── hil-evidence.v1.schema.json
-├── connectors/
-│   └── weknora/
-└── tests/
-    ├── retrieval-eval/
-    ├── permission-negative/
-    └── end-to-end/
+│   ├── archive/                    # 历史草案，仅供追溯
+│   ├── runbooks/
+│   └── source-materials/           # 原始 docx 等输入，不是 SSOT
+├── expert-groups/
+│   └── embedded-system/            # 嵌入式专家团机器资产 SSOT
+├── schemas/                        # 跨专家团共享 schema
+├── scripts/
+├── tests/
+├── 产品专家团-核心参考/
+└── 嵌入式系统专家团-核心参考/
 ```
 
-本文件和ADR是本次已归档产物；其余路径为后续实施建议，当前尚未创建。
+新一代文档直接更新稳定路径；历史版本通过 Git history 与 `docs/archive/` 追溯，不再创建 `_V3/_V4` 兼容副本。
 
 ## 16. 非目标
 
