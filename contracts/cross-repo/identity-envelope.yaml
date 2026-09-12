@@ -1,6 +1,6 @@
-schema_version: 1
+schema_version: 2
 status: current-stage-candidate
-purpose: refs-first identity spine across workflow, knowledge, agent assets, runtime and engineering evidence
+purpose: refs-first identity spine across workflow, knowledge, agent assets, runtime binding, runtime execution and engineering evidence
 
 required:
   work_item_id: string
@@ -17,16 +17,30 @@ agent_assets:
   provider: agent-dev-kit
   provider_commit: null
   adk_version: null
-  profiles: []
+  asset_profiles: []
   asset_bundle_hash: null
 
-runtime:
+runtime_binding:
+  repository: null
+  commit: null
+  runtime_target: null
+  runtime_profile: null
+  runtime_host: null
+  execution_receipt_ref: null
+
+runtime_execution:
+  provider: null
+  runtime_version: null
+  model: null
+  model_provider: null
+  mcp_fingerprint: null
+  sandbox_identity: null
+  approval_identity: null
+
+runtime_evaluation:
   evaluator: llm_agent
   evaluator_commit: null
-  provider: null
-  target_id: null
-  runtime_version: null
-  execution_receipt_ref: null
+  comparison_evidence_ref: null
 
 engineering:
   repositories: []
@@ -42,6 +56,8 @@ verification:
 
 rules:
   - refs point to authoritative source; envelope does not copy source facts into a second SSOT
-  - exact provider and source commits are required before claiming reproducibility
-  - missing knowledge/asset/runtime identity blocks cross-repo reproducibility claim
-  - runtime execution success never implies verification PASS
+  - exact provider, runtime-binding and source commits are required before claiming reproducibility
+  - asset_profile belongs to Agent Asset Control Plane and runtime_profile belongs to Runtime Binding; do not merge their semantics
+  - missing knowledge/asset/runtime-binding/runtime identity blocks cross-repo reproducibility claim
+  - runtime execution receipt records execution facts only and must not contain verification_pass, release_ready or domain_gate_pass
+  - runtime local conformance success never implies verification PASS

@@ -5,7 +5,9 @@
 
 ## 1. 默认模型
 
-`main` 是默认唯一长期分支。`feat/*`、`docs/*`、`design/*`、`refactor/*`、`fix/*`、`chore/*` 等均视为任务分支，不作为历史存档。
+`main` 是默认唯一长期分支。`feat/*`、`docs/*`、`design/*`、`arch/*`、`refactor/*`、`fix/*`、`chore/*` 等均视为任务分支，不作为历史存档。
+
+其中 `arch/*` 用于 ADR/跨仓边界/架构 Contract 等阶段性架构工作；它与 `design/*` 一样仍是临时任务分支，不能因为名称为 architecture 就成为长期漂移分支。
 
 ## 2. 创建要求
 
@@ -39,7 +41,7 @@ Git history / merged PR 已提供历史，不通过长期保留任务分支实�
 
 ### Bootstrap 行为
 
-当前首次落地阶段额外允许：当 `.github/workflows/branch-gc.yml` 本身首次/后续通过 PR 合入 `main` 时，以 `push + exact workflow path` 自动触发一次 GC。它仍使用相同 allowlist 与安全校验，不扩大删除范围。
+当前首次落地阶段额外允许：当 `.github/workflows/branch-gc.yml` 或其 allowlist 通过 PR 合入 `main` 时，以 `push + exact audited path` 自动触发一次 GC。它仍使用相同 allowlist 与安全校验，不扩大删除范围。
 
 如果后续确认手动模式足够，可单独 PR 移除这个 bootstrap `push` trigger，仅保留 `workflow_dispatch`。
 
@@ -68,11 +70,11 @@ Git history / merged PR 已提供历史，不通过长期保留任务分支实�
 - `main` 明确拒绝；
 - protected/open-PR/merged-PR 校验存在；
 - 删除动作仍限定 Git branch ref；
-- allowlist 不含 `main`、无重复、只允许批准的任务分支前缀。
+- allowlist 不含 `main`、无重复、只允许批准的任务分支前缀（含 `arch/` 架构任务分支）。
 
 ## 8. 当前清理
 
-当前 merged branch GC 由 Issue #19 跟踪。首次 workflow rollout 的 allowlist 同时包含本次 `chore/branch-gc-workflow`，因此 workflow 合入 main 后可以连同自身 head branch 一并清理。
+当前 merged branch GC 由 Issue #19 跟踪。allowlist 只保留当前明确需要清理的已审计任务分支；历史已删除分支应从 live allowlist 移除。
 
 ## 9. Review cadence
 

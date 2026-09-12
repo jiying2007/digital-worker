@@ -1,34 +1,51 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "status": "candidate-integration",
   "architecture_provider_selection": "not_frozen",
+  "architecture_model": "four-control-planes-plus-replaceable-runtime-bindings",
   "providers": {
     "knowledge_control_plane": {
       "repository": "jiying2007/knowledge-hub",
       "ref": "master",
-      "commit": "8541d5f0a40263536179ea44764bca2baa063731",
+      "commit": "e28e719516ff88c485627099e8cc58b20ade9a57",
       "contract": "registry/integrations/digital-worker.json",
       "contract_version": "1.0",
-      "validation": "BLOCKED_CI_TRANSPORT",
-      "notes": "Interface JSON is present; current Hub quality run is red in existing Python/rtk wrapper transport, so this pin is candidate-only."
+      "validation": "BLOCKED_CI_TRANSPORT_AND_ROUTE_PENDING",
+      "notes": "Runtime-consumer public contract is under PR #16; digital-worker governed project route and native Hub gates remain pending."
     },
     "agent_asset_control_plane": {
       "repository": "jiying2007/agent-dev-kit",
       "ref": "main",
-      "commit": "9ab5b2a6047f9afb8460d9e985abfa44cd909947",
+      "commit": "cceef553ed6c43646ad62f87b23b2eefc1df8309",
       "contract": "manifests/integrations/digital-worker.json",
+      "runtime_binding_contract": "manifests/integrations/codex-runtime-binding.json",
       "contract_version": "1.0",
       "adk_version": "5.0.0-rc.2",
-      "required_profile": "embedded-fullstack",
-      "validation": "CORE_CI_PASS_PROMOTION_JOB_UNAVAILABLE"
+      "required_asset_profile": "embedded-fullstack",
+      "asset_bundle_hash": null,
+      "validation": "RUNTIME_BINDING_PR_CI_PASS_BUNDLE_IDENTITY_BLOCKED"
     },
     "runtime_practice_eval": {
       "repository": "jiying2007/llm_agent",
       "ref": "main",
-      "commit": "cb80e5ad15e783e627736d52f8d67ad5a445c2fc",
+      "commit": "c3303580278fdc402fceecccde4baab6323a1c78",
       "contract": "manifests/digital_worker_runtime_pilot.json",
+      "contract_version": "1.1",
+      "validation": "RUNTIME_BINDING_RECEIPT_PR_CI_PASS"
+    }
+  },
+  "runtime_bindings": {
+    "codex": {
+      "repository": "jiying2007/codex",
+      "ref": "main",
+      "commit": "01afd61c7f14f0da3a901096f33f016add6b3640",
+      "contract": "manifests/integrations/digital-worker-runtime-binding.json",
       "contract_version": "1.0",
-      "validation": "CONTRACT_PREVIOUS_PASS_LATEST_JOB_LEVEL_FAILURE"
+      "runtime_target": "codex-cli",
+      "runtime_profile_examples": ["token-lean", "team-collab"],
+      "required_asset_profile": "embedded-fullstack",
+      "execution_receipt_schema": "schemas/runtime-execution-receipt.schema.json",
+      "validation": "CONTRACT_CI_PASS_ASSET_BUNDLE_IDENTITY_BLOCKED"
     }
   },
   "rules": {
@@ -36,6 +53,9 @@
     "provider_specific_paths_must_not_enter_domain_contracts": true,
     "source_of_truth_stays_at_source": true,
     "provider_failure_must_not_be_reported_as_pass": true,
-    "runtime_output_is_not_verification_pass": true
+    "asset_profile_must_be_separate_from_runtime_profile": true,
+    "runtime_local_gate_is_not_domain_gate": true,
+    "runtime_output_is_not_verification_pass": true,
+    "runtime_execution_receipt_must_not_contain_verification_pass": true
   }
 }

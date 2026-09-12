@@ -52,7 +52,10 @@ if "main" in branches:
 if len(branches) != len(set(branches)):
     fail("Branch GC allowlist contains duplicate entries")
 
-allowed_prefixes = ("docs/", "feat/", "fix/", "refactor/", "design/", "chore/", "research/", "release/")
+# All entries are still explicit/reviewed allowlist items and remain subject to
+# main/protected/open-PR/merged-PR guards in the workflow. `arch/` is a normal
+# temporary architecture task class, equivalent in lifecycle to `design/`.
+allowed_prefixes = ("docs/", "feat/", "fix/", "refactor/", "design/", "arch/", "chore/", "research/", "release/")
 for branch in branches:
     if not branch.startswith(allowed_prefixes):
         fail(f"unexpected branch class in GC allowlist: {branch}")

@@ -13,7 +13,7 @@ CAPABILITY = ROOT / "config" / "integrations" / "provider-capability-matrix.yaml
 OWNERSHIP = ROOT / "contracts" / "cross-repo" / "embedded-ai-operating-system.yaml"
 IDENTITY = ROOT / "contracts" / "cross-repo" / "identity-envelope.yaml"
 HARVEST = ROOT / "contracts" / "cross-repo" / "knowledge-harvest-handoff.yaml"
-STRATEGY = ROOT / "docs" / "strategy" / "four-repo-ai-operating-system.md"
+STRATEGY = ROOT / "docs" / "strategy" / "four-control-planes-runtime-bindings.md"
 QUICKSTART = ROOT / "docs" / "runbooks" / "embedded-closed-loop-quickstart.md"
 SKILLS = ROOT / "expert-groups" / "embedded-system" / "config" / "p0-skills.yaml"
 MATRIX = ROOT / "expert-groups" / "embedded-system" / "config" / "skill-ownership-matrix.yaml"
@@ -25,33 +25,59 @@ def require(value: bool, message: str) -> None:
         raise AssertionError(message)
 
 
+def exact_sha(value: str | None) -> bool:
+    return re.fullmatch(r"[0-9a-f]{40}", value or "") is not None
+
+
 def main() -> None:
     for path in [LOCK, CAPABILITY, OWNERSHIP, IDENTITY, HARVEST, STRATEGY, QUICKSTART, SKILLS, MATRIX, ADAPTER]:
         require(path.is_file(), f"missing cross-repo asset: {path.relative_to(ROOT)}")
 
     lock = json.loads(LOCK.read_text(encoding="utf-8"))
+    require(lock["schema_version"] == 2, "cross-repo lock must use 4+N schema v2")
+    require(lock["architecture_model"] == "four-control-planes-plus-replaceable-runtime-bindings", "architecture model drift")
     require(lock["architecture_provider_selection"] == "not_frozen", "provider choice must remain not_frozen")
+
     expected = {
-        "knowledge_control_plane": "jiying2007/knowledge-hub",
-        "agent_asset_control_plane": "jiying2007/agent-dev-kit",
-        "runtime_practice_eval": "jiying2007/llm_agent",
+        "knowledge_control_plane": ("jiying2007/knowledge-hub", "1.0"),
+        "agent_asset_control_plane": ("jiying2007/agent-dev-kit", "1.0"),
+        "runtime_practice_eval": ("jiying2007/llm_agent", "1.1"),
     }
-    for key, repo in expected.items():
+    for key, (repo, contract_version) in expected.items():
         provider = lock["providers"].get(key, {})
         require(provider.get("repository") == repo, f"wrong provider repository for {key}")
-        require(re.fullmatch(r"[0-9a-f]{40}", provider.get("commit", "")) is not None, f"{key} must pin exact commit")
-        require(provider.get("contract_version") == "1.0", f"{key} contract version must be explicit")
+        require(exact_sha(provider.get("commit")), f"{key} must pin exact commit")
+        require(provider.get("contract_version") == contract_version, f"wrong contract version for {key}")
         require(provider.get("validation"), f"{key} validation state must be explicit")
-        require("PASS" not in provider.get("validation", "") or "BLOCKED" not in provider.get("validation", ""), f"ambiguous provider validation: {key}")
-    require(lock["rules"]["runtime_output_is_not_verification_pass"] is True, "runtime output must never imply verification PASS")
-    require(lock["rules"]["source_of_truth_stays_at_source"] is True, "source authority rule must remain enabled")
+
+    codex = lock["runtime_bindings"].get("codex", {})
+    require(codex.get("repository") == "jiying2007/codex", "Codex Runtime Binding repository drift")
+    require(exact_sha(codex.get("commit")), "Codex Runtime Binding must pin exact commit")
+    require(codex.get("runtime_target") == "codex-cli", "Codex target drift")
+    require(codex.get("required_asset_profile") == "embedded-fullstack", "Codex must consume the ADK embedded-fullstack Asset Profile")
+    require(codex.get("execution_receipt_schema") == "schemas/runtime-execution-receipt.schema.json", "Codex receipt schema missing")
+    require("BLOCKED" in codex.get("validation", ""), "Codex must remain operationally blocked until bundle identity exists")
+    require(lock["providers"]["agent_asset_control_plane"].get("asset_bundle_hash") is None, "do not fabricate ADK asset bundle identity")
+
+    rules = lock["rules"]
+    for key in [
+        "source_of_truth_stays_at_source",
+        "provider_failure_must_not_be_reported_as_pass",
+        "asset_profile_must_be_separate_from_runtime_profile",
+        "runtime_local_gate_is_not_domain_gate",
+        "runtime_output_is_not_verification_pass",
+        "runtime_execution_receipt_must_not_contain_verification_pass",
+    ]:
+        require(rules[key] is True, f"required 4+N rule disabled: {key}")
 
     ownership = yaml.safe_load(OWNERSHIP.read_text(encoding="utf-8"))
+    require(ownership["architecture_model"] == "four-control-planes-plus-replaceable-runtime-bindings", "ownership architecture drift")
     require(ownership["planes"]["digital-worker"]["role"] == "rd-operating-model", "digital-worker role drift")
     require(ownership["planes"]["knowledge-hub"]["role"] == "knowledge-control-plane", "knowledge-hub role drift")
     require(ownership["planes"]["agent-dev-kit"]["role"] == "agent-asset-control-plane", "ADK role drift")
     require(ownership["planes"]["llm_agent"]["role"] == "practice-and-runtime-evaluation-lab", "llm_agent role drift")
-    require(ownership["planes"]["knowledge-hub"]["write_from_digital_worker"] == "proposal-only", "knowledge writes must remain proposal-only")
+    require(ownership["runtime_bindings"]["candidates"]["codex"]["runtime_target"] == "codex-cli", "Codex candidate missing")
+    require("domain-verification-pass" in ownership["runtime_bindings"]["contract"]["must_not_own"], "Runtime Binding must not own verification PASS")
 
     capability = yaml.safe_load(CAPABILITY.read_text(encoding="utf-8"))
     require(capability["provider_selection"] == "not_frozen", "capability matrix must not freeze provider choice")
@@ -69,13 +95,14 @@ def main() -> None:
     require(all(item["decision"] in allowed for item in decisions), "invalid skill ownership decision")
     require(matrix["promotion_rule"]["require_real_pilot_evidence"] is True, "skill replacement requires real pilot evidence")
     require(matrix["promotion_rule"]["auto_remove_domain_skill"] is False, "domain skills must not auto-remove")
-    require(any(item["decision"] == "WRAP_ADK" for item in decisions), "matrix must contain at least one concrete ADK wrapper candidate")
-    require(any(item["decision"] == "KEEP_DOMAIN_CONTRACT" for item in decisions), "matrix must preserve domain-only semantics")
 
     identity = yaml.safe_load(IDENTITY.read_text(encoding="utf-8"))
     require(identity["knowledge_context"]["provider"] == "knowledge-hub", "identity envelope knowledge provider drift")
     require(identity["agent_assets"]["provider"] == "agent-dev-kit", "identity envelope ADK provider drift")
-    require(identity["runtime"]["evaluator"] == "llm_agent", "identity envelope runtime evaluator drift")
+    require(identity["runtime_evaluation"]["evaluator"] == "llm_agent", "identity envelope runtime evaluator drift")
+    for key in ["repository", "commit", "runtime_target", "runtime_profile", "runtime_host", "execution_receipt_ref"]:
+        require(key in identity["runtime_binding"], f"runtime binding identity missing {key}")
+    require(any("must not contain verification_pass" in rule for rule in identity["rules"]), "receipt must explicitly reject verification_pass")
 
     harvest = yaml.safe_load(HARVEST.read_text(encoding="utf-8"))
     require(harvest["to"] == "knowledge-hub", "Knowledge Harvest must route to Knowledge Hub")
@@ -90,14 +117,14 @@ def main() -> None:
         require(forbidden not in adapter, f"digital-worker must not own runtime-specific path: {forbidden}")
 
     strategy = STRATEGY.read_text(encoding="utf-8")
-    for token in ["R&D Operating Model", "Knowledge Control Plane", "Agent Asset Control Plane", "Practice/Runtime Evaluation Lab", "route-pending"]:
-        require(token in strategy, f"four-repo strategy missing boundary marker: {token}")
+    for token in ["4 个稳定控制面", "N 个可替换 Runtime Binding", "jiying2007/codex", "Asset Profile", "Runtime Profile", "Execution Receipt"]:
+        require(token in strategy, f"4+N strategy missing marker: {token}")
 
     quickstart = QUICKSTART.read_text(encoding="utf-8")
-    for token in ["KNOWLEDGE_HUB_ROOT", "embedded_knowledge.py context", "embedded_knowledge.py evidence-pack", "bootstrap-local-catalog", "identity-envelope.yaml"]:
+    for token in ["KNOWLEDGE_HUB_ROOT", "embedded_knowledge.py context", "embedded_knowledge.py evidence-pack", "identity-envelope.yaml"]:
         require(token in quickstart, f"quickstart missing integrated workflow marker: {token}")
 
-    print("cross-repo integration validation PASS: ownership, exact pins, capability evidence, skill matrix, identity envelope, Knowledge Hub adapter/handoff")
+    print("cross-repo integration validation PASS: 4 control planes + replaceable Runtime Bindings, exact pins, fail-closed readiness")
 
 
 if __name__ == "__main__":

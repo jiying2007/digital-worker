@@ -2,7 +2,7 @@
 
 - Status: active runbook
 - Stage baseline: `docs/strategy/embedded-domain-closed-loop-v1.md`
-- Four-repo baseline: `docs/strategy/four-repo-ai-operating-system.md`
+- Cross-repo baseline: `docs/strategy/four-control-planes-runtime-bindings.md`
 - Scope: first real Debug / Feature / Review-Release runs
 
 ## 1. Register the real task
@@ -90,17 +90,27 @@ At minimum capture:
 ```text
 work_item_id / run_id
 Knowledge Hub provider commit + source fingerprint / evidence pack ref
-ADK provider commit + version + profiles + asset bundle hash
-runtime provider / target / version / execution receipt
+ADK provider commit + version + Asset Profile + asset bundle hash
+Runtime Binding repository + exact commit + target + Runtime Profile + host
+Runtime execution provider/version/model/MCP/sandbox/approval identity
+Runtime Execution Receipt ref
 repo exact base/result SHA + build/artifact/device identities
 verification run + review refs
 ```
 
-The selected provider pins are recorded in `config/integrations/cross-repo-lock.json`. A pin identifies what the Pilot consumed; it does **not** freeze the target architecture to one provider.
+`Asset Profile` and `Runtime Profile` are different identities. For the first Codex binding, the intended pair is:
+
+```text
+ADK Asset Profile    = embedded-fullstack
+Codex Runtime Profile = token-lean or team-collab
+Runtime Target        = codex-cli
+```
+
+The selected provider/binding pins are recorded in `config/integrations/cross-repo-lock.json`. A pin identifies what the Pilot consumed; it does **not** freeze the target architecture to one provider/runtime.
 
 ## 6. Select Agent assets through ADK
 
-`digital-worker` keeps Expert identity and domain Gate semantics. Reusable execution assets are selected from `agent-dev-kit`, with `embedded-fullstack` as the required candidate profile for this integration stage.
+`digital-worker` keeps Expert identity and domain Gate semantics. Reusable execution assets are selected from `agent-dev-kit`, with `embedded-fullstack` as the required candidate **Asset Profile** for this integration stage.
 
 Consult:
 
@@ -108,36 +118,63 @@ Consult:
 
 A `WRAP_ADK` or `ADK_REUSE_CANDIDATE` classification does not remove the existing P0 Skill. Real Pilot evidence is required before promotion/replacement.
 
-Record the ADK commit/version/profile and produced asset bundle hash in the identity envelope. Runtime-specific exporter or user-home paths must not be implemented in digital-worker.
+Record the ADK exact commit/version/Asset Profile and provider-produced asset bundle hash in the identity envelope. Do not use a consumer lock hash, Git blob SHA, short SHA or tag as a substitute.
 
-## 7. Execute the engineering loop
+The Codex Runtime Binding currently remains `BLOCKED_ASSET_BUNDLE_IDENTITY`; its Contract CI being green does not make it operationally ready until the ADK bundle identity is proven.
 
-Maintain the V1 spine throughout execution:
+## 7. Execute through a Runtime Binding
+
+Runtime-specific configuration belongs to the selected Runtime Binding, not digital-worker.
+
+For Codex the binding is `jiying2007/codex`, which owns Codex Runtime Profile, config rendering, MCP/sandbox binding, source→build→plan→dry-run→apply/rollback, live drift and Runtime Execution Receipt.
+
+Maintain the V1 spine:
 
 ```text
 work_item_id / run_id
   -> shared Material/System Context
   -> Knowledge Hub context/evidence refs (or explicit bootstrap fallback)
   -> Expert technical analysis / decision
-  -> ADK profile/skill asset identity
-  -> Engineering Agent Runtime execution identity
+  -> ADK Asset Profile / bundle identity
+  -> Runtime Binding exact identity
+  -> Runtime execution + Execution Receipt
   -> exact source/build/artifact/device/test identity
   -> Acceptance -> Evidence
   -> independent Verification / Review
   -> Knowledge Harvest
 ```
 
-Debug uses one shared Hypothesis Registry. Feature work records Integration Reconciliation when multiple domains/interfaces are involved. Runtime Provider may vary, but Contract / Gate / Action / Verification semantics do not.
+Debug uses one shared Hypothesis Registry. Feature work records Integration Reconciliation when multiple domains/interfaces are involved.
 
-## 8. Runtime comparison
+A Runtime-local `final`, `commit`, `apply` or `release` gate is only Runtime conformance. It never implies digital-worker Domain Gate PASS, Verification PASS or product Release Ready.
 
-For #18 or any controlled cross-runtime comparison, keep the same Work Item, exact base, Material/System Context, Knowledge fingerprint, Engineering Task Package, Acceptance and Verification standard.
+## 8. Runtime Execution Receipt
 
-`llm_agent` owns target-health/comparison/Loop Readiness evidence; `agent-dev-kit` owns Profile/Skill/target-asset identity; `digital-worker` owns the engineering and Verification judgement.
+A Runtime Binding receipt records what the Runtime actually executed. It must bind the same `work_item_id/run_id` and exact Runtime/ADK/repository identities.
 
-A Runtime completion is never a Verification PASS.
+For Codex the receipt schema is owned by the binding:
 
-## 9. Complete the run
+`jiying2007/codex:schemas/runtime-execution-receipt.schema.json`
+
+The receipt must not contain or imply:
+
+```text
+verification_pass
+release_ready
+domain_gate_pass
+```
+
+These remain independent digital-worker decisions.
+
+## 9. Runtime comparison
+
+For #18 or any controlled cross-runtime comparison, keep the same Work Item, exact base, Material/System Context, Knowledge fingerprint, Engineering Task Package, Acceptance, ADK Asset Profile/bundle and Verification standard.
+
+Each candidate uses its own Runtime Binding, Runtime Profile and Execution Receipt. The next Runtime must not receive the previous Runtime's final answer or patch.
+
+`llm_agent` owns target-health/comparison/Loop Readiness evidence; `agent-dev-kit` owns Asset Profile/Skill/bundle identity; each Runtime Binding owns target-local conformance; `digital-worker` owns engineering Verification/Review judgement.
+
+## 10. Complete the run
 
 Copy the reviewed working artifacts into the evidence bundle through `--extra`:
 
@@ -155,6 +192,8 @@ Debug additionally supplies:
 --extra hypothesis_registry=<RUN_DIR>/working/hypothesis-registry.json
 ```
 
+When a Runtime Binding materially executed the task, its reviewed Execution Receipt must also be retained as evidence and referenced from `identity-envelope.yaml` / run evidence.
+
 Then:
 
 ```bash
@@ -162,7 +201,7 @@ python scripts/embedded_pilot.py validate <RUN_DIR>
 python scripts/embedded_pilot.py bundle <RUN_DIR> --fail-incomplete
 ```
 
-## 10. Route Knowledge Harvest
+## 11. Route Knowledge Harvest
 
 `NO_KNOWLEDGE_DELTA` ends the knowledge branch without manufacturing a document.
 
@@ -177,18 +216,19 @@ python scripts/embedded_knowledge.py proposal-route \
 
 This may route the candidate to reviewing/owner review. It does **not** directly write active knowledge and does not imply promotion.
 
-## 11. Closure rules
+## 12. Closure rules
 
-A run is not successful merely because code builds. Before closure check:
+A run is not successful merely because code builds or Runtime local gates pass. Before closure check:
 
 - all required Acceptance Criteria have concrete Evidence mapping;
 - no cross-layer PASS inference;
 - relevant source/artifact/device/test identities are exact or explicitly unresolved;
-- Knowledge/ADK/Runtime provider identities are pinned when they materially contributed;
+- Knowledge/ADK/Runtime Binding/Runtime execution identities are pinned when they materially contributed;
+- Runtime Execution Receipt is present when a binding executed the task and contains no domain Verification claim;
 - Verification and Review independence is preserved;
 - Knowledge Harvest is finalized as either `NO_KNOWLEDGE_DELTA` or an evidence-backed proposal candidate;
 - observations are fed back to #26 rather than immediately creating a new Schema/Agent/Platform.
 
-## 12. Current implementation boundary
+## 13. Current implementation boundary
 
-This runbook deliberately does **not** require a new RAG, Vector DB, Context Broker, Knowledge Graph, Integration Expert, runtime exporter, or Artifact-Lineage database inside digital-worker. Those responsibilities either belong to another control plane or remain evidence-driven future options.
+This runbook deliberately does **not** require a new RAG, Vector DB, Context Broker, Knowledge Graph, Integration Expert, central Runtime Gateway or Artifact-Lineage database inside digital-worker. Runtime-specific distribution remains in replaceable Runtime Bindings; other capabilities either belong to another control plane or remain evidence-driven future options.
