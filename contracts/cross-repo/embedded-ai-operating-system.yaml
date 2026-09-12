@@ -1,6 +1,7 @@
-schema_version: 1
+schema_version: 2
 status: current-stage-baseline
 architecture_provider_selection: not_frozen
+architecture_model: four-control-planes-plus-replaceable-runtime-bindings
 
 planes:
   digital-worker:
@@ -20,6 +21,7 @@ planes:
       - general-knowledge-lifecycle-engine
       - runtime-specific-agent-exporters
       - external-practice-adoption-lab
+      - runtime-host-configuration
 
   knowledge-hub:
     role: knowledge-control-plane
@@ -37,9 +39,9 @@ planes:
     owns:
       - reusable-agent-assets
       - reusable-skills
-      - profiles
+      - asset-profiles
       - workflow-assets
-      - target-export-install-rollback
+      - target-export-contract
       - asset-evaluation-and-release
     required_profile: embedded-fullstack
 
@@ -54,6 +56,34 @@ planes:
     must_not_own:
       - production-runtime
       - domain-verification-pass
+
+runtime_bindings:
+  contract:
+    purpose: map provider-neutral agent assets and engineering packages into one concrete runtime/host without changing domain semantics
+    required_identity:
+      - runtime-binding-repository
+      - runtime-binding-commit
+      - runtime-target
+      - runtime-profile
+      - runtime-host
+      - execution-receipt-ref
+    must_not_own:
+      - domain-gate-semantics
+      - domain-verification-pass
+      - knowledge-lifecycle
+      - reusable-agent-skill-source-of-truth
+      - cross-runtime-effectiveness-evaluation
+  candidates:
+    codex:
+      repository: jiying2007/codex
+      role: codex-runtime-distribution-and-host-integration
+      runtime_target: codex-cli
+      status: candidate
+    claude-code:
+      repository: null
+      role: future-runtime-binding
+      runtime_target: claude-code
+      status: future
 
 source_fact_planes:
   git_ci_hil_artifact_store:
@@ -71,16 +101,30 @@ handoffs:
     failure: BLOCKED_or_NEEDS_REVIEW
   - from: digital-worker
     to: agent-dev-kit
-    contract: profile-and-asset-bundle-request
+    contract: asset-profile-and-bundle-request
     failure: BLOCKED
+  - from: agent-dev-kit
+    to: runtime-binding
+    contract: target-bundle-identity
+    failure: BLOCKED_ASSET_BUNDLE_IDENTITY
   - from: digital-worker
+    to: runtime-binding
+    contract: engineering-task-package-plus-runtime-binding-request
+    failure: BLOCKED
+  - from: runtime-binding
+    to: digital-worker
+    contract: runtime-execution-receipt
+    failure: BLOCKED_or_FAILED
+  - from: runtime-binding
     to: llm_agent
-    contract: joint-runtime-pilot-evidence
+    contract: runtime-health-and-comparison-evidence
     failure: NOT_READY_or_BLOCKED
 
 stable_principles:
   - Provider 可替换，Contract 稳定
   - Source of Truth stays at source
   - Expert identity 与 Runtime 解耦
+  - Asset Profile 与 Runtime Profile 分离
+  - Runtime local gate 不等于 Domain Gate
   - Runtime output 不等于 Verification PASS
   - Knowledge candidate 不自动 promotion active
