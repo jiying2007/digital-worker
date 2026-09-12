@@ -1,6 +1,7 @@
-schema_version: 1
+schema_version: 2
 status: evidence-in-progress
 provider_selection: not_frozen
+architecture_model: four-control-planes-plus-replaceable-runtime-bindings
 
 roles:
   knowledge_control_plane:
@@ -8,8 +9,9 @@ roles:
     repository: jiying2007/knowledge-hub
     evidence:
       contract: registry/integrations/digital-worker.json
-      pinned_commit: 8541d5f0a40263536179ea44764bca2baa063731
-      current_validation: BLOCKED_CI_TRANSPORT
+      pinned_commit: e28e719516ff88c485627099e8cc58b20ade9a57
+      current_validation: BLOCKED_CI_TRANSPORT_AND_ROUTE_PENDING
+      runtime_consumer_contract_pr: 16
     capabilities:
       registry: native
       context_preflight: native
@@ -18,6 +20,7 @@ roles:
       proposal_lifecycle: native
       owner_review: native
       source_acl_provenance: native
+      public_runtime_consumer_contract: candidate-pr
       digital_worker_project_route: pending-governed-registration
     decision: candidate-not-default
 
@@ -26,37 +29,59 @@ roles:
     repository: jiying2007/agent-dev-kit
     evidence:
       contract: manifests/integrations/digital-worker.json
-      pinned_commit: 9ab5b2a6047f9afb8460d9e985abfa44cd909947
-      current_validation: CORE_CI_PASS_PROMOTION_JOB_UNAVAILABLE
+      runtime_binding_contract: manifests/integrations/codex-runtime-binding.json
+      pinned_commit: cceef553ed6c43646ad62f87b23b2eefc1df8309
+      current_validation: RUNTIME_BINDING_CONTRACT_PR_CI_SUCCESS
     capabilities:
       agent_asset_ssot: native
       skill_asset_ssot: native
-      profiles: native
+      asset_profiles: native
       embedded_fullstack_profile: native
-      target_export_install_rollback: native
-      runtime_specific_live_write: controlled-external-chain
-    decision: preferred-candidate-for-pilot
+      target_export_contract: native
+      provider_produced_codex_bundle_hash: missing-blocking
+      runtime_specific_live_write: forbidden-by-contract
+    decision: preferred-candidate-for-pilot-after-bundle-identity
+
+  runtime_binding:
+    candidates:
+      codex:
+        repository: jiying2007/codex
+        pinned_commit: 01afd61c7f14f0da3a901096f33f016add6b3640
+        runtime_target: codex-cli
+        contract: manifests/integrations/digital-worker-runtime-binding.json
+        execution_receipt_schema: schemas/runtime-execution-receipt.schema.json
+        contract_validation: PR_CI_SUCCESS
+        operational_readiness: BLOCKED_ASSET_BUNDLE_IDENTITY
+        capabilities:
+          runtime_profiles: native
+          target_mapping: native
+          source_build_plan_dry_run_apply: native
+          rollback: native
+          mcp_sandbox_binding: native
+          live_drift: native
+          execution_receipt_contract: native
+          domain_verification_pass: unsupported-by-design
+      claude_code:
+        repository: null
+        runtime_target: claude-code
+        status: future-binding
+    decision: not_frozen
 
   runtime_practice_eval:
     candidate: llm_agent
     repository: jiying2007/llm_agent
     evidence:
       contract: manifests/digital_worker_runtime_pilot.json
-      pinned_commit: cb80e5ad15e783e627736d52f8d67ad5a445c2fc
-      current_validation: JOB_LEVEL_CI_FAILURE_REQUIRES_RERUN
+      pinned_commit: c3303580278fdc402fceecccde4baab6323a1c78
+      current_validation: RUNTIME_BINDING_RECEIPT_PR_CI_SUCCESS
     capabilities:
       external_practice_intake: native
       runtime_target_health: native
       loop_readiness: native
-      runtime_comparison: contract-ready
+      runtime_binding_comparison: contract-ready
+      execution_receipt_consumption: contract-ready
       production_runtime: unsupported-by-design
     decision: candidate-evaluation-lab
-
-  engineering_runtime:
-    candidates:
-      - {id: codex-home, evidence_owner: llm_agent, status: existing-target}
-      - {id: claude-code, evidence_owner: agent-dev-kit/llm_agent, status: experimental-pending-real-health}
-    decision: not_frozen
 
   engineering_fact_sources:
     candidates: [git, ci, hil, artifact-store]
@@ -68,3 +93,5 @@ rules:
   selected_integration_does_not_freeze_architecture: true
   provider_failure_is_not_pass: true
   fallback_exit_plan_required_before_default: true
+  contract_ci_success_does_not_imply_operational_readiness: true
+  runtime_binding_is_not_control_plane: true
