@@ -11,8 +11,8 @@
       "contract": "registry/integrations/digital-worker.json",
       "contract_version": "1.0",
       "contract_canonical_sha256": "21b79295b532ff78b39461f2ef35f222fb1d9ba18a51eafff37d13351ead14ff",
-      "validation": "BLOCKED_CI_TRANSPORT_AND_ROUTE_PENDING",
-      "notes": "Exact pin is intentionally allowed to lag provider main. Promotion requires checkout-level compatibility evidence, not freshness alone."
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_ROUTE_PENDING",
+      "notes": "Exact pin is intentionally allowed to lag provider main. Pinned contract checkout/digest is verified by digital-worker permanent CI; governed project route remains pending. Promotion requires compatibility evidence, not freshness alone."
     },
     "agent_asset_control_plane": {
       "repository": "jiying2007/agent-dev-kit",
@@ -26,7 +26,7 @@
       "adk_version": "5.0.0-rc.2",
       "required_asset_profile": "embedded-fullstack",
       "asset_bundle_hash": null,
-      "validation": "RUNTIME_BINDING_PR_CI_PASS_BUNDLE_IDENTITY_BLOCKED"
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_BUNDLE_IDENTITY_BLOCKED"
     },
     "runtime_practice_eval": {
       "repository": "jiying2007/llm_agent",
@@ -35,7 +35,7 @@
       "contract": "manifests/digital_worker_runtime_pilot.json",
       "contract_version": "1.1",
       "contract_canonical_sha256": "1fbbbaf77c70d868085da67ecce46a4d7a750b6bafa67463442c869ecaba5f6a",
-      "validation": "RUNTIME_BINDING_RECEIPT_PR_CI_PASS"
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED"
     }
   },
   "runtime_bindings": {
@@ -50,7 +50,7 @@
       "runtime_profile_examples": ["token-lean", "team-collab"],
       "required_asset_profile": "embedded-fullstack",
       "execution_receipt_schema": "schemas/runtime-execution-receipt.schema.json",
-      "validation": "CONTRACT_CI_PASS_ASSET_BUNDLE_IDENTITY_BLOCKED"
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_ASSET_BUNDLE_IDENTITY_BLOCKED"
     }
   },
   "rules": {
