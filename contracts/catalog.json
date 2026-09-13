@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "status": "active",
+  "purpose": "Single machine catalog for authoritative digital-worker contracts and schemas. The catalog records authority and compatibility metadata; it does not duplicate contract bodies.",
+  "contracts": [
+    {"id":"task-brief","version":"1","path":"schemas/task-brief.v1.schema.json","owner":"digital-worker","authority":"domain-contract","producer":"work-item-intake","consumers":["embedded-expert-team"],"status":"active","compatibility":"backward-compatible-within-v1"},
+    {"id":"pilot-run","version":"1","path":"schemas/pilot-run.v1.schema.json","owner":"digital-worker","authority":"pilot-control","producer":"embedded_pilot.py","consumers":["pilot-validator","pilot-evaluator"],"status":"active","compatibility":"strict"},
+    {"id":"pilot-evidence-bundle","version":"1","path":"schemas/pilot-evidence-bundle.v1.schema.json","owner":"digital-worker","authority":"pilot-evidence","producer":"embedded_pilot.py","consumers":["pilot-validator"],"status":"active","compatibility":"strict"},
+    {"id":"delivery-receipt","version":"1","path":"schemas/delivery-receipt.v1.schema.json","owner":"digital-worker","authority":"engineering-handoff","producer":"engineering-execution","consumers":["verification","pilot"],"status":"active","compatibility":"strict"},
+    {"id":"engineering-task-package","version":"1","path":"expert-groups/embedded-system/schemas/engineering-task-package.schema.json","owner":"digital-worker","authority":"engineering-handoff","producer":"embedded-expert-team","consumers":["engineer","runtime-binding"],"status":"active","compatibility":"strict"},
+    {"id":"verification-report","version":"1","path":"expert-groups/embedded-system/schemas/verification-report.schema.json","owner":"digital-worker","authority":"domain-verification","producer":"verifier","consumers":["review","pilot"],"status":"active","compatibility":"strict"},
+    {"id":"review-report","version":"1","path":"expert-groups/embedded-system/schemas/review-report.schema.json","owner":"digital-worker","authority":"independent-review","producer":"reviewer","consumers":["pilot"],"status":"active","compatibility":"strict"},
+    {"id":"hypothesis-registry","version":"1","path":"expert-groups/embedded-system/schemas/hypothesis-registry.schema.json","owner":"digital-worker","authority":"debug-shared-state","producer":"debug-workflow","consumers":["debug-experts","verification"],"status":"active","compatibility":"strict"},
+    {"id":"material-manifest","version":"1","path":"expert-groups/embedded-system/schemas/material-manifest.schema.json","owner":"digital-worker","authority":"task-context","producer":"pilot-scaffold","consumers":["expert-team","runtime-binding","verification"],"status":"active","compatibility":"strict"},
+    {"id":"cross-repo-lock","version":"3","path":"config/integrations/cross-repo-lock.json","owner":"digital-worker","authority":"integration-identity","producer":"integration-promotion","consumers":["cross-repo-ci","knowledge-adapter","runtime-pilot"],"status":"active","compatibility":"exact-pin"},
+    {"id":"identity-envelope","version":"2","path":"contracts/cross-repo/identity-envelope.yaml","owner":"digital-worker","authority":"cross-plane-identity","producer":"digital-worker","consumers":["pilot","runtime-binding","verification"],"status":"current-stage-candidate","compatibility":"refs-first"},
+    {"id":"embedded-ai-operating-system","version":"2","path":"contracts/cross-repo/embedded-ai-operating-system.yaml","owner":"digital-worker","authority":"cross-repo-ownership","producer":"digital-worker","consumers":["all-control-planes"],"status":"current-stage-baseline","compatibility":"4-plus-n"}
+  ]
+}

@@ -33,18 +33,26 @@ def validate(path: Path, schema: Path):
 
 
 def main():
-    plan_path = PILOT / "pilot-plan.yaml"
-    requirements_path = PILOT / "artifact-requirements.yaml"
-    plan = load_yaml(plan_path)
-    requirements = load_yaml(requirements_path)
+    plan = load_yaml(PILOT / "pilot-plan.yaml")
+    requirements = load_yaml(PILOT / "artifact-requirements.yaml")
     run_schema = load_json(ROOT / "schemas" / "pilot-run.v1.schema.json")
     run_properties = set(run_schema["properties"])
+    common = requirements["common"]
 
     assert_true(plan["artifact_requirements"] == "artifact-requirements.yaml", "pilot plan must point to artifact-requirements.yaml")
     assert_true(set(plan["tracks"]) == set(requirements["tracks"]), "pilot plan and artifact requirements track sets differ")
-    assert_true(requirements["common"]["real_run_requires_exact_base_commit"] is True, "real pilots must require exact base commit")
-    assert_true(requirements["common"]["all_refs_must_resolve_inside_run_directory"] is True, "pilot refs must remain inside run directory")
-    assert_true(requirements["common"]["evidence_bundle_required_for_completed_run"] is True, "completed pilots must require evidence bundle")
+    for key in [
+        "real_run_requires_exact_base_commit",
+        "real_run_requires_full_40_hex_base_commit",
+        "all_refs_must_resolve_inside_run_directory",
+        "evidence_bundle_required_for_completed_run",
+        "completed_run_is_terminal",
+        "completed_bundle_hashes_revalidated",
+        "superseding_run_required_for_completed_correction",
+    ]:
+        assert_true(common.get(key) is True, f"pilot trust requirement disabled: {key}")
+    base_pattern = run_schema["properties"]["base_commit"].get("pattern")
+    assert_true(base_pattern == "^[0-9a-fA-F]{40}$", "pilot-run schema must require full 40-hex base commit when present")
 
     for track, cfg in requirements["tracks"].items():
         assert_true(cfg["required_refs"], f"pilot track must require at least one structured ref: {track}")
@@ -54,14 +62,17 @@ def main():
             assert_true(kind and isinstance(kind, str), f"invalid required extra artifact kind: {track}")
 
     validate(ROOT / "tests" / "fixtures" / "engineering-task-package.valid.json", EMB / "schemas" / "engineering-task-package.schema.json")
+    validate(ROOT / "tests" / "fixtures" / "delivery-receipt.valid.json", ROOT / "schemas" / "delivery-receipt.v1.schema.json")
     validate(ROOT / "tests" / "fixtures" / "verification-report.valid.json", EMB / "schemas" / "verification-report.schema.json")
     validate(ROOT / "tests" / "fixtures" / "review-report.valid.json", EMB / "schemas" / "review-report.schema.json")
     validate(ROOT / "tests" / "fixtures" / "pilot-result.feature.valid.json", ROOT / "schemas" / "pilot-result.v1.schema.json")
 
-    assert_true((ROOT / "scripts" / "embedded_pilot.py").is_file(), "embedded pilot CLI missing")
+    pilot_cli = (ROOT / "scripts" / "embedded_pilot.py").read_text(encoding="utf-8")
+    for marker in ["exact_git_sha", "validate_bundle_integrity", "TERMINAL_STATUSES", "superseding run"]:
+        assert_true(marker in pilot_cli, f"embedded pilot CLI missing trust marker: {marker}")
     assert_true((ROOT / "schemas" / "pilot-evidence-bundle.v1.schema.json").is_file(), "pilot evidence bundle schema missing")
     assert_true((ROOT / "schemas" / "pilot-status.v1.schema.json").is_file(), "pilot status schema missing")
-    print("embedded pilot operations validation PASS: plan/requirements/fixtures/CLI are consistent")
+    print("embedded pilot operations validation PASS: plan/requirements/fixtures/CLI trust semantics are consistent")
 
 
 if __name__ == "__main__":

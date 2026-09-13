@@ -5,13 +5,13 @@
 
 ## 1. 默认模型
 
-`main` 是默认唯一长期分支。`feat/*`、`docs/*`、`design/*`、`arch/*`、`refactor/*`、`fix/*`、`chore/*` 等均视为任务分支，不作为历史存档。
+`main` 是默认唯一长期分支。`feat/*`、`docs/*`、`design/*`、`arch/*`、`refactor/*`、`fix/*`、`chore/*`、`codex/*` 等均视为任务分支，不作为历史存档。
 
-其中 `arch/*` 用于 ADR/跨仓边界/架构 Contract 等阶段性架构工作；它与 `design/*` 一样仍是临时任务分支，不能因为名称为 architecture 就成为长期漂移分支。
+其中 `arch/*` 用于 ADR/跨仓边界/架构 Contract 等阶段性架构工作；`codex/*` 用于受控自动化/Codex 任务工作。二者与 `design/*` 一样仍是临时任务分支，不能因为名称特殊就成为长期漂移分支。
 
 ## 2. 创建要求
 
-任务分支应绑定明确目标/Issue/PR，并从已知 exact main SHA 创建。分支名描述任务，不描述个人。
+任务分支应绑定明确目标/Issue/PR，并从已知 exact main SHA 创建。分支名描述任务，不描述个人身份；自动化创建的 `codex/*` 仍必须满足相同 PR/CI/GC 约束。
 
 ## 3. 合并后 GC
 
@@ -31,17 +31,18 @@ Git history / merged PR 已提供历史，不通过长期保留任务分支实�
 
 治理模型：
 
-- 长期入口仅为手动 `workflow_dispatch`；
+- 长期入口包含手动 `workflow_dispatch`；
 - 允许 `dry_run=true` 只校验不删除；
 - 待删除分支必须先进入 `.github/branch-gc-allowlist.txt`，因此删除范围必须经过 PR review / main history；
 - workflow 使用最小必要权限：`contents: write` + `pull-requests: read`；
+- GitHub Action 使用 immutable full-SHA pin；
 - 每个分支删除前 fail-closed 校验：branch exists、`branch != main`、not protected、open PR = 0、merged PR evidence >= 1；
 - 分支已不存在时幂等跳过；
 - 删除后输出剩余远端分支用于审计。
 
 ### Bootstrap 行为
 
-当前首次落地阶段额外允许：当 `.github/workflows/branch-gc.yml` 或其 allowlist 通过 PR 合入 `main` 时，以 `push + exact audited path` 自动触发一次 GC。它仍使用相同 allowlist 与安全校验，不扩大删除范围。
+当前阶段额外允许：当 `.github/workflows/branch-gc.yml` 或其 allowlist 通过 PR 合入 `main` 时，以 `push + exact audited path` 自动触发一次 GC。它仍使用相同 allowlist 与安全校验，不扩大删除范围。
 
 如果后续确认手动模式足够，可单独 PR 移除这个 bootstrap `push` trigger，仅保留 `workflow_dispatch`。
 
@@ -67,10 +68,11 @@ Git history / merged PR 已提供历史，不通过长期保留任务分支实�
 - workflow / allowlist 存在；
 - `workflow_dispatch` 存在；
 - `contents: write` / `pull-requests: read` 权限存在；
+- checkout Action 保持 exact SHA pin；
 - `main` 明确拒绝；
 - protected/open-PR/merged-PR 校验存在；
 - 删除动作仍限定 Git branch ref；
-- allowlist 不含 `main`、无重复、只允许批准的任务分支前缀（含 `arch/` 架构任务分支）。
+- allowlist 不含 `main`、无重复、只允许批准的任务分支前缀（含 `arch/` 与 `codex/`）。
 
 ## 8. 当前清理
 

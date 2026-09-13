@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "status": "required-before-real-pilot-acceptance",
+  "default_branch": "main",
+  "required": {
+    "server_side_enforcement": true,
+    "pull_request_required": true,
+    "required_status_checks": ["Embedded Expert Contracts / validate"],
+    "block_force_push": true,
+    "block_branch_deletion": true
+  },
+  "recommended": {
+    "strict_required_checks": true,
+    "required_approvals": 0,
+    "bounded_bypass_only": true
+  },
+  "notes": "Repository-local tests cannot substitute for GitHub server-side enforcement. Approval count remains zero while the repository is single-owner; increase before multi-contributor productionization."
+}

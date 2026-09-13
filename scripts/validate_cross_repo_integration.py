@@ -29,12 +29,16 @@ def exact_sha(value: str | None) -> bool:
     return re.fullmatch(r"[0-9a-f]{40}", value or "") is not None
 
 
+def digest(value: str | None) -> bool:
+    return re.fullmatch(r"[0-9a-f]{64}", value or "") is not None
+
+
 def main() -> None:
     for path in [LOCK, CAPABILITY, OWNERSHIP, IDENTITY, HARVEST, STRATEGY, QUICKSTART, SKILLS, MATRIX, ADAPTER]:
         require(path.is_file(), f"missing cross-repo asset: {path.relative_to(ROOT)}")
 
     lock = json.loads(LOCK.read_text(encoding="utf-8"))
-    require(lock["schema_version"] == 2, "cross-repo lock must use 4+N schema v2")
+    require(lock["schema_version"] == 3, "cross-repo lock must use trust-closure schema v3")
     require(lock["architecture_model"] == "four-control-planes-plus-replaceable-runtime-bindings", "architecture model drift")
     require(lock["architecture_provider_selection"] == "not_frozen", "provider choice must remain not_frozen")
 
@@ -48,25 +52,33 @@ def main() -> None:
         require(provider.get("repository") == repo, f"wrong provider repository for {key}")
         require(exact_sha(provider.get("commit")), f"{key} must pin exact commit")
         require(provider.get("contract_version") == contract_version, f"wrong contract version for {key}")
+        require(digest(provider.get("contract_canonical_sha256")), f"{key} must pin canonical contract SHA256")
         require(provider.get("validation"), f"{key} validation state must be explicit")
+
+    adk = lock["providers"]["agent_asset_control_plane"]
+    require(digest(adk.get("runtime_binding_contract_canonical_sha256")), "ADK runtime-binding contract digest missing")
 
     codex = lock["runtime_bindings"].get("codex", {})
     require(codex.get("repository") == "jiying2007/codex", "Codex Runtime Binding repository drift")
     require(exact_sha(codex.get("commit")), "Codex Runtime Binding must pin exact commit")
+    require(digest(codex.get("contract_canonical_sha256")), "Codex Runtime Binding contract digest missing")
     require(codex.get("runtime_target") == "codex-cli", "Codex target drift")
     require(codex.get("required_asset_profile") == "embedded-fullstack", "Codex must consume the ADK embedded-fullstack Asset Profile")
     require(codex.get("execution_receipt_schema") == "schemas/runtime-execution-receipt.schema.json", "Codex receipt schema missing")
     require("BLOCKED" in codex.get("validation", ""), "Codex must remain operationally blocked until bundle identity exists")
-    require(lock["providers"]["agent_asset_control_plane"].get("asset_bundle_hash") is None, "do not fabricate ADK asset bundle identity")
+    require(adk.get("asset_bundle_hash") is None, "do not fabricate ADK asset bundle identity")
 
     rules = lock["rules"]
     for key in [
+        "contract_digest_required",
         "source_of_truth_stays_at_source",
         "provider_failure_must_not_be_reported_as_pass",
         "asset_profile_must_be_separate_from_runtime_profile",
         "runtime_local_gate_is_not_domain_gate",
         "runtime_output_is_not_verification_pass",
         "runtime_execution_receipt_must_not_contain_verification_pass",
+        "pin_freshness_does_not_imply_compatibility",
+        "pin_promotion_requires_checkout_verification",
     ]:
         require(rules[key] is True, f"required 4+N rule disabled: {key}")
 
@@ -111,7 +123,7 @@ def main() -> None:
     require(harvest["hard_rules"]["owner_review_required"] is True, "Knowledge promotion requires owner review")
 
     adapter = ADAPTER.read_text(encoding="utf-8")
-    for token in ["knowledge-context.sh", "knowledge-evidence-pack.sh", "knowledge-action-check.sh", "knowledge-proposal-route.sh", "bootstrap-local-catalog", "KNOWLEDGE_HUB_ROOT"]:
+    for token in ["knowledge-context.sh", "knowledge-evidence-pack.sh", "knowledge-action-check.sh", "knowledge-proposal-route.sh", "bootstrap-local-catalog", "KNOWLEDGE_HUB_ROOT", "BLOCKED_PROVIDER_IDENTITY_MISMATCH"]:
         require(token in adapter, f"knowledge adapter missing required surface: {token}")
     for forbidden in ["~/.codex", "~/.claude", "~/.config/opencode"]:
         require(forbidden not in adapter, f"digital-worker must not own runtime-specific path: {forbidden}")
@@ -124,7 +136,7 @@ def main() -> None:
     for token in ["KNOWLEDGE_HUB_ROOT", "embedded_knowledge.py context", "embedded_knowledge.py evidence-pack", "identity-envelope.yaml"]:
         require(token in quickstart, f"quickstart missing integrated workflow marker: {token}")
 
-    print("cross-repo integration validation PASS: 4 control planes + replaceable Runtime Bindings, exact pins, fail-closed readiness")
+    print("cross-repo integration validation PASS: 4 control planes + replaceable Runtime Bindings, exact pins, canonical digests, fail-closed readiness")
 
 
 if __name__ == "__main__":
