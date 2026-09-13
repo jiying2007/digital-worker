@@ -13,7 +13,8 @@ CAPABILITY = ROOT / "config" / "integrations" / "provider-capability-matrix.yaml
 OWNERSHIP = ROOT / "contracts" / "cross-repo" / "embedded-ai-operating-system.yaml"
 IDENTITY = ROOT / "contracts" / "cross-repo" / "identity-envelope.yaml"
 HARVEST = ROOT / "contracts" / "cross-repo" / "knowledge-harvest-handoff.yaml"
-STRATEGY = ROOT / "docs" / "strategy" / "four-control-planes-runtime-bindings.md"
+STRATEGY = ROOT / "docs" / "strategy" / "ai-rd-target-operating-model.md"
+LEGACY_STRATEGY = ROOT / "docs" / "strategy" / "four-control-planes-runtime-bindings.md"
 QUICKSTART = ROOT / "docs" / "runbooks" / "embedded-closed-loop-quickstart.md"
 SKILLS = ROOT / "expert-groups" / "embedded-system" / "config" / "p0-skills.yaml"
 MATRIX = ROOT / "expert-groups" / "embedded-system" / "config" / "skill-ownership-matrix.yaml"
@@ -34,7 +35,7 @@ def digest(value: str | None) -> bool:
 
 
 def main() -> None:
-    for path in [LOCK, CAPABILITY, OWNERSHIP, IDENTITY, HARVEST, STRATEGY, QUICKSTART, SKILLS, MATRIX, ADAPTER]:
+    for path in [LOCK, CAPABILITY, OWNERSHIP, IDENTITY, HARVEST, STRATEGY, LEGACY_STRATEGY, QUICKSTART, SKILLS, MATRIX, ADAPTER]:
         require(path.is_file(), f"missing cross-repo asset: {path.relative_to(ROOT)}")
 
     lock = json.loads(LOCK.read_text(encoding="utf-8"))
@@ -65,8 +66,8 @@ def main() -> None:
     require(codex.get("runtime_target") == "codex-cli", "Codex target drift")
     require(codex.get("required_asset_profile") == "embedded-fullstack", "Codex must consume the ADK embedded-fullstack Asset Profile")
     require(codex.get("execution_receipt_schema") == "schemas/runtime-execution-receipt.schema.json", "Codex receipt schema missing")
-    require("BLOCKED" in codex.get("validation", ""), "Codex must remain operationally blocked until bundle identity exists")
-    require(adk.get("asset_bundle_hash") is None, "do not fabricate ADK asset bundle identity")
+    require("BLOCKED" in codex.get("validation", ""), "current Codex lock must stay fail-closed until the versioned source-set migration is promoted")
+    require(adk.get("asset_bundle_hash") is None, "current legacy lock must not fabricate an ADK asset bundle identity")
 
     rules = lock["rules"]
     for key in [
@@ -129,14 +130,32 @@ def main() -> None:
         require(forbidden not in adapter, f"digital-worker must not own runtime-specific path: {forbidden}")
 
     strategy = STRATEGY.read_text(encoding="utf-8")
-    for token in ["4 个稳定控制面", "N 个可替换 Runtime Binding", "jiying2007/codex", "Asset Profile", "Runtime Profile", "Execution Receipt"]:
-        require(token in strategy, f"4+N strategy missing marker: {token}")
+    for token in [
+        "4 个稳定控制面",
+        "N 个可替换 Runtime Binding",
+        "jiying2007/codex",
+        "Thin Session Bootstrap",
+        "L0 — Quick Assist",
+        "L1 — Governed Engineering",
+        "L2 — Formal Evidence",
+        "Asset Profile",
+        "Runtime Profile",
+        "Execution Receipt",
+        "exact-source-set",
+    ]:
+        require(token in strategy, f"target operating model missing marker: {token}")
+    require("asset_bundle_hash / BLOCKED_ASSET_BUNDLE_IDENTITY" in strategy, "target operating model must document the legacy bundle migration boundary")
+    require("target-baseline / frozen-for-implementation" in strategy, "target operating model status drift")
+
+    legacy_strategy = LEGACY_STRATEGY.read_text(encoding="utf-8")
+    require("Status: `superseded`" in legacy_strategy, "transitional 4+N strategy must remain superseded")
+    require("ai-rd-target-operating-model.md" in legacy_strategy, "superseded strategy must point to final target baseline")
 
     quickstart = QUICKSTART.read_text(encoding="utf-8")
     for token in ["KNOWLEDGE_HUB_ROOT", "embedded_knowledge.py context", "embedded_knowledge.py evidence-pack", "identity-envelope.yaml"]:
         require(token in quickstart, f"quickstart missing integrated workflow marker: {token}")
 
-    print("cross-repo integration validation PASS: 4 control planes + replaceable Runtime Bindings, exact pins, canonical digests, fail-closed readiness")
+    print("cross-repo integration validation PASS: final target operating model indexed; current machine locks remain fail-closed pending versioned source-set migration")
 
 
 if __name__ == "__main__":
