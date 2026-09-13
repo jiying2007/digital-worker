@@ -1,5 +1,5 @@
 {
-  "schema_version": 2,
+  "schema_version": 3,
   "status": "candidate-integration",
   "architecture_provider_selection": "not_frozen",
   "architecture_model": "four-control-planes-plus-replaceable-runtime-bindings",
@@ -10,15 +10,18 @@
       "commit": "e28e719516ff88c485627099e8cc58b20ade9a57",
       "contract": "registry/integrations/digital-worker.json",
       "contract_version": "1.0",
+      "contract_canonical_sha256": "21b79295b532ff78b39461f2ef35f222fb1d9ba18a51eafff37d13351ead14ff",
       "validation": "BLOCKED_CI_TRANSPORT_AND_ROUTE_PENDING",
-      "notes": "Runtime-consumer public contract is under PR #16; digital-worker governed project route and native Hub gates remain pending."
+      "notes": "Exact pin is intentionally allowed to lag provider main. Promotion requires checkout-level compatibility evidence, not freshness alone."
     },
     "agent_asset_control_plane": {
       "repository": "jiying2007/agent-dev-kit",
       "ref": "main",
       "commit": "cceef553ed6c43646ad62f87b23b2eefc1df8309",
       "contract": "manifests/integrations/digital-worker.json",
+      "contract_canonical_sha256": "83e468e15b620cb757b749d93a2f9269c39839e0ea3e38bbcfc3e77f16b3f197",
       "runtime_binding_contract": "manifests/integrations/codex-runtime-binding.json",
+      "runtime_binding_contract_canonical_sha256": "86dbcdfebc05cd4db6da0169ac07c3ba5139a21f1c32ee32520b11997d2caf40",
       "contract_version": "1.0",
       "adk_version": "5.0.0-rc.2",
       "required_asset_profile": "embedded-fullstack",
@@ -31,6 +34,7 @@
       "commit": "c3303580278fdc402fceecccde4baab6323a1c78",
       "contract": "manifests/digital_worker_runtime_pilot.json",
       "contract_version": "1.1",
+      "contract_canonical_sha256": "1fbbbaf77c70d868085da67ecce46a4d7a750b6bafa67463442c869ecaba5f6a",
       "validation": "RUNTIME_BINDING_RECEIPT_PR_CI_PASS"
     }
   },
@@ -41,6 +45,7 @@
       "commit": "01afd61c7f14f0da3a901096f33f016add6b3640",
       "contract": "manifests/integrations/digital-worker-runtime-binding.json",
       "contract_version": "1.0",
+      "contract_canonical_sha256": "12165c1794c72809d07f3684799b70661048a9585011b69785c8f6c40756da59",
       "runtime_target": "codex-cli",
       "runtime_profile_examples": ["token-lean", "team-collab"],
       "required_asset_profile": "embedded-fullstack",
@@ -50,12 +55,15 @@
   },
   "rules": {
     "exact_commit_required": true,
+    "contract_digest_required": true,
     "provider_specific_paths_must_not_enter_domain_contracts": true,
     "source_of_truth_stays_at_source": true,
     "provider_failure_must_not_be_reported_as_pass": true,
     "asset_profile_must_be_separate_from_runtime_profile": true,
     "runtime_local_gate_is_not_domain_gate": true,
     "runtime_output_is_not_verification_pass": true,
-    "runtime_execution_receipt_must_not_contain_verification_pass": true
+    "runtime_execution_receipt_must_not_contain_verification_pass": true,
+    "pin_freshness_does_not_imply_compatibility": true,
+    "pin_promotion_requires_checkout_verification": true
   }
 }

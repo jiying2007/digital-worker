@@ -8,7 +8,7 @@
   "workflow_mode": "diagnostic_chain",
   "human_owner": "fixture-owner",
   "repo_root": "/workspace/example",
-  "base_commit": "0123456789abcdef",
+  "base_commit": "0123456789abcdef0123456789abcdef01234567",
   "task_brief_ref": "tests/fixtures/task-brief.valid.json",
   "delivery_receipt_ref": "tests/fixtures/delivery-receipt.valid.json",
   "verification_report_ref": null,

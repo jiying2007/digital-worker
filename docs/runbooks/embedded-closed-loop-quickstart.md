@@ -2,14 +2,15 @@
 
 - Status: active runbook
 - Stage baseline: `docs/strategy/embedded-domain-closed-loop-v1.md`
+- Trust gate: `docs/strategy/r0-trust-closure.md`
 - Cross-repo baseline: `docs/strategy/four-control-planes-runtime-bindings.md`
 - Scope: first real Debug / Feature / Review-Release runs
 
 ## 1. Register the real task
 
-Use the `Embedded Expert Pilot` issue template. A real task must have a stable `work_item_id`, human owner, repo root and **exact immutable base commit SHA**. Do not bind a real run only to `main` / `dev`.
+Use the `Embedded Expert Pilot` issue template. A real task must have a stable `work_item_id`, human owner, repo root and a **full 40-hex immutable base commit SHA**. Branch names, tags and short SHAs are not accepted as real-run source identity.
 
-## 2. Create task-brief and initialize the run
+## 2. Initialize and scaffold
 
 ```bash
 python scripts/embedded_pilot.py init \
@@ -21,142 +22,76 @@ python scripts/embedded_pilot.py init \
   --human-owner <OWNER> \
   --task-brief <TASK_BRIEF_JSON> \
   --repo-root <REPO_ROOT> \
-  --base-commit <EXACT_SHA>
-```
+  --base-commit <FULL_40_HEX_SHA>
 
-## 3. Scaffold the V1 working artifacts
-
-```bash
 python scripts/embedded_pilot_scaffold.py \
   expert-groups/embedded-system/pilot/runs/<RUN_ID>
 ```
 
-This creates under `working/`:
+The scaffold creates `material-manifest.json`, `acceptance-evidence-matrix.md`, `knowledge-harvest.md`, and for Debug one shared `hypothesis-registry.json`. Unknown device/test/reproduction/context identity stays `missing/BLOCKED`; never turn missing context into READY by assumption.
 
-- `material-manifest.json`
-- `acceptance-evidence-matrix.md`
-- `knowledge-harvest.md`
-- Debug only: `hypothesis-registry.json`
+## 3. Assemble Knowledge context from the exact locked provider
 
-The scaffold is intentionally fail-safe: unresolved device/test/reproduction/context identity remains `missing` and the Material Manifest may start as `BLOCKED`. Fill it from trusted sources; never change missing context to READY by assumption.
+The local 50-entry registry is bootstrap-only. Long-term context/evidence/lifecycle belongs to Knowledge Hub.
 
-## 4. Assemble Knowledge context
-
-### 4.1 Preferred path: Knowledge Hub adapter
-
-Configure a checked-out Knowledge Hub explicitly; digital-worker does not assume a user-local path:
+`KNOWLEDGE_HUB_ROOT` must point to the **exact commit pinned in** `config/integrations/cross-repo-lock.json`, not simply the latest local Knowledge Hub checkout. The adapter checks both Git HEAD and the canonical digest of `registry/integrations/digital-worker.json` and fails closed with `BLOCKED_PROVIDER_IDENTITY_MISMATCH` on drift.
 
 ```bash
-export KNOWLEDGE_HUB_ROOT=/path/to/knowledge-hub
+export KNOWLEDGE_HUB_ROOT=/path/to/exact-pinned/knowledge-hub
 python scripts/embedded_knowledge.py adapter-status
-```
 
-Then use Hub-owned context/evidence surfaces through the adapter:
-
-```bash
 python scripts/embedded_knowledge.py context \
   --cwd "$PWD" \
   --query "<platform symptom subsystem>" \
-  --task-type general \
-  --context-budget small \
-  --limit 3
+  --task-type general --context-budget small --limit 3
 
 python scripts/embedded_knowledge.py evidence-pack \
   --query "<platform symptom subsystem>" \
   --scope-ref repository:<repo-id>
 ```
 
-The Knowledge Hub governed `digital-worker` project route is currently **pending governed registration**. If the route is unresolved, provider CI is blocked, or the checkout/surface is missing, keep Gate K `BLOCKED/NEEDS_REVIEW`; do not silently treat the adapter as successful.
+If the route, ACL/authority, provider identity or public surface is unresolved, Gate K remains `BLOCKED/NEEDS_REVIEW`.
 
-### 4.2 Bootstrap fallback: local internal-seed catalog
-
-The 50-entry local catalog remains bootstrap-only:
+Bootstrap fallback remains explicit:
 
 ```bash
 python scripts/embedded_knowledge.py verify
 python scripts/embedded_knowledge.py query --text "spi timeout debug evidence" --limit 10
 ```
 
-The JSON result identifies `mode=bootstrap-local-catalog`. It is a candidate list only and does not represent Knowledge Hub lifecycle/ACL/promotion evidence. Source authority, version/revision, ACL and provenance still require verification.
+A bootstrap hit is only a candidate; authority/version/ACL/provenance still require verification.
 
-## 5. Pin cross-repo execution identity
+## 4. Pin the cross-plane identity spine
 
-Before a cross-repo reproducibility claim, populate the refs-first envelope defined by:
-
-`contracts/cross-repo/identity-envelope.yaml`
-
-At minimum capture:
+Use `contracts/cross-repo/identity-envelope.yaml`. At minimum bind:
 
 ```text
 work_item_id / run_id
-Knowledge Hub provider commit + source fingerprint / evidence pack ref
-ADK provider commit + version + Asset Profile + asset bundle hash
+Knowledge Hub exact commit + source fingerprint / evidence pack ref
+ADK exact commit + version + Asset Profile + provider-produced bundle hash
 Runtime Binding repository + exact commit + target + Runtime Profile + host
-Runtime execution provider/version/model/MCP/sandbox/approval identity
-Runtime Execution Receipt ref
+runtime/model/MCP/sandbox/approval identity + Execution Receipt ref
 repo exact base/result SHA + build/artifact/device identities
 verification run + review refs
 ```
 
-`Asset Profile` and `Runtime Profile` are different identities. For the first Codex binding, the intended pair is:
+`Asset Profile` and `Runtime Profile` are distinct identities:
 
 ```text
-ADK Asset Profile    = embedded-fullstack
+ADK Asset Profile     = embedded-fullstack
 Codex Runtime Profile = token-lean or team-collab
 Runtime Target        = codex-cli
 ```
 
-The selected provider/binding pins are recorded in `config/integrations/cross-repo-lock.json`. A pin identifies what the Pilot consumed; it does **not** freeze the target architecture to one provider/runtime.
+The lock intentionally may lag provider main. Freshness is not compatibility. Pin promotion requires a real checkout at the exact SHA plus contract version/digest verification by `scripts/verify_cross_repo_checkouts.py`.
 
-## 6. Select Agent assets through ADK
+## 5. ADK and Runtime Binding
 
-`digital-worker` keeps Expert identity and domain Gate semantics. Reusable execution assets are selected from `agent-dev-kit`, with `embedded-fullstack` as the required candidate **Asset Profile** for this integration stage.
+`digital-worker` owns Expert identity, Domain Gate, Verification and Review. Reusable Agent/Skill assets belong to `agent-dev-kit`; runtime distribution/host integration belongs to a replaceable Runtime Binding.
 
-Consult:
+For Codex, the binding is `jiying2007/codex`. The current binding remains `BLOCKED_ASSET_BUNDLE_IDENTITY` until ADK emits a provider-produced `embedded-fullstack -> codex-cli` bundle identity and Codex proves consumption of the same bundle. Git blob SHA, consumer lock hash, short commit or tag is not a substitute.
 
-`expert-groups/embedded-system/config/skill-ownership-matrix.yaml`
-
-A `WRAP_ADK` or `ADK_REUSE_CANDIDATE` classification does not remove the existing P0 Skill. Real Pilot evidence is required before promotion/replacement.
-
-Record the ADK exact commit/version/Asset Profile and provider-produced asset bundle hash in the identity envelope. Do not use a consumer lock hash, Git blob SHA, short SHA or tag as a substitute.
-
-The Codex Runtime Binding currently remains `BLOCKED_ASSET_BUNDLE_IDENTITY`; its Contract CI being green does not make it operationally ready until the ADK bundle identity is proven.
-
-## 7. Execute through a Runtime Binding
-
-Runtime-specific configuration belongs to the selected Runtime Binding, not digital-worker.
-
-For Codex the binding is `jiying2007/codex`, which owns Codex Runtime Profile, config rendering, MCP/sandbox binding, source→build→plan→dry-run→apply/rollback, live drift and Runtime Execution Receipt.
-
-Maintain the V1 spine:
-
-```text
-work_item_id / run_id
-  -> shared Material/System Context
-  -> Knowledge Hub context/evidence refs (or explicit bootstrap fallback)
-  -> Expert technical analysis / decision
-  -> ADK Asset Profile / bundle identity
-  -> Runtime Binding exact identity
-  -> Runtime execution + Execution Receipt
-  -> exact source/build/artifact/device/test identity
-  -> Acceptance -> Evidence
-  -> independent Verification / Review
-  -> Knowledge Harvest
-```
-
-Debug uses one shared Hypothesis Registry. Feature work records Integration Reconciliation when multiple domains/interfaces are involved.
-
-A Runtime-local `final`, `commit`, `apply` or `release` gate is only Runtime conformance. It never implies digital-worker Domain Gate PASS, Verification PASS or product Release Ready.
-
-## 8. Runtime Execution Receipt
-
-A Runtime Binding receipt records what the Runtime actually executed. It must bind the same `work_item_id/run_id` and exact Runtime/ADK/repository identities.
-
-For Codex the receipt schema is owned by the binding:
-
-`jiying2007/codex:schemas/runtime-execution-receipt.schema.json`
-
-The receipt must not contain or imply:
+A Runtime Execution Receipt records execution facts only and must never contain or imply:
 
 ```text
 verification_pass
@@ -164,19 +99,31 @@ release_ready
 domain_gate_pass
 ```
 
-These remain independent digital-worker decisions.
+Runtime-local success is not digital-worker Verification PASS.
 
-## 9. Runtime comparison
+## 6. Execute the task
 
-For #18 or any controlled cross-runtime comparison, keep the same Work Item, exact base, Material/System Context, Knowledge fingerprint, Engineering Task Package, Acceptance, ADK Asset Profile/bundle and Verification standard.
+Maintain one V1 spine:
 
-Each candidate uses its own Runtime Binding, Runtime Profile and Execution Receipt. The next Runtime must not receive the previous Runtime's final answer or patch.
+```text
+work_item_id / run_id
+  -> shared Material/System Context
+  -> Knowledge context/evidence refs
+  -> Expert analysis / decision
+  -> ADK Asset Profile / bundle identity
+  -> Runtime Binding exact identity
+  -> Runtime Execution Receipt
+  -> exact source/build/artifact/device/test identity
+  -> Acceptance -> Evidence
+  -> independent Verification / Review
+  -> Knowledge Harvest
+```
 
-`llm_agent` owns target-health/comparison/Loop Readiness evidence; `agent-dev-kit` owns Asset Profile/Skill/bundle identity; each Runtime Binding owns target-local conformance; `digital-worker` owns engineering Verification/Review judgement.
+Debug uses one shared Hypothesis Registry. Feature work records Integration Reconciliation where multiple domains/interfaces are involved. Device write/OTA/release remains behind the existing A0-A7 human gates.
 
-## 10. Complete the run
+## 7. Complete exactly once
 
-Copy the reviewed working artifacts into the evidence bundle through `--extra`:
+Copy reviewed working artifacts into the run with `complete`:
 
 ```bash
 python scripts/embedded_pilot.py complete <RUN_DIR> \
@@ -192,43 +139,46 @@ Debug additionally supplies:
 --extra hypothesis_registry=<RUN_DIR>/working/hypothesis-registry.json
 ```
 
-When a Runtime Binding materially executed the task, its reviewed Execution Receipt must also be retained as evidence and referenced from `identity-envelope.yaml` / run evidence.
+`complete` creates the final `evidence-bundle.json` and then makes the run terminal. **Do not run `bundle` after completion.** A completed/cancelled run cannot be reopened or rebundled through the CLI; corrections require a superseding run so history remains auditable.
 
-Then:
+Validate the terminal evidence:
 
 ```bash
 python scripts/embedded_pilot.py validate <RUN_DIR>
-python scripts/embedded_pilot.py bundle <RUN_DIR> --fail-incomplete
 ```
 
-## 11. Route Knowledge Harvest
+Validation recomputes every referenced artifact SHA-256 and requires the live artifact set to match the frozen bundle. Any post-completion artifact modification therefore invalidates the run until a new superseding run is created.
 
-`NO_KNOWLEDGE_DELTA` ends the knowledge branch without manufacturing a document.
+## 8. Runtime comparison
 
-For evidence-backed `KNOWLEDGE_CANDIDATE`, follow `contracts/cross-repo/knowledge-harvest-handoff.yaml`. The proposal JSON schema remains owned by Knowledge Hub; digital-worker must not fork it.
+For #18, freeze Work Item, exact base, Material/System Context, Knowledge fingerprint, Engineering Task Package, Acceptance, ADK Asset Profile/bundle and Verification standard. Each candidate gets an independent Runtime Binding/Profile/Execution Receipt. The next Runtime must not receive the previous Runtime's final answer or patch.
 
-Once a valid Hub proposal has been produced according to the provider contract:
+`llm_agent` owns runtime health/comparison/Loop Readiness evidence; digital-worker retains the final engineering Verification/Review judgment.
+
+## 9. Knowledge Harvest
+
+`NO_KNOWLEDGE_DELTA` is valid. For evidence-backed `KNOWLEDGE_CANDIDATE`, use `contracts/cross-repo/knowledge-harvest-handoff.yaml`; digital-worker does not fork the Knowledge Hub proposal schema.
 
 ```bash
-python scripts/embedded_knowledge.py proposal-route \
-  --proposal <PROPOSAL_JSON>
+python scripts/embedded_knowledge.py proposal-route --proposal <PROPOSAL_JSON>
 ```
 
-This may route the candidate to reviewing/owner review. It does **not** directly write active knowledge and does not imply promotion.
+This only routes a candidate for Hub lifecycle/owner review; it never directly creates active knowledge.
 
-## 12. Closure rules
+## 10. Closure gate
 
-A run is not successful merely because code builds or Runtime local gates pass. Before closure check:
+Before accepting a real completed run:
 
-- all required Acceptance Criteria have concrete Evidence mapping;
-- no cross-layer PASS inference;
-- relevant source/artifact/device/test identities are exact or explicitly unresolved;
-- Knowledge/ADK/Runtime Binding/Runtime execution identities are pinned when they materially contributed;
-- Runtime Execution Receipt is present when a binding executed the task and contains no domain Verification claim;
+- `scripts/verify_repository_governance.py` must report server-side governance PASS;
+- `scripts/verify_cross_repo_checkouts.py` must verify every materially used locked provider/binding;
+- all Acceptance Criteria map to concrete Evidence;
+- source/artifact/device/test identity is exact or explicitly unresolved;
+- Runtime Execution Receipt is retained when a binding executed work;
 - Verification and Review independence is preserved;
-- Knowledge Harvest is finalized as either `NO_KNOWLEDGE_DELTA` or an evidence-backed proposal candidate;
-- observations are fed back to #26 rather than immediately creating a new Schema/Agent/Platform.
+- `incorrect_pass=0` and no unauthorized action;
+- Knowledge Harvest is finalized;
+- observations feed #26 before new Schema/Agent/Platform is proposed.
 
-## 13. Current implementation boundary
+## 11. Current implementation boundary
 
-This runbook deliberately does **not** require a new RAG, Vector DB, Context Broker, Knowledge Graph, Integration Expert, central Runtime Gateway or Artifact-Lineage database inside digital-worker. Runtime-specific distribution remains in replaceable Runtime Bindings; other capabilities either belong to another control plane or remain evidence-driven future options.
+Do not add a unified Knowledge Platform, Vector DB, Context Broker, Knowledge Graph, Integration Expert, central Runtime Gateway or Runtime-specific exporter to digital-worker without repeated real evidence. The stable model remains **4 control planes + N replaceable Runtime Bindings**.

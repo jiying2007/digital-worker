@@ -25,8 +25,9 @@ concurrency:
 jobs:
   gc:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
 
       - name: Delete approved merged task branches
         env:
@@ -47,63 +48,31 @@ jobs:
 
           for branch in "${branches[@]}"; do
             echo "==> checking ${branch}"
-
             if [[ "${branch}" == "main" ]]; then
-              echo "refusing to delete main"
-              exit 1
+              echo "refusing to delete main"; exit 1
             fi
-
             encoded="$(jq -rn --arg v "${branch}" '$v|@uri')"
-
             if ! gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${encoded}" >/dev/null 2>&1; then
-              echo "${branch}: already absent"
-              continue
+              echo "${branch}: already absent"; continue
             fi
-
             protected="$(gh api "repos/${GITHUB_REPOSITORY}/branches/${encoded}" --jq '.protected')"
             if [[ "${protected}" != "false" ]]; then
-              echo "${branch}: protected branch; refusing GC"
-              exit 1
+              echo "${branch}: protected branch; refusing GC"; exit 1
             fi
-
-            open_count="$(
-              gh pr list \
-                --repo "${GITHUB_REPOSITORY}" \
-                --head "${branch}" \
-                --state open \
-                --json number \
-                --jq 'length'
-            )"
+            open_count="$(gh pr list --repo "${GITHUB_REPOSITORY}" --head "${branch}" --state open --json number --jq 'length')"
             if [[ "${open_count}" != "0" ]]; then
-              echo "${branch}: still has ${open_count} open PR(s); refusing GC"
-              exit 1
+              echo "${branch}: still has ${open_count} open PR(s); refusing GC"; exit 1
             fi
-
-            merged_count="$(
-              gh pr list \
-                --repo "${GITHUB_REPOSITORY}" \
-                --head "${branch}" \
-                --state closed \
-                --json mergedAt \
-                --jq '[.[] | select(.mergedAt != null)] | length'
-            )"
+            merged_count="$(gh pr list --repo "${GITHUB_REPOSITORY}" --head "${branch}" --state closed --json mergedAt --jq '[.[] | select(.mergedAt != null)] | length')"
             if [[ "${merged_count}" == "0" ]]; then
-              echo "${branch}: no merged PR evidence; refusing GC"
-              exit 1
+              echo "${branch}: no merged PR evidence; refusing GC"; exit 1
             fi
-
             if [[ "${DRY_RUN}" == "true" ]]; then
-              echo "${branch}: dry-run PASS; would delete"
-              continue
+              echo "${branch}: dry-run PASS; would delete"; continue
             fi
-
             echo "${branch}: deleting"
-            gh api \
-              --method DELETE \
-              "repos/${GITHUB_REPOSITORY}/git/refs/heads/${encoded}"
+            gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/${encoded}"
           done
 
           echo "==> remaining remote branches"
-          gh api --paginate \
-            "repos/${GITHUB_REPOSITORY}/branches?per_page=100" \
-            --jq '.[].name'
+          gh api --paginate "repos/${GITHUB_REPOSITORY}/branches?per_page=100" --jq '.[].name'

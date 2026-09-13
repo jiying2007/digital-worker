@@ -4,8 +4,9 @@
 
 ## 当前基线
 
-- [Embedded Domain Closed Loop V1](embedded-domain-closed-loop-v1.md)：当前阶段嵌入式研发域内闭环终版方案；目标是先让嵌入式独立形成 Task / Engineering / Quality / Knowledge / Capability 五个闭环，再通过 Adapter 向企业上下游扩展。
-- [4 个稳定控制面 + N 个可替换 Runtime Binding](four-control-planes-runtime-bindings.md)：当前跨仓实施基线；四个稳定控制面保持 Provider-neutral，`jiying2007/codex` 作为第一套 Runtime Binding，后续 Runtime 必须复用同一身份、receipt 和验证边界。
+- [R0 Trust Closure](r0-trust-closure.md)：首个真实 Pilot 被接受前的可信链 Gate；先闭合 evidence integrity、cross-repo exact checkout/digest、Knowledge provider identity 和 GitHub server governance，不扩架构面。
+- [Embedded Domain Closed Loop V1](embedded-domain-closed-loop-v1.md)：当前阶段嵌入式研发域内闭环方案；目标是先让嵌入式独立形成 Task / Engineering / Quality / Knowledge / Capability 五个闭环，再通过 Adapter 向企业上下游扩展。
+- [4 个稳定控制面 + N 个可替换 Runtime Binding](four-control-planes-runtime-bindings.md)：当前跨仓长期边界；四个稳定控制面保持 Provider-neutral，`jiying2007/codex` 作为第一套 Runtime Binding，后续 Runtime 必须复用同一身份、receipt 和验证边界。
 
 ## 已 supersede
 
@@ -18,6 +19,8 @@
 3. 需要改变稳定架构语义时必须进入 ADR / Contract 评审；
 4. 实施中发现的信息断点先记录为 Pilot evidence，重复出现后再升级 Schema / Skill / Platform；
 5. Provider / Runtime Binding exact pin 只固定一次 Pilot/集成消费的接口身份，不等于冻结总体 Provider 选择；
-6. Contract CI success 与 Operational Readiness 分开；Provider CI 未执行/失败、route 未登记、asset bundle identity 缺失或 runtime identity 不完整时必须显式 BLOCKED/NOT_READY；
-7. Runtime local gate 不得推导 digital-worker Domain Gate / Verification PASS；
-8. Strategy 可被后续阶段 supersede，但历史通过 Git 保留。
+6. Pin freshness 不等于 compatibility；跨仓 promotion 必须 checkout exact SHA 并验证 contract version/digest；
+7. Contract CI success 与 Operational Readiness 分开；Provider CI 未执行/失败、route 未登记、asset bundle identity 缺失或 runtime identity 不完整时必须显式 BLOCKED/NOT_READY；
+8. Runtime local gate 不得推导 digital-worker Domain Gate / Verification PASS；
+9. Repository-local tests 不得替代 GitHub server-side enforcement；
+10. Strategy 可被后续阶段 supersede，但历史通过 Git 保留。

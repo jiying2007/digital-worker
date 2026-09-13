@@ -12,6 +12,7 @@ from jsonschema import Draft202012Validator
 ROOT = Path(__file__).resolve().parents[1]
 EMB = ROOT / "expert-groups" / "embedded-system"
 STRATEGY = ROOT / "docs" / "strategy" / "embedded-domain-closed-loop-v1.md"
+TRUST = ROOT / "docs" / "strategy" / "r0-trust-closure.md"
 REGISTRY = EMB / "knowledge" / "registry.yaml"
 REQUIREMENTS = EMB / "pilot" / "artifact-requirements.yaml"
 QUICKSTART = ROOT / "docs" / "runbooks" / "embedded-closed-loop-quickstart.md"
@@ -39,6 +40,10 @@ def main():
         assert_true(marker in strategy, f"closed-loop strategy missing {marker}")
     assert_true("Enterprise Digital Thread 不是前置条件" in strategy, "strategy must keep enterprise integration non-blocking")
     assert_true("当前目标只推进到 **E2，并为 E3 建基础**" in strategy, "strategy must constrain maturity claim")
+
+    trust = TRUST.read_text(encoding="utf-8")
+    for token in ["R0 Trust Closure", "full 40-hex Git SHA", "completed/cancelled", "contract path/version", "canonical JSON SHA-256", "server-side enforcement"]:
+        assert_true(token in trust, f"R0 trust gate missing marker: {token}")
 
     registry = load_yaml(REGISTRY)
     assert_true(registry["status"] == "internal-seed", "knowledge registry must declare internal-seed status")
@@ -70,6 +75,8 @@ def main():
     requirements = load_yaml(REQUIREMENTS)
     required_closed_loop = set(requirements["common"]["closed_loop_v1_artifacts"])
     assert_true(required_closed_loop == {"material_manifest", "acceptance_evidence_matrix", "knowledge_harvest"}, "closed-loop V1 artifact set changed unexpectedly")
+    for key in ["real_run_requires_full_40_hex_base_commit", "completed_run_is_terminal", "completed_bundle_hashes_revalidated", "superseding_run_required_for_completed_correction"]:
+        assert_true(requirements["common"].get(key) is True, f"R0 pilot trust requirement disabled: {key}")
     for track, cfg in requirements["tracks"].items():
         extras = set(cfg["required_extra_artifacts"])
         assert_true(required_closed_loop <= extras, f"pilot track missing closed-loop artifacts: {track}")
@@ -100,13 +107,13 @@ def main():
     for token in ["missing_critical", '"BLOCKED"', "acceptance-evidence-matrix.md", "knowledge-harvest.md", "hypothesis-registry.json"]:
         assert_true(token in scaffold_text, f"scaffold helper missing fail-safe behavior: {token}")
     knowledge_text = KNOWLEDGE_CLI.read_text(encoding="utf-8")
-    for token in ["Candidate list only", "source ACL/version/provenance", "missing_git_sources", "query"]:
-        assert_true(token in knowledge_text, f"knowledge helper missing governance behavior: {token}")
+    for token in ["bootstrap-local-catalog", "Candidate list only", "BLOCKED_PROVIDER_IDENTITY_MISMATCH", "contract_canonical_sha256"]:
+        assert_true(token in knowledge_text, f"knowledge helper missing R0 governance behavior: {token}")
     quickstart = QUICKSTART.read_text(encoding="utf-8")
-    for token in ["embedded_pilot_scaffold.py", "embedded_knowledge.py verify", "exact immutable base commit SHA", "NO_KNOWLEDGE_DELTA"]:
-        assert_true(token in quickstart, f"closed-loop quickstart missing token: {token}")
+    for token in ["embedded_pilot_scaffold.py", "embedded_knowledge.py verify", "full 40-hex immutable base commit SHA", "NO_KNOWLEDGE_DELTA", "Do not run `bundle` after completion"]:
+        assert_true(token in quickstart, f"closed-loop quickstart missing R0 token: {token}")
 
-    print(f"embedded closed-loop V1 validation PASS: 7 must-haves, {len(entries)} registry entries, 3 closed-loop artifacts, operational helpers guarded")
+    print(f"embedded closed-loop V1 validation PASS: 7 must-haves, R0 trust gate, {len(entries)} registry entries, 3 closed-loop artifacts")
 
 
 if __name__ == "__main__":

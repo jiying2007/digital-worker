@@ -24,6 +24,7 @@ RUN_SCHEMA = ROOT / "schemas" / "pilot-run.v1.schema.json"
 TASK_SCHEMA = ROOT / "schemas" / "task-brief.v1.schema.json"
 BUNDLE_SCHEMA = ROOT / "schemas" / "pilot-evidence-bundle.v1.schema.json"
 STATUS_SCHEMA = ROOT / "schemas" / "pilot-status.v1.schema.json"
+TERMINAL_STATUSES = {"completed", "cancelled"}
 
 REF_SCHEMAS = {
     "engineering_task_package_ref": EMB / "schemas" / "engineering-task-package.schema.json",
@@ -59,6 +60,18 @@ def validate_json(value: dict, schema_path: Path):
 def assert_true(condition: bool, message: str):
     if not condition:
         raise ValueError(message)
+
+
+def exact_git_sha(value: str | None) -> bool:
+    """Return true only for a canonical full 40-hex Git object id."""
+    return re.fullmatch(r"[0-9a-fA-F]{40}", value or "") is not None
+
+
+def assert_mutable(run: dict, operation: str) -> None:
+    assert_true(
+        run.get("status") not in TERMINAL_STATUSES,
+        f"pilot run is terminal ({run.get('status')}); create a superseding run instead of {operation}",
+    )
 
 
 def safe_ref(run_dir: Path, ref: str, must_exist: bool = True) -> Path:
@@ -104,8 +117,7 @@ def check_route(run: dict):
 
 
 def required_artifacts(run: dict) -> tuple[list[str], list[str]]:
-    requirements = load_yaml(REQUIREMENTS)
-    cfg = requirements["tracks"][run["pilot_track"]]
+    cfg = load_yaml(REQUIREMENTS)["tracks"][run["pilot_track"]]
     return list(cfg["required_refs"]), list(cfg["required_extra_artifacts"])
 
 
@@ -139,55 +151,20 @@ def validate_linked_document(run_dir: Path, run: dict, field: str, schema_path: 
     return doc
 
 
-def validate_run_dir(run_dir: Path) -> dict:
-    run_dir = run_dir.resolve()
-    run = load_run(run_dir)
-    check_route(run)
-
-    task_path = safe_ref(run_dir, run["task_brief_ref"])
-    task = load_json(task_path)
-    validate_json(task, TASK_SCHEMA)
-    assert_true(task["work_item_id"] == run["work_item_id"], "task brief work_item_id mismatch")
-    if run.get("repo_root"):
-        assert_true(run["repo_root"] in task["repo_roots"], "pilot repo_root is not authorized by task brief")
-    if run["source_type"] == "real":
-        assert_true(bool(run.get("repo_root")), "real pilot requires repo_root")
-        assert_true(bool(run.get("base_commit")), "real pilot requires exact base_commit")
-        assert_true(re.fullmatch(r"[0-9a-fA-F]{7,40}", run["base_commit"] or "") is not None, "real pilot base_commit must be an exact Git SHA")
-
-    for field, schema_path in REF_SCHEMAS.items():
-        validate_linked_document(run_dir, run, field, schema_path)
-    for kind, ref in run.get("extra_artifact_refs", {}).items():
-        assert_true(re.fullmatch(r"[A-Za-z0-9_.-]+", kind) is not None, f"invalid extra artifact kind: {kind}")
-        safe_ref(run_dir, ref)
-
-    if run["status"] == "completed":
-        required_refs, required_extra = required_artifacts(run)
-        for field in required_refs:
-            assert_true(bool(run.get(field)), f"completed {run['pilot_track']} run missing required ref: {field}")
-            safe_ref(run_dir, run[field])
-        extras = run.get("extra_artifact_refs", {})
-        for kind in required_extra:
-            assert_true(kind in extras, f"completed {run['pilot_track']} run missing required extra artifact: {kind}")
-            safe_ref(run_dir, extras[kind])
-        assert_true(bool(run.get("evidence_bundle_ref")), "completed run requires evidence_bundle_ref")
-        bundle_path = safe_ref(run_dir, run["evidence_bundle_ref"])
-        bundle = load_json(bundle_path)
-        validate_json(bundle, BUNDLE_SCHEMA)
-        assert_true(bundle["run_id"] == run["run_id"], "evidence bundle run_id mismatch")
-        assert_true(bundle["work_item_id"] == run["work_item_id"], "evidence bundle work_item_id mismatch")
-        assert_true(bundle["source_type"] == run["source_type"], "evidence bundle source_type mismatch")
-        assert_true(bundle["complete"] is True and not bundle["missing_required"], "completed run evidence bundle is incomplete")
-    return run
-
-
-def collect_bundle(run_dir: Path, run: dict) -> dict:
+def current_artifacts(run_dir: Path, run: dict) -> tuple[list[dict], list[str]]:
     required_refs, required_extra = required_artifacts(run)
     required_ref_set = set(required_refs)
     required_extra_set = set(required_extra)
-    artifacts = []
-    missing = []
-    fields = ["task_brief_ref", "engineering_task_package_ref", "delivery_receipt_ref", "verification_report_ref", "review_report_ref", "pilot_result_ref"]
+    artifacts: list[dict] = []
+    missing: list[str] = []
+    fields = [
+        "task_brief_ref",
+        "engineering_task_package_ref",
+        "delivery_receipt_ref",
+        "verification_report_ref",
+        "review_report_ref",
+        "pilot_result_ref",
+    ]
     for field in fields:
         ref = run.get(field)
         required = field in required_ref_set
@@ -204,6 +181,11 @@ def collect_bundle(run_dir: Path, run: dict) -> dict:
     for kind, ref in sorted(extras.items()):
         path = safe_ref(run_dir, ref)
         artifacts.append({"kind": kind, "path": ref, "sha256": sha256(path), "required": kind in required_extra_set})
+    return artifacts, missing
+
+
+def collect_bundle(run_dir: Path, run: dict) -> dict:
+    artifacts, missing = current_artifacts(run_dir, run)
     bundle = {
         "schema_version": 1,
         "run_id": run["run_id"],
@@ -216,6 +198,59 @@ def collect_bundle(run_dir: Path, run: dict) -> dict:
     }
     validate_json(bundle, BUNDLE_SCHEMA)
     return bundle
+
+
+def validate_bundle_integrity(run_dir: Path, run: dict, bundle: dict) -> None:
+    """Recompute every artifact digest; a completed run must match its frozen bundle exactly."""
+    expected, missing = current_artifacts(run_dir, run)
+    assert_true(not missing, f"completed run now misses required artifacts: {missing}")
+    actual_by_path = {item["path"]: item for item in bundle.get("artifacts", [])}
+    expected_by_path = {item["path"]: item for item in expected}
+    assert_true(len(actual_by_path) == len(bundle.get("artifacts", [])), "evidence bundle contains duplicate artifact paths")
+    assert_true(set(actual_by_path) == set(expected_by_path), "evidence bundle artifact set no longer matches run refs")
+    for path, expected_item in expected_by_path.items():
+        recorded = actual_by_path[path]
+        assert_true(recorded.get("kind") == expected_item["kind"], f"evidence kind drift: {path}")
+        assert_true(recorded.get("required") == expected_item["required"], f"evidence required flag drift: {path}")
+        assert_true(recorded.get("sha256") == expected_item["sha256"], f"evidence SHA256 mismatch: {path}")
+
+
+def validate_run_dir(run_dir: Path) -> dict:
+    run_dir = run_dir.resolve()
+    run = load_run(run_dir)
+    check_route(run)
+
+    task = load_json(safe_ref(run_dir, run["task_brief_ref"]))
+    validate_json(task, TASK_SCHEMA)
+    assert_true(task["work_item_id"] == run["work_item_id"], "task brief work_item_id mismatch")
+    if run.get("repo_root"):
+        assert_true(run["repo_root"] in task["repo_roots"], "pilot repo_root is not authorized by task brief")
+    if run["source_type"] == "real":
+        assert_true(bool(run.get("repo_root")), "real pilot requires repo_root")
+        assert_true(exact_git_sha(run.get("base_commit")), "real pilot base_commit must be a full 40-hex Git SHA")
+
+    for field, schema_path in REF_SCHEMAS.items():
+        validate_linked_document(run_dir, run, field, schema_path)
+    for kind, ref in run.get("extra_artifact_refs", {}).items():
+        assert_true(re.fullmatch(r"[A-Za-z0-9_.-]+", kind) is not None, f"invalid extra artifact kind: {kind}")
+        safe_ref(run_dir, ref)
+
+    if run["status"] == "completed":
+        required_refs, required_extra = required_artifacts(run)
+        for field in required_refs:
+            assert_true(bool(run.get(field)), f"completed {run['pilot_track']} run missing required ref: {field}")
+        extras = run.get("extra_artifact_refs", {})
+        for kind in required_extra:
+            assert_true(kind in extras, f"completed {run['pilot_track']} run missing required extra artifact: {kind}")
+        assert_true(bool(run.get("evidence_bundle_ref")), "completed run requires evidence_bundle_ref")
+        bundle = load_json(safe_ref(run_dir, run["evidence_bundle_ref"]))
+        validate_json(bundle, BUNDLE_SCHEMA)
+        assert_true(bundle["run_id"] == run["run_id"], "evidence bundle run_id mismatch")
+        assert_true(bundle["work_item_id"] == run["work_item_id"], "evidence bundle work_item_id mismatch")
+        assert_true(bundle["source_type"] == run["source_type"], "evidence bundle source_type mismatch")
+        assert_true(bundle["complete"] is True and not bundle["missing_required"], "completed run evidence bundle is incomplete")
+        validate_bundle_integrity(run_dir, run, bundle)
+    return run
 
 
 def copy_into(run_dir: Path, source: Path, filename: str) -> str:
@@ -236,8 +271,7 @@ def cmd_init(args):
     assert_true(route is not None and args.workflow_mode in route["allowed_modes"], "workflow mode is not permitted for task type")
     if args.source_type == "real":
         assert_true(bool(args.repo_root), "real pilot init requires --repo-root")
-        assert_true(bool(args.base_commit), "real pilot init requires --base-commit")
-        assert_true(re.fullmatch(r"[0-9a-fA-F]{7,40}", args.base_commit) is not None, "real pilot --base-commit must be exact Git SHA")
+        assert_true(exact_git_sha(args.base_commit), "real pilot --base-commit must be a full 40-hex Git SHA")
     if args.repo_root:
         assert_true(args.repo_root in task["repo_roots"], "--repo-root is not authorized by task brief")
 
@@ -276,12 +310,13 @@ def cmd_init(args):
 
 def cmd_status(args):
     run = load_run(args.run_dir)
+    assert_mutable(run, "changing status")
     assert_true(args.status != "completed", "use complete command to enter completed state")
     run["status"] = args.status
     if args.status == "running" and not run.get("started_at"):
         run["started_at"] = now_iso()
-    if args.status in {"blocked", "cancelled"}:
-        run["finished_at"] = now_iso() if args.status == "cancelled" else run.get("finished_at")
+    if args.status == "cancelled":
+        run["finished_at"] = now_iso()
     if args.note:
         run.setdefault("notes", []).append(args.note)
     write_json(run_path(args.run_dir), run)
@@ -302,6 +337,7 @@ def parse_extra(values: list[str]) -> dict[str, Path]:
 def cmd_complete(args):
     run_dir = args.run_dir.resolve()
     run = load_run(run_dir)
+    assert_mutable(run, "completing again")
     attachments = {
         "engineering_task_package_ref": (args.engineering_task_package, "engineering-task-package.json"),
         "delivery_receipt_ref": (args.delivery_receipt, "delivery-receipt.json"),
@@ -336,14 +372,13 @@ def cmd_complete(args):
 def cmd_bundle(args):
     run_dir = args.run_dir.resolve()
     run = load_run(run_dir)
+    assert_mutable(run, "regenerating evidence bundle")
     bundle = collect_bundle(run_dir, run)
     write_json(run_dir / "evidence-bundle.json", bundle)
     run["evidence_bundle_ref"] = "evidence-bundle.json"
     write_json(run_path(run_dir), run)
     if args.fail_incomplete and not bundle["complete"]:
         raise SystemExit(2)
-    if run["status"] == "completed":
-        validate_run_dir(run_dir)
 
 
 def cmd_validate(args):
