@@ -1,6 +1,6 @@
-schema_version: 2
-status: current-stage-candidate
-purpose: refs-first identity spine across workflow, knowledge, agent assets, runtime binding, runtime execution and engineering evidence
+schema_version: 3
+status: current-stage-baseline
+purpose: refs-first identity spine across workflow, knowledge, immutable agent release, runtime source-set/distribution, runtime execution and engineering evidence
 
 required:
   work_item_id: string
@@ -12,13 +12,20 @@ knowledge_context:
   evidence_pack_ref: null
   knowledge_ids: []
   provider_commit: null
+  provider_contract_digest: null
 
 agent_assets:
   provider: agent-dev-kit
-  provider_commit: null
-  adk_version: null
+  provider_contract_commit: null
+  release_identity:
+    version: null
+    tag: null
+    commit: null
+    tree: null
+    manifest_blob: null
+    release_artifact_sha256: null
   asset_profiles: []
-  asset_bundle_hash: null
+  source_set_ref: null
 
 runtime_binding:
   repository: null
@@ -26,6 +33,9 @@ runtime_binding:
   runtime_target: null
   runtime_profile: null
   runtime_host: null
+  source_set_identity_ref: null
+  runtime_distribution_identity_ref: null
+  session_bootstrap_ref: null
   execution_receipt_ref: null
 
 runtime_execution:
@@ -57,7 +67,10 @@ verification:
 rules:
   - refs point to authoritative source; envelope does not copy source facts into a second SSOT
   - exact provider, runtime-binding and source commits are required before claiming reproducibility
+  - formal execution requires immutable ADK release identity plus exact Runtime source-set identity; a monolithic Runtime bundle is not required
+  - when a Runtime Binding executes work, runtime distribution identity and execution receipt are required
   - asset_profile belongs to Agent Asset Control Plane and runtime_profile belongs to Runtime Binding; do not merge their semantics
-  - missing knowledge/asset/runtime-binding/runtime identity blocks cross-repo reproducibility claim
+  - L2 Formal Evidence requires exact-pinned Knowledge provider identity and contract digest
+  - missing knowledge/asset/runtime-binding/source-set/distribution/runtime identity blocks cross-repo reproducibility claim
   - runtime execution receipt records execution facts only and must not contain verification_pass, release_ready or domain_gate_pass
   - runtime local conformance success never implies verification PASS
