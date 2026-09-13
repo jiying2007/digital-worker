@@ -112,7 +112,7 @@ digital-worker/
 |总体能力架构|`proposed-for-review`|
 |4+N 控制面边界|`current-stage-baseline`|
 |Architecture Review Pack|`review-candidate`|
-|R0 Trust Closure|`implementation-candidate / live-governance-pending`|
+|R0 Trust Closure|`implemented / live-governance-pending`|
 |Embedded Domain Closed Loop V1|`current-stage-baseline`|
 |Provider / Knowledge 选型|`not-frozen`|
 |嵌入式专家团|`0.7.0 / tooling-ready / real-pilot-evidence-pending`|
@@ -141,7 +141,7 @@ digital-worker/
 
 ## 下一步
 
-1. 完成 R0 candidate CI，并让 live Repository Governance Audit PASS；
+1. R0 仓内/跨仓可信链已闭合；下一唯一 R0 blocker 是让 live Repository Governance Audit PASS；
 2. Codex 参与正式执行前闭合 ADK provider-produced bundle identity + Codex consumer identity；
 3. 使用 Embedded Domain Closed Loop V1 执行 #6 Debug real Pilot；
 4. 执行 #7 Feature、#8 Review/Release；
