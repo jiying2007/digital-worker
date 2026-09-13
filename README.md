@@ -18,11 +18,11 @@
 - [Branch Lifecycle](docs/governance/branch-lifecycle.md)：默认只长期保留 main，任务分支由受控 Branch GC 收口；
 - [真实 Pilot Runbook](docs/runbooks/embedded-pilot.md) 与 [Quickstart](docs/runbooks/embedded-closed-loop-quickstart.md)。
 
-历史 4+N 阶段文档 [four-control-planes-runtime-bindings.md](docs/strategy/four-control-planes-runtime-bindings.md) 已被 Final Target Operating Model supersede；其核心 4+N 边界保留，但旧 monolithic bundle / `asset_bundle_hash` 语义不再作为终态前提。
+历史 4+N 阶段文档 [four-control-planes-runtime-bindings.md](docs/strategy/four-control-planes-runtime-bindings.md) 已被 Final Target Operating Model supersede；其核心 4+N 边界保留，但旧 monolithic bundle / `asset_bundle_hash` 语义不再作为 active identity。
 
 ## 当前阶段重点
 
-> **终态 Operating Model 已冻结；下一步只做跨仓合同迁移、server governance 和真实 Pilot 证据，不再新增控制面。**
+> **终态 Operating Model 与代码侧 exact-source-set 机器合同已收敛；剩余重点是 GitHub server governance 与真实 Pilot / Knowledge reuse / multi-runtime 证据，不再新增控制面。**
 
 V1 最小执行集：
 
@@ -44,10 +44,12 @@ Full 40-hex source identity
 + revalidated artifact SHA-256
 + exact cross-repo checkout / contract digest
 + exact Knowledge Provider runtime identity
++ immutable ADK release / Runtime source-set / distribution identity
++ Session Bootstrap / Runtime Execution Receipt identity
 + GitHub server-side repository governance
 ```
 
-当前只推进到 E2 Engineering Closed Loop，并为 E3 Knowledge Closed Loop 建基础；不因基础设施、synthetic CI 或 Runtime-local PASS 声明 Production Ready。
+当前只推进到 E2 Engineering Closed Loop，并为 E3 Knowledge Closed Loop 建基础；不因基础设施、synthetic CI、source-set identity 或 Runtime-local PASS 声明 Production Ready。
 
 ## 稳定架构原则
 
@@ -84,8 +86,10 @@ Full 40-hex source identity
 - real `base_commit` 强制 full 40-hex SHA；
 - completed/cancelled run 为 terminal；
 - completed validate 每次重新计算全部 artifact SHA-256，artifact set 必须与 evidence bundle 精确一致；
-- `cross-repo-lock.json` v3 绑定 exact commit + contract canonical SHA-256；
+- `cross-repo-lock.json` v4 绑定 exact provider/runtime commit + canonical contract digest + immutable ADK release + Codex Session Bootstrap identity；
 - permanent CI 实际 fetch locked Knowledge Hub / ADK / llm_agent / Codex SHA 并核验 contract；
+- ADK provider contract 与 llm_agent Runtime Pilot contract 已迁移到 exact-source-set 语义；
+- Codex Runtime Binding v2 已 `SOURCE_SET_BOUND`，并实现 L0/L1/L2 Thin Session Bootstrap；
 - `embedded_knowledge.py` 校验实际 Knowledge Hub checkout HEAD + contract digest；
 - `contracts/catalog.json` 统一本仓 Contract authority；
 - GitHub Actions 使用 full-SHA pin、最小权限、超时与 trust regression。
@@ -129,14 +133,16 @@ digital-worker/
 |AI R&D Target Operating Model|`target-baseline / frozen-for-implementation`|
 |旧 4+N strategy|`superseded-by-target-operating-model`|
 |Architecture Review Pack|`review-candidate`|
-|R0 Trust Closure|`implemented / live-governance-pending`|
+|R0 Trust Closure|`code-and-cross-repo-closed / live-governance-pending`|
 |Embedded Domain Closed Loop V1|`current-stage-baseline`|
 |Provider / Knowledge 选型|`not-frozen`|
 |嵌入式专家团|`0.7.0 / tooling-ready / real-pilot-evidence-pending`|
 |Embedded Knowledge Registry|`internal-seed / 50 entries`|
 |核心参考|`review-ready / synchronized-v0.7.0`|
-|ADK/Codex target identity model|`exact-source-set target / upstream-consumer-migration-pending`|
-|真实 Pilot|`pending-contract-migration-and-real-evidence` (#6/#7/#8)|
+|ADK/Codex identity model|`immutable-release + exact-source-set / source-set-bound`|
+|Codex Session Bootstrap|`L0/L1/L2 active / provider-identity-aware`|
+|llm_agent Runtime Pilot contract|`v1.2 / exact-release-source-set-distribution identity`|
+|真实 Pilot|`pending-live-governance-and-real-evidence` (#6/#7/#8)|
 |Knowledge PoC|open (#16)|
 |Provider Capability Matrix|open (#17)|
 |Multi-runtime Pilot|open (#18)|
@@ -157,18 +163,15 @@ digital-worker/
 9. `main` 默认唯一长期分支，任务分支按 Branch Lifecycle + Branch GC 收口；
 10. Runtime/Knowledge/AI 输出均不得自行产生 Domain Verification PASS；
 11. 新跨仓合同不得重新引入 monolithic Runtime bundle 作为 universal required identity；
-12. Target Baseline 描述终态方向；当前机器状态必须以 exact pin / Contract / CI / Evidence 为准，不能用目标文档覆盖未完成迁移。
+12. Target Baseline 描述终态方向；当前机器状态必须以 exact pin / Contract / CI / Evidence 为准。
 
 ## 下一步
 
-1. 把 `digital-worker` 的 `asset_bundle_hash / BLOCKED_ASSET_BUNDLE_IDENTITY` 过渡语义迁移为 ADK immutable release + exact-source-set refs；
-2. 同步迁移 `llm_agent` Runtime Pilot contract 的 bundle identity frozen input / hard rule；
-3. promotion 兼容 ADK/Codex integration contract exact SHA + canonical digest，并跑 fresh cross-repo verification；
-4. 让 live Repository Governance Audit PASS；
-5. 使用 Embedded Domain Closed Loop V1 执行 #6 Debug real Pilot；
-6. 执行 #7 Feature、#8 Review/Release；
-7. #16 引入真实 NAS / 飞书 / CI-HIL Source 并完成至少一次真实 Knowledge reuse；
-8. #18 用同一 Contract 完成第二 Runtime Binding 对照；
-9. 满足 #26 的 E2/Knowledge foundation 门槛后才进入独立 Productionization Review。
+1. 让 live Repository Governance Audit PASS；这是接受第一个 real completed Pilot 前唯一剩余 R0 外部 blocker；
+2. 使用 Embedded Domain Closed Loop V1 + Codex L2 Session Bootstrap 执行 #6 Debug real Pilot；
+3. 执行 #7 Feature、#8 Review/Release；
+4. #16 引入真实 NAS / 飞书 / CI-HIL Source 并完成至少一次真实 Knowledge reuse；
+5. #18 用同一 Work/Context/Acceptance/Verification Contract 完成第二 Runtime Binding 对照；
+6. 满足 #26 的 E2/Knowledge foundation 门槛后才进入独立 Productionization Review。
 
 在真实 PoC/Pilot evidence 出现前，不冻结唯一 WorkBuddy/WeKnora/Codex/Claude 方案，也不扩大 A3-A7 自动化权限。
