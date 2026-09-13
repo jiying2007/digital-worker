@@ -113,6 +113,9 @@ def verify_one(name: str, entry: dict, destination: Path, fetch: bool) -> dict:
         )
         report["runtime_binding_contract"] = secondary
         baseline = entry["release_baseline"]
+        if fetch:
+            run("git", "-C", str(destination), "fetch", "--quiet", "--depth=1", "origin", baseline["commit"])
+            run("git", "-C", str(destination), "fetch", "--quiet", "--depth=1", "origin", "tag", baseline["tag"])
         actual_tree = run("git", "-C", str(destination), "rev-parse", f"{baseline['commit']}^{{tree}}")
         actual_manifest_blob = run("git", "-C", str(destination), "rev-parse", f"{baseline['commit']}:manifest.json")
         actual_tag_commit = run("git", "-C", str(destination), "rev-parse", f"{baseline['tag']}^{{}}")
