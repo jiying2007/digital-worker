@@ -42,7 +42,7 @@ def main():
     assert_true("当前目标只推进到 **E2，并为 E3 建基础**" in strategy, "strategy must constrain maturity claim")
 
     trust = TRUST.read_text(encoding="utf-8")
-    for token in ["R0 Trust Closure", "full 40-hex Git SHA", "completed/cancelled", "contract version/digest", "server-side enforcement"]:
+    for token in ["R0 Trust Closure", "full 40-hex Git SHA", "completed/cancelled", "contract path/version", "canonical JSON SHA-256", "server-side enforcement"]:
         assert_true(token in trust, f"R0 trust gate missing marker: {token}")
 
     registry = load_yaml(REGISTRY)
