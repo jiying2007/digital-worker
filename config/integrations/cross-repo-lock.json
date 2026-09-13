@@ -1,6 +1,6 @@
 {
-  "schema_version": 3,
-  "status": "candidate-integration",
+  "schema_version": 4,
+  "status": "source-set-integrated",
   "architecture_provider_selection": "not_frozen",
   "architecture_model": "four-control-planes-plus-replaceable-runtime-bindings",
   "providers": {
@@ -12,29 +12,37 @@
       "contract_version": "1.0",
       "contract_canonical_sha256": "21b79295b532ff78b39461f2ef35f222fb1d9ba18a51eafff37d13351ead14ff",
       "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_ROUTE_PENDING",
-      "notes": "Exact pin is intentionally allowed to lag provider main. Pinned contract checkout/digest is verified by digital-worker permanent CI; governed project route remains pending. Promotion requires compatibility evidence, not freshness alone."
+      "notes": "Exact pin intentionally remains on the previously verified provider contract while governed project route/real reuse evidence is pending. Freshness alone is not compatibility evidence."
     },
     "agent_asset_control_plane": {
       "repository": "jiying2007/agent-dev-kit",
       "ref": "main",
-      "commit": "cceef553ed6c43646ad62f87b23b2eefc1df8309",
+      "commit": "bd7f4eacb3bcdc25f9e5094811a8f036eaa17a2e",
       "contract": "manifests/integrations/digital-worker.json",
-      "contract_canonical_sha256": "83e468e15b620cb757b749d93a2f9269c39839e0ea3e38bbcfc3e77f16b3f197",
+      "contract_version": "2.0",
+      "contract_canonical_sha256": "085a8ba542f0886257d5049f2e851e342cf7ea7500ffebfbf219ad80f841ec18",
       "runtime_binding_contract": "manifests/integrations/codex-runtime-binding.json",
-      "runtime_binding_contract_canonical_sha256": "86dbcdfebc05cd4db6da0169ac07c3ba5139a21f1c32ee32520b11997d2caf40",
-      "contract_version": "1.0",
-      "adk_version": "5.0.0-rc.2",
+      "runtime_binding_contract_version": "2.0",
+      "runtime_binding_contract_canonical_sha256": "dd58705d83119e3a2390b16c5710369f82d766002db50714ab36c56b8d2cd011",
+      "release_baseline": {
+        "version": "5.1.0",
+        "tag": "v5.1.0",
+        "commit": "59cbd5cb40ca7077ee5407636bfc617e295ec7e5",
+        "tree": "16d3c99d4dac8c41c09509b82c536a11cc058ca9",
+        "manifest_blob": "bc349b0dc003c553059cdddbc368ae8ea6ffda89",
+        "release_artifact_sha256": "d4684fe5888203b4a25e7dda9ab51b83fb900cae2d09adb6e5179a775748c965"
+      },
       "required_asset_profile": "embedded-fullstack",
-      "asset_bundle_hash": null,
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_BUNDLE_IDENTITY_BLOCKED"
+      "delivery_mode": "exact-source-set-reference",
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_SOURCE_SET_READY"
     },
     "runtime_practice_eval": {
       "repository": "jiying2007/llm_agent",
       "ref": "main",
-      "commit": "c3303580278fdc402fceecccde4baab6323a1c78",
+      "commit": "270d38f8b65da32cd8c7c4d5c2cac427682a6d28",
       "contract": "manifests/digital_worker_runtime_pilot.json",
-      "contract_version": "1.1",
-      "contract_canonical_sha256": "1fbbbaf77c70d868085da67ecce46a4d7a750b6bafa67463442c869ecaba5f6a",
+      "contract_version": "1.2",
+      "contract_canonical_sha256": "8d7fa0f3fbc2de3de1048ee0bd425fb79a130e876f3cd196e8914a6ff0a157c4",
       "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED"
     }
   },
@@ -42,15 +50,20 @@
     "codex": {
       "repository": "jiying2007/codex",
       "ref": "main",
-      "commit": "01afd61c7f14f0da3a901096f33f016add6b3640",
+      "commit": "eed4244e5ce15101210132a0680b620cc4dabfe7",
       "contract": "manifests/integrations/digital-worker-runtime-binding.json",
-      "contract_version": "1.0",
-      "contract_canonical_sha256": "12165c1794c72809d07f3684799b70661048a9585011b69785c8f6c40756da59",
+      "contract_version": "2.0",
+      "contract_canonical_sha256": "d28291031f160ccbbc1ebf9b68f31d7b70cc3f07035fb57beca48827e4c4d455",
       "runtime_target": "codex-cli",
       "runtime_profile_examples": ["token-lean", "team-collab"],
       "required_asset_profile": "embedded-fullstack",
+      "source_identity_mode": "exact-release-source-blobs",
+      "runtime_readiness": "SOURCE_SET_BOUND",
+      "session_bootstrap_contract": "manifests/session_bootstrap.json",
+      "session_bootstrap_contract_version": "1.0",
+      "session_bootstrap_contract_canonical_sha256": "1b5473f5b5f8b9c5f31738916bb4075bd601988cede17caaffd607d28cb7d68e",
       "execution_receipt_schema": "schemas/runtime-execution-receipt.schema.json",
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_ASSET_BUNDLE_IDENTITY_BLOCKED"
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_SOURCE_SET_BOUND"
     }
   },
   "rules": {
@@ -60,6 +73,11 @@
     "source_of_truth_stays_at_source": true,
     "provider_failure_must_not_be_reported_as_pass": true,
     "asset_profile_must_be_separate_from_runtime_profile": true,
+    "immutable_adk_release_required": true,
+    "exact_source_set_identity_required": true,
+    "runtime_distribution_identity_required_when_executed": true,
+    "monolithic_runtime_bundle_not_required_identity": true,
+    "formal_mode_requires_exact_pinned_knowledge": true,
     "runtime_local_gate_is_not_domain_gate": true,
     "runtime_output_is_not_verification_pass": true,
     "runtime_execution_receipt_must_not_contain_verification_pass": true,

@@ -1,4 +1,4 @@
-schema_version: 2
+schema_version: 3
 status: current-stage-baseline
 architecture_provider_selection: not_frozen
 architecture_model: four-control-planes-plus-replaceable-runtime-bindings
@@ -41,9 +41,14 @@ planes:
       - reusable-skills
       - asset-profiles
       - workflow-assets
-      - target-export-contract
+      - immutable-release-identity
+      - exact-source-set-handoff-contract
       - asset-evaluation-and-release
     required_profile: embedded-fullstack
+    must_not_own:
+      - runtime-distribution-assembly
+      - runtime-live-home
+      - domain-verification-pass
 
   llm_agent:
     role: practice-and-runtime-evaluation-lab
@@ -59,14 +64,24 @@ planes:
 
 runtime_bindings:
   contract:
-    purpose: map provider-neutral agent assets and engineering packages into one concrete runtime/host without changing domain semantics
+    purpose: select exact provider source assets and assemble one concrete runtime/host distribution without changing domain semantics
     required_identity:
       - runtime-binding-repository
       - runtime-binding-commit
       - runtime-target
       - runtime-profile
       - runtime-host
+      - source-set-identity-ref
+      - runtime-distribution-identity-ref
+      - session-bootstrap-ref
       - execution-receipt-ref
+    owns:
+      - exact-source-selection
+      - runtime-profile
+      - runtime-host-mapping
+      - runtime-distribution-assembly
+      - session-bootstrap
+      - runtime-execution-receipt
     must_not_own:
       - domain-gate-semantics
       - domain-verification-pass
@@ -78,7 +93,8 @@ runtime_bindings:
       repository: jiying2007/codex
       role: codex-runtime-distribution-and-host-integration
       runtime_target: codex-cli
-      status: candidate
+      status: source-set-bound
+      session_bootstrap: active
     claude-code:
       repository: null
       role: future-runtime-binding
@@ -101,19 +117,19 @@ handoffs:
     failure: BLOCKED_or_NEEDS_REVIEW
   - from: digital-worker
     to: agent-dev-kit
-    contract: asset-profile-and-bundle-request
+    contract: asset-profile-plus-immutable-release-ref
     failure: BLOCKED
   - from: agent-dev-kit
     to: runtime-binding
-    contract: target-bundle-identity
-    failure: BLOCKED_ASSET_BUNDLE_IDENTITY
+    contract: immutable-release-plus-exact-source-set-handoff
+    failure: BLOCKED_SOURCE_SET_IDENTITY
   - from: digital-worker
     to: runtime-binding
     contract: engineering-task-package-plus-runtime-binding-request
     failure: BLOCKED
   - from: runtime-binding
     to: digital-worker
-    contract: runtime-execution-receipt
+    contract: source-set/distribution/session-bootstrap/runtime-execution-receipt
     failure: BLOCKED_or_FAILED
   - from: runtime-binding
     to: llm_agent
@@ -125,6 +141,8 @@ stable_principles:
   - Source of Truth stays at source
   - Expert identity 与 Runtime 解耦
   - Asset Profile 与 Runtime Profile 分离
+  - ADK immutable release 与 Runtime exact source-set/distribution identity 分层
+  - Session Bootstrap 是 Runtime Binding 内的薄装配层，不是第五控制面
   - Runtime local gate 不等于 Domain Gate
   - Runtime output 不等于 Verification PASS
   - Knowledge candidate 不自动 promotion active
