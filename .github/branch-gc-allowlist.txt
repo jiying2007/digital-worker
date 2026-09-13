@@ -1,4 +1,4 @@
-# Approved merged task branches for Branch GC.
+# Approved merged task branches pending Branch GC.
 # One branch per line. `main` is forbidden by the workflow and validator.
-# Historical branches already deleted by prior GC runs are intentionally removed from this live allowlist.
-codex/r0-trust-closure
+# Empty is the healthy steady state when no reviewed merged branch is pending deletion.
+# Historical branches already deleted by prior GC runs must not remain here.

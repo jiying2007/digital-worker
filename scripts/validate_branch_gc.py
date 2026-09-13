@@ -22,6 +22,7 @@ required_snippets = [
     "refusing to delete main", "protected branch; refusing GC", "open PR(s); refusing GC",
     "no merged PR evidence; refusing GC", ".github/branch-gc-allowlist.txt",
     "--method DELETE", "git/refs/heads/", "dry-run PASS; would delete",
+    "allowlist is empty; nothing to do",
     "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
 ]
 for snippet in required_snippets:
@@ -40,18 +41,19 @@ for raw in allowlist.read_text(encoding="utf-8").splitlines():
     if line:
         branches.append(line)
 
-if not branches:
-    fail("Branch GC allowlist must contain at least one reviewed branch")
+# Empty is the desired steady state when no merged task branch is pending GC.
+# The workflow explicitly handles it as a no-op; forcing a stale item into the
+# allowlist would turn a one-shot deletion ledger into a second lifecycle registry.
 if "main" in branches:
     fail("main must never appear in Branch GC allowlist")
 if len(branches) != len(set(branches)):
     fail("Branch GC allowlist contains duplicate entries")
 
-# Every item is explicit and reviewed. codex/ is a short-lived automation task class,
-# subject to the same protected/open-PR/merged-PR guards as human task branches.
+# Every non-empty item is explicit and reviewed. codex/ is a short-lived automation
+# task class, subject to the same protected/open-PR/merged-PR guards as human branches.
 allowed_prefixes = ("docs/", "feat/", "fix/", "refactor/", "design/", "arch/", "chore/", "research/", "release/", "codex/")
 for branch in branches:
     if not branch.startswith(allowed_prefixes):
         fail(f"unexpected branch class in GC allowlist: {branch}")
 
-print(f"Branch GC safety contract OK ({len(branches)} approved branch(es))")
+print(f"Branch GC safety contract OK ({len(branches)} pending approved branch(es))")
