@@ -46,7 +46,7 @@ class PilotTrustTests(unittest.TestCase):
             original = pilot.required_artifacts
             pilot.required_artifacts = lambda _run: (["task_brief_ref"], [])
             try:
-                bundle = {"artifacts": [{"kind": "task-brief", "path": "task-brief.json", "sha256": digest, "required": True}]}
+                bundle = {"artifacts": [{"kind": "task_brief", "path": "task-brief.json", "sha256": digest, "required": True}]}
                 pilot.validate_bundle_integrity(root, run, bundle)
                 artifact.write_text("after\n", encoding="utf-8")
                 with self.assertRaisesRegex(ValueError, "SHA256 mismatch"):
