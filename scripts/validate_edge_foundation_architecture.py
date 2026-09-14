@@ -26,6 +26,9 @@ def main() -> None:
     shadow_routing_path = DOMAIN_ROOT / "routing-shadow.yaml"
     pilot_shadow_evaluator_path = ROOT / "scripts" / "evaluate_edge_foundation_pilot_shadow.py"
     pilot_shadow_schema_path = ROOT / "schemas" / "edge-foundation-shadow-receipt.v1.schema.json"
+    phase3_readiness_evaluator_path = ROOT / "scripts" / "evaluate_edge_foundation_phase3_readiness.py"
+    phase3_readiness_schema_path = ROOT / "schemas" / "edge-foundation-phase3-readiness.v1.schema.json"
+    pilot_plan_path = LEGACY_ROOT / "pilot" / "pilot-plan.yaml"
     adr_path = ROOT / "docs" / "adr" / "ADR-004-edge-foundation-digital-responsibility-architecture.md"
     legacy_path = LEGACY_ROOT / "expert-group.yaml"
 
@@ -35,6 +38,9 @@ def main() -> None:
         shadow_routing_path,
         pilot_shadow_evaluator_path,
         pilot_shadow_schema_path,
+        phase3_readiness_evaluator_path,
+        phase3_readiness_schema_path,
+        pilot_plan_path,
         adr_path,
         legacy_path,
     ):
@@ -150,8 +156,13 @@ def main() -> None:
     require(compatibility["shadow_evaluator"] == "../../scripts/evaluate_edge_foundation_shadow.py", "shadow evaluator path drift")
     require(compatibility["pilot_shadow_evaluator"] == "../../scripts/evaluate_edge_foundation_pilot_shadow.py", "pilot shadow evaluator path drift")
     require(compatibility["pilot_shadow_receipt_schema"] == "../../schemas/edge-foundation-shadow-receipt.v1.schema.json", "pilot shadow receipt schema path drift")
+    require(compatibility["phase3_readiness_evaluator"] == "../../scripts/evaluate_edge_foundation_phase3_readiness.py", "phase-3 readiness evaluator path drift")
+    require(compatibility["phase3_readiness_schema"] == "../../schemas/edge-foundation-phase3-readiness.v1.schema.json", "phase-3 readiness schema path drift")
+    require(compatibility["phase3_promotion_gate_source"] == "../../expert-groups/embedded-system/pilot/pilot-plan.yaml", "phase-3 promotion gate source drift")
     require(compatibility["phase3_evidence_requires_real_pilot"] is True, "phase-3 must require real Pilot evidence")
     require(compatibility["synthetic_pilot_must_not_count_for_phase3"] is True, "synthetic Pilot must never count for phase-3 evidence")
+    require(compatibility["phase3_readiness_requires_separate_review"] is True, "phase-3 readiness must require a separate review")
+    require(compatibility["automatic_canonical_switch_forbidden"] is True, "automatic canonical switch must remain forbidden")
     require(compatibility["canonical_routing_switched"] is False, "canonical routing must remain unswitched in phase-2")
 
     phases = {item["id"]: item for item in mapping["phases"]}
@@ -176,7 +187,7 @@ def main() -> None:
         "edge-foundation architecture validation PASS: "
         f"{len(expert_ids)} Domain Experts, {len(embedded_capabilities)} embedded core Capabilities, "
         f"{len(mapped_ids)}/8 legacy identities mapped, phase-2 shadow/pilot evidence guarded, "
-        "provider-neutral orchestration/runtime, independent Assurance"
+        "phase-3 readiness fail-closed, provider-neutral orchestration/runtime, independent Assurance"
     )
 
 
