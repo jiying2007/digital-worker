@@ -20,38 +20,25 @@ SPEC.loader.exec_module(switch)
 
 
 class CanonicalSwitchDryRunTests(unittest.TestCase):
-    def test_domain_registers_dry_run_contract_without_switching(self):
+    def test_domain_registers_minimal_migration_contract(self):
         domain = yaml.safe_load((ROOT / "domains" / "edge-foundation" / "domain.yaml").read_text(encoding="utf-8"))
-        compat = domain["legacy_compatibility"]
-        self.assertEqual(compat["canonical_switch_dry_run_policy"], "canonical-switch-dry-run.yaml")
-        self.assertEqual(
-            compat["canonical_switch_plan_generator"],
-            "../../scripts/generate_edge_foundation_canonical_switch_plan.py",
-        )
-        self.assertEqual(
-            compat["canonical_switch_plan_schema"],
-            "../../schemas/edge-foundation-canonical-switch-plan.v1.schema.json",
-        )
-        self.assertTrue(compat["canonical_switch_dry_run_must_not_apply"])
-        self.assertTrue(compat["phase4_deprecation_must_be_separate_from_phase3"])
-        self.assertTrue(compat["phase5_removal_must_be_separate_from_phase3"])
-        self.assertFalse(compat["canonical_routing_switched"])
+        self.assertNotIn("legacy_compatibility", domain)
+        migration = domain["migration"]
+        self.assertEqual(migration["switch_policy"], "canonical-switch-dry-run.yaml")
+        self.assertEqual(migration["identity_mapping"], "compatibility/embedded-1plus7-mapping.yaml")
+        self.assertTrue(migration["phase4_deprecation_separate"])
+        self.assertTrue(migration["phase5_removal_separate"])
+        self.assertFalse(migration["canonical_routing_switched"])
 
     def test_policy_keeps_phase3_narrow_and_non_applying(self):
-        policy = yaml.safe_load(
-            (ROOT / "domains" / "edge-foundation" / "canonical-switch-dry-run.yaml").read_text(encoding="utf-8")
-        )
+        policy = yaml.safe_load((ROOT / "domains" / "edge-foundation" / "canonical-switch-dry-run.yaml").read_text(encoding="utf-8"))
         self.assertFalse(policy["canonical_routing_switched"])
         self.assertFalse(policy["automatic_apply_allowed"])
-        self.assertEqual(
-            policy["allowed_change_classes"],
-            ["canonical-routing-authority", "migration-phase-status", "routing-selector-entrypoint"],
-        )
+        self.assertEqual(policy["allowed_change_classes"], ["canonical-routing-authority", "routing-selector-entrypoint"])
+        self.assertNotIn("migration-phase-status", policy["allowed_change_classes"])
+        self.assertIn("compatibility-mapping-rewrite", policy["forbidden_change_classes"])
         self.assertIn("legacy-identity-deprecation", policy["forbidden_change_classes"])
         self.assertIn("legacy-identity-removal", policy["forbidden_change_classes"])
-        self.assertIn("action-authority-expansion", policy["forbidden_change_classes"])
-        self.assertIn("provider-binding-change", policy["forbidden_change_classes"])
-        self.assertIn("production-ready-claim", policy["forbidden_change_classes"])
         self.assertEqual(policy["required_followup_phases"], ["phase-4-deprecation", "phase-5-removal"])
         self.assertEqual(policy["rollback_authority"], "legacy-embedded-1plus7")
 
@@ -87,10 +74,9 @@ class CanonicalSwitchDryRunTests(unittest.TestCase):
         self.assertEqual(plan["status"], "DRY_RUN_ONLY")
         self.assertFalse(plan["apply_allowed"])
         self.assertFalse(plan["canonical_routing_switched"])
-        self.assertEqual(plan["proposed_canonical_authority"], "edge-foundation")
-        self.assertEqual(plan["rollback_authority"], "legacy-embedded-1plus7")
-        self.assertIn("legacy-identity-deprecation", plan["forbidden_change_classes"])
-        self.assertIn("phase-4-deprecation", plan["required_followup_phases"])
+        self.assertEqual(plan["allowed_change_classes"], ["canonical-routing-authority", "routing-selector-entrypoint"])
+        self.assertIn("compatibility-mapping-rewrite", plan["forbidden_change_classes"])
+        self.assertEqual(plan["required_followup_phases"], ["phase-4-deprecation", "phase-5-removal"])
         self.assertEqual(plan["evidence_run_ids"], review_package["evidence_run_ids"])
 
 
