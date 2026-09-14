@@ -41,6 +41,10 @@ def main():
 
     assert_true(plan["artifact_requirements"] == "artifact-requirements.yaml", "pilot plan must point to artifact-requirements.yaml")
     assert_true(set(plan["tracks"]) == set(requirements["tracks"]), "pilot plan and artifact requirements track sets differ")
+    assert_true(
+        "reproduction_or_log" in plan["tracks"]["debug"]["required_evidence"],
+        "debug Pilot must preserve reproduction-or-log evidence semantics",
+    )
     for key in [
         "real_run_requires_exact_base_commit",
         "real_run_requires_full_40_hex_base_commit",
@@ -66,13 +70,24 @@ def main():
     validate(ROOT / "tests" / "fixtures" / "verification-report.valid.json", EMB / "schemas" / "verification-report.schema.json")
     validate(ROOT / "tests" / "fixtures" / "review-report.valid.json", EMB / "schemas" / "review-report.schema.json")
     validate(ROOT / "tests" / "fixtures" / "pilot-result.feature.valid.json", ROOT / "schemas" / "pilot-result.v1.schema.json")
+    validate(ROOT / "tests" / "fixtures" / "material-manifest.valid.json", EMB / "schemas" / "material-manifest.schema.json")
 
     pilot_cli = (ROOT / "scripts" / "embedded_pilot.py").read_text(encoding="utf-8")
     for marker in ["exact_git_sha", "validate_bundle_integrity", "TERMINAL_STATUSES", "superseding run"]:
         assert_true(marker in pilot_cli, f"embedded pilot CLI missing trust marker: {marker}")
+
+    scaffold = (ROOT / "scripts" / "embedded_pilot_scaffold.py").read_text(encoding="utf-8")
+    for marker in ["reproduction_or_log", 'material_item("reproduction"', 'material_item("log"']:
+        assert_true(marker in scaffold, f"Pilot scaffold missing debug evidence-alternative marker: {marker}")
+    material_validator = ROOT / "scripts" / "validate_material_manifest.py"
+    assert_true(material_validator.is_file(), "material manifest semantic validator missing")
+    validator_text = material_validator.read_text(encoding="utf-8")
+    for marker in ["recompute_blockers", "reproduction_or_log", "require_terminal_ready", "DEGRADED"]:
+        assert_true(marker in validator_text, f"material manifest validator missing semantic marker: {marker}")
+
     assert_true((ROOT / "schemas" / "pilot-evidence-bundle.v1.schema.json").is_file(), "pilot evidence bundle schema missing")
     assert_true((ROOT / "schemas" / "pilot-status.v1.schema.json").is_file(), "pilot status schema missing")
-    print("embedded pilot operations validation PASS: plan/requirements/fixtures/CLI trust semantics are consistent")
+    print("embedded pilot operations validation PASS: plan/requirements/fixtures/CLI/material readiness semantics are consistent")
 
 
 if __name__ == "__main__":
