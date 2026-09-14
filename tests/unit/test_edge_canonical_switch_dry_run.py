@@ -20,6 +20,23 @@ SPEC.loader.exec_module(switch)
 
 
 class CanonicalSwitchDryRunTests(unittest.TestCase):
+    def test_domain_registers_dry_run_contract_without_switching(self):
+        domain = yaml.safe_load((ROOT / "domains" / "edge-foundation" / "domain.yaml").read_text(encoding="utf-8"))
+        compat = domain["legacy_compatibility"]
+        self.assertEqual(compat["canonical_switch_dry_run_policy"], "canonical-switch-dry-run.yaml")
+        self.assertEqual(
+            compat["canonical_switch_plan_generator"],
+            "../../scripts/generate_edge_foundation_canonical_switch_plan.py",
+        )
+        self.assertEqual(
+            compat["canonical_switch_plan_schema"],
+            "../../schemas/edge-foundation-canonical-switch-plan.v1.schema.json",
+        )
+        self.assertTrue(compat["canonical_switch_dry_run_must_not_apply"])
+        self.assertTrue(compat["phase4_deprecation_must_be_separate_from_phase3"])
+        self.assertTrue(compat["phase5_removal_must_be_separate_from_phase3"])
+        self.assertFalse(compat["canonical_routing_switched"])
+
     def test_policy_keeps_phase3_narrow_and_non_applying(self):
         policy = yaml.safe_load(
             (ROOT / "domains" / "edge-foundation" / "canonical-switch-dry-run.yaml").read_text(encoding="utf-8")
@@ -34,6 +51,7 @@ class CanonicalSwitchDryRunTests(unittest.TestCase):
         self.assertIn("legacy-identity-removal", policy["forbidden_change_classes"])
         self.assertIn("action-authority-expansion", policy["forbidden_change_classes"])
         self.assertIn("provider-binding-change", policy["forbidden_change_classes"])
+        self.assertIn("production-ready-claim", policy["forbidden_change_classes"])
         self.assertEqual(policy["required_followup_phases"], ["phase-4-deprecation", "phase-5-removal"])
         self.assertEqual(policy["rollback_authority"], "legacy-embedded-1plus7")
 
