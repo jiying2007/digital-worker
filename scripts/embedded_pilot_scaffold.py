@@ -61,11 +61,18 @@ def build_material_manifest(run: dict, task: dict) -> dict:
         material_item("kernel_rtos", False, "missing"),
         material_item("toolchain", False, "missing"),
         material_item("firmware", False, "missing"),
-        material_item("reproduction", debug, "missing" if debug else "not_applicable"),
+        # Debug accepts either a reproducible procedure OR an authoritative raw log.
+        # Neither individual item is marked required; the validator enforces the OR-group.
+        material_item("reproduction", False, "missing" if debug else "not_applicable"),
+        material_item("log", False, "missing" if debug else "not_applicable"),
         material_item("device_identity", device_required, "missing" if device_required else "not_applicable"),
         material_item("test_environment", True, "missing"),
     ]
     missing_critical = [item["kind"] for item in items if item["required"] and item["status"] != "available"]
+    if debug:
+        by_kind = {item["kind"]: item for item in items}
+        if not any(by_kind[kind]["status"] == "available" for kind in ("reproduction", "log")):
+            missing_critical.append("reproduction_or_log")
     manifest = {
         "run_id": run["run_id"],
         "items": items,
