@@ -6,13 +6,16 @@
 
 当前仓库处于 **iterative-development**。总体 Operating Model 和 exact-source-set 身份链已经具备运行基础；端侧方向正在从“嵌入式 1+7 目标组织”迁移到“端侧底座 Domain → Expert → Capability → Skill”的责任模型，同时保持现有嵌入式机器 Contract、Pilot 和可信治理不被破坏。
 
+phase-1 shadow model 已在 `main=0977b8833c7fdcb0d11848bb713820678205a929` 闭环，fresh-main CI `34845537811` 全绿。当前进入 **phase-2 dual evaluation（双轨评测）**：旧 1+7 路由继续执行，新责任模型通过 `routing-shadow.yaml` 和 Golden Case 只读对照，明确不切 canonical routing、不扩大动作权限。
+
 当前顺序：
 
 ```text
-Edge Foundation phase-1 shadow model
-  → 旧 1+7 / 新责任模型双轨验证
-  → Debug / Feature / Review-Release real Pilot
-  → canonical routing switch（证据充分后）
+Edge Foundation phase-1 shadow model（已完成）
+  → phase-2 旧 1+7 / 新责任模型双轨评测（当前）
+  → Debug / Feature / Review-Release real Pilot evidence
+  → canonical routing switch（证据充分后、另行评审）
+  → legacy identity deprecation / proven removal
   → 外部知识源与真实知识复用
   → Multi-runtime 对照
   → Productionization Review
@@ -27,6 +30,7 @@ Edge Foundation phase-1 shadow model
 - [ADR-003：Provider-neutral AI R&D Target Architecture](docs/adr/ADR-003-provider-neutral-ai-rd-target-architecture.md)：总体 Provider-neutral 架构决策；
 - [ADR-004：端侧底座数字责任架构](docs/adr/ADR-004-edge-foundation-digital-responsibility-architecture.md)：端侧 Domain / Expert / Capability / Skill 目标责任模型与中英术语；
 - [端侧底座机器责任模型](domains/edge-foundation/domain.yaml)：三 Domain Expert、协调角色、编排/执行/可信保障边界及旧 1+7 兼容入口；
+- [端侧双轨路由评测](domains/edge-foundation/routing-shadow.yaml)：14 类旧 Task 到新责任语义的 shadow mapping；仅用于评测，不改变执行路由；
 - [AI R&D Target Operating Model](docs/strategy/ai-rd-target-operating-model.md)：长期 Operating Model；
 - [R0 Trust Closure](docs/strategy/r0-trust-closure.md)：真实 Pilot 的可信链基线；
 - [Embedded Domain Closed Loop V1](docs/strategy/embedded-domain-closed-loop-v1.md)：当前嵌入式落地策略与兼容执行面；
@@ -67,7 +71,9 @@ Edge Foundation phase-1 shadow model
      └─ 能力域（Capability）→ 原子技能（Skill）
 ```
 
-现有嵌入式 `1+7` 暂时保留为 **legacy compatibility surface**：继续承载已运行的 Task / Gate / Skill owner / Golden Case / Pilot Contract，但不再作为端侧目标组织结构继续扩张。兼容映射在 `domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml`。
+现有嵌入式 `1+7` 暂时保留为 **legacy compatibility surface（旧版兼容表面）**：继续承载已运行的 Task / Gate / Skill owner / Golden Case / Pilot Contract，但不再作为端侧目标组织结构继续扩张。兼容映射在 `domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml`。
+
+当前 `routing-shadow.yaml` 只负责双轨评测：它必须保持 `canonical_routing: false`、不得修改旧执行 route、不得扩大 A0-A7 动作权限；所有未映射 Task、未知 Capability 或无证据跨域扩展均 fail-closed（保守阻断）。
 
 ## 嵌入式当前最小闭环
 
@@ -90,8 +96,9 @@ One Work Item / Run
 |对象|状态|
 |---|---|
 |AI R&D Target Operating Model|`target-baseline / frozen-for-implementation`|
-|Edge Foundation Target Architecture|`ADR-004 / phase-1-shadow`|
+|Edge Foundation Target Architecture|`ADR-004 / phase-2-dual-evaluation`|
 |Edge Foundation Domain Contract|`target-v1 / canonical-responsibility-model`|
+|Edge Foundation Shadow Routing|`dual-evaluation / non-canonical`|
 |Embedded Domain Closed Loop V1|`compatibility-execution-baseline`|
 |嵌入式 1+7 机器资产|`0.7.0 / legacy-compatibility-surface / pilot-operations-ready`|
 |核心参考|`operational-reference / migration-aware`|
