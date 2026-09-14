@@ -5,7 +5,7 @@
 - Target operating model: `docs/strategy/ai-rd-target-operating-model.md`
 - Trust baseline: `docs/strategy/r0-trust-closure.md`
 - Repository stage: `iterative-development`
-- Scope: first real Debug / Feature / Review-Release runs
+- Scope: real Debug / Feature / Review-Release runs
 
 ## 1. Register the real task
 
@@ -33,7 +33,7 @@ The scaffold creates `material-manifest.json`, `acceptance-evidence-matrix.md`, 
 
 ## 3. Resolve the L2 Formal session before Runtime execution
 
-The first Codex Runtime Binding implements the frozen thin Session Bootstrap. L2 must use the exact identities locked by digital-worker; it is not a second workflow engine and cannot produce Domain Verification PASS.
+The Codex Runtime Binding implements the frozen thin Session Bootstrap. L2 must use the exact identities locked by digital-worker; it is not a second workflow engine and cannot produce Domain Verification PASS.
 
 ```bash
 rtk bash ~/codex/scripts/session-bootstrap.sh \
@@ -44,15 +44,14 @@ rtk bash ~/codex/scripts/session-bootstrap.sh \
   --engineering-task-package <ENGINEERING_TASK_PACKAGE_JSON> \
   --digital-worker-root <DIGITAL_WORKER_ROOT> \
   --knowledge-root <EXACT_PINNED_KNOWLEDGE_HUB_ROOT> \
-  --runtime-profile token-lean \
   --summary-json
 ```
 
-The bootstrap must resolve `L2 / formal-evidence`, validate the Codex Runtime Binding as `SOURCE_SET_BOUND`, retain the ADK immutable release/source-set identity, and verify the Knowledge checkout identity described below. A blocked bootstrap is a formal blocker, never a PASS.
+The bootstrap must resolve `L2 / formal-evidence`, validate the Codex Runtime Binding as `SOURCE_SET_BOUND`, retain the ADK immutable release/source-set identity, and verify the Knowledge checkout identity described below. The current Codex distribution uses its neutral default runtime profile; Runtime-profile selection remains owned by the Runtime Binding and must not be hard-coded by digital-worker. A blocked bootstrap is a formal blocker, never a PASS.
 
 ## 4. Assemble Knowledge context from the exact locked provider
 
-The local 50-entry registry is bootstrap-only. Long-term context/evidence/lifecycle belongs to Knowledge Hub.
+The local registry is bootstrap-only. Long-term context/evidence/lifecycle belongs to Knowledge Hub.
 
 `KNOWLEDGE_HUB_ROOT` must point to the **exact commit pinned in** `config/integrations/cross-repo-lock.json`, not simply the latest local Knowledge Hub checkout. The adapter and L2 Session Bootstrap check both Git HEAD and the canonical digest of `registry/integrations/digital-worker.json` and fail closed on drift.
 
@@ -100,11 +99,11 @@ verification run + review refs
 
 ```text
 ADK Asset Profile     = embedded-fullstack
-Codex Runtime Profile = token-lean or team-collab
+Codex Runtime Profile = default (runtime-owned)
 Runtime Target        = codex-cli
 ```
 
-A monolithic Runtime bundle digest is **not** a required identity. ADK owns the immutable release and source-set handoff contract; the Runtime Binding owns exact source selection and Runtime distribution assembly.
+A monolithic Runtime bundle digest is **not** a required identity. ADK owns the immutable release and source-set handoff contract; the Runtime Binding owns exact source selection, Runtime-profile semantics and Runtime distribution assembly.
 
 The lock intentionally may lag provider main. Freshness is not compatibility. Pin promotion requires a real checkout at the exact SHA plus contract version/digest verification by `scripts/verify_cross_repo_checkouts.py`.
 
@@ -121,6 +120,7 @@ ADK handoff           = exact-source-set-reference
 Codex source identity = exact-release-source-blobs
 Codex readiness       = SOURCE_SET_BOUND
 Session Bootstrap     = active L0/L1/L2 thin bootstrap
+Runtime profile       = neutral default, owned by Codex Runtime Binding
 ```
 
 `SOURCE_SET_BOUND` means the Runtime source/distribution binding is identity-ready. It does **not** mean the engineering task passed Verification or the product is Release Ready.
@@ -186,7 +186,7 @@ Validation recomputes every referenced artifact SHA-256 and requires the live ar
 
 ## 9. Runtime comparison
 
-For #18, freeze Work Item, exact base, Material/System Context, Knowledge fingerprint, Engineering Task Package, Acceptance, ADK immutable release/Asset Profile/source-set standard and Verification standard. Each candidate gets an independent Runtime Binding/Profile/source-set/distribution identity/Execution Receipt. The next Runtime must not receive the previous Runtime's final answer or patch.
+For runtime comparison, freeze Work Item, exact base, Material/System Context, Knowledge fingerprint, Engineering Task Package, Acceptance, ADK immutable release/Asset Profile/source-set standard and Verification standard. Each candidate gets an independent Runtime Binding/Profile/source-set/distribution identity/Execution Receipt. The next Runtime must not receive the previous Runtime's final answer or patch.
 
 `llm_agent` owns runtime health/comparison/Loop Readiness evidence; digital-worker retains the final engineering Verification/Review judgment.
 
@@ -212,7 +212,7 @@ Before accepting a real completed run in the current `iterative-development` sta
 - Verification and Review independence is preserved;
 - `incorrect_pass=0` and no unauthorized action；
 - Knowledge Harvest is finalized；
-- observations feed #26 before new Schema/Agent/Platform is proposed。
+- repeated observations must exist before new Schema/Agent/Platform is proposed。
 
 **Main branch protection is intentionally not a current-stage acceptance gate.** `python scripts/verify_repository_governance.py` remains advisory and may report `DEFERRED_CURRENT_STAGE` while main is unprotected.
 
