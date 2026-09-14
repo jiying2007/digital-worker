@@ -1,0 +1,16 @@
+{
+  "run_id": "EXAMPLE-UBIFS-001",
+  "task_type": "defect_debugging",
+  "workflow_mode": "diagnostic_chain",
+  "completed_gates": ["gate.k", "gate.m", "gate.0", "gate.t", "gate.e", "gate.v", "gate.r", "gate.c"],
+  "artifacts": ["technical-analysis.json", "hypothesis-registry.json", "engineering-task-package.json", "delivery-receipt.json", "verification-report.json", "review-report.json", "acceptance-evidence-matrix.md"],
+  "gate_ledger_ref": "example://gate-ledger",
+  "delivery_receipt_ref": "delivery-receipt.json",
+  "verification_ref": "verification-report.json",
+  "review_ref": "review-report.json",
+  "blockers": [],
+  "open_risks": [],
+  "unverified_items": [],
+  "knowledge_candidates": ["ECC status mapping regression rule", "NAND-to-UBIFS layered diagnostic runbook"],
+  "closure_status": "COMPLETED"
+}

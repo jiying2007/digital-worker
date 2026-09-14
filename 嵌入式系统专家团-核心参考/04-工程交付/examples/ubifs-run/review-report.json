@@ -1,0 +1,11 @@
+{
+  "run_id": "EXAMPLE-UBIFS-001",
+  "reviewer": "embedded-review-governor",
+  "implementation_owner": "engineer-plus-engineering-agent",
+  "independence_confirmed": true,
+  "decision": "APPROVE",
+  "findings": [],
+  "evidence_refs": ["verification-report.json", "technical-decision.json"],
+  "residual_risks": [],
+  "unverified_items": []
+}

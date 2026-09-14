@@ -1,0 +1,19 @@
+{
+  "package_id": "PKG-EXAMPLE-UBIFS-001",
+  "run_id": "EXAMPLE-UBIFS-001",
+  "repo_root": "firmware/main",
+  "base_commit": "1111111111111111111111111111111111111111",
+  "dirty_baseline": "clean",
+  "goal": "Implement the scoped ECC status mapping correction.",
+  "non_goals": ["Change filesystem policy", "Change partition layout"],
+  "implementation_plan": ["Patch the confirmed mapping path", "Run cross-build", "Produce a traceable artifact for target verification"],
+  "acceptance_criteria": ["Cross-build passes", "Correctable ECC no longer maps to uncorrectable", "True uncorrectable ECC remains fail-closed"],
+  "allowed_actions": ["A3_MODIFY_WORKTREE", "A4_BUILD_TEST"],
+  "forbidden_actions": ["production_ota", "otp_fuse"],
+  "required_verification": ["cross_build", "device", "hil"],
+  "evidence_refs": ["technical-decision.json"],
+  "knowledge_refs": [],
+  "risks": ["Incorrect mapping could hide real media errors"],
+  "unverified_items": [],
+  "downstream_contract": ["delivery-receipt"]
+}

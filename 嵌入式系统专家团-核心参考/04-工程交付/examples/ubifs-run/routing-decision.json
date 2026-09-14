@@ -1,0 +1,10 @@
+{
+  "run_id": "EXAMPLE-UBIFS-001",
+  "task_type": "defect_debugging",
+  "workflow_mode": "diagnostic_chain",
+  "experts": ["debug-reliability-expert", "linux-bsp-expert"],
+  "reason": "The symptom is a storage reliability defect requiring one shared hypothesis registry and Linux storage-stack facts.",
+  "required_gates": ["gate.k", "gate.m", "gate.0", "gate.t", "gate.e", "gate.v", "gate.r", "gate.c"],
+  "action_ceiling": "A4_BUILD_TEST",
+  "stop_condition": "Block if exact source/firmware/device identity cannot be maintained."
+}

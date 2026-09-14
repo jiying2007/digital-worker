@@ -1,0 +1,18 @@
+{
+  "run_id": "EXAMPLE-UBIFS-001",
+  "work_item_id": "EXAMPLE-EMB-001",
+  "task_type": "defect_debugging",
+  "workflow_mode": "diagnostic_chain",
+  "goal": "Confirm the cause of the false UBIFS read-only transition and define the smallest safe fix.",
+  "scope": ["SPI-NAND ECC status handling", "MTD return mapping", "UBI/UBIFS error propagation"],
+  "boundary": ["No partition layout change", "No production release action"],
+  "non_goals": ["General storage stack refactor"],
+  "constraints": ["Preserve real uncorrectable ECC fail-closed behavior"],
+  "acceptance_criteria": ["Cross-build passes", "Original reproduction no longer triggers false read-only", "True uncorrectable ECC remains reported"],
+  "required_verification": ["cross_build", "device", "hil"],
+  "action_ceiling": "A4_BUILD_TEST",
+  "risk_level": "high",
+  "stop_condition": "Stop if source/device identity drifts or the experiment cannot distinguish ECC mapping from data corruption.",
+  "assumptions": [],
+  "consumed_refs": ["task-brief.json", "material-manifest.json"]
+}
