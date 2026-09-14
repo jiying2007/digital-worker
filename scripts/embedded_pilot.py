@@ -28,6 +28,7 @@ BUNDLE_SCHEMA = ROOT / "schemas" / "pilot-evidence-bundle.v1.schema.json"
 STATUS_SCHEMA = ROOT / "schemas" / "pilot-status.v1.schema.json"
 EDGE_SHADOW_EVALUATOR = ROOT / "scripts" / "evaluate_edge_foundation_pilot_shadow.py"
 EDGE_READINESS_EVALUATOR = ROOT / "scripts" / "evaluate_edge_foundation_phase3_readiness.py"
+MATERIAL_VALIDATOR = ROOT / "scripts" / "validate_material_manifest.py"
 TERMINAL_STATUSES = {"completed", "cancelled"}
 
 REF_SCHEMAS = {
@@ -123,6 +124,28 @@ def check_route(run: dict):
 def required_artifacts(run: dict) -> tuple[list[str], list[str]]:
     cfg = load_yaml(REQUIREMENTS)["tracks"][run["pilot_track"]]
     return list(cfg["required_refs"]), list(cfg["required_extra_artifacts"])
+
+
+def validate_material_manifest_ref(run_dir: Path, run: dict, require_terminal_ready: bool = False):
+    ref = run.get("extra_artifact_refs", {}).get("material_manifest")
+    if not ref:
+        return None
+    path = safe_ref(run_dir, ref)
+    manifest = load_json(path)
+    assert_true(manifest.get("run_id") == run["run_id"], "material manifest run_id mismatch")
+    command = [
+        sys.executable,
+        str(MATERIAL_VALIDATOR),
+        str(path),
+        "--track",
+        run["pilot_track"],
+    ]
+    if require_terminal_ready:
+        command.append("--require-terminal-ready")
+    completed = subprocess.run(command, check=False, capture_output=True, text=True)
+    detail = (completed.stderr or completed.stdout or "material manifest validator failed").strip()
+    assert_true(completed.returncode == 0, f"material manifest validation failed: {detail}")
+    return completed
 
 
 def validate_linked_document(run_dir: Path, run: dict, field: str, schema_path: Path):
@@ -238,6 +261,7 @@ def validate_run_dir(run_dir: Path) -> dict:
     for kind, ref in run.get("extra_artifact_refs", {}).items():
         assert_true(re.fullmatch(r"[A-Za-z0-9_.-]+", kind) is not None, f"invalid extra artifact kind: {kind}")
         safe_ref(run_dir, ref)
+    validate_material_manifest_ref(run_dir, run, require_terminal_ready=run["status"] == "completed")
 
     if run["status"] == "completed":
         required_refs, required_extra = required_artifacts(run)
@@ -362,6 +386,7 @@ def cmd_complete(args):
     run["finished_at"] = None
     write_json(run_path(run_dir), run)
     validate_run_dir(run_dir)
+    validate_material_manifest_ref(run_dir, run, require_terminal_ready=True)
 
     bundle = collect_bundle(run_dir, run)
     assert_true(bundle["complete"], f"cannot complete pilot run; missing required artifacts: {bundle['missing_required']}")
