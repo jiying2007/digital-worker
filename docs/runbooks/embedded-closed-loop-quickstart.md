@@ -3,7 +3,8 @@
 - Status: active runbook
 - Stage baseline: `docs/strategy/embedded-domain-closed-loop-v1.md`
 - Target operating model: `docs/strategy/ai-rd-target-operating-model.md`
-- Trust gate: `docs/strategy/r0-trust-closure.md`
+- Trust baseline: `docs/strategy/r0-trust-closure.md`
+- Repository stage: `iterative-development`
 - Scope: first real Debug / Feature / Review-Release runs
 
 ## 1. Register the real task
@@ -181,7 +182,7 @@ Validate the terminal evidence:
 python scripts/embedded_pilot.py validate <RUN_DIR>
 ```
 
-Validation recomputes every referenced artifact SHA-256 and requires the live artifact set to match the frozen bundle. Any post-completion artifact modification therefore invalidates the run until a new superseding run is created.
+Validation recomputes every referenced artifact SHA-256 and requires the live artifact set to match the frozen evidence bundle. Any post-completion artifact modification therefore invalidates the run until a new superseding run is created.
 
 ## 9. Runtime comparison
 
@@ -199,20 +200,29 @@ python scripts/embedded_knowledge.py proposal-route --proposal <PROPOSAL_JSON>
 
 This only routes a candidate for Hub lifecycle/owner review; it never directly creates active knowledge.
 
-## 11. Closure gate
+## 11. Current-stage closure gate
 
-Before accepting a real completed run:
+Before accepting a real completed run in the current `iterative-development` stage:
 
-- `scripts/verify_repository_governance.py` must report server-side governance PASS;
 - `scripts/verify_cross_repo_checkouts.py` must verify every materially used locked provider/binding plus the Codex Session Bootstrap contract;
 - all Acceptance Criteria map to concrete Evidence;
 - source/artifact/device/test identity is exact or explicitly unresolved;
 - immutable ADK release, Runtime source-set and Runtime distribution identity are retained when a binding executed work;
 - Runtime Execution Receipt is retained when a binding executed work;
 - Verification and Review independence is preserved;
-- `incorrect_pass=0` and no unauthorized action;
-- Knowledge Harvest is finalized;
-- observations feed #26 before new Schema/Agent/Platform is proposed.
+- `incorrect_pass=0` and no unauthorized action；
+- Knowledge Harvest is finalized；
+- observations feed #26 before new Schema/Agent/Platform is proposed。
+
+**Main branch protection is intentionally not a current-stage acceptance gate.** `python scripts/verify_repository_governance.py` remains advisory and may report `DEFERRED_CURRENT_STAGE` while main is unprotected.
+
+Before Productionization / protected multi-contributor operation, run:
+
+```bash
+python scripts/verify_repository_governance.py --strict
+```
+
+Strict mode must PASS before the repository is treated as production-governed.
 
 ## 12. Current implementation boundary
 
