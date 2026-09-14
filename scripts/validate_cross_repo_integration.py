@@ -14,7 +14,6 @@ OWNERSHIP = ROOT / "contracts" / "cross-repo" / "embedded-ai-operating-system.ya
 IDENTITY = ROOT / "contracts" / "cross-repo" / "identity-envelope.yaml"
 HARVEST = ROOT / "contracts" / "cross-repo" / "knowledge-harvest-handoff.yaml"
 STRATEGY = ROOT / "docs" / "strategy" / "ai-rd-target-operating-model.md"
-LEGACY_STRATEGY = ROOT / "docs" / "strategy" / "four-control-planes-runtime-bindings.md"
 QUICKSTART = ROOT / "docs" / "runbooks" / "embedded-closed-loop-quickstart.md"
 SKILLS = ROOT / "expert-groups" / "embedded-system" / "config" / "p0-skills.yaml"
 MATRIX = ROOT / "expert-groups" / "embedded-system" / "config" / "skill-ownership-matrix.yaml"
@@ -35,7 +34,7 @@ def digest(value: str | None) -> bool:
 
 
 def main() -> None:
-    for path in [LOCK, CAPABILITY, OWNERSHIP, IDENTITY, HARVEST, STRATEGY, LEGACY_STRATEGY, QUICKSTART, SKILLS, MATRIX, ADAPTER]:
+    for path in [LOCK, CAPABILITY, OWNERSHIP, IDENTITY, HARVEST, STRATEGY, QUICKSTART, SKILLS, MATRIX, ADAPTER]:
         require(path.is_file(), f"missing cross-repo asset: {path.relative_to(ROOT)}")
 
     lock = json.loads(LOCK.read_text(encoding="utf-8"))
@@ -86,12 +85,7 @@ def main() -> None:
     require("SOURCE_SET_BOUND" in codex.get("validation", ""), "Codex source-set binding must be promoted")
 
     rendered_lock = json.dumps(lock, ensure_ascii=False, sort_keys=True)
-    for retired in (
-        '"asset_bundle_hash"',
-        "BLOCKED_ASSET_BUNDLE_IDENTITY",
-        "5.0.0-rc.2",
-        "provider-produced bundle",
-    ):
+    for retired in ('"asset_bundle_hash"', "BLOCKED_ASSET_BUNDLE_IDENTITY", "5.0.0-rc.2", "provider-produced bundle"):
         require(retired not in rendered_lock, f"retired bundle-era active lock token returned: {retired}")
 
     rules = lock["rules"]
@@ -156,15 +150,8 @@ def main() -> None:
     require("source_set_ref" in identity["agent_assets"], "identity envelope source-set ref missing")
     require(identity["runtime_evaluation"]["evaluator"] == "llm_agent", "identity envelope runtime evaluator drift")
     for key in [
-        "repository",
-        "commit",
-        "runtime_target",
-        "runtime_profile",
-        "runtime_host",
-        "source_set_identity_ref",
-        "runtime_distribution_identity_ref",
-        "session_bootstrap_ref",
-        "execution_receipt_ref",
+        "repository", "commit", "runtime_target", "runtime_profile", "runtime_host",
+        "source_set_identity_ref", "runtime_distribution_identity_ref", "session_bootstrap_ref", "execution_receipt_ref",
     ]:
         require(key in identity["runtime_binding"], f"runtime binding identity missing {key}")
     identity_text = IDENTITY.read_text(encoding="utf-8")
@@ -178,7 +165,10 @@ def main() -> None:
     require(harvest["hard_rules"]["owner_review_required"] is True, "Knowledge promotion requires owner review")
 
     adapter = ADAPTER.read_text(encoding="utf-8")
-    for token in ["knowledge-context.sh", "knowledge-evidence-pack.sh", "knowledge-action-check.sh", "knowledge-proposal-route.sh", "bootstrap-local-catalog", "KNOWLEDGE_HUB_ROOT", "BLOCKED_PROVIDER_IDENTITY_MISMATCH"]:
+    for token in [
+        "knowledge-context.sh", "knowledge-evidence-pack.sh", "knowledge-action-check.sh", "knowledge-proposal-route.sh",
+        "bootstrap-local-catalog", "KNOWLEDGE_HUB_ROOT", "BLOCKED_PROVIDER_IDENTITY_MISMATCH",
+    ]:
         require(token in adapter, f"knowledge adapter missing required surface: {token}")
     for forbidden in ["~/.codex", "~/.claude", "~/.config/opencode"]:
         require(forbidden not in adapter, f"digital-worker must not own runtime-specific path: {forbidden}")
@@ -199,10 +189,6 @@ def main() -> None:
     ]:
         require(token in strategy, f"target operating model missing marker: {token}")
     require("target-baseline / frozen-for-implementation" in strategy, "target operating model status drift")
-
-    legacy_strategy = LEGACY_STRATEGY.read_text(encoding="utf-8")
-    require("Status: `superseded`" in legacy_strategy, "transitional 4+N strategy must remain superseded")
-    require("ai-rd-target-operating-model.md" in legacy_strategy, "superseded strategy must point to final target baseline")
 
     quickstart = QUICKSTART.read_text(encoding="utf-8")
     for token in [
