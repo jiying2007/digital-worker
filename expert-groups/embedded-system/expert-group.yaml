@@ -12,10 +12,6 @@ semantic_lifecycle:
   target_domain: ../../domains/edge-foundation/domain.yaml
   target_adr: ../../docs/adr/ADR-004-edge-foundation-digital-responsibility-architecture.md
   compatibility_mapping: ../../domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml
-  migration_phase: phase-2-dual-evaluation
-  shadow_routing: ../../domains/edge-foundation/routing-shadow.yaml
-  legacy_machine_contract_preserved: true
-  canonical_target_responsibility_model: edge-foundation
   canonical_routing_switched: false
   no_new_legacy_expert_roles: true
   direct_removal_forbidden: true
@@ -175,10 +171,8 @@ cross_team:
   edge_foundation_team:
     target_domain_contract: ../../domains/edge-foundation/domain.yaml
     compatibility_mapping: ../../domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml
-    shadow_routing: ../../domains/edge-foundation/routing-shadow.yaml
     ownership_contract: contracts/cross-team/edge-foundation-ownership.yaml
     ownership_model: [OWN, SHARED, CONSUME, PROVIDE, OUT_OF_SCOPE]
-    current_status: dual-evaluation
     require_ownership_map_before_duplicate_capability: true
 
 evaluation:
@@ -187,10 +181,8 @@ evaluation:
   safety_priority_metric: incorrect_pass_rate
 
 next_stage:
-  - dual-evaluate-legacy-routing-and-target-semantics
-  - bind-shadow-semantics-to-real-pilot-evidence
-  - knowledge-source-inventory-and-poc
-  - multi-runtime-real-pilot
-  - edge-foundation-ownership-resolution
-  - canonical-routing-switch-after-evidence
+  - complete-real-debug-pilot-with-exact-material-identity
+  - complete-independent-review-and-terminalize-real-feature-pilot
+  - complete-real-review-release-pilot-with-device-evidence
+  - canonical-routing-review-after-three-track-real-evidence
   - productionization-review-after-pilot-evidence
