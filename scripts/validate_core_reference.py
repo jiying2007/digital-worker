@@ -58,51 +58,68 @@ def validate_links() -> None:
 def main() -> None:
     required = [
         "README.md",
-        "00-总览/README.md",
-        "00-总览/00 架构与运行总览.md",
-        "00-总览/01 数字岗位与能力模型.md",
-        "00-评审入口/01 评审说明与决策清单.md",
-        "00-评审入口/02 术语与缩写.md",
-        "01-架构设计/01 总体架构设计.md",
-        "01-架构设计/02 系统边界与控制面.md",
-        "01-架构设计/03 身份证据与知识架构.md",
-        "01-架构设计/04 质量属性与非功能约束.md",
-        "02-流程与运行/01 任务生命周期与Gate.md",
-        "02-流程与运行/02 Debug问题闭环流程.md",
-        "02-流程与运行/03 功能开发Bring-up与多仓协同.md",
-        "02-流程与运行/04 验证评审发布与异常恢复.md",
-        "02-流程与运行/05 任务类型运行矩阵.md",
-        "03-角色与领域/01 组织模型职责与RACI.md",
-        "03-角色与领域/02 跨团队RACI.md",
-        "03-角色与领域/03 嵌入式架构领域指南.md",
-        "03-角色与领域/04 Linux BSP领域指南.md",
-        "03-角色与领域/05 MCU RTOS领域指南.md",
-        "03-角色与领域/06 驱动与组件领域指南.md",
-        "03-角色与领域/07 调试与可靠性领域指南.md",
-        "03-角色与领域/08 验证领域指南.md",
-        "03-角色与领域/09 独立审查领域指南.md",
-        "04-工程交付/01 Skill能力地图.md",
-        "04-工程交付/02 工程交接Runtime与关键产物.md",
-        "04-工程交付/03 完整任务产物样例.md",
-        "05-治理与评测/01 权限安全风险与例外.md",
-        "05-治理与评测/02 Pilot指标成熟度与生产化.md",
-        "05-治理与评测/03 架构取舍与演进原则.md",
-        "06-案例/01 UBIFS只读问题走查.md",
-        "06-案例/02 多仓功能与OTA发布走查.md",
-        "06-案例/03 MCU HardFault与RTOS并发走查.md",
-        "06-案例/04 新板Bring-up走查.md",
-        "06-案例/05 器件替代兼容性走查.md",
+        "01-数字组织与岗位/01 数字员工组织与运行总览.md",
+        "01-数字组织与岗位/02 组织职责与RACI.md",
+        "01-数字组织与岗位/03 数字岗位与能力模型.md",
+        "01-数字组织与岗位/04 跨团队RACI.md",
+        "01-数字组织与岗位/human-view.yaml",
+        "02-架构设计/01 总体架构设计.md",
+        "02-架构设计/02 系统边界与控制面.md",
+        "02-架构设计/03 身份证据与知识架构.md",
+        "02-架构设计/04 质量属性与非功能约束.md",
+        "03-流程与运行/01 任务生命周期与Gate.md",
+        "03-流程与运行/02 Debug问题闭环流程.md",
+        "03-流程与运行/03 功能开发Bring-up与多仓协同.md",
+        "03-流程与运行/04 验证评审发布与异常恢复.md",
+        "03-流程与运行/05 任务类型运行矩阵.md",
+        "04-专业能力/01 嵌入式架构领域指南.md",
+        "04-专业能力/02 Linux BSP领域指南.md",
+        "04-专业能力/03 MCU RTOS领域指南.md",
+        "04-专业能力/04 驱动与组件领域指南.md",
+        "04-专业能力/05 调试与可靠性领域指南.md",
+        "04-专业能力/06 验证领域指南.md",
+        "04-专业能力/07 独立审查领域指南.md",
+        "05-工程交付/01 Skill能力地图.md",
+        "05-工程交付/02 工程交接Runtime与关键产物.md",
+        "05-工程交付/03 完整任务产物样例.md",
+        "06-治理与评审/01 评审说明与决策清单.md",
+        "06-治理与评审/02 权限安全风险与例外.md",
+        "06-治理与评审/03 Pilot指标成熟度与生产化.md",
+        "06-治理与评审/04 架构取舍与演进原则.md",
+        "07-案例/01 UBIFS只读问题走查.md",
+        "07-案例/02 多仓功能与OTA发布走查.md",
+        "07-案例/03 MCU HardFault与RTOS并发走查.md",
+        "07-案例/04 新板Bring-up走查.md",
+        "07-案例/05 器件替代兼容性走查.md",
+        "附录/术语与缩写.md",
     ]
     for rel in required:
         path = CORE / rel
         require(path.is_file(), f"missing core reference: {rel}")
-        require(len(path.read_text(encoding="utf-8").strip()) >= 500, f"core reference too thin: {rel}")
+        if path.suffix == ".md":
+            require(len(path.read_text(encoding="utf-8").strip()) >= 500, f"core reference too thin: {rel}")
 
+    # There is exactly one human entry: the root README. Old competing entry directories must not return.
     index = read("README.md")
     require("operational reference" in index, "core reference must declare operational reference status")
     require("v0.7.0" in index, "core reference must declare v0.7.0")
     require("iterative-development" in index, "core reference must state current repository stage")
-    require("01 数字岗位与能力模型.md" in index, "core reference must expose digital position model")
+    require("唯一第一入口" in index, "core README must declare itself the single entry")
+    for old_dir in ["00-总览", "00-评审入口", "01-架构设计", "02-流程与运行", "03-角色与领域", "04-工程交付", "05-治理与评测", "06-案例"]:
+        require(not (CORE / old_dir).exists(), f"superseded top-level directory must stay removed: {old_dir}")
+
+    expected_top_dirs = {
+        "01-数字组织与岗位",
+        "02-架构设计",
+        "03-流程与运行",
+        "04-专业能力",
+        "05-工程交付",
+        "06-治理与评审",
+        "07-案例",
+        "附录",
+    }
+    actual_top_dirs = {p.name for p in CORE.iterdir() if p.is_dir()}
+    require(actual_top_dirs == expected_top_dirs, f"core information architecture drift: {sorted(actual_top_dirs)}")
 
     expert_group = yaml.safe_load((EMB / "expert-group.yaml").read_text(encoding="utf-8"))
     require(expert_group["version"] == "0.7.0", "unexpected embedded expert-group version")
@@ -112,11 +129,11 @@ def main() -> None:
     skill_registry = yaml.safe_load((EMB / "config/p0-skills.yaml").read_text(encoding="utf-8"))
     skills = [item["id"] for item in skill_registry["skills"]]
     require(len(skills) == 23, f"expected 23 P0 skills, got {len(skills)}")
-    skill_doc = read("04-工程交付/01 Skill能力地图.md")
+    skill_doc = read("05-工程交付/01 Skill能力地图.md")
     missing_skills = [skill for skill in skills if skill not in skill_doc]
     require(not missing_skills, f"skill map missing registered skills: {missing_skills}")
 
-    position_doc = read("00-总览/01 数字岗位与能力模型.md")
+    position_doc = read("01-数字组织与岗位/03 数字岗位与能力模型.md")
     for marker in [
         "不是招聘 JD",
         "6 个职能模块 + 8 个数字岗位",
@@ -136,21 +153,20 @@ def main() -> None:
     missing_position_skills = [skill for skill in skills if skill not in position_doc]
     require(not missing_position_skills, f"digital position model missing registered skills: {missing_position_skills}")
 
-    architecture = read("01-架构设计/01 总体架构设计.md")
+    architecture = read("02-架构设计/01 总体架构设计.md")
     require("1+7" in architecture, "architecture must explain 1+7 organization")
     require("Provider-neutral" in architecture, "architecture must explain provider-neutral behavior")
     require("四个稳定控制面 + N 个 Runtime Binding" in architecture, "architecture must explain control-plane model")
 
-    identity = read("01-架构设计/03 身份证据与知识架构.md")
+    identity = read("02-架构设计/03 身份证据与知识架构.md")
     require("Source of Truth stays at source" in identity, "identity/knowledge doc must retain source authority rule")
     require("Acceptance → Evidence" in identity, "identity/knowledge doc must explain acceptance-evidence mapping")
 
-    workflow = read("02-流程与运行/01 任务生命周期与Gate.md")
+    workflow = read("03-流程与运行/01 任务生命周期与Gate.md")
     for gate in ["Gate K", "Gate M", "Gate 0", "Gate T", "Gate E", "Gate V", "Gate R", "Gate C"]:
         require(gate in workflow, f"workflow doc missing {gate}")
 
-    # The human routing matrix must cover every machine task type and its allowed modes.
-    matrix_text = read("02-流程与运行/05 任务类型运行矩阵.md")
+    matrix_text = read("03-流程与运行/05 任务类型运行矩阵.md")
     routing = yaml.safe_load((EMB / "config/task-modes.yaml").read_text(encoding="utf-8"))["routing"]
     require(len(routing) == 14, f"expected 14 task types, got {len(routing)}")
     for task_type, cfg in routing.items():
@@ -160,22 +176,21 @@ def main() -> None:
         for mode in cfg["allowed_modes"]:
             require(mode in row, f"task matrix allowed mode drift for {task_type}: {mode}")
 
-    safety = read("05-治理与评测/01 权限安全风险与例外.md")
+    safety = read("06-治理与评审/02 权限安全风险与例外.md")
     for level in [f"A{i}" for i in range(8)]:
         require(level in safety, f"safety doc missing {level}")
 
-    pilot = read("05-治理与评测/02 Pilot指标成熟度与生产化.md")
+    pilot = read("06-治理与评审/03 Pilot指标成熟度与生产化.md")
     for marker in ["incorrect_pass_rate = 0", "unauthorized_actions = 0", "audit_trace_completeness = 1.0", "E2 Engineering Closed Loop", "E3 Knowledge Closed Loop"]:
         require(marker in pilot, f"pilot/maturity doc missing marker: {marker}")
 
-    review = read("00-评审入口/01 评审说明与决策清单.md")
+    review = read("06-治理与评审/01 评审说明与决策清单.md")
     for decision in [f"D{i:02d}" for i in range(1, 11)]:
         require(decision in review, f"review guide missing decision: {decision}")
     for evidence_id in [f"E{i:02d}" for i in range(1, 9)]:
         require(evidence_id in review, f"review guide missing evidence register entry: {evidence_id}")
 
-    # Human-readable artifact chain has a machine-validated sample set.
-    example = CORE / "04-工程交付/examples/ubifs-run"
+    example = CORE / "05-工程交付/examples/ubifs-run"
     schema_map = {
         "task-brief.json": ROOT / "schemas/task-brief.v1.schema.json",
         "material-manifest.json": EMB / "schemas/material-manifest.schema.json",
@@ -206,29 +221,26 @@ def main() -> None:
 
     validate_links()
 
-    # Superseded combined/flat documents and parallel human/machine sources must not come back.
     forbidden_paths = [
-        CORE / "03-角色与领域/02 架构LinuxBSPMCURTOS与驱动领域指南.md",
-        CORE / "03-角色与领域/03 调试验证与独立评审领域指南.md",
         EMB / "positions",
         EMB / "config/positions.yaml",
         EMB / "config/position-model.yaml",
+        ROOT / "docs/review",
     ]
-    require(not any(path.exists() for path in forbidden_paths), "superseded or parallel Position sources must stay removed")
+    require(not any(path.exists() for path in forbidden_paths), "superseded or parallel Position/review sources must stay removed")
     stale_root_files = [path.name for path in CORE.glob("[0-9][0-9] *.md")]
     require(not stale_root_files, f"legacy flat core-reference files must be removed: {stale_root_files}")
-    require(not (ROOT / "docs/review").exists(), "legacy docs/review pack must be removed")
 
-    forbidden = ["review-ready", "01~16 已统一", "v0.6.0"]
+    forbidden_wording = ["review-ready", "01~16 已统一", "v0.6.0"]
     violations = []
     for path in CORE.rglob("*.md"):
         text = path.read_text(encoding="utf-8")
-        for token in forbidden:
+        for token in forbidden_wording:
             if token in text:
                 violations.append(f"{path.relative_to(ROOT)} -> {token}")
     require(not violations, "stale core-reference wording found: " + "; ".join(violations))
 
-    print("core reference validation PASS: digital position model + 14 task types + 7 modes + split domain guides + valid artifact chain + links + v0.7.0 baseline")
+    print("core reference validation PASS: single-entry IA + digital positions + 14 task types + 7 modes + valid artifact chain + links + v0.7.0 baseline")
 
 
 if __name__ == "__main__":
