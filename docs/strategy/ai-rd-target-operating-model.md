@@ -1,11 +1,11 @@
 # AI R&D Target Operating Model — Final Baseline
 
 - Status: `target-baseline / frozen-for-implementation`
-- Date: 2026-09-13
+- Date: 2026-09-14
 - Scope: `digital-worker` / `knowledge-hub` / `agent-dev-kit` / `llm_agent` + N replaceable Runtime Bindings
 - Parent architecture: `docs/adr/ADR-003-provider-neutral-ai-rd-target-architecture.md`
 - Domain implementation baseline: `docs/strategy/embedded-domain-closed-loop-v1.md`
-- Trust gate: `docs/strategy/r0-trust-closure.md`
+- Trust baseline: `docs/strategy/r0-trust-closure.md`
 - Authority: 本文冻结长期 Operating Model；ADR、机器 Contract、Schema、Action Policy 和真实 Evidence 在冲突时优先
 
 ## 1. 审查结论
@@ -18,7 +18,7 @@
 
 本次审查同时确认一项重要语义迁移：ADK → Codex 不再要求 provider-produced monolithic bundle。终态采用 **immutable ADK release + exact-source-set handoff + Runtime consumer assembly**。`asset_bundle_hash / BLOCKED_ASSET_BUNDLE_IDENTITY` 属于旧过渡模型，不得作为终态架构前提。
 
-截至当前实施收敛，ADK provider contract、llm_agent Runtime Pilot contract、Codex Runtime Binding / L0-L1-L2 Session Bootstrap 和 digital-worker cross-repo identity spine 均已迁移到 source-set 语义。剩余阻塞属于 live server governance 与真实 Pilot / Knowledge reuse / multi-runtime evidence，不再属于 bundle-era 架构缺口；因此仍不得声明 Production Ready。
+截至当前实施收敛，ADK provider contract、llm_agent Runtime Pilot contract、Codex Runtime Binding / L0-L1-L2 Session Bootstrap 和 digital-worker cross-repo identity spine 均已迁移到 source-set 语义。当前进入 `iterative-development`：main server-side protection 暂不作为真实 Pilot 前置，严格治理延后到 Productionization；现阶段主要缺口是 #6/#7/#8 真实 Pilot、#16 Knowledge reuse 和 #18 multi-runtime evidence，因此仍不得声明 Production Ready。
 
 ## 2. 终态总图
 
@@ -496,7 +496,7 @@ NO_DELTA            │
 
 Knowledge lifecycle 的最终裁决只属于 Knowledge Control Plane。
 
-## 12. 当前实现状态（2026-09-13 收敛基线）
+## 12. 当前实现状态（2026-09-14 迭代基线）
 
 代码侧终态迁移已经从“目标语义”推进为机器合同事实：
 
@@ -506,7 +506,7 @@ Knowledge lifecycle 的最终裁决只属于 Knowledge Control Plane。
 4. `digital-worker` cross-repo lock v4、Identity Envelope v3、ownership/capability/Quickstart 已迁移到 immutable-release + source-set/distribution/bootstrap identity；
 5. permanent cross-repo CI 负责 fresh exact checkout、canonical digest、ADK release tree/manifest/tag 和 Codex Session Bootstrap contract verification；
 6. Knowledge Hub Formal L2 仍坚持 exact-pinned provider identity；当前 pin 可落后 provider main，route/真实 reuse 未完成前不升级为默认；
-7. GitHub `main` server-side governance 仍是外部 blocker；repository-local CI 不能替代 branch/ruleset enforcement；
+7. 当前 repository stage 为 `iterative-development`：GitHub `main` server-side protection 暂不要求，不阻塞 real Pilot；strict governance 保留为 Productionization 前置；
 8. #6/#7/#8 真实 Pilot evidence、#16 Knowledge reuse、#18 multi-runtime evidence 仍未完成；
 9. 因此当前不得声明 Production Ready。
 
@@ -514,15 +514,15 @@ Knowledge lifecycle 的最终裁决只属于 Knowledge Control Plane。
 
 终态架构与代码侧 source-set contract 已冻结并收敛，后续不再新增控制面：
 
-1. 让 GitHub Repository Governance Audit PASS；
-2. 使用 L2 Session Bootstrap + Embedded Domain Closed Loop V1 执行 #6 Debug real Pilot；
-3. 执行 #7 Feature real Pilot；
-4. 执行 #8 Review/Release real Pilot；
-5. #16 引入真实 Knowledge Source 并形成至少一次 evidence-backed reuse；
-6. #18 增加第二个健康 Runtime Binding，以相同 Work/Context/Acceptance/Verification 完成隔离对照；
-7. 满足 E2/Knowledge foundation 后进入独立 Productionization Review。
+1. 使用 L2 Session Bootstrap + Embedded Domain Closed Loop V1 执行 #6 Debug real Pilot；
+2. 执行 #7 Feature real Pilot；
+3. 执行 #8 Review/Release real Pilot；
+4. #16 引入真实 Knowledge Source 并形成至少一次 evidence-backed reuse；
+5. #18 增加第二个健康 Runtime Binding，以相同 Work/Context/Acceptance/Verification 完成隔离对照；
+6. 满足 E2/Knowledge foundation 后进入独立 Productionization Review；
+7. Productionization 前启用 GitHub server-side ruleset，并让 `Repository Governance Audit --strict` PASS。
 
-任何不能由当前权限或真实工程输入完成的步骤必须保持 `BLOCKED/PENDING`，不得用合成证据替代。
+任何不能由当前权限或真实工程输入完成的步骤必须保持 `BLOCKED/PENDING`，不得用合成证据替代。main protection 当前为 stage-deferred，不得继续误报为 real Pilot blocker。
 
 ## 14. 终态验收标准
 
@@ -570,14 +570,14 @@ Knowledge lifecycle 的最终裁决只属于 Knowledge Control Plane。
 - 独立 Execution Receipt；
 - 后一个 Runtime 不接收前一个 Runtime 的最终 answer/patch。
 
-### Governance Closed
+### Governance Closed — Productionization Gate
 
 - `main` server-side PR enforcement；
 - required status check；
 - block force push / non-fast-forward；
 - block default-branch deletion；
 - bounded bypass；
-- live audit PASS。
+- strict live audit PASS。
 
 ## 15. 永久禁止的反模式
 
