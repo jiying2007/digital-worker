@@ -71,9 +71,8 @@ if len(branches) != len(set(branches)):
     fail("Branch GC allowlist contains duplicate entries")
 
 allowed_prefixes = ("docs/", "feat/", "fix/", "refactor/", "design/", "arch/", "chore/", "research/", "release/", "codex/")
-legacy_one_shot = {"noop-cleanup-marker", "noop-do-not-use"}
 for branch in branches:
-    if not branch.startswith(allowed_prefixes) and branch not in legacy_one_shot:
+    if not branch.startswith(allowed_prefixes):
         fail(f"unexpected branch class in GC allowlist: {branch}")
 
 print(f"Branch GC safety contract OK ({len(branches)} pending approved branch(es); current-tip evidence + absent-ref handling required)")
