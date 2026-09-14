@@ -35,7 +35,6 @@
       "uniqueItems": true,
       "items": {"enum": [
         "canonical-routing-authority",
-        "migration-phase-status",
         "routing-selector-entrypoint"
       ]}
     },
@@ -46,6 +45,7 @@
       "items": {"enum": [
         "legacy-identity-removal",
         "legacy-identity-deprecation",
+        "compatibility-mapping-rewrite",
         "skill-owner-rewrite",
         "pilot-threshold-change",
         "action-authority-expansion",

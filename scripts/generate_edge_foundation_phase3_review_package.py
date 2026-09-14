@@ -47,7 +47,6 @@ def file_sha256(path: Path) -> str:
 def build_package(readiness_path: Path) -> dict:
     readiness = load_json(readiness_path)
     validate_json(readiness, READINESS_SCHEMA)
-
     require(readiness["status"] == "ELIGIBLE_FOR_REVIEW", "phase-3 readiness is not ELIGIBLE_FOR_REVIEW")
     require(readiness["eligible_for_phase3_review"] is True, "phase-3 review eligibility is false")
     require(readiness["canonical_routing_switched"] is False, "canonical routing is already switched")
@@ -55,12 +54,11 @@ def build_package(readiness_path: Path) -> dict:
 
     domain = load_yaml(DOMAIN)
     mapping = load_yaml(MAPPING)
-    compatibility = domain["legacy_compatibility"]
-    require(compatibility["canonical_routing_switched"] is False, "domain contract already marks canonical routing switched")
-    require(compatibility["migration_phase"] == "phase-2-dual-evaluation", "review package may only be prepared from phase-2")
-
-    phases = {item["id"]: item for item in mapping["phases"]}
-    require(phases["phase-3-canonical-switch"]["status"] == "blocked-on-evidence", "unexpected phase-3 migration status")
+    migration = domain["migration"]
+    require(migration["canonical_routing_switched"] is False, "domain contract already marks canonical routing switched")
+    require(migration["automatic_canonical_switch_forbidden"] is True, "automatic canonical switch must remain forbidden")
+    require(migration["phase4_deprecation_separate"] is True, "legacy deprecation must remain a later action")
+    require(migration["phase5_removal_separate"] is True, "legacy removal must remain a later action")
 
     invariants = list(mapping["migration_invariants"])
     required_invariants = {
@@ -85,11 +83,11 @@ def build_package(readiness_path: Path) -> dict:
         "migration_invariants": invariants,
         "proposed_changes": [
             "set-edge-foundation-as-canonical-routing-authority",
-            "mark-phase-2-dual-evaluation-completed",
-            "mark-phase-3-canonical-switch-completed-after-independent-review",
+            "introduce-canonical-routing-selector-entrypoint",
             "preserve-legacy-1plus7-as-compatibility-surface",
         ],
         "explicit_non_goals": [
+            "do-not-rewrite-compatibility-mapping-in-phase-3",
             "do-not-deprecate-legacy-identities-in-phase-3",
             "do-not-remove-legacy-identities-in-phase-3",
             "do-not-expand-a0-a7-authority",
@@ -106,6 +104,7 @@ def build_package(readiness_path: Path) -> dict:
             "readiness-artifact-identity-verified",
             "all-evidence-run-ids-traceable",
             "legacy-compatibility-preserved",
+            "compatibility-mapping-unchanged",
             "verification-independence-preserved",
             "review-independence-preserved",
             "provider-neutrality-preserved",
@@ -125,8 +124,7 @@ def main() -> None:
 
     try:
         package = build_package(args.readiness)
-    except (AssertionError, Exception) as exc:
-        # jsonschema and parse failures also fail closed as exit=2 for review preparation.
+    except Exception as exc:
         print(f"phase-3 review package BLOCKED: {exc}")
         raise SystemExit(2)
 

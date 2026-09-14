@@ -14,20 +14,18 @@ automatic_apply_allowed: false
 
 allowed_change_classes:
   - canonical-routing-authority
-  - migration-phase-status
   - routing-selector-entrypoint
 
 allowed_paths:
   canonical-routing-authority:
     - domains/edge-foundation/domain.yaml
-  migration-phase-status:
-    - domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml
   routing-selector-entrypoint:
     - domains/edge-foundation/canonical-routing.yaml
 
 forbidden_change_classes:
   - legacy-identity-removal
   - legacy-identity-deprecation
+  - compatibility-mapping-rewrite
   - skill-owner-rewrite
   - pilot-threshold-change
   - action-authority-expansion
@@ -49,6 +47,7 @@ rules:
   - dry-run-plan-never-authorizes-automatic-apply
   - switch-candidate-diff-must-exactly-match-change-manifest
   - switch-candidate-files-must-match-policy-allowlist
+  - phase-3-must-not-rewrite-compatibility-mapping
   - phase-3-must-not-deprecate-or-remove-legacy-identities
   - phase-4-and-phase-5-remain-separate-actions
   - verification-and-review-independence-must-remain
