@@ -3,8 +3,8 @@
 > 文档状态：**运行参考（operational reference）**  
 > 对应兼容实现：`expert-groups/embedded-system/` v0.7.0  
 > 目标责任架构：`domains/edge-foundation/` + `ADR-004`  
-> 当前阶段：`iterative-development` / `phase-1-shadow`  
-> 当前目标：在不破坏现有机器 Contract 和 Pilot 的前提下，将嵌入式 `1+7` 从“目标组织结构”迁移为“嵌入式专家内部能力 + 可信保障职责”的兼容执行面。
+> 当前阶段：`iterative-development` / `phase-2-dual-evaluation`  
+> 当前目标：在不破坏现有机器 Contract 和 Pilot 的前提下，将嵌入式 `1+7` 从“目标组织结构”迁移为“嵌入式专家内部能力 + 可信保障职责”的兼容执行面，并用旧路由 + Golden Case 对新责任语义做双轨评测。
 
 本文件仍是**唯一第一入口**。核心参考按“数字组织 → 架构 → 流程 → 专业能力 → 工程交付 → 治理评审 → 案例 → 附录”组织；现有详细机器规则仍由 `expert-groups/embedded-system/` 执行，新目标责任模型以 `docs/adr/ADR-004-edge-foundation-digital-responsibility-architecture.md` 和 `domains/edge-foundation/domain.yaml` 为准。
 
@@ -23,6 +23,8 @@
 ```
 
 现有 `1+7 / 8 个数字岗位 / 23 P0 Skill / 14 Task / 7 Mode / 8 Gate / A0-A7 / 7 层 Verification` 是**迁移期机器兼容基线**，不是新的端侧目标组织语义。旧身份与新模型的 8/8 显式映射见 `domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml`。
+
+当前双轨评测只读 `domains/edge-foundation/routing-shadow.yaml`：它把现有 14 类 Task 映射到新的 Domain / Expert / Capability / 高层工作流语义，但明确 `canonical_routing: false`，不会改变旧执行路径和动作权限。
 
 三条迁移红线：
 
@@ -63,7 +65,7 @@
 |迁移期数字岗位职责 / 输入输出 / 任职资格|[数字岗位与能力模型](01-数字组织与岗位/03%20数字岗位与能力模型.md)|总览和 RACI 只摘要/引用|
 |岗位内部协作|[数字岗位协作与 RACI](01-数字组织与岗位/02%20组织职责与RACI.md)|岗位说明不重复 RACI 表|
 |跨团队协作|[跨团队 RACI](01-数字组织与岗位/04%20跨团队RACI.md)|案例只引用相关责任|
-|Task Type / Workflow Mode 路由|[任务类型运行矩阵](03-流程与运行/05%20任务类型运行矩阵.md)|迁移期不复制第二套路由表|
+|Task Type / Workflow Mode 路由|[任务类型运行矩阵](03-流程与运行/05%20任务类型运行矩阵.md)|迁移期不复制第二套执行路由表；shadow mapping 只用于评测|
 |Gate / 状态 / 失败回流|[任务生命周期与 Gate](03-流程与运行/01%20任务生命周期与Gate.md)|专业 SOP 不重定义 Gate|
 |P0 Skill ID / Owner / 用途|[Skill 能力地图](05-工程交付/01%20Skill能力地图.md)|岗位只显示 Skill 数和 Profile 链接|
 |A0-A7 / 人工高风险边界|[权限、安全、风险与例外](06-治理与评审/02%20权限安全风险与例外.md)|总览只说明能力≠权限|
@@ -94,6 +96,8 @@
 ```text
 ADR-004 + domains/edge-foundation/（目标责任模型）
    ↓
+routing-shadow + evaluator（双轨评测，不切执行路由）
+   ↓
 README（唯一人类入口）
    ↓
 01~07 + 附录（迁移期职责、方法、流程、治理和案例）
@@ -109,7 +113,7 @@ expert-groups/embedded-system/（旧机器 Contract 兼容执行面）
 
 当前迁移顺序：
 
-`phase-1 shadow model → dual evaluation → canonical routing switch → legacy identity deprecation → real Pilot proven removal`
+`phase-1 shadow model（已完成） → phase-2 dual evaluation（当前） → real Pilot evidence → canonical routing switch → legacy identity deprecation → proven removal`
 
 同时真实工程证据链继续推进：
 
