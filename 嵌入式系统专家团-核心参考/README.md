@@ -2,135 +2,74 @@
 
 > 文档状态：**运行参考（operational reference）**  
 > 对应实现：`expert-groups/embedded-system/` v0.7.0  
-> 当前阶段：`iterative-development`，推进真实 Debug / Feature / Review-Release 闭环  
-> 文档用途：架构评审、团队培训、研发协作和日常查阅
+> 当前阶段：`iterative-development`  
+> 当前目标：真实 Debug / Feature / Review-Release 闭环，推进 E2 Engineering Closed Loop
 
-本目录是嵌入式系统专家团的人类可读说明。机器执行规则仍以 `expert-groups/embedded-system/` 下的配置、Contract、Schema 和策略文件为准；本文档解释设计理由、工作方法、流程、责任边界和典型场景，不维护第二套机器配置。
+本目录采用三层信息体系：**总览负责快速理解，Markdown 手册负责工程方法，机器 Contract 负责精确执行**。三层不能互相替代。
 
-## 1. 先看什么
+## 1. 第一次看：先打开总览
 
-### 架构或管理评审
+优先阅读 [`00-总览/README.md`](00-总览/README.md)，并打开：
 
-1. [`00-评审入口/01 评审说明与决策清单.md`](00-评审入口/01%20评审说明与决策清单.md)
-2. [`01-架构设计/01 总体架构设计.md`](01-架构设计/01%20总体架构设计.md)
-3. [`01-架构设计/02 系统边界与控制面.md`](01-架构设计/02%20系统边界与控制面.md)
-4. [`01-架构设计/04 质量属性与非功能约束.md`](01-架构设计/04%20质量属性与非功能约束.md)
-5. [`02-流程与运行/05 任务类型运行矩阵.md`](02-流程与运行/05%20任务类型运行矩阵.md)
-6. [`03-角色与领域/02 跨团队RACI.md`](03-角色与领域/02%20跨团队RACI.md)
-7. [`05-治理与评测/02 Pilot指标成熟度与生产化.md`](05-治理与评测/02%20Pilot指标成熟度与生产化.md)
+**[`嵌入式系统专家团-架构与运行总览.xlsx`](00-总览/嵌入式系统专家团-架构与运行总览.xlsx)**
 
-### 日常研发任务
+总览用 8 张表回答最常见的问题：
 
-- 缺陷、长稳、现场问题：[`02 Debug问题闭环流程`](02-流程与运行/02%20Debug问题闭环流程.md)
-- 功能、驱动、Bring-up、多仓：[`03 功能开发Bring-up与多仓协同`](02-流程与运行/03%20功能开发Bring-up与多仓协同.md)
-- 验证、评审、OTA/发布：[`04 验证评审发布与异常恢复`](02-流程与运行/04%20验证评审发布与异常恢复.md)
-- 不确定该走哪条链：先查 [`05 任务类型运行矩阵`](02-流程与运行/05%20任务类型运行矩阵.md)
+1. 整套体系是什么、当前成熟度在哪里；
+2. 1+7 各角色负责什么、输入输出是什么；
+3. 14 类任务分别走什么 mode、谁主责；
+4. Gate 如何串并行、失败后回哪里；
+5. Artifact / Evidence 为什么存在、如何串成身份链；
+6. A0-A7 权限与 7 层 Verification 如何区分；
+7. 产品、项目、开发、硬件、测试/HIL、Verification、Review、Release 如何分工；
+8. 常用术语以及一次完整任务如何走通。
 
-### 专业工作方法
+**Excel 只是视图，不是第二个 SSOT。** 其中机器字段来自或校验于 `expert-group.yaml`、`task-modes.yaml`、`workflow.yaml`、`gate-policy.yaml`、`action-policy.yaml` 和 `p0-skills.yaml`；CI 会检查它们是否漂移。
 
-- [`嵌入式架构`](03-角色与领域/03%20嵌入式架构领域指南.md)
-- [`Linux / BSP`](03-角色与领域/04%20Linux%20BSP领域指南.md)
-- [`MCU / RTOS`](03-角色与领域/05%20MCU%20RTOS领域指南.md)
-- [`驱动与组件`](03-角色与领域/06%20驱动与组件领域指南.md)
-- [`调试与可靠性`](03-角色与领域/07%20调试与可靠性领域指南.md)
-- [`验证`](03-角色与领域/08%20验证领域指南.md)
-- [`独立审查`](03-角色与领域/09%20独立审查领域指南.md)
+## 2. 做具体任务：再下钻工程手册
 
-### 工程交付、权限和样例
+|你现在要做什么|优先入口|
+|---|---|
+|不知道任务该怎么走|[`任务类型运行矩阵`](02-流程与运行/05%20任务类型运行矩阵.md)|
+|缺陷、长稳、现场问题|[`Debug 问题闭环`](02-流程与运行/02%20Debug问题闭环流程.md)|
+|功能、驱动、Bring-up、多仓|[`功能开发与多仓协同`](02-流程与运行/03%20功能开发Bring-up与多仓协同.md)|
+|验证、评审、OTA/发布|[`验证评审发布与异常恢复`](02-流程与运行/04%20验证评审发布与异常恢复.md)|
+|要看专家职责与跨团队分工|[`组织职责`](03-角色与领域/01%20组织模型职责与RACI.md) / [`跨团队 RACI`](03-角色与领域/02%20跨团队RACI.md)|
+|要看专业方法|[`嵌入式架构`](03-角色与领域/03%20嵌入式架构领域指南.md) / [`Linux BSP`](03-角色与领域/04%20Linux%20BSP领域指南.md) / [`MCU RTOS`](03-角色与领域/05%20MCU%20RTOS领域指南.md) / [`驱动组件`](03-角色与领域/06%20驱动与组件领域指南.md) / [`调试可靠性`](03-角色与领域/07%20调试与可靠性领域指南.md) / [`验证`](03-角色与领域/08%20验证领域指南.md) / [`独立审查`](03-角色与领域/09%20独立审查领域指南.md)|
+|要看工程交付物|[`工程交接与关键产物`](04-工程交付/02%20工程交接Runtime与关键产物.md) / [`完整产物样例`](04-工程交付/03%20完整任务产物样例.md)|
+|不熟悉术语|[`术语与缩写`](00-评审入口/02%20术语与缩写.md)|
 
-- 23 个 P0 Skill：[`04-工程交付/01 Skill能力地图.md`](04-工程交付/01%20Skill能力地图.md)
-- 工程任务包、Runtime、关键产物：[`04-工程交付/02 工程交接Runtime与关键产物.md`](04-工程交付/02%20工程交接Runtime与关键产物.md)
-- 同一 Run 的完整产物链：[`04-工程交付/03 完整任务产物样例.md`](04-工程交付/03%20完整任务产物样例.md)
-- A0-A7、敏感数据、风险例外：[`05-治理与评测/01 权限安全风险与例外.md`](05-治理与评测/01%20权限安全风险与例外.md)
-- 不熟悉术语：[`00-评审入口/02 术语与缩写.md`](00-评审入口/02%20术语与缩写.md)
+案例目录覆盖 UBIFS、Linux+MCU 多仓 OTA、MCU HardFault/RTOS 并发、新板 Bring-up、器件替代。案例用于解释工作方法，不计入 real Pilot evidence。
 
-## 2. 当前稳定基线
+## 3. 需要精确规则：回机器 Contract
 
-当前不再讨论“是否要建立专家团”这类基础问题。稳定项如下：
+发生冲突时，执行侧以机器资产为准：
 
-- 组织采用 **1 名主理人 + 7 个专业角色**；
-- 当前注册 **23 个 P0 Skill**；
-- 14 类 task type 路由到 7 种 workflow mode；
-- 任务先分类，再选择最短正确流程，不默认 full-chain；
-- 工程判断、代码实施、验证、独立审查分开；
-- 项目事实以工程证据为准，不以语言表达的确定程度代替验证；
-- Runtime/工具可以替换，Task/Gate/Evidence/Verification 规则不随工具变化；
-- 知识原文仍由原系统负责，索引和检索不改变原始事实的权威；
-- A6 设备写入、A7 发布必须保留人工批准；
-- 当前目标是完成 E2 工程闭环，并为 E3 知识复用闭环建立真实证据；
-- 在真实 Pilot 达到门槛并通过人工 Productionization Review 前，不声明 Production Ready。
+1. `expert-groups/embedded-system/expert-group.yaml`；
+2. `config/workflow.yaml`、`task-modes.yaml`、`gate-policy.yaml`、`action-policy.yaml`、`material-requirements.yaml`；
+3. `contracts/**/*.yaml`、`schemas/*.schema.json`；
+4. 专家定义、Skill 与运行脚本；
+5. 本目录人类可读说明。
 
-## 3. 当前阶段最小闭环
+总览和 Markdown 都不能用文字覆盖机器 Contract。
 
-每个真实任务至少要能回答七个问题：
+## 4. 当前稳定基线
 
-1. 这是哪个 `work_item_id / run_id`？
-2. 使用的是哪一份板卡、平台、仓库、源码和工具链上下文？
-3. Debug 类任务是否共用一份 Hypothesis Registry？
-4. 源码、构建产物、设备和测试证据能否串起来？
-5. 每条验收要求由什么证据证明？
-6. 任务结束后是否有值得沉淀的知识；如果没有，是否明确 `NO_KNOWLEDGE_DELTA`？
-7. 新知识能否在后续任务被实际引用，而不是只登记在清单里？
+- **1 名主理人 + 7 个专业角色**；
+- **23 个 P0 Skill**；
+- **14 类 task type → 7 种 workflow mode**；
+- **Gate K/M/0/T/E/V/R/C**；
+- **A0-A7**，A6 设备写入、A7 发布保留人工批准；
+- **7 层 Verification**，禁止跨层推导；
+- 工程实施、Verification、Independent Review 分开；
+- Source of Truth stays at source；
+- Provider-neutral，Runtime 可替换但工程语义不变；
+- 真实 Pilot 达到门槛并通过人工 Productionization Review 前，**不声明 Production Ready**。
 
-## 4. 文档与机器资产的权威顺序
+## 5. 当前真正需要推进的事项
 
-发生冲突时按以下顺序处理：
+当前缺口不是继续扩写架构，而是取得真实工程证据。统一由 [#26 Embedded Domain Closed Loop V1 rollout tracker](https://github.com/jiying2007/digital-worker/issues/26) 跟踪：
 
-1. `研发中心AI数字员工研发流程规划.md` 与正式 ADR；
-2. `expert-groups/embedded-system/expert-group.yaml`；
-3. `config/workflow.yaml`、`task-modes.yaml`、`action-policy.yaml`、`gate-policy.yaml`、`material-requirements.yaml`；
-4. `contracts/**/*.yaml` 与 `schemas/*.schema.json`；
-5. 专家定义、Skill 和运行脚本；
-6. 本目录的人类可读说明；
-7. brainstorming / archive / source-materials。
+`#6 Debug → #7 Feature → #8 Review/Release → #16 Knowledge reuse / 外部 Source → #18 Multi-runtime → Productionization Review → #12 strict server governance`
 
-因此，本目录可以解释“为什么这样设计”，但不能用文字覆盖机器 Contract。
-
-## 5. 文档结构
-
-```text
-00-评审入口     评审决策、证据缺口、术语
-01-架构设计     总体架构、系统边界、身份/证据/知识、质量属性
-02-流程与运行   生命周期、Debug、开发、验证恢复、任务运行矩阵
-03-角色与领域   专家团 RACI、跨团队 RACI、7 个专业领域指南
-04-工程交付     Skill、工程交接、完整产物样例
-05-治理与评测   权限安全、Pilot、成熟度、架构取舍
-06-案例         5 类典型嵌入式场景走查
-```
-
-## 6. 当前需要真实工程证明的事项
-
-当前主要缺口不是再写一轮架构，而是取得真实运行证据。统一由 [#26 Embedded Domain Closed Loop V1 rollout tracker](https://github.com/jiying2007/digital-worker/issues/26) 跟踪：
-
-- #6 Debug real Pilot；
-- #7 Feature real Pilot；
-- #8 Review/Release real Pilot；
-- #16 Knowledge reuse / 外部 Source；
-- #18 Multi-runtime 对照；
-- Productionization Review；
-- #12 strict server governance（生产化阶段）。
-
-这些事项未完成时，文档应明确写“未证明”，不得用设计完整度替代运行结果。
-
-## 7. 案例
-
-当前案例覆盖：
-
-- UBIFS 异常只读诊断；
-- Linux + MCU 多仓功能与 OTA；
-- MCU HardFault / RTOS 并发；
-- 新板 Bring-up；
-- 器件替代兼容性。
-
-这些案例用于解释工作方法，不计入 real Pilot evidence。
-
-## 8. 写作约定
-
-本目录面向研发人员，不写成提示词或模型说明书：
-
-- 先讲工程问题，再讲机制；
-- 用职责、输入、输出、判断条件和失败处理描述流程；
-- 能用中文工程术语说清楚的，不堆叠英文概念；
-- 产品名只在确有实现关系时出现，不把品牌写成架构；
-- 示例必须标明“示例”还是“真实证据”；
-- 历史变更由 Git 记录，不在活动文档中保留兼容段落和失效结论。
+后续文档调整应由真实任务暴露的缺口驱动，而不是先增加新的概念、角色或模板。
