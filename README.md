@@ -1,126 +1,89 @@
 # digital-worker
 
-研发中心 AI 数字员工主仓。这里维护研发工作的稳定规则：任务、专业职责、工程交接、证据、验证、审查、权限和成熟度；不把知识全文、通用能力资产或具体 Coding Runtime 再复制一套进来。
+研发中心 AI 数字员工主仓。这里维护稳定的责任、任务、工程交接、证据、验证、审查、权限和成熟度规则；不复制知识全文、通用 Agent 资产或具体 Coding Runtime。
 
 ## 当前阶段
 
-当前仓库处于 **iterative-development**。总体 Operating Model 和 exact-source-set 身份链已经具备运行基础；端侧方向正在从“嵌入式 1+7 目标组织”迁移到“端侧底座 Domain → Expert → Capability → Skill”的责任模型，同时保持现有嵌入式机器 Contract、Pilot 和可信治理不被破坏。
-
-phase-1 shadow model 已闭环；phase-2 的 14 类 Task / Golden Case 双轨语义评测、Pilot shadow receipt 和 phase-3 readiness 聚合器也已落到 main。当前仍保持 **phase-2 dual evaluation（双轨评测）**，原因不是仓库内缺少切换判据，而是 #6 / #7 / #8 尚未产生满足门槛的真实 completed Pilot evidence。`canonical_routing_switched=false` 继续作为硬约束。
-
-当前顺序：
+仓库处于 **iterative-development**。端侧目标责任模型已经冻结为：
 
 ```text
-Edge Foundation phase-1 shadow model（已完成）
-  → phase-2 静态/Golden 双轨评测（已完成）
-  → Debug / Feature / Review-Release real Pilot evidence（当前 blocker）
-  → phase-3 readiness = ELIGIBLE_FOR_REVIEW
-  → canonical routing switch（证据充分后、独立评审）
-  → legacy identity deprecation / proven removal
-  → 外部知识源与真实知识复用
-  → Multi-runtime 对照
-  → Productionization Review
-  → strict repository governance
+Domain（领域）
+  → Expert（专家）
+    → Capability（能力域）
+      → Skill（技能）
 ```
 
-当前只目标推进到 **E2 Engineering Closed Loop，并为 E3 Knowledge Closed Loop 建基础**。真实任务证据不足时，不声明 Production Ready，也不提前声明旧 1+7 已完成退役。
+端侧底座领域（Edge Foundation Domain）当前由 **结构专家、硬件专家、嵌入式系统专家**三个 Domain Expert 组成；端侧协调是 Role（角色），不是第四个技术专家。Orchestration（编排）、Execution（执行）和 Assurance（可信保障）与具体 Provider / Runtime 解耦。
+
+旧嵌入式 `1+7` 仍是当前 **legacy compatibility surface（旧版兼容表面）**，继续承载既有 Task / Gate / Skill owner / Golden Case / Pilot Contract 和 rollback；但它不再保存独立迁移 phase 状态，也不再作为目标组织结构扩张。8/8 身份桥接只保留在 `domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml`，晋级状态由真实 Pilot receipt + phase-3 readiness 计算。
+
+`canonical_routing_switched=false` 仍是硬约束。Phase-3 只允许切换 canonical routing authority 和引入 selector entrypoint；禁止在同一动作中改写 compatibility mapping、废弃/删除旧身份、扩大 A0-A7、改变 Verification / Independent Review 独立性或绑定具体 Provider。旧身份 deprecation / removal 分别属于后续独立阶段。
+
+## 真实 Pilot 进展
+
+当前三轨不是“尚未开始”，而是处在不同真实证据阶段：
+
+| Track | 当前状态 | 主要剩余项 |
+|---|---|---|
+| Debug | 已选定 SSC305 / SPI-NAND / UBI-UBIFS 并发写后只读问题 | 产品源码 exact SHA、原始 dmesg/UBI/UBIFS/MTD 日志、设备/Flash/Kernel/Test identity |
+| Feature | PCR02 OTA artifact identity 组件已完成真实 Engineering 与可复跑 Verification | Independent Review + Pilot structured terminal bundle |
+| Review / Release | PCR02 v1.1.21 artifact identity 与 HTTP/HTTPS distribution evidence 已完成 | 真实设备下载/安装/启动/回滚、独立 release review、人工 release gate |
+
+Synthetic evidence 只验证工具链，永远不计入 phase-3 promotion。只有三轨都形成 eligible real receipt，才能得到 `ELIGIBLE_FOR_REVIEW`；这仍只允许发起独立 canonical-switch 评审，不自动切路由，也不自动声明 Production Ready。
+
+当前目标仍是 **E2 Engineering Closed Loop，并为 E3 Knowledge Closed Loop 建基础**。
 
 ## 主要入口
 
 - [研发中心 AI 数字员工研发流程规划](研发中心AI数字员工研发流程规划.md)：研发中心总体流程和 Provider-neutral 原则；
 - [ADR-003：Provider-neutral AI R&D Target Architecture](docs/adr/ADR-003-provider-neutral-ai-rd-target-architecture.md)：总体 Provider-neutral 架构决策；
-- [ADR-004：端侧底座数字责任架构](docs/adr/ADR-004-edge-foundation-digital-responsibility-architecture.md)：端侧 Domain / Expert / Capability / Skill 目标责任模型与中英术语；
-- [端侧底座机器责任模型](domains/edge-foundation/domain.yaml)：三 Domain Expert、协调角色、编排/执行/可信保障边界及旧 1+7 兼容入口；
-- [端侧双轨路由评测](domains/edge-foundation/routing-shadow.yaml)：14 类旧 Task 到新责任语义的 shadow mapping；仅用于评测，不改变执行路由；
-- `scripts/evaluate_edge_foundation_pilot_shadow.py`：把单个真实 Pilot 映射为端侧责任语义 shadow receipt；
-- `scripts/evaluate_edge_foundation_phase3_readiness.py`：聚合真实 receipt，判断是否仅达到 `ELIGIBLE_FOR_REVIEW`；不会自动切换 canonical routing；
-- [AI R&D Target Operating Model](docs/strategy/ai-rd-target-operating-model.md)：长期 Operating Model；
-- [R0 Trust Closure](docs/strategy/r0-trust-closure.md)：真实 Pilot 的可信链基线；
-- [Embedded Domain Closed Loop V1](docs/strategy/embedded-domain-closed-loop-v1.md)：当前嵌入式落地策略与兼容执行面；
-- [嵌入式系统兼容机器资产](expert-groups/embedded-system/README.md)：v0.7.0 的配置、Contract、Schema、Skill 和 Pilot 工具；
-- [嵌入式系统核心参考](嵌入式系统专家团-核心参考/)：迁移期面向人的职责、流程、专业方法、治理和案例；
+- [ADR-004：端侧底座数字责任架构](docs/adr/ADR-004-edge-foundation-digital-responsibility-architecture.md)：端侧责任模型与中英术语；
+- [端侧底座机器责任模型](domains/edge-foundation/domain.yaml)：三 Domain Expert、协调角色、编排/执行/可信保障边界；
+- [旧 1+7 身份桥接](domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml)：静态 8/8 mapping + removal gates，不保存 mutable phase 状态；
+- [端侧 Shadow Routing](domains/edge-foundation/routing-shadow.yaml)：旧 Task 到目标责任语义的非 canonical 对照；
+- `scripts/evaluate_edge_foundation_pilot_shadow.py`：真实 Pilot → Edge Foundation shadow receipt；
+- `scripts/evaluate_edge_foundation_phase3_readiness.py`：聚合真实 receipt，判断 `ELIGIBLE_FOR_REVIEW`；
+- [AI R&D Target Operating Model](docs/strategy/ai-rd-target-operating-model.md)；
+- [Embedded Domain Closed Loop V1](docs/strategy/embedded-domain-closed-loop-v1.md)；
+- [嵌入式兼容执行面](expert-groups/embedded-system/README.md)；
+- [嵌入式核心参考](嵌入式系统专家团-核心参考/)；
 - [真实 Pilot Runbook](docs/runbooks/embedded-pilot.md) 与 [Quickstart](docs/runbooks/embedded-closed-loop-quickstart.md)；
-- [Contract Catalog](contracts/catalog.json)：本仓 authoritative Contract 账本。
+- [Contract Catalog](contracts/catalog.json)。
 
 ## 长期边界
 
-长期模型是 **稳定责任/控制面 + N 个可替换 Runtime Binding + Thin Session Bootstrap**。具体 Provider、Agent 数量和 Runtime 拓扑不属于组织责任架构：
+稳定模型是 **责任/控制面稳定 + Runtime 可替换 + Thin Session Bootstrap**：
 
-- `digital-worker`：Work/Run、Domain / Role / Expert / Capability / Skill 责任模型、Gate、Action Policy、工程交接、Identity/Evidence、Verification、Review、Pilot/Maturity；
-- `knowledge-hub`：Knowledge Registry、authority、ACL、freshness、context/evidence 查询和知识生命周期；
+- `digital-worker`：Domain / Role / Expert / Capability / Skill、Work/Run、Gate、Action Policy、Engineering handoff、Identity/Evidence、Verification、Review、Pilot/Maturity；
+- `knowledge-hub`：Knowledge Registry、authority、ACL、freshness、context/evidence 查询与知识生命周期；
 - `agent-dev-kit`：通用 Agent/Skill、Asset Profile、immutable release、资产校验与回滚；
-- `llm_agent`：外部实践 intake、采用/健康度观察、Runtime 对比；不进入日常 Runtime 热链；
-- Runtime Binding：Codex、Claude Code、IDE/Internal Runtime、WorkBuddy 或未来其他具体执行/编排实现；
+- `llm_agent`：外部实践 intake、采用/健康度观察、Runtime 对比；
+- Runtime Binding：Codex、Claude Code、IDE/Internal Runtime、WorkBuddy 或未来其他实现；
 - Thin Session Bootstrap：单次会话装配 project/mode/contract/skill/provider identity，不成为新的控制面。
 
-稳定原则：**责任（Responsibility）不等于运行时（Runtime），专家（Expert）不等于 Agent，能力域（Capability）不默认等于 Agent。**
+稳定原则：**责任（Responsibility）不等于运行时（Runtime）；专家（Expert）不等于 Agent；能力域（Capability）不默认等于 Agent；知识索引不替代权威 Source。**
 
-两条链保持分离：
-
-```text
-能力演进：External Practice → llm_agent → agent-dev-kit → immutable release → Runtime Binding
-任务执行：Engineer / Orchestrator → Contract → digital-worker / Knowledge Provider / ADK assets → Engineering → Verification → Review
-```
-
-## 端侧底座当前目标模型
-
-```text
-端侧底座领域（Edge Foundation Domain）
-│
-├─ 端侧协调角色（Edge Coordination Role，不是第四个技术专家）
-├─ 结构专家（Structure Expert）
-├─ 硬件专家（Hardware Expert）
-└─ 嵌入式系统专家（Embedded System Expert）
-     └─ 能力域（Capability）→ 原子技能（Skill）
-```
-
-现有嵌入式 `1+7` 暂时保留为 **legacy compatibility surface（旧版兼容表面）**：继续承载已运行的 Task / Gate / Skill owner / Golden Case / Pilot Contract，但不再作为端侧目标组织结构继续扩张。兼容映射在 `domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml`。
-
-当前 `routing-shadow.yaml` 只负责双轨评测：它必须保持 `canonical_routing: false`、不得修改旧执行 route、不得扩大 A0-A7 动作权限；所有未映射 Task、未知 Capability 或无证据跨域扩展均 fail-closed（保守阻断）。
-
-phase-3 readiness 直接复用 `expert-groups/embedded-system/pilot/pilot-plan.yaml` 的真实三轨门槛。Synthetic receipt 永远不计入；即使 readiness 达到 `ELIGIBLE_FOR_REVIEW`，也仍需独立 canonical-switch 评审，禁止自动切换。
-
-## 嵌入式当前最小闭环
-
-每个真实 Run 至少要维持：
+## 真实 Run 最小闭环
 
 ```text
 One Work Item / Run
 + Shared Material/System Context
-+ One Hypothesis Registry for Debug
 + Exact Source / Artifact Identity
 + Acceptance → Evidence
++ Engineering Delivery
++ Verification
++ Independent Review
 + Knowledge Harvest
-+ Knowledge Registry / Knowledge Hub refs
 ```
 
-同时要求：full 40-hex source identity、terminal evidence integrity、artifact SHA-256、exact cross-repo identity、Runtime/Session identity、独立 Verification / Review。
-
-## 当前状态
-
-|对象|状态|
-|---|---|
-|AI R&D Target Operating Model|`target-baseline / frozen-for-implementation`|
-|Edge Foundation Target Architecture|`ADR-004 / phase-2-dual-evaluation`|
-|Edge Foundation Domain Contract|`target-v1 / canonical-responsibility-model`|
-|Edge Foundation Shadow Routing|`14/14 mapped / non-canonical`|
-|Edge Foundation Pilot Shadow Receipt|`implemented / real-only phase3 eligibility`|
-|Edge Foundation Phase-3 Readiness|`implemented / current result BLOCKED-no-real-pilot`|
-|Embedded Domain Closed Loop V1|`compatibility-execution-baseline`|
-|嵌入式 1+7 机器资产|`0.7.0 / legacy-compatibility-surface / pilot-operations-ready`|
-|核心参考|`operational-reference / migration-aware`|
-|Provider / Knowledge 选型|`not-frozen`|
-|Embedded Knowledge Registry|`internal-seed`|
-|真实 Pilot|`ready-for-real-evidence / no real task bound yet`|
-|main server governance|`deferred-until-productionization`|
-|Production Ready|**禁止声明**|
+Debug 另外要求一份共享 Hypothesis Registry。Material Manifest 在 `planned/running/blocked` 可诚实保持 `BLOCKED`；进入 `complete` 前必须是 `READY` 或经明确批准的 `DEGRADED`。completed run 会重新校验终态材料和 frozen evidence bundle；禁止通过“文件存在”推导材料已充分。
 
 ## 仓库治理
 
-当前阶段 main server-side protection 明确延后到 Productionization；repository-local CI 仍必须通过。进入 Productionization 前必须配置严格 server governance，并运行：
+当前 main server-side protection 仍延后到 Productionization；repository-local CI 必须持续通过。进入 Productionization 前运行：
 
 ```bash
 python scripts/verify_repository_governance.py --strict
 ```
 
-当前不再为失效设计保留平行“最新版/最终版”入口。历史设计由 Git history 与 ADR 提供；活动目录只保留当前 target、兼容执行面和明确的迁移状态。
+活动目录只保留当前 target、仍有实际执行/rollback 责任的 compatibility surface，以及机器可验证的迁移契约。历史方案由 Git history 与 ADR 保存，不再维护平行“最新版/最终版”入口。
