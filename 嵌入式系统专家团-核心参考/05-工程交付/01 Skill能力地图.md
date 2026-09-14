@@ -1,5 +1,7 @@
 # Skill 能力地图
 
+> **本页是 P0 Skill ID、Owner、用途与输出的唯一完整人类来源。** 岗位说明书只引用 Skill Profile/数量，不复制第二份 Skill 清单；机器权威仍是 `expert-groups/embedded-system/config/p0-skills.yaml`。
+
 ## 1. Skill 的定位
 
 Skill 是可重复使用的工程方法，不是“再造一个专家角色”。当前 P0 共 **23 个 Skill**，机器登记以 `expert-groups/embedded-system/config/p0-skills.yaml` 为准。
