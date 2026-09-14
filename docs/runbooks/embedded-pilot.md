@@ -190,7 +190,31 @@ python scripts/embedded_pilot.py phase3-readiness \
 
 即使输出 `ELIGIBLE_FOR_REVIEW`，也只表示**允许发起 phase-3 canonical routing switch 的独立评审**；不会自动修改 `canonical_routing_switched=false`，不会自动废弃旧 1+7，也不会扩大 A0-A7 权限。
 
-## 11. 当前阶段退出条件
+## 11. 生成 phase-3 独立评审包
+
+只有 readiness 已经是 `ELIGIBLE_FOR_REVIEW` 时，才允许生成 **phase-3 canonical routing 独立评审包**：
+
+```bash
+python scripts/generate_edge_foundation_phase3_review_package.py \
+  edge-foundation-phase3-readiness.json \
+  --output edge-foundation-phase3-review-package.json
+```
+
+该评审包会绑定 readiness 文件的 SHA256 和真实 evidence run IDs，并冻结以下边界：
+
+- 当前 canonical authority 仍是旧嵌入式 `1+7`；
+- 建议切换到 `edge-foundation` 只是一项待评审变更，不会自动 apply；
+- Phase-3 只允许切 canonical routing authority；
+- 旧 `1+7` compatibility surface 在 Phase-3 必须继续保留；
+- legacy identity deprecation 属于独立的 Phase-4，不得与 Phase-3 同一动作完成；
+- A0-A7、Verification / Independent Review、Provider-neutral 和 Source-of-Truth 边界不得变化；
+- 评审包必须携带可执行 rollback plan。
+
+如果 readiness 仍是 `BLOCKED`、仍有 blocker、或 `canonical_routing_switched` 已经不是 false，生成器必须 exit `2` fail-closed，且不得生成可用于切换的评审包。
+
+即使评审包输出 `READY_FOR_INDEPENDENT_REVIEW`，也**不等于 phase-3 已批准**。真正切换必须由独立 PR/ADR 执行，并逐项验证 review package 的 `required_review_checks`。
+
+## 12. 当前阶段退出条件
 
 前三条 real Pilot 的目标不是自动 Production Ready，而是证明至少达到 E2 Engineering Closed Loop，并为 E3 Knowledge Closed Loop 建基础。
 
