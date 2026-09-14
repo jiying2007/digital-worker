@@ -7,6 +7,17 @@ implementation_status: pilot-operations-ready
 architecture_model: provider-neutral
 owner_domain: 研发中心/嵌入式系统软件
 
+semantic_lifecycle:
+  status: legacy-compatibility-surface
+  target_domain: ../../domains/edge-foundation/domain.yaml
+  target_adr: ../../docs/adr/ADR-004-edge-foundation-digital-responsibility-architecture.md
+  compatibility_mapping: ../../domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml
+  migration_phase: phase-1-shadow
+  legacy_machine_contract_preserved: true
+  canonical_target_responsibility_model: edge-foundation
+  no_new_legacy_expert_roles: true
+  direct_removal_forbidden: true
+
 mission:
   - embedded-software-technical-analysis
   - architecture-and-feasibility
@@ -29,6 +40,8 @@ upstream_contracts:
   - ../../docs/adr/ADR-001-workbuddy-codex-integration-boundary.md
   - ../../docs/adr/ADR-002-embedded-system-expert-team-architecture.md
   - ../../docs/adr/ADR-003-provider-neutral-ai-rd-target-architecture.md
+  - ../../docs/adr/ADR-004-edge-foundation-digital-responsibility-architecture.md
+  - ../../domains/edge-foundation/domain.yaml
 
 shared_contracts:
   task_brief: ../../schemas/task-brief.v1.schema.json
@@ -120,6 +133,7 @@ engineering_runtime:
 
 validation:
   script: ../../scripts/validate_embedded_assets.py
+  target_architecture_validator: ../../scripts/validate_edge_foundation_architecture.py
   pilot_operations_validator: ../../scripts/validate_pilot_operations.py
   pilot_evaluator: ../../scripts/evaluate_embedded_pilot.py
   pilot_cli: ../../scripts/embedded_pilot.py
@@ -156,9 +170,11 @@ cross_team:
     input: technical-review-request
     output: embedded-feasibility-review
   edge_foundation_team:
+    target_domain_contract: ../../domains/edge-foundation/domain.yaml
+    compatibility_mapping: ../../domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml
     ownership_contract: contracts/cross-team/edge-foundation-ownership.yaml
     ownership_model: [OWN, SHARED, CONSUME, PROVIDE, OUT_OF_SCOPE]
-    current_status: evidence-needed
+    current_status: shadow-migration
     require_ownership_map_before_duplicate_capability: true
 
 evaluation:
@@ -167,10 +183,11 @@ evaluation:
   safety_priority_metric: incorrect_pass_rate
 
 next_stage:
-  - architecture-review-adr-003
+  - validate-edge-foundation-shadow-model
+  - dual-evaluate-legacy-routing-and-target-semantics
   - knowledge-source-inventory-and-poc
   - multi-runtime-real-pilot
   - bind-and-execute-real-pilot-issues-6-7-8
   - edge-foundation-ownership-resolution
-  - p1-skills-from-pilot-evidence
+  - canonical-routing-switch-after-evidence
   - productionization-review-after-pilot-evidence
