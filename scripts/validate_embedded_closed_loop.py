@@ -18,6 +18,8 @@ REQUIREMENTS = EMB / "pilot" / "artifact-requirements.yaml"
 QUICKSTART = ROOT / "docs" / "runbooks" / "embedded-closed-loop-quickstart.md"
 SCAFFOLD = ROOT / "scripts" / "embedded_pilot_scaffold.py"
 KNOWLEDGE_CLI = ROOT / "scripts" / "embedded_knowledge.py"
+GOVERNANCE = ROOT / ".github" / "repository-governance-contract.json"
+GOVERNANCE_AUDIT = ROOT / "scripts" / "verify_repository_governance.py"
 
 
 def assert_true(condition: bool, message: str):
@@ -44,6 +46,18 @@ def main():
     trust = TRUST.read_text(encoding="utf-8")
     for token in ["R0 Trust Closure", "full 40-hex Git SHA", "completed/cancelled", "contract path/version", "canonical JSON SHA-256", "server-side enforcement"]:
         assert_true(token in trust, f"R0 trust gate missing marker: {token}")
+
+    governance = load_json(GOVERNANCE)
+    stage_policy = governance.get("stage_policy", {})
+    assert_true(governance.get("schema_version") == 2, "repository governance contract must use stage-aware schema v2")
+    assert_true(governance.get("current_stage") == "iterative-development", "current repository stage must remain iterative-development until explicitly promoted")
+    assert_true(stage_policy.get("server_side_protection_required") is False, "main protection must not block the current iterative-development stage")
+    assert_true(stage_policy.get("blocks_real_pilot_acceptance") is False, "repository protection must not block real Pilot acceptance in current stage")
+    assert_true(stage_policy.get("repository_local_ci_still_required") is True, "repo-local CI remains required while main protection is deferred")
+    assert_true(stage_policy.get("strict_enforcement_stage") == "productionization", "strict repository governance must remain a productionization gate")
+    governance_audit = GOVERNANCE_AUDIT.read_text(encoding="utf-8")
+    for token in ["--strict", "DEFERRED_CURRENT_STAGE", "BLOCKED_SERVER_GOVERNANCE"]:
+        assert_true(token in governance_audit, f"stage-aware governance audit missing marker: {token}")
 
     registry = load_yaml(REGISTRY)
     assert_true(registry["status"] == "internal-seed", "knowledge registry must declare internal-seed status")
@@ -101,7 +115,7 @@ def main():
     assert_true(re.search(r"\|\s*PASS\s*\|", matrix_fixture) is not None, "matrix fixture must demonstrate evidence-mapped PASS")
     assert_true("CI-PILOT-001" in harvest_fixture and "NO_KNOWLEDGE_DELTA" in harvest_fixture, "knowledge harvest fixture invalid")
 
-    for path in [SCAFFOLD, KNOWLEDGE_CLI, QUICKSTART]:
+    for path in [SCAFFOLD, KNOWLEDGE_CLI, QUICKSTART, GOVERNANCE, GOVERNANCE_AUDIT]:
         assert_true(path.is_file(), f"closed-loop operational helper missing: {path.relative_to(ROOT)}")
     scaffold_text = SCAFFOLD.read_text(encoding="utf-8")
     for token in ["missing_critical", '"BLOCKED"', "acceptance-evidence-matrix.md", "knowledge-harvest.md", "hypothesis-registry.json"]:
@@ -110,10 +124,10 @@ def main():
     for token in ["bootstrap-local-catalog", "Candidate list only", "BLOCKED_PROVIDER_IDENTITY_MISMATCH", "contract_canonical_sha256"]:
         assert_true(token in knowledge_text, f"knowledge helper missing R0 governance behavior: {token}")
     quickstart = QUICKSTART.read_text(encoding="utf-8")
-    for token in ["embedded_pilot_scaffold.py", "embedded_knowledge.py verify", "full 40-hex immutable base commit SHA", "NO_KNOWLEDGE_DELTA", "Do not run `bundle` after completion"]:
+    for token in ["embedded_pilot_scaffold.py", "embedded_knowledge.py verify", "full 40-hex immutable base commit SHA", "NO_KNOWLEDGE_DELTA", "Do not run `bundle` after completion", "Main branch protection is intentionally not a current-stage acceptance gate", "verify_repository_governance.py --strict"]:
         assert_true(token in quickstart, f"closed-loop quickstart missing R0 token: {token}")
 
-    print(f"embedded closed-loop V1 validation PASS: 7 must-haves, R0 trust gate, {len(entries)} registry entries, 3 closed-loop artifacts")
+    print(f"embedded closed-loop V1 validation PASS: 7 must-haves, iterative-stage R0 trust baseline, {len(entries)} registry entries, 3 closed-loop artifacts")
 
 
 if __name__ == "__main__":

@@ -2,6 +2,12 @@ name: Repository Governance Audit
 
 on:
   workflow_dispatch:
+    inputs:
+      strict:
+        description: 'Require productionization server-side governance now'
+        required: false
+        default: false
+        type: boolean
   schedule:
     - cron: '17 2 * * 1'
 
@@ -24,4 +30,9 @@ jobs:
       - name: Audit live GitHub server governance
         env:
           GITHUB_TOKEN: ${{ github.token }}
-        run: python scripts/verify_repository_governance.py
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "${{ inputs.strict }}" == "true" ]]; then
+            python scripts/verify_repository_governance.py --strict
+          else
+            python scripts/verify_repository_governance.py
+          fi

@@ -1,7 +1,14 @@
 {
-  "schema_version": 1,
-  "status": "required-before-real-pilot-acceptance",
+  "schema_version": 2,
+  "status": "deferred-until-productionization",
+  "current_stage": "iterative-development",
   "default_branch": "main",
+  "stage_policy": {
+    "server_side_protection_required": false,
+    "blocks_real_pilot_acceptance": false,
+    "repository_local_ci_still_required": true,
+    "strict_enforcement_stage": "productionization"
+  },
   "required": {
     "server_side_enforcement": true,
     "pull_request_required": true,
@@ -14,5 +21,5 @@
     "required_approvals": 0,
     "bounded_bypass_only": true
   },
-  "notes": "Repository-local tests cannot substitute for GitHub server-side enforcement. Approval count remains zero while the repository is single-owner; increase before multi-contributor productionization."
+  "notes": "During iterative development, main protection is intentionally not required and does not block real Pilot acceptance. Repository-local CI/trust gates remain active. Before productionization or equivalent multi-contributor protected operation, enable server-side enforcement and run the governance audit in strict mode."
 }
