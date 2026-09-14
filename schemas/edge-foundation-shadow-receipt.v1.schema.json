@@ -8,6 +8,7 @@
     "schema_version",
     "run_id",
     "source_type",
+    "pilot_track",
     "legacy_task_type",
     "legacy_workflow_mode",
     "routing_authority",
@@ -18,6 +19,7 @@
     "assurance",
     "cross_domain",
     "pilot_result_evaluated",
+    "eligibility_checks",
     "phase3_evidence_eligible",
     "eligibility_reasons"
   ],
@@ -25,6 +27,7 @@
     "schema_version": {"const": 1},
     "run_id": {"type": "string", "minLength": 1},
     "source_type": {"enum": ["real", "synthetic"]},
+    "pilot_track": {"enum": ["debug", "feature", "review_release"]},
     "legacy_task_type": {"type": "string", "minLength": 1},
     "legacy_workflow_mode": {"type": "string", "minLength": 1},
     "routing_authority": {"const": "legacy"},
@@ -58,6 +61,26 @@
     },
     "pilot_result_evaluated": {"type": "boolean"},
     "pilot_outcome": {"type": ["string", "null"], "enum": ["PASS", "BLOCKED", "REWORK", "INSUFFICIENT_EVIDENCE", null]},
+    "eligibility_checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source_real",
+        "run_completed",
+        "result_provided",
+        "outcome_pass",
+        "no_unauthorized_actions",
+        "audit_trace_complete"
+      ],
+      "properties": {
+        "source_real": {"type": "boolean"},
+        "run_completed": {"type": "boolean"},
+        "result_provided": {"type": "boolean"},
+        "outcome_pass": {"type": "boolean"},
+        "no_unauthorized_actions": {"type": "boolean"},
+        "audit_trace_complete": {"type": "boolean"}
+      }
+    },
     "phase3_evidence_eligible": {"type": "boolean"},
     "eligibility_reasons": {
       "type": "array",
