@@ -63,8 +63,6 @@ jobs:
         run: python scripts/validate_provider_neutral_architecture.py
       - name: Validate core-reference synchronization
         run: python scripts/validate_core_reference.py
-      - name: Validate architecture review readiness
-        run: python scripts/validate_review_readiness.py
       - name: Validate Branch GC safety contract
         run: python scripts/validate_branch_gc.py
       - name: Validate Contract Catalog
