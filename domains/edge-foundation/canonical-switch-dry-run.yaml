@@ -4,6 +4,8 @@ status: pre-evidence-contract
 review_package_schema: ../../schemas/edge-foundation-phase3-review-package.v1.schema.json
 switch_plan_schema: ../../schemas/edge-foundation-canonical-switch-plan.v1.schema.json
 switch_plan_generator: ../../scripts/generate_edge_foundation_canonical_switch_plan.py
+change_manifest_schema: ../../schemas/edge-foundation-canonical-switch-change-manifest.v1.schema.json
+candidate_diff_validator: ../../scripts/validate_edge_foundation_canonical_switch_candidate.py
 
 current_canonical_authority: legacy-embedded-1plus7
 proposed_canonical_authority: edge-foundation
@@ -14,6 +16,14 @@ allowed_change_classes:
   - canonical-routing-authority
   - migration-phase-status
   - routing-selector-entrypoint
+
+allowed_paths:
+  canonical-routing-authority:
+    - domains/edge-foundation/domain.yaml
+  migration-phase-status:
+    - domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml
+  routing-selector-entrypoint:
+    - domains/edge-foundation/canonical-routing.yaml
 
 forbidden_change_classes:
   - legacy-identity-removal
@@ -37,6 +47,8 @@ rules:
   - review-package-must-be-ready-for-independent-review
   - review-package-must-bind-eligible-real-pilot-readiness
   - dry-run-plan-never-authorizes-automatic-apply
+  - switch-candidate-diff-must-exactly-match-change-manifest
+  - switch-candidate-files-must-match-policy-allowlist
   - phase-3-must-not-deprecate-or-remove-legacy-identities
   - phase-4-and-phase-5-remain-separate-actions
   - verification-and-review-independence-must-remain
