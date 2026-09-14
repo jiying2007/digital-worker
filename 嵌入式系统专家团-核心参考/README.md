@@ -7,13 +7,16 @@
 
 本目录采用三层信息体系：**总览负责快速理解，Markdown 手册负责工程方法，机器 Contract 负责精确执行**。三层不能互相替代。
 
-## 1. 第一次看：先看总览
+## 1. 第一次看：先看两个总览视角
 
 优先阅读：
 
-**[`00-总览/00 架构与运行总览.md`](00-总览/00%20架构与运行总览.md)**
+1. **[`00-总览/00 架构与运行总览.md`](00-总览/00%20架构与运行总览.md)**  
+   重点回答“整套体系怎么工作”。
+2. **[`00-总览/01 数字岗位与能力模型.md`](00-总览/01%20数字岗位与能力模型.md)**  
+   重点回答“有哪些数字岗位、每个数字员工负责什么、要会什么、工作要求是什么、如何证明具备岗位资格”。
 
-这一个入口集中回答八类最常见问题：
+架构与运行总览集中回答八类问题：
 
 1. 整套体系是什么、当前成熟度在哪里；
 2. 1+7 各角色负责什么、输入输出是什么；
@@ -24,13 +27,16 @@
 7. 产品、项目、开发、硬件、测试/HIL、Verification、Review、Release 如何分工；
 8. 常用术语以及一次完整任务如何走通。
 
-总览是**视图，不是第二个 SSOT**。其中 task / mode / role / gate / action / verification 等机器字段由 CI 与 `expert-group.yaml`、`task-modes.yaml`、`workflow.yaml`、`gate-policy.yaml`、`action-policy.yaml`、`p0-skills.yaml` 做同步校验。
+数字岗位与能力模型把同一套 `1+7 Agent + 23 P0 Skill` 重新组织为 **6 个职能模块 + 8 个数字岗位**：Module 只用于组织理解，Position 是岗位人类视图，Agent 是数字员工，Skill 是岗位技能。它用于岗位职责、工作内容、工作要求、数字任职资格、能力成熟度和岗位替代评估，不新增机器路由层。
+
+两个总览都是**视图，不是第二个 SSOT**。task / mode / Agent / Skill / gate / action / verification 等机器字段由 CI 与 `expert-group.yaml`、`task-modes.yaml`、`workflow.yaml`、`gate-policy.yaml`、`action-policy.yaml`、`p0-skills.yaml` 和相关 Contract 做同步校验。
 
 ## 2. 做具体任务：再下钻工程手册
 
 |你现在要做什么|优先入口|
 |---|---|
 |不知道任务该怎么走|[`任务类型运行矩阵`](02-流程与运行/05%20任务类型运行矩阵.md)|
+|想知道某个数字员工相当于什么岗位、需要什么能力|[`数字岗位与能力模型`](00-总览/01%20数字岗位与能力模型.md)|
 |缺陷、长稳、现场问题|[`Debug 问题闭环`](02-流程与运行/02%20Debug问题闭环流程.md)|
 |功能、驱动、Bring-up、多仓|[`功能开发与多仓协同`](02-流程与运行/03%20功能开发Bring-up与多仓协同.md)|
 |验证、评审、OTA/发布|[`验证评审发布与异常恢复`](02-流程与运行/04%20验证评审发布与异常恢复.md)|
@@ -51,11 +57,12 @@
 4. 专家定义、Skill 与运行脚本；
 5. 本目录人类可读说明。
 
-总览和 Markdown 都不能用文字覆盖机器 Contract。
+总览、岗位说明和 Markdown 手册都不能用文字覆盖机器 Contract。
 
 ## 4. 当前稳定基线
 
-- **1 名主理人 + 7 个专业角色**；
+- **1 名主理人 + 7 个专业角色 / 8 个数字岗位**；
+- **6 个职能模块**仅作为人类组织与能力规划视图，不参与机器路由；
 - **23 个 P0 Skill**；
 - **14 类 task type → 7 种 workflow mode**；
 - **Gate K/M/0/T/E/V/R/C**；
@@ -63,8 +70,9 @@
 - **7 层 Verification**，禁止跨层推导；
 - 工程实施、Verification、Independent Review 分开；
 - Source of Truth stays at source；
-- Provider-neutral，Runtime 可替换但工程语义不变；
-- 真实 Pilot 达到门槛并通过人工 Productionization Review 前，**不声明 Production Ready**。
+- Provider-neutral，Runtime 可替换但岗位职责与工程语义不变；
+- Position Profile 不单独建立 `positions.yaml` / `positions/` 机器 SSOT；
+- 真实 Pilot 达到门槛并通过人工 Productionization Review 前，**不声明 Production Ready，也不声明岗位已完全替代人工**。
 
 ## 5. 当前真正需要推进的事项
 
@@ -72,4 +80,4 @@
 
 `#6 Debug → #7 Feature → #8 Review/Release → #16 Knowledge reuse / 外部 Source → #18 Multi-runtime → Productionization Review → #12 strict server governance`
 
-后续文档调整应由真实任务暴露的缺口驱动，而不是先增加新的概念、角色或模板。
+数字岗位模型用于判断“需要哪些职责和能力”，真实 Pilot 用于证明“这个数字员工是否真的胜任”。后续岗位和 Skill 调整必须由真实任务暴露的缺口驱动，而不是先增加新的概念、岗位、Skill 或模板。
