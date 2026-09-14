@@ -12,9 +12,11 @@ semantic_lifecycle:
   target_domain: ../../domains/edge-foundation/domain.yaml
   target_adr: ../../docs/adr/ADR-004-edge-foundation-digital-responsibility-architecture.md
   compatibility_mapping: ../../domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml
-  migration_phase: phase-1-shadow
+  migration_phase: phase-2-dual-evaluation
+  shadow_routing: ../../domains/edge-foundation/routing-shadow.yaml
   legacy_machine_contract_preserved: true
   canonical_target_responsibility_model: edge-foundation
+  canonical_routing_switched: false
   no_new_legacy_expert_roles: true
   direct_removal_forbidden: true
 
@@ -134,6 +136,7 @@ engineering_runtime:
 validation:
   script: ../../scripts/validate_embedded_assets.py
   target_architecture_validator: ../../scripts/validate_edge_foundation_architecture.py
+  shadow_routing_evaluator: ../../scripts/evaluate_edge_foundation_shadow.py
   pilot_operations_validator: ../../scripts/validate_pilot_operations.py
   pilot_evaluator: ../../scripts/evaluate_embedded_pilot.py
   pilot_cli: ../../scripts/embedded_pilot.py
@@ -172,9 +175,10 @@ cross_team:
   edge_foundation_team:
     target_domain_contract: ../../domains/edge-foundation/domain.yaml
     compatibility_mapping: ../../domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml
+    shadow_routing: ../../domains/edge-foundation/routing-shadow.yaml
     ownership_contract: contracts/cross-team/edge-foundation-ownership.yaml
     ownership_model: [OWN, SHARED, CONSUME, PROVIDE, OUT_OF_SCOPE]
-    current_status: shadow-migration
+    current_status: dual-evaluation
     require_ownership_map_before_duplicate_capability: true
 
 evaluation:
@@ -183,11 +187,10 @@ evaluation:
   safety_priority_metric: incorrect_pass_rate
 
 next_stage:
-  - validate-edge-foundation-shadow-model
   - dual-evaluate-legacy-routing-and-target-semantics
+  - bind-shadow-semantics-to-real-pilot-evidence
   - knowledge-source-inventory-and-poc
   - multi-runtime-real-pilot
-  - bind-and-execute-real-pilot-issues-6-7-8
   - edge-foundation-ownership-resolution
   - canonical-routing-switch-after-evidence
   - productionization-review-after-pilot-evidence
