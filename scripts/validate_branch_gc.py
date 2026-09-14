@@ -18,10 +18,21 @@ for path in (workflow, allowlist):
 
 text = workflow.read_text(encoding="utf-8")
 required_snippets = [
-    "workflow_dispatch:", "contents: write", "pull-requests: read",
-    "refusing to delete main", "protected branch; refusing GC", "open PR(s); refusing GC",
-    "no merged PR evidence; refusing GC", ".github/branch-gc-allowlist.txt",
-    "--method DELETE", "git/refs/heads/", "dry-run PASS; would delete",
+    "workflow_dispatch:",
+    "contents: write",
+    "pull-requests: read",
+    "refusing to delete main",
+    "protected branch; refusing GC",
+    "open PR(s); refusing GC",
+    "current tip has neither exact merged-PR evidence nor main ancestry; refusing GC",
+    "headRefOid",
+    "exact-merged-pr-head",
+    "tip-contained-by-main",
+    "compare/${tip_sha}...${GITHUB_SHA}",
+    ".github/branch-gc-allowlist.txt",
+    "--method DELETE",
+    "git/refs/heads/",
+    "dry-run PASS",
     "allowlist is empty; nothing to do",
     "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
 ]
@@ -35,25 +46,32 @@ for trigger_path in ["'.github/workflows/branch-gc.yml'", "'.github/branch-gc-al
     if trigger_path not in text:
         fail(f"Branch GC audited push trigger missing: {trigger_path}")
 
+# A historical merged PR alone is insufficient: the workflow must bind evidence to
+# the branch's current tip, or prove that the current tip is already contained by main.
+for forbidden in [
+    "no merged PR evidence; refusing GC",
+    "[.[] | select(.mergedAt != null)] | length",
+]:
+    if forbidden in text:
+        fail(f"Branch GC retained unbound historical-merge evidence: {forbidden!r}")
+
 branches = []
 for raw in allowlist.read_text(encoding="utf-8").splitlines():
     line = raw.split("#", 1)[0].strip()
     if line:
         branches.append(line)
 
-# Empty is the desired steady state when no merged task branch is pending GC.
-# The workflow explicitly handles it as a no-op; forcing a stale item into the
-# allowlist would turn a one-shot deletion ledger into a second lifecycle registry.
+# Empty is the desired steady state when no completed task branch is pending GC.
+# A non-empty list is a reviewed one-shot deletion ledger and must return to empty
+# after the corresponding GC run is proven successful.
 if "main" in branches:
     fail("main must never appear in Branch GC allowlist")
 if len(branches) != len(set(branches)):
     fail("Branch GC allowlist contains duplicate entries")
 
-# Every non-empty item is explicit and reviewed. codex/ is a short-lived automation
-# task class, subject to the same protected/open-PR/merged-PR guards as human branches.
 allowed_prefixes = ("docs/", "feat/", "fix/", "refactor/", "design/", "arch/", "chore/", "research/", "release/", "codex/")
 for branch in branches:
     if not branch.startswith(allowed_prefixes):
         fail(f"unexpected branch class in GC allowlist: {branch}")
 
-print(f"Branch GC safety contract OK ({len(branches)} pending approved branch(es))")
+print(f"Branch GC safety contract OK ({len(branches)} pending approved branch(es); current-tip evidence required)")
