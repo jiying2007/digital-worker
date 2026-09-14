@@ -10,6 +10,7 @@
 - [R0 Trust Closure](docs/strategy/r0-trust-closure.md)：当前 real Pilot 的 trust baseline；
 - [Embedded Domain Closed Loop V1](docs/strategy/embedded-domain-closed-loop-v1.md)：当前阶段嵌入式落地策略基线；
 - [嵌入式系统专家团机器资产](expert-groups/embedded-system/README.md)：`0.7.0 / tooling-ready / real-pilot-evidence-pending / provider-neutral`；
+- [嵌入式系统专家团-核心参考](嵌入式系统专家团-核心参考/)：`review-ready / synchronized-v0.7.0`；
 - [Contract Catalog](contracts/catalog.json)：本仓 authoritative Contract 的机器账本；
 - [Branch Lifecycle](docs/governance/branch-lifecycle.md)：任务分支与长期分支治理；
 - [真实 Pilot Runbook](docs/runbooks/embedded-pilot.md) 与 [Quickstart](docs/runbooks/embedded-closed-loop-quickstart.md)。
@@ -101,6 +102,7 @@ Full 40-hex source identity
 |Provider / Knowledge 选型|`not-frozen`|
 |嵌入式专家团|`0.7.0 / tooling-ready / real-pilot-evidence-pending`|
 |Embedded Knowledge Registry|`internal-seed / 50 entries`|
+|核心参考|`review-ready / synchronized-v0.7.0`|
 |ADK/Codex identity model|`immutable-release + exact-source-set / source-set-bound`|
 |Codex Session Bootstrap|`L0/L1/L2 active / provider-identity-aware`|
 |llm_agent Runtime Pilot contract|`v1.2 / exact-release-source-set-distribution identity`|
