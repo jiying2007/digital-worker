@@ -110,7 +110,7 @@ jobs:
       - name: Verify exact cross-repo checkouts and contract digests
         run: python scripts/verify_cross_repo_checkouts.py --root "$RUNNER_TEMP/dw-integrations" --fetch --output /tmp/cross-repo-verification.json
       - name: Upload cross-repo verification receipt
-        uses: actions/upload-artifact@ea165f8d65b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: cross-repo-verification
           path: /tmp/cross-repo-verification.json
