@@ -29,7 +29,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
 
-      - name: Delete approved merged task branches
+      - name: Delete approved completed task branches
         env:
           GH_TOKEN: ${{ github.token }}
           DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
@@ -51,26 +51,51 @@ jobs:
             if [[ "${branch}" == "main" ]]; then
               echo "refusing to delete main"; exit 1
             fi
+
             encoded="$(jq -rn --arg v "${branch}" '$v|@uri')"
-            if ! gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${encoded}" >/dev/null 2>&1; then
+            ref_json="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${encoded}" 2>/dev/null || true)"
+            if [[ -z "${ref_json}" ]]; then
               echo "${branch}: already absent"; continue
             fi
+            tip_sha="$(jq -r '.object.sha' <<<"${ref_json}")"
+            if [[ ! "${tip_sha}" =~ ^[0-9a-f]{40}$ ]]; then
+              echo "${branch}: invalid branch tip identity"; exit 1
+            fi
+
             protected="$(gh api "repos/${GITHUB_REPOSITORY}/branches/${encoded}" --jq '.protected')"
             if [[ "${protected}" != "false" ]]; then
               echo "${branch}: protected branch; refusing GC"; exit 1
             fi
-            open_count="$(gh pr list --repo "${GITHUB_REPOSITORY}" --head "${branch}" --state open --json number --jq 'length')"
+
+            open_count="$(gh pr list --repo "${GITHUB_REPOSITORY}" --head "${branch}" --state open --limit 100 --json number --jq 'length')"
             if [[ "${open_count}" != "0" ]]; then
               echo "${branch}: still has ${open_count} open PR(s); refusing GC"; exit 1
             fi
-            merged_count="$(gh pr list --repo "${GITHUB_REPOSITORY}" --head "${branch}" --state closed --json mergedAt --jq '[.[] | select(.mergedAt != null)] | length')"
-            if [[ "${merged_count}" == "0" ]]; then
-              echo "${branch}: no merged PR evidence; refusing GC"; exit 1
+
+            merged_tip_count="$(
+              gh pr list --repo "${GITHUB_REPOSITORY}" --head "${branch}" --state closed --limit 100 \
+                --json mergedAt,headRefOid \
+                --jq "[.[] | select(.mergedAt != null and .headRefOid == \"${tip_sha}\")] | length"
+            )"
+            compare_status="$(
+              gh api "repos/${GITHUB_REPOSITORY}/compare/${tip_sha}...${GITHUB_SHA}" --jq '.status' 2>/dev/null || echo unknown
+            )"
+
+            if [[ "${merged_tip_count}" != "0" ]]; then
+              evidence="exact-merged-pr-head"
+            elif [[ "${compare_status}" == "ahead" || "${compare_status}" == "identical" ]]; then
+              evidence="tip-contained-by-main"
+            else
+              echo "${branch}: current tip has neither exact merged-PR evidence nor main ancestry; refusing GC"
+              exit 1
             fi
+
             if [[ "${DRY_RUN}" == "true" ]]; then
-              echo "${branch}: dry-run PASS; would delete"; continue
+              echo "${branch}: dry-run PASS (${evidence}); would delete ${tip_sha}"
+              continue
             fi
-            echo "${branch}: deleting"
+
+            echo "${branch}: deleting ${tip_sha} (${evidence})"
             gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/${encoded}"
           done
 
