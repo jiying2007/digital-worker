@@ -7,6 +7,8 @@ import hashlib
 import json
 import re
 import shutil
+import subprocess
+import sys
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -24,6 +26,8 @@ RUN_SCHEMA = ROOT / "schemas" / "pilot-run.v1.schema.json"
 TASK_SCHEMA = ROOT / "schemas" / "task-brief.v1.schema.json"
 BUNDLE_SCHEMA = ROOT / "schemas" / "pilot-evidence-bundle.v1.schema.json"
 STATUS_SCHEMA = ROOT / "schemas" / "pilot-status.v1.schema.json"
+EDGE_SHADOW_EVALUATOR = ROOT / "scripts" / "evaluate_edge_foundation_pilot_shadow.py"
+EDGE_READINESS_EVALUATOR = ROOT / "scripts" / "evaluate_edge_foundation_phase3_readiness.py"
 TERMINAL_STATUSES = {"completed", "cancelled"}
 
 REF_SCHEMAS = {
@@ -423,6 +427,44 @@ def cmd_summary(args):
         raise SystemExit(2)
 
 
+def cmd_edge_shadow(args):
+    run_dir = args.run_dir.resolve()
+    run = validate_run_dir(run_dir)
+    output = (args.output or (run_dir / "edge-foundation-shadow-receipt.json")).resolve()
+    command = [
+        sys.executable,
+        str(EDGE_SHADOW_EVALUATOR),
+        str(run_path(run_dir)),
+        "--output",
+        str(output),
+    ]
+    pilot_result_ref = run.get("pilot_result_ref")
+    if pilot_result_ref:
+        command.extend(["--pilot-result", str(safe_ref(run_dir, pilot_result_ref))])
+    if args.cross_domain_trigger:
+        command.extend(["--cross-domain-trigger", args.cross_domain_trigger])
+    completed = subprocess.run(command, check=False)
+    if completed.returncode != 0:
+        raise SystemExit(completed.returncode)
+    print(output)
+
+
+def cmd_phase3_readiness(args):
+    command = [
+        sys.executable,
+        str(EDGE_READINESS_EVALUATOR),
+        "--receipt-dir",
+        str(args.runs_root.resolve()),
+    ]
+    if args.output:
+        command.extend(["--output", str(args.output.resolve())])
+    if args.require_ready:
+        command.append("--require-ready")
+    completed = subprocess.run(command, check=False)
+    if completed.returncode != 0:
+        raise SystemExit(completed.returncode)
+
+
 def build_parser():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -469,6 +511,18 @@ def build_parser():
     summary.add_argument("runs_root", type=Path)
     summary.add_argument("--output", type=Path)
     summary.set_defaults(func=cmd_summary)
+
+    edge_shadow = sub.add_parser("edge-shadow", help="Generate a non-canonical Edge Foundation shadow receipt for one run.")
+    edge_shadow.add_argument("run_dir", type=Path)
+    edge_shadow.add_argument("--cross-domain-trigger")
+    edge_shadow.add_argument("--output", type=Path)
+    edge_shadow.set_defaults(func=cmd_edge_shadow)
+
+    readiness = sub.add_parser("phase3-readiness", help="Aggregate Edge Foundation shadow receipts into phase-3 review readiness.")
+    readiness.add_argument("runs_root", type=Path, nargs="?", default=PILOT_DIR / "runs")
+    readiness.add_argument("--output", type=Path)
+    readiness.add_argument("--require-ready", action="store_true")
+    readiness.set_defaults(func=cmd_phase3_readiness)
     return parser
 
 
