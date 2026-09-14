@@ -1,7 +1,7 @@
 schema_version: 1
-overview_view_version: 1.0.0
+overview_view_version: 1.1.0
 status: operational-overview
-purpose: 仅保存总览层的人类可读标签、短说明和类比；机器规则仍以 expert-groups/embedded-system 下的 Contract/Policy/Schema 为准。
+purpose: 仅保存总览层的人类可读标签、短说明、数字岗位注解和类比；机器规则仍以 expert-groups/embedded-system 下的 Contract/Policy/Schema 为准。
 
 roles:
   embedded-system-team-lead:
@@ -60,6 +60,118 @@ roles:
     inputs: Technical Decision；Delivery Receipt；Verification Report；open risks
     outputs: Review Report；Release Readiness Decision
     boundaries: 不重复实施；不把进度压力改写成 Verification PASS
+
+modules:
+  M1:
+    name: 技术规划与工程编排
+    positioning: 定目标、定边界、定方案、组织闭环
+    work_content: Task 分类；系统架构；接口；资源；技术决策；工程交接；失败恢复；收口
+    work_requirements: 只拉必要岗位；目标与事实分开；重大决策可追溯；不能自签最终验证
+    positions: [embedded-system-team-lead, embedded-architecture-expert]
+  M2:
+    name: Linux / BSP 平台
+    positioning: 建立 Linux 与目标板的平台软件基础
+    work_content: Boot；Kernel；DT；Clock/Reset/Pinctrl；IRQ/DMA；Storage；Power；Bring-up
+    work_requirements: 绑定 exact BSP/board；硬事实有 TRM/代码/测量；Build PASS 不等于设备 PASS
+    positions: [linux-bsp-expert]
+  M3:
+    name: MCU / RTOS 底层固件
+    positioning: 建立 MCU 启动、实时系统、底层固件和 OTA 能力
+    work_content: Startup；Linker；ROM/RAM；ISR/DMA；RTOS；Watchdog；Low Power；Bootloader/OTA
+    work_requirements: 实时性需测量；并发需分析最坏情况；HardFault 不只凭 PC 猜根因；OTA 考虑掉电和 rollback
+    positions: [mcu-rtos-expert]
+  M4:
+    name: 驱动与组件平台
+    positioning: 把设备能力可靠接入系统并形成可复用接口
+    work_content: Driver；Protocol；Platform Adapter；Stable API；Error Recovery；器件替代；组件化
+    work_requirements: Init/Deinit/Error/Power 完整；API 编译通过不等于兼容；抽象由真实复用驱动
+    positions: [driver-component-expert]
+  M5:
+    name: 调试与可靠性
+    positioning: 把复杂异常推进到可证实 Root Cause
+    work_content: Timeline；Hypothesis；Crash/HardFault；Memory；Deadlock/Race；Performance；长稳；故障注入
+    work_requirements: Observed/Inferred/Confirmed 分开；假设可证伪；单变量实验优先；现象消失不等于根因确认
+    positions: [debug-reliability-expert]
+  M6:
+    name: 验证与技术治理
+    positioning: 独立证明做对了并判断是否足以交付
+    work_content: Verification Plan；Build/Device/HIL Evidence；Regression；Review；Release Readiness
+    work_requirements: 禁止跨验证层推导；实施与最终验证审查分离；P0/P1 风险不能被进度掩盖
+    positions: [verification-expert, embedded-review-governor]
+
+positions:
+  embedded-system-team-lead:
+    position_id: P01
+    name: 嵌入式技术负责人
+    module: M1
+    objective: 让任务有清楚目标、正确路由、完整材料、明确 Gate、可执行工程包和真实收口
+    work_content: 任务分类；Material Readiness；最小专业路由；Technical Decision；Engineering Package；失败恢复；Closure
+    work_requirements: 不默认 full_chain；缺材料正确 BLOCK；不越过领域 Owner；不自签最终 Verification；不绕过 A6/A7
+    qualification_focus: routing_accuracy；correct_block_rate；audit_trace_completeness；无越权和错误收口
+    real_world_analogy: Embedded Software Lead / Technical Lead
+  embedded-architecture-expert:
+    position_id: P02
+    name: 嵌入式系统架构师
+    module: M1
+    objective: 把产品和工程目标转成可实现的系统边界、接口、资源与质量属性约束
+    work_content: Linux/MCU 分工；接口和数据流；资源预算；NFR；生命周期；平台兼容；Verification 范围
+    work_requirements: target/estimate/measured 分开；接口覆盖异常和版本；不过度抽象；系统变化同步定义 Verification
+    qualification_focus: unsupported_claim_rate；evidence_coverage；human_correction_rate；系统级冲突识别
+    real_world_analogy: Embedded Systems Architect / Firmware Architect
+  linux-bsp-expert:
+    position_id: P03
+    name: Linux / BSP 平台工程师
+    module: M2
+    objective: 建立目标板从 Bootloader 到 Linux Kernel、DT、Storage 和 Power 的系统级平台能力
+    work_content: Boot；Kernel/DT；Clock/Reset/Pinctrl；IRQ/DMA；Storage/Filesystem；Suspend/Resume；BSP Porting；Bring-up
+    work_requirements: exact BSP/board；硬事实需 TRM/代码/测量；逐层确认可信阶段；Build PASS 不替代 device evidence
+    qualification_focus: evidence_coverage；unsupported_claim_rate；correct_block_rate；target-device 事实准确性
+    real_world_analogy: Linux BSP Engineer / Kernel / Platform Engineer
+  mcu-rtos-expert:
+    position_id: P04
+    name: MCU / RTOS 固件工程师
+    module: M3
+    objective: 建立 MCU 启动、内存、实时调度、低功耗和 Bootloader/OTA 的底层软件能力
+    work_content: Startup；Linker/ELF/MAP；ROM/RAM/Stack；ISR/DMA；RTOS；Watchdog；Low Power；OTA
+    work_requirements: 内存基于 MAP/ELF；实时性说明测量方法；并发分析 worst-case；PC 落点不等于根因；OTA 覆盖掉电 rollback
+    qualification_focus: evidence_coverage；unsupported_claim_rate；human_correction_rate；实时和并发事实准确性
+    real_world_analogy: MCU Firmware / RTOS Engineer
+  driver-component-expert:
+    position_id: P05
+    name: 驱动与组件工程师
+    module: M4
+    objective: 把硬件能力可靠接入系统并形成稳定、可维护、可测试、可移植的软件接口
+    work_content: Driver；Protocol；Platform Adapter；Stable API；Error/Timeout/Retry；Power；器件替代；组件化
+    work_requirements: Init/Deinit/Error Recovery 完整；API 编译不等于兼容；平台细节隔离；器件替代覆盖异常功耗生产流程
+    qualification_focus: evidence_coverage；unsupported_claim_rate；human_correction_rate；兼容和回归充分性
+    real_world_analogy: Device Driver / Embedded Middleware Engineer
+  debug-reliability-expert:
+    position_id: P06
+    name: 系统调试与可靠性工程师
+    module: M5
+    objective: 把复杂、偶发、长稳和性能异常推进到可证实 Root Cause，并定义最小修复和回归边界
+    work_content: Context；Timeline；Hypothesis Registry；Crash/HardFault；Memory；Deadlock/Race；Performance；长稳；故障注入
+    work_requirements: 先事实后根因；Hypothesis 可证伪；区分实验优先；不维护冲突 RCA；改后不复现不等于 Root Cause Confirmed
+    qualification_focus: root_cause_accuracy；evidence_coverage；human_correction_rate；能正确输出 evidence insufficient
+    real_world_analogy: System Debug / Reliability / Failure Analysis Engineer
+  verification-expert:
+    position_id: P07
+    name: Verification / HIL 工程师
+    module: M6
+    objective: 把 Acceptance 转成可执行验证计划，并独立判断 Evidence 实际证明到哪个 Verification Layer
+    work_content: Verification Plan；required layer；Regression Scope；Build/Device/HIL Evidence Check；Verification Report
+    work_requirements: 每层只接受对应层直接 Evidence；禁止跨层推导；测试执行与 Verification 判断分开；失败层不事后改 N/A
+    qualification_focus: incorrect_pass_rate；verification_completeness；evidence_coverage；audit_trace_completeness
+    real_world_analogy: System Verification / HIL Engineer
+  embedded-review-governor:
+    position_id: P08
+    name: 独立技术审查工程师
+    module: M6
+    objective: 独立判断 Evidence、Verification、Open Risk、Rollback 和 Provenance 是否足以允许交付或 Release
+    work_content: Code/Technical/Release Review；P0/P1 Finding；Risk Acceptance；Rollback/Provenance；Release Readiness
+    work_requirements: 不重复实施；不把 Review 变成重复测试；进度不改变 Verification 事实；A7 仍由明确人工 Gate 决定
+    qualification_focus: incorrect_pass_rate；audit_trace_completeness；correct_block_rate；错误放行拦截能力
+    real_world_analogy: Principal Reviewer / Release Quality Governor
 
 task_labels:
   feature_development: 新功能开发
