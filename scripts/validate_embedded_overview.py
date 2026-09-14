@@ -168,8 +168,12 @@ def main() -> None:
     require(len(expert_group["verification_layers"]) == 7, "expected 7 verification layers")
     for layer in expert_group["verification_layers"]:
         require(layer in text, f"overview verification layer missing: {layer}")
-    for marker in ["Verification Layer", "device_verified", "hil_verified", "release_verified", "禁止跨层推导"]:
+    for marker in ["Verification Layer", "device_verified", "hil_verified", "release_verified"]:
         require(contains_compact(position_text, marker), f"digital position verification boundary missing: {marker}")
+    require(
+        contains_compact(position_text, "不允许跨层推导") or contains_compact(position_text, "禁止跨层推导"),
+        "digital position model must explicitly forbid cross-layer verification inference",
+    )
     require("forbid_cross_layer_inference = true" in text, "overview must preserve no cross-layer inference rule")
 
     for metric in expert_group["evaluation"]["primary_metrics"]:
