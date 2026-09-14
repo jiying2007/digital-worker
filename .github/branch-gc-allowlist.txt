@@ -1,4 +1,12 @@
-# Approved merged task branches pending Branch GC.
+# Approved task branches pending one-shot Branch GC.
 # One branch per line. `main` is forbidden by the workflow and validator.
-# Empty is the healthy steady state when no reviewed merged branch is pending deletion.
-# Historical branches already deleted by prior GC runs must not remain here.
+# Eligibility is fail-closed: current tip must be an exact merged-PR head OR already contained by main.
+# After deletion this ledger returns to the healthy empty steady state in a follow-up cleanup.
+
+codex/core-reference-status-ratchet
+codex/defer-main-protection
+codex/embedded-core-reference-review-package
+codex/final-target-operating-model
+codex/r0-post-merge-cleanup
+codex/source-set-terminal-migration
+codex/branch-gc-convergence
