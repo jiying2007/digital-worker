@@ -1,0 +1,88 @@
+schema_version: 1
+id: embedded-1plus7-to-edge-foundation-v1
+status: active-compatibility
+source_model: ../../../expert-groups/embedded-system/expert-group.yaml
+target_model: ../domain.yaml
+migration_mode: shadow
+
+legacy_identities:
+  - legacy_id: embedded-system-team-lead
+    legacy_kind: team_lead
+    target_bindings:
+      - {kind: role, id: edge-coordination}
+      - {kind: capability-routing, id: embedded-system-expert}
+    removal_gate: canonical-routing-switched-and-pilot-proven
+
+  - legacy_id: embedded-architecture-expert
+    legacy_kind: expert
+    target_bindings:
+      - {kind: capability, id: embedded.architecture}
+    owner_expert: embedded-system-expert
+    removal_gate: capability-owner-migrated-and-pilot-proven
+
+  - legacy_id: linux-bsp-expert
+    legacy_kind: expert
+    target_bindings:
+      - {kind: capability, id: embedded.linux-bsp}
+    owner_expert: embedded-system-expert
+    removal_gate: capability-owner-migrated-and-pilot-proven
+
+  - legacy_id: mcu-rtos-expert
+    legacy_kind: expert
+    target_bindings:
+      - {kind: capability, id: embedded.mcu-rtos}
+    owner_expert: embedded-system-expert
+    removal_gate: capability-owner-migrated-and-pilot-proven
+
+  - legacy_id: driver-component-expert
+    legacy_kind: expert
+    target_bindings:
+      - {kind: capability, id: embedded.driver-component}
+    owner_expert: embedded-system-expert
+    removal_gate: capability-owner-migrated-and-pilot-proven
+
+  - legacy_id: debug-reliability-expert
+    legacy_kind: expert
+    target_bindings:
+      - {kind: capability, id: embedded.debug-reliability}
+    owner_expert: embedded-system-expert
+    removal_gate: capability-owner-migrated-and-pilot-proven
+
+  - legacy_id: verification-expert
+    legacy_kind: expert
+    target_bindings:
+      - {kind: assurance, id: verification}
+      - {kind: method-set, id: embedded-verification-methods}
+    removal_gate: assurance-contract-migrated-and-pilot-proven
+
+  - legacy_id: embedded-review-governor
+    legacy_kind: expert
+    target_bindings:
+      - {kind: assurance, id: review}
+      - {kind: criteria-set, id: embedded-review-criteria}
+    removal_gate: assurance-contract-migrated-and-pilot-proven
+
+migration_invariants:
+  - no-legacy-identity-orphan
+  - no-verification-self-approval-regression
+  - no-review-independence-regression
+  - no-provider-binding-regression
+  - no-skill-or-golden-case-big-bang-rewrite
+  - source-of-truth-stays-at-source
+
+phases:
+  - id: phase-1-shadow
+    description: 新责任模型与旧 1+7 同时校验，旧路由继续 canonical
+    status: active
+  - id: phase-2-dual-evaluation
+    description: 用 Golden Case 与真实 Pilot 同时评估旧路由和新责任语义
+    status: planned
+  - id: phase-3-canonical-switch
+    description: 切换到端侧 Domain / Expert / Capability canonical routing
+    status: blocked-on-evidence
+  - id: phase-4-deprecation
+    description: 标记旧 1+7 身份 deprecated，继续兼容历史记录
+    status: blocked-on-phase-3
+  - id: phase-5-removal
+    description: 删除不再被 Contract / Pilot / Artifact 引用的旧身份
+    status: blocked-on-real-pilot
