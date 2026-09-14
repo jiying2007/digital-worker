@@ -1,11 +1,11 @@
 # 嵌入式系统专家核心参考
 
-> 文档状态：**运行参考（Operational Reference）**  
+> 文档状态：**运行参考（operational reference）**  
 > 目标责任架构：`domains/edge-foundation/` + `ADR-004`  
 > 当前兼容执行面：`expert-groups/embedded-system/` v0.7.0  
 > 当前阶段：`iterative-development`
 
-本目录沉淀 Embedded System Expert（嵌入式系统专家）的专业方法、迁移期职责、流程、工程交付、治理和案例。**它不是第二套组织 SSOT**：端侧目标组织层级由 `ADR-004` 与 `domains/edge-foundation/domain.yaml` 定义；当前旧 `1+7` 的具体执行 Contract 仍由 `expert-groups/embedded-system/` 承担，直到真实 Pilot + 独立评审完成 canonical routing 切换。
+本 README 是本目录的**唯一第一入口**。本目录沉淀 Embedded System Expert（嵌入式系统专家）的专业方法、迁移期职责、流程、工程交付、治理和案例。**它不是第二套组织 SSOT**：端侧目标组织层级由 `ADR-004` 与 `domains/edge-foundation/domain.yaml` 定义；当前旧 `1+7` 的具体执行 Contract 仍由 `expert-groups/embedded-system/` 承担，直到真实 Pilot + 独立评审完成 canonical routing 切换。
 
 ## 0. 当前责任语义
 
