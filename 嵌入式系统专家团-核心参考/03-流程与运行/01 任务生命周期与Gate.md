@@ -1,5 +1,7 @@
 # 任务生命周期与 Gate
 
+> **本页是任务状态、主流程、K/M/0/T/E/V/R/C Gate、失败回流和 Workflow Mode 阶段含义的唯一详细人类来源。** 机器权威仍是 `expert-groups/embedded-system/config/workflow.yaml` 与 `gate-policy.yaml`。
+
 ## 1. 任务从哪里开始
 
 任务可以来自产品评审、项目开发、现场缺陷、测试问题、代码评审或发布准备。入口系统可以不同，但进入嵌入式研发域后必须形成稳定的 `work_item_id / run_id` 和 Task Brief。
@@ -46,7 +48,7 @@ Gate R  风险与放行审查
 Gate C  收口
 ```
 
-不是所有模式都包含 Execution/V/R，具体以 `config/workflow.yaml` 为准。
+不是所有模式都包含 Execution/V/R，具体以机器 Workflow 为准。
 
 ## 4. 各 Gate 的工程含义
 
@@ -93,31 +95,19 @@ Gate C  收口
 
 边界清楚的单专业分析。禁止因为回答不完整就悄悄扩成整链。
 
-## 6. 任务类型与默认路由
+Task Type 与 Mode 的完整映射只在 [任务类型运行矩阵](05%20任务类型运行矩阵.md) 维护。
 
-日常使用可按以下方式快速判断：
-
-- 新功能/组件：`feature_development / component_development` → short_chain；
-- 缺陷/现场/长稳：`defect_debugging / field_incident / stability_reliability` → diagnostic_chain；
-- 新板/移植：`platform_bringup / bsp_porting` → bringup_chain；
-- 架构/技术可行性：`architecture_design / technical_feasibility_review` → short/review_only；
-- 代码审查：`code_review` → review_only；
-- OTA/发布：`release_ota` → release_chain；
-- 性能问题：先判断是改进型还是诊断型，再选 short/diagnostic。
-
-详细映射以 `config/task-modes.yaml` 为准。
-
-## 7. Gate K/M/0 为什么分开
+## 6. Gate K/M/0 为什么分开
 
 三者看似都在“检查资料”，实际风险不同：
 
 - K 关注知识来源是否可信；
-- M 关注工程对象身份和材料是否齐；
+- M 关注工程对象 identity 和材料是否齐；
 - 0 关注需求本身是否说清楚。
 
 界面可以一次展示，但底层不能合并成一个模糊的“资料完整度”，否则很难知道失败后该补什么。
 
-## 8. 失败与恢复
+## 7. 失败与恢复
 
 ### 缺资料
 
@@ -125,30 +115,25 @@ Gate C  收口
 
 ### Verification FAIL
 
-返回**具体责任阶段**，例如：
-
-- build 失败 → Execution；
-- 验收定义错误 → Gate 0/T；
-- 设备 identity 不清 → Gate M/E；
-- 实现方向错误 → Analysis/T。
+返回**具体责任阶段**，例如：build 失败回 Execution；Acceptance 定义错误回 Gate 0/T；设备 identity 不清回 Gate M/E；实现方向错误回 Analysis/T。
 
 不因为一个失败默认整条链重跑。
 
 ### Review FAIL
 
-按 finding 指向责任阶段。P0/P1 正确性或安全问题原则上不得只用“已知风险”绕过。
+按 Finding 指向责任阶段。P0/P1 正确性或安全问题原则上不得只用“已知风险”绕过。
 
 ### Cross-stage reflow
 
 自动跨阶段回流最多一次，超过后需要人做明确决策，防止流程在多个阶段之间无休止循环。
 
-## 9. Completion 的含义
+## 8. Completion 的含义
 
 只有同时满足以下条件才进入 `completed`：
 
 - deliverable manifest 存在；
 - blocker 已解决或由明确责任人接受；
-- 验证状态没有夸大；
+- Verification 状态没有夸大；
 - required artifact 完整；
 - 真实 Run 的 evidence bundle 可复核。
 

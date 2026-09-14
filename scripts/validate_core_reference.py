@@ -99,59 +99,55 @@ def main() -> None:
         if path.suffix == ".md":
             require(len(path.read_text(encoding="utf-8").strip()) >= 500, f"core reference too thin: {rel}")
 
-    # There is exactly one human entry: the root README. Old competing entry directories must not return.
     index = read("README.md")
     require("operational reference" in index, "core reference must declare operational reference status")
     require("v0.7.0" in index, "core reference must declare v0.7.0")
     require("iterative-development" in index, "core reference must state current repository stage")
-    require("唯一第一入口" in index, "core README must declare itself the single entry")
-    for old_dir in ["00-总览", "00-评审入口", "01-架构设计", "02-流程与运行", "03-角色与领域", "04-工程交付", "05-治理与评测", "06-案例"]:
-        require(not (CORE / old_dir).exists(), f"superseded top-level directory must stay removed: {old_dir}")
+    require("唯一第一入口" in index, "core README must declare itself the single human entry")
 
     expected_top_dirs = {
-        "01-数字组织与岗位",
-        "02-架构设计",
-        "03-流程与运行",
-        "04-专业能力",
-        "05-工程交付",
-        "06-治理与评审",
-        "07-案例",
-        "附录",
+        "01-数字组织与岗位", "02-架构设计", "03-流程与运行", "04-专业能力",
+        "05-工程交付", "06-治理与评审", "07-案例", "附录",
     }
     actual_top_dirs = {p.name for p in CORE.iterdir() if p.is_dir()}
     require(actual_top_dirs == expected_top_dirs, f"core information architecture drift: {sorted(actual_top_dirs)}")
+    for old_dir in ["00-总览", "00-评审入口", "01-架构设计", "02-流程与运行", "03-角色与领域", "04-工程交付", "05-治理与评测", "06-案例"]:
+        require(not (CORE / old_dir).exists(), f"superseded top-level directory must stay removed: {old_dir}")
 
     expert_group = yaml.safe_load((EMB / "expert-group.yaml").read_text(encoding="utf-8"))
     require(expert_group["version"] == "0.7.0", "unexpected embedded expert-group version")
     require(expert_group["architecture_model"] == "provider-neutral", "embedded architecture must remain provider-neutral")
     require(len(expert_group["experts"]) == 7, "human reference assumes 1+7 expert organization")
 
+    human = yaml.safe_load((CORE / "01-数字组织与岗位/human-view.yaml").read_text(encoding="utf-8"))
+    require(human.get("schema_version") == 2 and human.get("view_version") == "2.0.0", "human-view must use converged v2 schema")
+    for stale_key in ["roles", "task_labels", "task_guidance", "artifacts", "cross_team_roles", "cross_team_raci", "terms", "walkthrough"]:
+        require(stale_key not in human, f"human-view must not mirror non-position content: {stale_key}")
+
     skill_registry = yaml.safe_load((EMB / "config/p0-skills.yaml").read_text(encoding="utf-8"))
     skills = [item["id"] for item in skill_registry["skills"]]
     require(len(skills) == 23, f"expected 23 P0 skills, got {len(skills)}")
     skill_doc = read("05-工程交付/01 Skill能力地图.md")
     missing_skills = [skill for skill in skills if skill not in skill_doc]
-    require(not missing_skills, f"skill map missing registered skills: {missing_skills}")
+    require(not missing_skills, f"Skill capability map missing registered skills: {missing_skills}")
 
     position_doc = read("01-数字组织与岗位/03 数字岗位与能力模型.md")
     for marker in [
-        "不是招聘 JD",
-        "6 个职能模块 + 8 个数字岗位",
-        "Position = 数字岗位",
-        "Agent    = 承担岗位的数字员工",
-        "Skill    = 数字员工掌握的岗位技能",
-        "数字任职资格模型",
-        "岗位替代",
-        "positions.yaml",
-        "不声明任何岗位已经达到完全替代人工",
+        "不是招聘 JD", "6 个职能模块 + 8 个数字岗位", "Position = 数字岗位",
+        "Agent    = 承担岗位的数字员工", "Skill    = 数字员工掌握的岗位技能",
+        "数字任职资格模型", "岗位替代", "positions.yaml", "不声明任何岗位已经达到完全替代人工",
     ]:
         require(marker in position_doc, f"digital position model missing marker: {marker}")
     for position_id in [f"P{i:02d}" for i in range(1, 9)]:
         require(position_id in position_doc, f"digital position model missing {position_id}")
     for module_id in [f"M{i}" for i in range(1, 7)]:
         require(module_id in position_doc, f"digital position model missing {module_id}")
-    missing_position_skills = [skill for skill in skills if skill not in position_doc]
-    require(not missing_position_skills, f"digital position model missing registered skills: {missing_position_skills}")
+    duplicated_position_skills = [skill for skill in skills if skill in position_doc]
+    require(not duplicated_position_skills, f"position model must not duplicate Skill IDs: {duplicated_position_skills}")
+
+    collaboration = read("01-数字组织与岗位/02 组织职责与RACI.md")
+    require("# 数字岗位协作与 RACI" in collaboration, "internal RACI must be collaboration-focused")
+    require("## 2. 主理人" not in collaboration and "## 3. 七个专业角色" not in collaboration, "internal RACI must not duplicate job descriptions")
 
     architecture = read("02-架构设计/01 总体架构设计.md")
     require("1+7" in architecture, "architecture must explain 1+7 organization")
@@ -180,6 +176,10 @@ def main() -> None:
     for level in [f"A{i}" for i in range(8)]:
         require(level in safety, f"safety doc missing {level}")
 
+    verification = read("03-流程与运行/04 验证评审发布与异常恢复.md")
+    for layer in expert_group["verification_layers"]:
+        require(layer in verification, f"verification flow guide missing layer: {layer}")
+
     pilot = read("06-治理与评审/03 Pilot指标成熟度与生产化.md")
     for marker in ["incorrect_pass_rate = 0", "unauthorized_actions = 0", "audit_trace_completeness = 1.0", "E2 Engineering Closed Loop", "E3 Knowledge Closed Loop"]:
         require(marker in pilot, f"pilot/maturity doc missing marker: {marker}")
@@ -189,6 +189,40 @@ def main() -> None:
         require(decision in review, f"review guide missing decision: {decision}")
     for evidence_id in [f"E{i:02d}" for i in range(1, 9)]:
         require(evidence_id in review, f"review guide missing evidence register entry: {evidence_id}")
+
+    # All professional SOPs use one stable outer structure while preserving domain-specific methods.
+    domain_guides = [
+        "04-专业能力/01 嵌入式架构领域指南.md",
+        "04-专业能力/02 Linux BSP领域指南.md",
+        "04-专业能力/03 MCU RTOS领域指南.md",
+        "04-专业能力/04 驱动与组件领域指南.md",
+        "04-专业能力/05 调试与可靠性领域指南.md",
+        "04-专业能力/06 验证领域指南.md",
+        "04-专业能力/07 独立审查领域指南.md",
+    ]
+    domain_headings = [
+        "## 1. 领域定位", "## 2. 典型任务", "## 3. 必要输入", "## 4. 分析方法",
+        "## 5. Evidence 要求", "## 6. 输出", "## 7. 协作与交接", "## 8. 常见错误", "## 9. BLOCK 条件",
+    ]
+    for rel in domain_guides:
+        text = read(rel)
+        for heading in domain_headings:
+            require(heading in text, f"domain SOP template drift: {rel} missing {heading}")
+        require("数字岗位与能力模型" in text, f"domain SOP must link back to Position definition: {rel}")
+
+    # Cases explain a concrete task, and link to common process rules instead of redefining them.
+    cases = [
+        "07-案例/01 UBIFS只读问题走查.md",
+        "07-案例/02 多仓功能与OTA发布走查.md",
+        "07-案例/03 MCU HardFault与RTOS并发走查.md",
+        "07-案例/04 新板Bring-up走查.md",
+        "07-案例/05 器件替代兼容性走查.md",
+    ]
+    for rel in cases:
+        text = read(rel)
+        for marker in ["任务类型运行矩阵", "任务生命周期与 Gate", "验证/评审/发布", "## 1. Task", "## 9. Knowledge Harvest"]:
+            require(marker in text, f"case walkthrough structure drift: {rel} missing {marker}")
+        require("不计入 real Pilot evidence" in text, f"case must remain explicitly non-Pilot evidence: {rel}")
 
     example = CORE / "05-工程交付/examples/ubifs-run"
     schema_map = {
@@ -207,7 +241,11 @@ def main() -> None:
     }
     docs = {name: validate_json(example / name, schema) for name, schema in schema_map.items()}
     run_id = "EXAMPLE-UBIFS-001"
-    for name in ["material-manifest.json", "task-charter.json", "routing-decision.json", "technical-analysis.json", "hypothesis-registry.json", "technical-decision.json", "engineering-task-package.json", "verification-report.json", "review-report.json", "deliverable-manifest.json"]:
+    for name in [
+        "material-manifest.json", "task-charter.json", "routing-decision.json", "technical-analysis.json",
+        "hypothesis-registry.json", "technical-decision.json", "engineering-task-package.json",
+        "verification-report.json", "review-report.json", "deliverable-manifest.json",
+    ]:
         require(docs[name].get("run_id") == run_id, f"example run_id drift: {name}")
     work_item = docs["task-brief.json"]["work_item_id"]
     require(docs["delivery-receipt.json"]["work_item_id"] == work_item, "example work_item identity drift")
@@ -222,17 +260,14 @@ def main() -> None:
     validate_links()
 
     forbidden_paths = [
-        EMB / "positions",
-        EMB / "config/positions.yaml",
-        EMB / "config/position-model.yaml",
-        ROOT / "docs/review",
+        EMB / "positions", EMB / "config/positions.yaml", EMB / "config/position-model.yaml", ROOT / "docs/review",
     ]
-    require(not any(path.exists() for path in forbidden_paths), "superseded or parallel Position/review sources must stay removed")
+    require(not any(path.exists() for path in forbidden_paths), "parallel Position/review sources must stay removed")
     stale_root_files = [path.name for path in CORE.glob("[0-9][0-9] *.md")]
     require(not stale_root_files, f"legacy flat core-reference files must be removed: {stale_root_files}")
 
     forbidden_wording = ["review-ready", "01~16 已统一", "v0.6.0"]
-    violations = []
+    violations: list[str] = []
     for path in CORE.rglob("*.md"):
         text = path.read_text(encoding="utf-8")
         for token in forbidden_wording:
@@ -240,7 +275,10 @@ def main() -> None:
                 violations.append(f"{path.relative_to(ROOT)} -> {token}")
     require(not violations, "stale core-reference wording found: " + "; ".join(violations))
 
-    print("core reference validation PASS: single-entry IA + digital positions + 14 task types + 7 modes + valid artifact chain + links + v0.7.0 baseline")
+    print(
+        "core reference validation PASS: single entry + content ownership convergence + standardized domain SOPs + "
+        "case walkthroughs + 14 task types + 8 gates + valid artifact chain + links + v0.7.0 baseline"
+    )
 
 
 if __name__ == "__main__":

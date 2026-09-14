@@ -1,72 +1,17 @@
-schema_version: 1
-overview_view_version: 1.1.0
-status: operational-overview
-purpose: 仅保存总览层的人类可读标签、短说明、数字岗位注解和类比；机器规则仍以 expert-groups/embedded-system 下的 Contract/Policy/Schema 为准。
-
-roles:
-  embedded-system-team-lead:
-    name: 主理人
-    positioning: 流程编排与收口中枢
-    responsibilities: 接单与分类；Gate K/M/0/T/E/C；最小专业路由；工程交接；失败恢复；收口
-    inputs: Task Brief；Material/System Context；各专业分析；Verification/Review 结果
-    outputs: Routing Decision；Technical Decision；Engineering Package；Deliverable Manifest
-    boundaries: 不替专业角色给结论；不自签最终 Verification；不绕过 A6/A7
-  embedded-architecture-expert:
-    name: 嵌入式架构
-    positioning: 系统边界、接口与质量属性 Owner
-    responsibilities: Linux/MCU 分工；接口与数据流；资源预算；实时性/NFR；故障隔离；平台影响
-    inputs: 产品目标；平台/板卡；现状架构；资源/性能/功耗约束
-    outputs: Architecture Impact；Interface Review；Technical Analysis
-    boundaries: 不代 BSP/MCU 实施；目标值不能写成实测事实
-  linux-bsp-expert:
-    name: Linux/BSP
-    positioning: Linux 平台与板级软件事实 Owner
-    responsibilities: Boot；Kernel/DT；Clock/Reset/Pinctrl；IRQ/DMA；Storage/Filesystem；板级资源
-    inputs: BSP/SDK；board revision；DTS/Kconfig；TRM/schematic；boot/dmesg
-    outputs: Boot/DT/IRQ-DMA/Storage Technical Analysis
-    boundaries: 不用软件日志替代硬件测量；缺 TRM/代码不高置信下硬事实
-  mcu-rtos-expert:
-    name: MCU/RTOS
-    positioning: MCU 裸机/RTOS/实时性与 MCU OTA Owner
-    responsibilities: Startup；Linker/ROM/RAM；ISR/DMA；RTOS；Watchdog；低功耗；Bootloader/OTA
-    inputs: MCU source；linker/map；datasheet；RTOS config；fault context
-    outputs: Startup/Linker/Concurrency Technical Analysis
-    boundaries: 不负责 Linux 平台事实；实时性需实测方法
-  driver-component-expert:
-    name: 驱动与组件
-    positioning: 设备驱动、稳定接口与跨平台复用 Owner
-    responsibilities: 协议；驱动集成；组件 API；错误恢复；平台适配；器件替代兼容
-    inputs: 设备资料；总线/平台资源；接口契约；BSP/MCU 事实
-    outputs: Driver Integration Review；Compatibility Matrix；Technical Analysis
-    boundaries: 不决定系统级职责分配；API 可编译不等于兼容
-  debug-reliability-expert:
-    name: 调试与可靠性
-    positioning: 事实时间线、假设与 Root Cause Owner
-    responsibilities: Log triage；Hypothesis Registry；Crash/HardFault；Memory；Performance；长稳/可靠性
-    inputs: exact identity；日志/core/dump；设备证据；领域事实
-    outputs: Diagnostic Evidence；Hypothesis Registry；RCA/Technical Analysis
-    boundaries: 不脱离领域 Owner 编造寄存器/平台事实；现象消失不等于根因确认
-  verification-expert:
-    name: 验证
-    positioning: 验证层级、证据覆盖与回归充分性 Owner
-    responsibilities: Verification Plan；required layer；Build/Device/HIL evidence；Regression Scope；Verification Report
-    inputs: Acceptance；Engineering Package/Receipt；test/HIL evidence
-    outputs: Verification Plan；Verification Evidence；Verification Report
-    boundaries: 不替实现者补代码；低层 PASS 不向高层推导
-  embedded-review-governor:
-    name: 独立审查
-    positioning: 风险、错误放行与 Release Readiness Owner
-    responsibilities: Code/Release Review；P0/P1 finding；风险接受检查；rollback/provenance；放行意见
-    inputs: Technical Decision；Delivery Receipt；Verification Report；open risks
-    outputs: Review Report；Release Readiness Decision
-    boundaries: 不重复实施；不把进度压力改写成 Verification PASS
+schema_version: 2
+view_version: 2.0.0
+status: operational-human-view
+purpose: >-
+  仅保存数字组织、模块和岗位的人类可读注解。Task、Workflow、Gate、Action、Verification、
+  Skill 注册、Artifact/Schema、RACI、术语和案例均不在本文件复制；对应机器规则和详细人类说明
+  继续以 expert-groups/embedded-system 与核心参考各职责文档为准。
 
 modules:
   M1:
     name: 技术规划与工程编排
     positioning: 定目标、定边界、定方案、组织闭环
     work_content: Task 分类；系统架构；接口；资源；技术决策；工程交接；失败恢复；收口
-    work_requirements: 只拉必要岗位；目标与事实分开；重大决策可追溯；不能自签最终验证
+    work_requirements: 只拉必要岗位；目标与事实分开；重大决策可追溯；实施、验证与审查保持职责分离
     positions: [embedded-system-team-lead, embedded-architecture-expert]
   M2:
     name: Linux / BSP 平台
@@ -78,7 +23,7 @@ modules:
     name: MCU / RTOS 底层固件
     positioning: 建立 MCU 启动、实时系统、底层固件和 OTA 能力
     work_content: Startup；Linker；ROM/RAM；ISR/DMA；RTOS；Watchdog；Low Power；Bootloader/OTA
-    work_requirements: 实时性需测量；并发需分析最坏情况；HardFault 不只凭 PC 猜根因；OTA 考虑掉电和 rollback
+    work_requirements: 实时性需测量；并发分析 worst-case；HardFault 不只凭 PC 猜根因；OTA 覆盖掉电和 rollback
     positions: [mcu-rtos-expert]
   M4:
     name: 驱动与组件平台
@@ -90,13 +35,13 @@ modules:
     name: 调试与可靠性
     positioning: 把复杂异常推进到可证实 Root Cause
     work_content: Timeline；Hypothesis；Crash/HardFault；Memory；Deadlock/Race；Performance；长稳；故障注入
-    work_requirements: Observed/Inferred/Confirmed 分开；假设可证伪；单变量实验优先；现象消失不等于根因确认
+    work_requirements: Observed/Inferred/Confirmed 分开；假设可证伪；区分实验优先；现象消失不等于根因确认
     positions: [debug-reliability-expert]
   M6:
     name: 验证与技术治理
     positioning: 独立证明做对了并判断是否足以交付
-    work_content: Verification Plan；Build/Device/HIL Evidence；Regression；Review；Release Readiness
-    work_requirements: 禁止跨验证层推导；实施与最终验证审查分离；P0/P1 风险不能被进度掩盖
+    work_content: Verification Plan；Evidence Check；Regression；Independent Review；Release Readiness
+    work_requirements: 禁止跨验证层推导；实施与最终验证/审查分离；P0/P1 风险不能被进度掩盖
     positions: [verification-expert, embedded-review-governor]
 
 positions:
@@ -104,162 +49,119 @@ positions:
     position_id: P01
     name: 嵌入式技术负责人
     module: M1
-    objective: 让任务有清楚目标、正确路由、完整材料、明确 Gate、可执行工程包和真实收口
-    work_content: 任务分类；Material Readiness；最小专业路由；Technical Decision；Engineering Package；失败恢复；Closure
+    positioning: 任务编排、技术协调、Gate 与闭环负责人
+    objective: 让任务有清楚目标、正确路由、完整材料、可执行工程包和真实收口
+    responsibilities: Task 分类；材料准备度；专业路由；技术决策；工程交接；失败恢复；Closure
+    work_content: 需求转工程任务；缺陷接单；新板任务分流；跨仓功能拆解；Release 前闭环检查；跨专业冲突收敛
     work_requirements: 不默认 full_chain；缺材料正确 BLOCK；不越过领域 Owner；不自签最终 Verification；不绕过 A6/A7
+    inputs: Task Brief；System/Material Context；领域分析；Verification/Review 结果
+    outputs: Routing Decision；Technical Decision；Engineering Package；Deliverable Manifest
+    collaboration: 上游接产品/项目/现场；按影响面调度 P02-P06；下游交 Engineering；由 P07/P08 独立验证与审查
+    boundaries: 不替专业岗位给领域事实；不把 Runtime success 当作验证；不接受无证据的 completed
     qualification_focus: routing_accuracy；correct_block_rate；audit_trace_completeness；无越权和错误收口
     real_world_analogy: Embedded Software Lead / Technical Lead
   embedded-architecture-expert:
     position_id: P02
     name: 嵌入式系统架构师
     module: M1
-    objective: 把产品和工程目标转成可实现的系统边界、接口、资源与质量属性约束
-    work_content: Linux/MCU 分工；接口和数据流；资源预算；NFR；生命周期；平台兼容；Verification 范围
+    positioning: 系统边界、接口、资源与质量属性设计岗位
+    objective: 把产品和工程目标转成可实现、可验证的系统方案与技术约束
+    responsibilities: Linux/MCU 分工；接口与数据流；资源预算；NFR；生命周期；平台影响；Verification 范围
+    work_content: 架构设计；技术可行性；跨仓/跨 MCU 接口；资源冲突；平台迁移；OTA/Power 生命周期
     work_requirements: target/estimate/measured 分开；接口覆盖异常和版本；不过度抽象；系统变化同步定义 Verification
+    inputs: 产品目标；平台/板卡；现状架构；资源/性能/功耗约束；领域事实
+    outputs: Architecture Impact；Interface Review；Resource/Timing Budget；Technical Analysis
+    collaboration: 与 P03-P05 核对平台事实；P06 提供系统假设；P07 定义验证覆盖；P01 收敛决策
+    boundaries: 不替 BSP/MCU/Driver 证明具体平台事实；不以架构假设覆盖 TRM、代码或测量
     qualification_focus: unsupported_claim_rate；evidence_coverage；human_correction_rate；系统级冲突识别
     real_world_analogy: Embedded Systems Architect / Firmware Architect
   linux-bsp-expert:
     position_id: P03
     name: Linux / BSP 平台工程师
     module: M2
+    positioning: Linux 平台和目标板系统事实 Owner
     objective: 建立目标板从 Bootloader 到 Linux Kernel、DT、Storage 和 Power 的系统级平台能力
-    work_content: Boot；Kernel/DT；Clock/Reset/Pinctrl；IRQ/DMA；Storage/Filesystem；Suspend/Resume；BSP Porting；Bring-up
+    responsibilities: Boot；Kernel/DT；Clock/Reset/Pinctrl；IRQ/DMA；Storage/Filesystem；Suspend/Resume；BSP Porting；Bring-up
+    work_content: 新板 Bring-up；启动失败；probe fail；DMA/cache；UBIFS；Flash 替代；Suspend/Resume；BSP 迁移
     work_requirements: exact BSP/board；硬事实需 TRM/代码/测量；逐层确认可信阶段；Build PASS 不替代 device evidence
+    inputs: BSP/SDK；board revision；DTS/Kconfig；TRM/schematic；boot/dmesg；image identity
+    outputs: Boot/DT/IRQ-DMA/Storage Analysis；Bring-up Evidence；平台风险与回归范围
+    collaboration: 与硬件确认电气事实；与 P05 交接设备/driver；复杂 RCA 进入 P06；P07 独立判断证据层级
+    boundaries: 不用软件日志替代硬件测量；不替 Driver/Component 决定公共 API；不跨设备/版本复用事实
     qualification_focus: evidence_coverage；unsupported_claim_rate；correct_block_rate；target-device 事实准确性
-    real_world_analogy: Linux BSP Engineer / Kernel / Platform Engineer
+    real_world_analogy: Linux BSP / Kernel / Platform Engineer
   mcu-rtos-expert:
     position_id: P04
     name: MCU / RTOS 固件工程师
     module: M3
+    positioning: MCU 裸机、RTOS、实时性与 MCU OTA 岗位
     objective: 建立 MCU 启动、内存、实时调度、低功耗和 Bootloader/OTA 的底层软件能力
-    work_content: Startup；Linker/ELF/MAP；ROM/RAM/Stack；ISR/DMA；RTOS；Watchdog；Low Power；OTA
+    responsibilities: Startup；Linker/ELF/MAP；ROM/RAM/Stack；ISR/DMA；RTOS；Watchdog；Low Power；OTA
+    work_content: MCU BSP；启动/链接问题；并发与时序；HardFault 上下文；资源优化；低功耗；Bootloader/OTA
     work_requirements: 内存基于 MAP/ELF；实时性说明测量方法；并发分析 worst-case；PC 落点不等于根因；OTA 覆盖掉电 rollback
+    inputs: MCU source；startup/linker/map/ELF；datasheet；RTOS config；fault context；firmware identity
+    outputs: Startup/Linker/Concurrency Analysis；Timing Evidence；OTA 约束；风险与回归范围
+    collaboration: 与 P02 处理系统分工；与 P05 处理设备接入；复杂偶发问题进入 P06；P07 独立验证
+    boundaries: 不负责 Linux 平台事实；不把估算时延写成实测；不自行执行生产 Fuse/签名/发布
     qualification_focus: evidence_coverage；unsupported_claim_rate；human_correction_rate；实时和并发事实准确性
     real_world_analogy: MCU Firmware / RTOS Engineer
   driver-component-expert:
     position_id: P05
     name: 驱动与组件工程师
     module: M4
+    positioning: 设备接入、稳定接口、器件替代和跨平台组件岗位
     objective: 把硬件能力可靠接入系统并形成稳定、可维护、可测试、可移植的软件接口
-    work_content: Driver；Protocol；Platform Adapter；Stable API；Error/Timeout/Retry；Power；器件替代；组件化
+    responsibilities: Driver；Protocol；Platform Adapter；Stable API；Error/Timeout/Retry；Power；器件替代；组件化
+    work_content: 设备 Bring-up；驱动集成；API 设计；平台 Adapter；器件替代；错误恢复；兼容与回归矩阵
     work_requirements: Init/Deinit/Error Recovery 完整；API 编译不等于兼容；平台细节隔离；器件替代覆盖异常功耗生产流程
+    inputs: device/board identity；datasheet/TRM/schematic；bus/protocol；平台资源；现有 driver/component/API
+    outputs: Driver Integration Review；Compatibility Matrix；Stable API/Adapter 建议；回归范围
+    collaboration: P03/P04 提供平台资源事实；P02 决定系统级接口；P06 主导复杂 RCA；P07 验证目标设备行为
+    boundaries: 不决定系统级职责分配；不把平台私有细节泄漏为公共 API；不以 smoke 代替兼容性结论
     qualification_focus: evidence_coverage；unsupported_claim_rate；human_correction_rate；兼容和回归充分性
     real_world_analogy: Device Driver / Embedded Middleware Engineer
   debug-reliability-expert:
     position_id: P06
     name: 系统调试与可靠性工程师
     module: M5
+    positioning: 复杂故障、长稳、性能和 Root Cause 闭环岗位
     objective: 把复杂、偶发、长稳和性能异常推进到可证实 Root Cause，并定义最小修复和回归边界
-    work_content: Context；Timeline；Hypothesis Registry；Crash/HardFault；Memory；Deadlock/Race；Performance；长稳；故障注入
-    work_requirements: 先事实后根因；Hypothesis 可证伪；区分实验优先；不维护冲突 RCA；改后不复现不等于 Root Cause Confirmed
+    responsibilities: Context；Timeline；Hypothesis Registry；Crash/HardFault；Memory；Deadlock/Race；Performance；长稳；故障注入
+    work_content: 现场问题；长稳异常；Crash；内存踩踏；并发；性能退化；资源增长；多领域 Root Cause 收敛
+    work_requirements: 先事实后根因；Hypothesis 可证伪；区分实验优先；不维护冲突 RCA；改后不复现不等于 Confirmed
+    inputs: exact source/fw/device；完整上下文日志/trace/core/dump；最近变更；复现条件；领域事实
+    outputs: Timeline；Hypothesis Registry；Root Cause/evidence insufficient；Engineering Recommendation；Regression Scope
+    collaboration: 向 P03-P05 获取领域事实；P01 组织决策；修复进入 Engineering；P07 独立复核；P08 审查残余风险
+    boundaries: 不替领域 Owner 编造寄存器/协议/硬件事实；不以语言置信度替代 evidence；不自行签最终 PASS
     qualification_focus: root_cause_accuracy；evidence_coverage；human_correction_rate；能正确输出 evidence insufficient
     real_world_analogy: System Debug / Reliability / Failure Analysis Engineer
   verification-expert:
     position_id: P07
     name: Verification / HIL 工程师
     module: M6
+    positioning: 验证层级、证据覆盖和回归充分性岗位
     objective: 把 Acceptance 转成可执行验证计划，并独立判断 Evidence 实际证明到哪个 Verification Layer
-    work_content: Verification Plan；required layer；Regression Scope；Build/Device/HIL Evidence Check；Verification Report
+    responsibilities: Verification Plan；required layer；Regression Scope；Build/Device/HIL Evidence Check；Verification Report
+    work_content: 验证计划；对象 identity；Host/Cross-build/SIL/Device/HIL 证据检查；回归范围；失败层定位
     work_requirements: 每层只接受对应层直接 Evidence；禁止跨层推导；测试执行与 Verification 判断分开；失败层不事后改 N/A
+    inputs: Acceptance；Engineering Package/Receipt；直接 Test/HIL Evidence；object identity
+    outputs: Verification Plan；Verification Evidence；Verification Report；unverified items / failures / risks
+    collaboration: 测试/HIL Owner 执行 case；实现岗位补证据或修复；P08 使用 Verification 事实做放行审查
+    boundaries: 不替实现者补代码后自签 PASS；不把测试平台绿灯直接等价为 Verification PASS；不承担 A7 放行批准
     qualification_focus: incorrect_pass_rate；verification_completeness；evidence_coverage；audit_trace_completeness
     real_world_analogy: System Verification / HIL Engineer
   embedded-review-governor:
     position_id: P08
     name: 独立技术审查工程师
     module: M6
+    positioning: 风险、错误放行和 Release Readiness 独立岗位
     objective: 独立判断 Evidence、Verification、Open Risk、Rollback 和 Provenance 是否足以允许交付或 Release
-    work_content: Code/Technical/Release Review；P0/P1 Finding；Risk Acceptance；Rollback/Provenance；Release Readiness
+    responsibilities: Code/Technical/Release Review；P0/P1 Finding；Risk Acceptance；Rollback/Provenance；Release Readiness
+    work_content: 重要代码审查；Release/OTA readiness；风险审查；错误 PASS 拦截；开放问题和 waiver 检查
     work_requirements: 不重复实施；不把 Review 变成重复测试；进度不改变 Verification 事实；A7 仍由明确人工 Gate 决定
+    inputs: Technical Decision；Delivery Receipt；Verification Report；open risks；rollback/provenance；required approvals
+    outputs: Review Report；Finding；Release Readiness Decision；residual risk / required rework
+    collaboration: 读取 P01-P07 产物但不替其工作；需要修改时回责任阶段；Release Owner 保留实际 A7 决策
+    boundaries: 不把 NOT_RUN/FAIL 改成 PASS；不在 review_only 里隐式修代码；不执行生产发布
     qualification_focus: incorrect_pass_rate；audit_trace_completeness；correct_block_rate；错误放行拦截能力
     real_world_analogy: Principal Reviewer / Release Quality Governor
-
-task_labels:
-  feature_development: 新功能开发
-  defect_debugging: 缺陷调试
-  architecture_design: 架构设计
-  technical_feasibility_review: 技术可行性评审
-  platform_bringup: 新板/新平台 Bring-up
-  bsp_porting: BSP 移植
-  driver_development: 驱动开发
-  component_development: 组件开发
-  mcu_firmware_development: MCU 固件开发
-  performance_optimization: 性能优化
-  stability_reliability: 稳定性/可靠性
-  code_review: 代码审查
-  release_ota: Release/OTA
-  field_incident: 现场问题
-
-task_guidance:
-  feature_development: {artifact: "架构影响 + Engineering Package + Acceptance→Evidence", verification: "cross-build + device；系统级变化按需 HIL"}
-  defect_debugging: {artifact: "共享 Hypothesis Registry + Root Cause/证据不足结论", verification: "原复现 + 受影响层回归"}
-  architecture_design: {artifact: "影响矩阵 + 接口/资源/NFR + 验证策略", verification: "Review evidence；实施另开链"}
-  technical_feasibility_review: {artifact: "Feasibility + 条件 + 风险 + 未决项", verification: "证据充分性；通常不要求无关 Device/HIL"}
-  platform_bringup: {artifact: "Board/System Context + 分层 Bring-up evidence", verification: "cross-build + target device；关键链按需 HIL"}
-  bsp_porting: {artifact: "Boot/DT/resource/driver 适配证据", verification: "cross-build + device"}
-  driver_development: {artifact: "Driver integration review + error recovery", verification: "cross-build + device"}
-  component_development: {artifact: "Stable API + platform adapter + regression scope", verification: "host/cross-build + target integration"}
-  mcu_firmware_development: {artifact: "Startup/RTOS/resource/OTA 影响 + Engineering Package", verification: "cross-build + target；实时/安全关键按需 HIL"}
-  performance_optimization: {artifact: "baseline → measurement → change → re-measurement", verification: "同环境指标复测 + regression"}
-  stability_reliability: {artifact: "时间线 + Hypothesis + 长稳/恢复证据", verification: "device/HIL/long-run 按目标定义"}
-  code_review: {artifact: "Review Report；不得隐式改代码", verification: "Review 本身；按需读取已有 evidence"}
-  release_ota: {artifact: "source/artifact manifest + rollback + open risk + approval", verification: "device + rollback/power-loss + release evidence"}
-  field_incident: {artifact: "现场 identity + 时间线 + Hypothesis + containment", verification: "复现/替代证据 + 修复后受影响层验证"}
-
-artifacts:
-  - {name: Task Brief, owner: 请求方/主理人, question: "要解决什么，什么算完成？", downstream: Gate K/M/0, schema: schemas/task-brief.v1.schema.json}
-  - {name: Knowledge Readiness, owner: 主理人, question: "需要的知识能追到可信 Source 吗？", downstream: Gate M, schema: expert-groups/embedded-system/schemas/knowledge-readiness.schema.json}
-  - {name: Material Manifest, owner: 主理人, question: "repo/base/board/device/material 是否齐全？", downstream: Gate 0, schema: expert-groups/embedded-system/schemas/material-manifest.schema.json}
-  - {name: Task Charter, owner: 主理人, question: "目标/范围/边界/验收是否清楚？", downstream: Triage, schema: expert-groups/embedded-system/schemas/task-charter.schema.json}
-  - {name: Routing Decision, owner: 主理人, question: "走哪个 mode、由谁主责？", downstream: Analysis, schema: expert-groups/embedded-system/schemas/routing-decision.schema.json}
-  - {name: Technical Analysis, owner: 领域专家, question: "事实、推断、风险和建议是什么？", downstream: Gate T, schema: expert-groups/embedded-system/schemas/technical-analysis.schema.json}
-  - {name: Hypothesis Registry, owner: 调试可靠性, question: "Debug 候选根因如何被证据支持/排除？", downstream: Gate T, schema: expert-groups/embedded-system/schemas/hypothesis-registry.schema.json}
-  - {name: Technical Decision, owner: 主理人, question: "方案、影响、风险、验证和回滚是否足够？", downstream: Gate E/Review, schema: expert-groups/embedded-system/schemas/technical-decision.schema.json}
-  - {name: Engineering Package, owner: 主理人, question: "工程师能否按包直接执行？", downstream: Execution, schema: expert-groups/embedded-system/schemas/engineering-task-package.schema.json}
-  - {name: Delivery Receipt, owner: 工程师 + Runtime, question: "实际改了什么、跑了什么、产出了什么？", downstream: Verification, schema: schemas/delivery-receipt.v1.schema.json}
-  - {name: Acceptance→Evidence, owner: Verification, question: "每条验收由什么证据证明？", downstream: Verification/Review, schema: expert-groups/embedded-system/templates/acceptance-evidence-matrix.md}
-  - {name: Verification Report, owner: Verification, question: "证据真正证明到了哪一层？", downstream: Review, schema: expert-groups/embedded-system/schemas/verification-report.schema.json}
-  - {name: Review Report, owner: 独立审查, question: "现有证据和残余风险是否足以放行？", downstream: Closure/Release, schema: expert-groups/embedded-system/schemas/review-report.schema.json}
-  - {name: Deliverable Manifest, owner: 主理人, question: "交付、blocker、风险、验证状态是否真实完整？", downstream: Closure, schema: expert-groups/embedded-system/schemas/deliverable-manifest.schema.json}
-  - {name: Knowledge Harvest, owner: 主理人/Knowledge Owner, question: "有没有可复用知识，需要提升还是 NO_KNOWLEDGE_DELTA？", downstream: Knowledge lifecycle, schema: expert-groups/embedded-system/templates/knowledge-harvest.md}
-
-cross_team_roles: [产品负责人, 项目负责人, 嵌入式主理人, 开发工程师, 硬件工程师, 测试/HIL Owner, Verification, Review Governor, Release Owner, Knowledge Owner, IT/Security]
-cross_team_raci:
-  - [目标/产品验收意图, A/R, C, C, I, I, C, C, I, I, I, I]
-  - [Task Brief / 技术入口澄清, C, C, A/R, C, C, C, I, I, I, I, I]
-  - [工程材料/版本身份确认, I, C, A, R, "R(硬件)", C, C, I, I, C, I]
-  - [技术分析/方案, C, C, A, R/C, C, C, C, I, I, I, I]
-  - [代码/配置实施, I, I, C, A/R, C, I, I, I, I, I, "C(权限)"]
-  - [设备写入 A6 批准, I, C, C, R, C, C, I, I, I, I, "A/C(组织政策)"]
-  - [测试/HIL 执行, I, C, C, C, C, A/R, C, I, I, I, I]
-  - [Verification Plan/Report, I, I, I, C, C, C, A/R, I, I, I, I]
-  - [Independent Review, I, I, I, C, C, C, C, A/R, I, I, I]
-  - [Risk Acceptance, C, "A(项目风险)", C, I, I, C, C, C, "A(发布相关)", I, "C(安全相关)"]
-  - [A7 Release 批准, I, C, I, I, I, C, C, C, A/R, I, C]
-  - [Knowledge Harvest, I, I, A/R, C, C, C, C, C, I, C, I]
-  - [知识正式提升/撤权, I, I, C, C, C, C, I, I, I, A/R, C]
-
-terms:
-  - [专家团, "技术部门", "一组稳定职责和工作规则，对外承接工程任务", "1+7 角色 + Task/Gate/Evidence", "不是一堆聊天机器人"]
-  - [主理人, "项目调度/流程中枢", "管任务、路由、Gate、恢复和收口", embedded-system-team-lead, "不是万能专家"]
-  - [Expert Role, "岗位职责", "稳定专业判断边界", "7 个专业角色", "不等于某个模型"]
-  - [Runtime, "工程工具/工作台", "在真实工作树和环境里执行分析、修改、构建", "Codex/Claude/IDE/Internal Runtime", "不是领域身份"]
-  - [Skill, "标准作业方法/工具按钮", "可复用工程方法", "23 个 P0 Skill", "不自动扩大权限"]
-  - [Gate, "质量门", "条件不到就不能进入下一阶段", "K/M/0/T/E/V/R/C", "不是会议本身"]
-  - [Receipt, "施工记录", "记录实际发生了什么", "Delivery/Runtime Receipt", "不是 Verification"]
-  - [Evidence, "原始凭据", "支撑 Claim 的可追溯事实", "SHA/log/hash/device/HIL", "不是语言置信度"]
-  - [Verification, "独立质检", "判断证据证明到了哪一层", "7 层 Verification", "不是最终放行"]
-  - [Review, "放行审查", "判断证据、风险和例外是否足以交付", Gate R, "不是再跑一次测试"]
-  - [Run, "一次受控工程实例", "可恢复、可审计、可 supersede", work_item_id/run_id, "不是聊天会话"]
-  - [SSOT, "唯一权威来源", "某类事实只认一个原始 Source", "Git/CI/HIL/NAS/正式文档", "Knowledge Provider 不自动成为权威"]
-
-walkthrough:
-  - [1, "接到“设备长稳后 UBIFS 变只读”", "Task Brief", "先冻结目标与验收，不猜根因"]
-  - [2, "确认 kernel/BSP/board/firmware/log/device identity", "Material Manifest", "身份冲突先 BLOCK"]
-  - [3, "路由 diagnostic_chain，拉 Debug + BSP", "Routing Decision", "不默认 full-chain"]
-  - [4, "建立时间线与 H1~Hn 假设", "Technical Analysis + Hypothesis Registry", "Observed/Inferred/Confirmed 分开"]
-  - [5, "用 ECC/MTD/BDMA 等区分实验收敛", "Evidence refs", "实验必须能排除候选"]
-  - [6, "形成最小修改、风险、回滚、验证计划", "Technical Decision", "方案未足够不进工程"]
-  - [7, "按 exact base 修改/构建/受控测试", "Engineering Package + Delivery Receipt", "实施成功不等于验证通过"]
-  - [8, "原复现、ECC 正/负 case、长稳/掉电按需", "Verification Report", "只给直接证据支持的层级 PASS"]
-  - [9, "独立审查吞错、数据完整性、回滚风险", "Review Report", "P0/P1 不可被普通 waiver 掩盖"]
-  - [10, "收口并沉淀可复用规则或 NO_KNOWLEDGE_DELTA", "Deliverable Manifest + Knowledge Harvest", "真实 Pilot 才计成熟度证据"]
