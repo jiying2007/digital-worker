@@ -153,32 +153,15 @@ knowledge:
     - measurement
     - collaboration-docs
 
-legacy_compatibility:
-  embedded_system_surface: ../../expert-groups/embedded-system/expert-group.yaml
-  mapping: compatibility/embedded-1plus7-mapping.yaml
-  mode: shadow
-  canonical_new_responsibility_model: true
-  legacy_machine_contract_preserved: true
-  direct_big_bang_removal_forbidden: true
-  migration_phase: phase-2-dual-evaluation
+migration:
+  legacy_surface: ../../expert-groups/embedded-system/expert-group.yaml
+  identity_mapping: compatibility/embedded-1plus7-mapping.yaml
   shadow_routing: routing-shadow.yaml
-  shadow_evaluator: ../../scripts/evaluate_edge_foundation_shadow.py
-  pilot_shadow_evaluator: ../../scripts/evaluate_edge_foundation_pilot_shadow.py
-  pilot_shadow_receipt_schema: ../../schemas/edge-foundation-shadow-receipt.v1.schema.json
-  phase3_readiness_evaluator: ../../scripts/evaluate_edge_foundation_phase3_readiness.py
-  phase3_readiness_schema: ../../schemas/edge-foundation-phase3-readiness.v1.schema.json
-  phase3_review_package_generator: ../../scripts/generate_edge_foundation_phase3_review_package.py
-  phase3_review_package_schema: ../../schemas/edge-foundation-phase3-review-package.v1.schema.json
-  canonical_switch_dry_run_policy: canonical-switch-dry-run.yaml
-  canonical_switch_plan_generator: ../../scripts/generate_edge_foundation_canonical_switch_plan.py
-  canonical_switch_plan_schema: ../../schemas/edge-foundation-canonical-switch-plan.v1.schema.json
-  phase3_promotion_gate_source: ../../expert-groups/embedded-system/pilot/pilot-plan.yaml
-  phase3_evidence_requires_real_pilot: true
-  synthetic_pilot_must_not_count_for_phase3: true
-  phase3_readiness_requires_separate_review: true
-  phase3_review_package_auto_apply_forbidden: true
-  canonical_switch_dry_run_must_not_apply: true
-  phase4_deprecation_must_be_separate_from_phase3: true
-  phase5_removal_must_be_separate_from_phase3: true
-  automatic_canonical_switch_forbidden: true
+  readiness_evaluator: ../../scripts/evaluate_edge_foundation_phase3_readiness.py
+  switch_policy: canonical-switch-dry-run.yaml
   canonical_routing_switched: false
+  automatic_canonical_switch_forbidden: true
+  phase4_deprecation_separate: true
+  phase5_removal_separate: true
+  real_pilot_evidence_required: true
+  synthetic_pilot_counts_for_promotion: false
