@@ -83,10 +83,11 @@ def main() -> None:
     require(digest(codex.get("session_bootstrap_contract_canonical_sha256")), "Codex Session Bootstrap digest missing")
     require(codex.get("execution_receipt_schema") == "schemas/runtime-execution-receipt.schema.json", "Codex receipt schema missing")
     require("SOURCE_SET_BOUND" in codex.get("validation", ""), "Codex source-set binding must be promoted")
+    require("runtime_profile_examples" not in codex, "digital-worker lock must not mirror mutable Codex runtime profile examples")
 
     rendered_lock = json.dumps(lock, ensure_ascii=False, sort_keys=True)
-    for retired in ('"asset_bundle_hash"', "BLOCKED_ASSET_BUNDLE_IDENTITY", "5.0.0-rc.2", "provider-produced bundle"):
-        require(retired not in rendered_lock, f"retired bundle-era active lock token returned: {retired}")
+    for retired in ('"asset_bundle_hash"', "BLOCKED_ASSET_BUNDLE_IDENTITY", "5.0.0-rc.2", "provider-produced bundle", "token-lean"):
+        require(retired not in rendered_lock, f"retired active lock token returned: {retired}")
 
     rules = lock["rules"]
     for key in [
@@ -201,12 +202,19 @@ def main() -> None:
         "embedded_knowledge.py context",
         "embedded_knowledge.py evidence-pack",
         "identity-envelope.yaml",
+        "default (runtime-owned)",
     ]:
         require(token in quickstart, f"quickstart missing integrated source-set workflow marker: {token}")
-    for retired in ["provider-produced bundle hash", "BLOCKED_ASSET_BUNDLE_IDENTITY", "ADK Asset Profile / bundle identity"]:
-        require(retired not in quickstart, f"quickstart retained retired bundle-era marker: {retired}")
+    for retired in [
+        "provider-produced bundle hash",
+        "BLOCKED_ASSET_BUNDLE_IDENTITY",
+        "ADK Asset Profile / bundle identity",
+        "token-lean",
+        "--runtime-profile",
+    ]:
+        require(retired not in quickstart, f"quickstart retained retired runtime marker: {retired}")
 
-    print("cross-repo integration validation PASS: final source-set machine contracts, exact pins/digests, thin Session Bootstrap and fail-closed domain boundaries")
+    print("cross-repo integration validation PASS: final source-set machine contracts, exact pins/digests, thin Session Bootstrap, retired profile ratchets and fail-closed domain boundaries")
 
 
 if __name__ == "__main__":
