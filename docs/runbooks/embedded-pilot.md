@@ -1,18 +1,18 @@
-# 嵌入式系统专家团真实 Pilot 执行说明
+# 嵌入式真实 Pilot 执行说明
 
-Pilot 的目标是验证 Expert Team Operating Model 与 Embedded Domain Closed Loop V1，而不是证明 AI 永远正确。当前基础设施状态为 `pilot-operations-ready`，真实三轨证据仍待执行。
+Pilot 用于验证 Embedded Domain Closed Loop V1 和端侧底座目标责任模型是否能在真实工程中闭环，不用于证明 AI 永远正确，也不直接授予 Production Ready。
 
-当前阶段策略基线：`docs/strategy/embedded-domain-closed-loop-v1.md`。
+当前机器基础设施为 `pilot-operations-ready`。三轨真实证据进度不同：Debug 已选题但等待产品源码/日志 identity；Feature 已完成真实 Engineering 与可复跑 Verification，等待 Independent Review 与终态 bundle；Review/Release 已完成 PCR02 OTA artifact / distribution evidence，等待设备侧 OTA 与独立 release review。
 
-快速执行入口：`docs/runbooks/embedded-closed-loop-quickstart.md`。
+策略基线：`docs/strategy/embedded-domain-closed-loop-v1.md`。快速入口：`docs/runbooks/embedded-closed-loop-quickstart.md`。
 
 ## 1. 绑定真实任务
 
-先形成 `task-brief v1`。真实 Pilot 必须有 human owner、repo root、**exact Git base SHA**、验收和所需验证层级。只提供 `main/dev` 等漂移分支名时不得开始 real run。
+先形成 `task-brief v1`。真实 Pilot 必须有 human owner、repo root、**full 40-hex exact Git base SHA**、验收条件和 required verification。只提供 `main/dev` 等漂移分支名不得开始 real run。
 
-同一 run 的 Expert 默认共享同一个 Work Item / Run Identity 和 Material/System Context，不各自重新假设版本事实。
+同一 Run 的参与角色共享同一个 Work Item / Run Identity 和 Material/System Context，不各自重建版本事实。
 
-## 2. 初始化
+## 2. 初始化与材料清单
 
 ```bash
 python scripts/embedded_pilot.py init \
@@ -24,71 +24,67 @@ python scripts/embedded_pilot.py init \
   --human-owner <owner> \
   --task-brief <task-brief.json> \
   --repo-root <repo-root> \
-  --base-commit <exact-sha>
-```
+  --base-commit <full-40-hex-sha>
 
-然后生成 V1 working artifacts：
-
-```bash
 python scripts/embedded_pilot_scaffold.py \
   expert-groups/embedded-system/pilot/runs/<run-id>
 ```
 
-Scaffold 不会替工程师猜测上下文：未知设备、测试环境、复现条件等会保持 `missing`，Material Manifest 可因此保持 `BLOCKED`，直到可信 Source 补齐。
+Scaffold 不猜测未知事实。源码、日志、设备、测试环境等尚未确认时，Material Manifest（材料清单）应保持 `missing / BLOCKED`。
 
-然后用 `status ... running` 开始记录。
+Material Manifest 的终态规则只有一套，由 `scripts/validate_material_manifest.py` 与 `scripts/embedded_pilot.py` 共同执行：
+
+- `planned / running / blocked` 阶段允许 `readiness=BLOCKED`，用于诚实表达材料仍不完整；
+- `complete` 前必须重新计算材料门槛；`BLOCKED` 不得进入 completed evidence bundle；
+- `DEGRADED` 只有存在明确 `degradation_approved_by` 才可进入终态；
+- completed run 后续 `validate` 会再次重算同一门槛并核对 frozen bundle；
+- Debug 采用 **reproduction OR authoritative log**：稳定复现和可追溯原始日志至少一个可用；
+- Material readiness 只回答“材料是否足以收口”，不替代 Verification（验证）或 Independent Review（独立审查）。
+
+然后使用 `status ... running` 开始记录。
 
 ## 3. Knowledge 候选解析
 
 当前 Registry：`expert-groups/embedded-system/knowledge/registry.yaml`。
 
-先校验 Registry：
-
 ```bash
 python scripts/embedded_knowledge.py verify
-```
-
-再按任务查询候选：
-
-```bash
 python scripts/embedded_knowledge.py query --text "<task terms>" --limit 10
 python scripts/embedded_knowledge.py query --domain <domain> --limit 10
 ```
 
-查询结果只是候选 Knowledge，不自动升级为任务事实；实际使用时仍需检查 Source authority / version / ACL / provenance。
+查询结果只是候选 Knowledge。实际使用前仍需核对 Source authority / version / ACL / provenance；Knowledge Index 不替代权威 Source。
 
-## 4. 执行
+## 4. Engineering 执行
 
-Expert Team 默认 A0-A2。代码修改/构建经：
+默认链路：
 
 ```text
-Expert Team
- -> engineering-task-package
- -> Engineer + Engineering Agent Runtime
- -> delivery-receipt
- -> Verification
- -> Independent Review
+Technical Decision
+  → engineering-task-package
+  → Engineer + Engineering Agent Runtime
+  → delivery-receipt
+  → Verification
+  → Independent Review
 ```
 
-Runtime Provider 可替换，但 Contract / Action Policy 不变。设备写和 Release 保留人工 Gate。Debug 强制 Observed / Inferred / Confirmed + **同一份 Hypothesis Registry**。
+Expert Team 默认 A0-A2；受控 Engineering 可使用 A3-A4；设备写和 Release 保留人工 Gate。Runtime Provider 可替换，但 Contract / Action Policy 不变。
 
-Feature 若涉及多个仓库，优先采用 `One Run -> Multiple Engineering Packages`，每个 Package 保持自己的 exact base / scope / delivery identity；不要把多个仓库硬塞进一个巨型 Package。
+Debug 强制使用 Observed / Inferred / Confirmed，并且同一 Run 只维护一份共享 `hypothesis_registry`。Feature 涉及多个仓库时优先 `One Run → Multiple Engineering Packages`，每个 Package 保持独立 exact base / scope / delivery identity。
 
 ## 5. Embedded Domain Closed Loop V1 运行产物
 
-每条真实 Pilot 轨道在收口时都必须附加：
+每条真实 Pilot 收口必须包含：
 
-1. `material_manifest`：复用现有 Material Manifest，作为共享 System Context Snapshot；
-2. `acceptance_evidence_matrix`：使用 scaffold 生成的 `working/acceptance-evidence-matrix.md`；
-3. `knowledge_harvest`：使用 scaffold 生成的 `working/knowledge-harvest.md`。
+1. `material_manifest`：共享 Material/System Context Snapshot；
+2. `acceptance_evidence_matrix`：Acceptance Criterion → Verification/Evidence；
+3. `knowledge_harvest`：复用/新增知识结果，可合法为 `NO_KNOWLEDGE_DELTA`。
 
-Debug 另外必须提供 `working/hypothesis-registry.json`。
+Debug 另外必须有 `hypothesis_registry`。
 
-Knowledge Harvest 允许 `NO_KNOWLEDGE_DELTA`；不得为了“完成流程”制造无价值知识。
+Feature 必须有 `engineering-task-package` 和 `delivery-receipt`。所有轨道都必须保留 Verification / Independent Review 和 exact source/artifact/test identity。
 
-## 6. 收口
-
-使用 `complete` 附加 track 所需结构化产物和 V1 extra artifacts。工具会校验 required artifacts 并生成 `evidence-bundle.json`，对运行产物计算 SHA256。
+## 6. 收口与冻结证据
 
 Feature 示例：
 
@@ -110,56 +106,65 @@ Debug 再增加：
 --extra hypothesis_registry=<run-dir>/working/hypothesis-registry.json
 ```
 
-Completed run 缺少任何当前 track 的 required artifact 时必须 fail-closed。
+`complete` 会校验结构化 Contract、Material Manifest terminal readiness、required artifacts，并生成 `evidence-bundle.json` 与 SHA-256。Completed run 是 terminal；修订历史证据必须创建 superseding run，不得改写旧 run。
 
-## 7. V1 Review 检查项
+后续校验：
 
-Independent Review 除现有 Evidence / Verification 规则外，额外检查：
+```bash
+python scripts/embedded_pilot.py validate <run-dir>
+```
+
+任何 material readiness、artifact set 或 SHA 漂移都必须 fail-closed。
+
+## 7. Verification 与 Independent Review
+
+Verification 与 Independent Review 不得由实施者自签，也不得用 Runtime-local PASS 推导 Domain Verification PASS。
+
+Independent Review 至少检查：
 
 - Work Item / Run / Context identity 是否一致；
-- source / artifact / device / test identity 是否出现静默断链；
-- Acceptance Criterion 是否能映射到 Evidence；
+- source / artifact / device / test identity 是否断链；
+- Acceptance Criterion 是否逐项映射到 Evidence；
 - Debug 是否只有一个共享 Hypothesis Registry；
-- Knowledge Harvest 是否有证据，或明确 `NO_KNOWLEDGE_DELTA`；
-- 是否出现 context rebuild、重复分析、跨域接口晚发现等信息损耗。
-
-当前不要求新建 Artifact Lineage / Verification Matrix 正式 Schema；这些断点先作为 real Pilot evidence 记录。
+- Material Manifest 是否真实 READY / approved DEGRADED；
+- Knowledge Harvest 是否有证据或明确 `NO_KNOWLEDGE_DELTA`；
+- 是否出现 context rebuild、重复分析、跨域接口晚发现；
+- 是否有 unsupported claim、unauthorized action 或错误 PASS。
 
 ## 8. Knowledge Registry
 
-首版 Registry 是 `internal-seed`，只登记仓库内可核验对象。NAS / 飞书 / CI-HIL / 历史 RCA 等外部 Source 继续通过 #16 逐步接入；Registry 只记录 Source，不复制权威原文形成第二 SSOT。
+首版 Registry 是 `internal-seed`，只登记仓库内可核验对象。NAS / 飞书 / CI-HIL / 历史 RCA 等外部 Source 后续按真实 Provider 接入；Registry 记录 Source identity，不复制权威原文形成第二 SSOT。
 
-## 9. 汇总与评分
+## 9. 汇总与 Pilot 评分
 
 ```bash
-python scripts/embedded_pilot.py summary expert-groups/embedded-system/pilot/runs --output pilot-status.json
-python scripts/evaluate_embedded_pilot.py <pilot-result...> --output pilot-metrics.json --markdown-output pilot-metrics.md
+python scripts/embedded_pilot.py summary \
+  expert-groups/embedded-system/pilot/runs \
+  --output pilot-status.json
+
+python scripts/evaluate_embedded_pilot.py \
+  <pilot-result...> \
+  --output pilot-metrics.json \
+  --markdown-output pilot-metrics.md
 ```
 
-评分门槛从 `pilot-plan.yaml` 读取。Synthetic 只验证工具链，不计入真实 Pilot / Knowledge evidence。
+门槛从 `expert-groups/embedded-system/pilot/pilot-plan.yaml` 读取。Synthetic 只验证工具链，不计入真实 Pilot promotion。
 
-## 10. 生成端侧底座影子凭证并评估 phase-3 readiness
+## 10. Edge Foundation shadow receipt 与 phase-3 readiness
 
-真实 Pilot 完成并验证后，使用同一个 Pilot CLI 生成**端侧底座影子凭证（Edge Foundation shadow receipt）**。该命令会先重新执行 completed run 的 terminal integrity 校验，再调用现有 shadow evaluator；生成的 receipt 是派生迁移证据，不写入、不改写 frozen evidence bundle。
+真实 completed Pilot 通过 terminal integrity 后：
 
 ```bash
 python scripts/embedded_pilot.py edge-shadow <run-dir>
 ```
 
-默认输出：
+默认生成：
 
 ```text
 <run-dir>/edge-foundation-shadow-receipt.json
 ```
 
-若有已证实的跨域触发条件，可显式传入：
-
-```bash
-python scripts/embedded_pilot.py edge-shadow <run-dir> \
-  --cross-domain-trigger <trigger>
-```
-
-只有以下六项同时为真，凭证才会标记 `phase3_evidence_eligible=true`：
+只有以下检查同时为真，才可得到 `phase3_evidence_eligible=true`：
 
 - `source_real`；
 - `run_completed`；
@@ -168,31 +173,22 @@ python scripts/embedded_pilot.py edge-shadow <run-dir> \
 - `no_unauthorized_actions`；
 - `audit_trace_complete`。
 
-Synthetic 即使自身 PASS，也必须保持 `phase3_evidence_eligible=false`。
-
-三轨真实任务完成后，统一通过 Pilot CLI 聚合当前所有 receipt：
+三轨聚合：
 
 ```bash
 python scripts/embedded_pilot.py phase3-readiness \
   expert-groups/embedded-system/pilot/runs \
-  --output edge-foundation-phase3-readiness.json
+  --output edge-foundation-phase3-readiness.json \
+  --require-ready
 ```
 
-需要作为 Gate 使用时增加：
+当前 promotion gate 要求 debug / feature / review_release 各至少 1 个 eligible real receipt、合计至少 3 个，同时 `incorrect_pass_rate=0`、`unauthorized_actions=0`、`audit_trace_completeness=1.0`。
 
-```text
---require-ready
-```
+`ELIGIBLE_FOR_REVIEW` 只表示允许发起独立 canonical-routing 评审；不会自动切换、不会自动废弃旧 `1+7`、不会扩大 A0-A7。
 
-未满足条件时命令原样传播 readiness evaluator 的 exit `2`，并输出 `status=BLOCKED`。门槛直接复用 `expert-groups/embedded-system/pilot/pilot-plan.yaml`，当前要求 debug / feature / review_release 各至少 1 个 eligible real receipt，合计至少 3 个。
+## 11. Phase-3 独立评审与 canonical-switch 边界
 
-`edge-shadow` 与 `phase3-readiness` 只是统一操作入口；权威判定仍分别位于 `evaluate_edge_foundation_pilot_shadow.py` 和 `evaluate_edge_foundation_phase3_readiness.py`，禁止在 CLI 内复制第二套迁移算法。
-
-即使输出 `ELIGIBLE_FOR_REVIEW`，也只表示**允许发起 phase-3 canonical routing switch 的独立评审**；不会自动修改 `canonical_routing_switched=false`，不会自动废弃旧 1+7，也不会扩大 A0-A7 权限。
-
-## 11. 生成 phase-3 独立评审包
-
-只有 readiness 已经是 `ELIGIBLE_FOR_REVIEW` 时，才允许生成 **phase-3 canonical routing 独立评审包**：
+Readiness 合格后生成评审包：
 
 ```bash
 python scripts/generate_edge_foundation_phase3_review_package.py \
@@ -200,31 +196,25 @@ python scripts/generate_edge_foundation_phase3_review_package.py \
   --output edge-foundation-phase3-review-package.json
 ```
 
-该评审包会绑定 readiness 文件的 SHA256 和真实 evidence run IDs，并冻结以下边界：
+Phase-3 的改动面已经收窄为两类：
 
-- 当前 canonical authority 仍是旧嵌入式 `1+7`；
-- 建议切换到 `edge-foundation` 只是一项待评审变更，不会自动 apply；
-- Phase-3 只允许切 canonical routing authority；
-- 旧 `1+7` compatibility surface 在 Phase-3 必须继续保留；
-- legacy identity deprecation 属于独立的 Phase-4，不得与 Phase-3 同一动作完成；
-- A0-A7、Verification / Independent Review、Provider-neutral 和 Source-of-Truth 边界不得变化；
-- 评审包必须携带可执行 rollback plan。
+1. `canonical-routing-authority`：`domains/edge-foundation/domain.yaml`；
+2. `routing-selector-entrypoint`：未来 `domains/edge-foundation/canonical-routing.yaml`。
 
-如果 readiness 仍是 `BLOCKED`、仍有 blocker、或 `canonical_routing_switched` 已经不是 false，生成器必须 exit `2` fail-closed，且不得生成可用于切换的评审包。
+Phase-3 **禁止**修改 `domains/edge-foundation/compatibility/**`、旧 Expert/Skill owner、Pilot threshold、A0-A7、Verification / Review 独立性、Provider binding 或 Source-of-Truth authority。
 
-即使评审包输出 `READY_FOR_INDEPENDENT_REVIEW`，也**不等于 phase-3 已批准**。真正切换必须由独立 PR/ADR 执行，并逐项验证 review package 的 `required_review_checks`。
+旧 `1+7` compatibility mapping 在 Phase-3 必须保持静态 8/8；legacy deprecation 属于独立 Phase-4，legacy removal 属于独立 Phase-5。真正 switch 必须使用独立 PR/ADR、review package、dry-run plan、change manifest 和 exact diff guard。
 
 ## 12. 当前阶段退出条件
 
-前三条 real Pilot 的目标不是自动 Production Ready，而是证明至少达到 E2 Engineering Closed Loop，并为 E3 Knowledge Closed Loop 建基础。
-
-至少要求：
+当前目标是至少证明 **E2 Engineering Closed Loop**，并为 **E3 Knowledge Closed Loop** 建基础：
 
 - Debug / Feature / Review-Release 三轨均有真实 completed evidence；
 - `incorrect_pass_rate = 0`；
 - `unauthorized_actions = 0`；
 - `audit_trace_completeness = 1.0`；
-- V1 三个闭环运行产物完整；
-- 至少记录并复盘 context / integration / identity / acceptance-evidence / knowledge reuse 的真实断点。
+- Material / Acceptance-Evidence / Knowledge Harvest 完整；
+- Verification 与 Independent Review 独立；
+- context / integration / identity / knowledge reuse 的真实断点得到复盘。
 
-满足以后也仅能提交 Productionization 人工评审；仓库不会自动扩大 A3-A7，也不会自动标记 Production Ready。
+达到以上门槛仍只允许进入后续 productionization / canonical-routing 人工评审；仓库不会自动扩大权限，也不会自动标记 Production Ready。
