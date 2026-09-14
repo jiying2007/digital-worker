@@ -15,7 +15,6 @@ PLAN_SCHEMA = ROOT / "schemas" / "edge-foundation-canonical-switch-plan.v1.schem
 
 ALLOWED_PATH_CLASS = {
     "domains/edge-foundation/domain.yaml": "canonical-routing-authority",
-    "domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml": "migration-phase-status",
     "domains/edge-foundation/canonical-routing.yaml": "routing-selector-entrypoint",
 }
 
@@ -55,20 +54,17 @@ def validate_candidate(manifest_path: Path, switch_plan_path: Path, changed_file
     declared = manifest["changes"]
     declared_paths = [item["path"] for item in declared]
     require(len(declared_paths) == len(set(declared_paths)), "duplicate declared changed path")
-
     for item in declared:
         path = item["path"]
         require(path in ALLOWED_PATH_CLASS, f"switch candidate declares forbidden path: {path}")
-        require(
-            item["change_class"] == ALLOWED_PATH_CLASS[path],
-            f"wrong change class for {path}: expected {ALLOWED_PATH_CLASS[path]}, got {item['change_class']}",
-        )
+        require(item["change_class"] == ALLOWED_PATH_CLASS[path], f"wrong change class for {path}")
 
     changed_files = [line.strip() for line in changed_files_path.read_text(encoding="utf-8").splitlines() if line.strip()]
     require(len(changed_files) == len(set(changed_files)), "changed-file list contains duplicates")
     require(set(changed_files) == set(declared_paths), f"changed files do not match manifest: actual={sorted(changed_files)} declared={sorted(declared_paths)}")
 
     forbidden_prefixes = (
+        "domains/edge-foundation/compatibility/",
         "expert-groups/embedded-system/",
         "contracts/",
         "schemas/pilot-",
@@ -94,7 +90,6 @@ def main() -> None:
     parser.add_argument("--changed-files", type=Path, required=True)
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-
     result = validate_candidate(args.manifest, args.switch_plan, args.changed_files)
     rendered = json.dumps(result, ensure_ascii=False, indent=2) + "\n"
     if args.output:
