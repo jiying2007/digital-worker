@@ -4,6 +4,7 @@ status: active-compatibility
 source_model: ../../../expert-groups/embedded-system/expert-group.yaml
 target_model: ../domain.yaml
 migration_mode: shadow
+shadow_routing: ../routing-shadow.yaml
 
 legacy_identities:
   - legacy_id: embedded-system-team-lead
@@ -69,14 +70,19 @@ migration_invariants:
   - no-provider-binding-regression
   - no-skill-or-golden-case-big-bang-rewrite
   - source-of-truth-stays-at-source
+  - shadow-routing-does-not-change-execution
 
 phases:
   - id: phase-1-shadow
     description: 新责任模型与旧 1+7 同时校验，旧路由继续 canonical
-    status: active
+    status: completed
+    evidence:
+      main_commit: 0977b8833c7fdcb0d11848bb713820678205a929
+      fresh_main_run: 34845537811
   - id: phase-2-dual-evaluation
     description: 用 Golden Case 与真实 Pilot 同时评估旧路由和新责任语义
-    status: planned
+    status: active
+    machine_evaluator: ../../../scripts/evaluate_edge_foundation_shadow.py
   - id: phase-3-canonical-switch
     description: 切换到端侧 Domain / Expert / Capability canonical routing
     status: blocked-on-evidence
