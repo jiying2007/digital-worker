@@ -58,6 +58,9 @@ def validate_links() -> None:
 def main() -> None:
     required = [
         "README.md",
+        "00-总览/README.md",
+        "00-总览/00 架构与运行总览.md",
+        "00-总览/01 数字岗位与能力模型.md",
         "00-评审入口/01 评审说明与决策清单.md",
         "00-评审入口/02 术语与缩写.md",
         "01-架构设计/01 总体架构设计.md",
@@ -99,6 +102,7 @@ def main() -> None:
     require("operational reference" in index, "core reference must declare operational reference status")
     require("v0.7.0" in index, "core reference must declare v0.7.0")
     require("iterative-development" in index, "core reference must state current repository stage")
+    require("01 数字岗位与能力模型.md" in index, "core reference must expose digital position model")
 
     expert_group = yaml.safe_load((EMB / "expert-group.yaml").read_text(encoding="utf-8"))
     require(expert_group["version"] == "0.7.0", "unexpected embedded expert-group version")
@@ -111,6 +115,26 @@ def main() -> None:
     skill_doc = read("04-工程交付/01 Skill能力地图.md")
     missing_skills = [skill for skill in skills if skill not in skill_doc]
     require(not missing_skills, f"skill map missing registered skills: {missing_skills}")
+
+    position_doc = read("00-总览/01 数字岗位与能力模型.md")
+    for marker in [
+        "不是招聘 JD",
+        "6 个职能模块 + 8 个数字岗位",
+        "Position = 数字岗位",
+        "Agent    = 承担岗位的数字员工",
+        "Skill    = 数字员工掌握的岗位技能",
+        "数字任职资格模型",
+        "岗位替代",
+        "positions.yaml",
+        "不声明任何岗位已经达到完全替代人工",
+    ]:
+        require(marker in position_doc, f"digital position model missing marker: {marker}")
+    for position_id in [f"P{i:02d}" for i in range(1, 9)]:
+        require(position_id in position_doc, f"digital position model missing {position_id}")
+    for module_id in [f"M{i}" for i in range(1, 7)]:
+        require(module_id in position_doc, f"digital position model missing {module_id}")
+    missing_position_skills = [skill for skill in skills if skill not in position_doc]
+    require(not missing_position_skills, f"digital position model missing registered skills: {missing_position_skills}")
 
     architecture = read("01-架构设计/01 总体架构设计.md")
     require("1+7" in architecture, "architecture must explain 1+7 organization")
@@ -182,12 +206,15 @@ def main() -> None:
 
     validate_links()
 
-    # Superseded combined/flat documents must not come back.
+    # Superseded combined/flat documents and parallel human/machine sources must not come back.
     forbidden_paths = [
         CORE / "03-角色与领域/02 架构LinuxBSPMCURTOS与驱动领域指南.md",
         CORE / "03-角色与领域/03 调试验证与独立评审领域指南.md",
+        EMB / "positions",
+        EMB / "config/positions.yaml",
+        EMB / "config/position-model.yaml",
     ]
-    require(not any(path.exists() for path in forbidden_paths), "superseded combined domain guides must stay removed")
+    require(not any(path.exists() for path in forbidden_paths), "superseded or parallel Position sources must stay removed")
     stale_root_files = [path.name for path in CORE.glob("[0-9][0-9] *.md")]
     require(not stale_root_files, f"legacy flat core-reference files must be removed: {stale_root_files}")
     require(not (ROOT / "docs/review").exists(), "legacy docs/review pack must be removed")
@@ -201,7 +228,7 @@ def main() -> None:
                 violations.append(f"{path.relative_to(ROOT)} -> {token}")
     require(not violations, "stale core-reference wording found: " + "; ".join(violations))
 
-    print("core reference validation PASS: 14 task types, 7 modes, split domain guides, valid artifact chain, links and v0.7.0 baseline")
+    print("core reference validation PASS: digital position model + 14 task types + 7 modes + split domain guides + valid artifact chain + links + v0.7.0 baseline")
 
 
 if __name__ == "__main__":
