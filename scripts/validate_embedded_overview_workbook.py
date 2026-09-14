@@ -51,19 +51,14 @@ def require(cond: bool, msg: str) -> None:
 
 
 def git_blob(path: str) -> str:
-    return subprocess.check_output(
-        ["git", "hash-object", str(ROOT / path)], text=True
-    ).strip()
+    return subprocess.check_output(["git", "hash-object", str(ROOT / path)], text=True).strip()
 
 
 def _shared_strings(zf: zipfile.ZipFile) -> list[str]:
     if "xl/sharedStrings.xml" not in zf.namelist():
         return []
     root = ET.fromstring(zf.read("xl/sharedStrings.xml"))
-    out: list[str] = []
-    for si in root.findall("x:si", NS):
-        out.append("".join(t.text or "" for t in si.findall(".//x:t", NS)))
-    return out
+    return ["".join(t.text or "" for t in si.findall(".//x:t", NS)) for si in root.findall("x:si", NS)]
 
 
 def _sheet_map(zf: zipfile.ZipFile) -> tuple[list[str], dict[str, str]]:
@@ -75,9 +70,9 @@ def _sheet_map(zf: zipfile.ZipFile) -> tuple[list[str], dict[str, str]]:
     for sheet in book.findall("x:sheets/x:sheet", NS):
         name = sheet.attrib["name"]
         rid = sheet.attrib[f"{{{OFFICE_REL}}}id"]
-        target = targets[rid]
+        target = targets[rid].lstrip("/")
         if not target.startswith("xl/"):
-            target = "xl/" + target.lstrip("/")
+            target = "xl/" + target
         names.append(name)
         mapping[name] = target
     return names, mapping
@@ -113,10 +108,7 @@ def main() -> None:
         sheets = {name: _cells(zf, sheet_xml[name], shared) for name in sheet_names}
 
     overview = sheets["00 总览"]
-    expected_kpis = {
-        "A7": "8", "D7": "23", "G7": "14", "J7": "7",
-        "A10": "8", "D10": "8", "G10": "7",
-    }
+    expected_kpis = {"A7": "8", "D7": "23", "G7": "14", "J7": "7", "A10": "8", "D10": "8", "G10": "7"}
     for ref, expected in expected_kpis.items():
         require(overview.get(ref) == expected, f"overview KPI drift at {ref}: {overview.get(ref)} != {expected}")
     overview_text = "\n".join(overview.values())
