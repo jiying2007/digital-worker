@@ -4,7 +4,7 @@
 > 对应兼容实现：`expert-groups/embedded-system/` v0.7.0  
 > 目标责任架构：`domains/edge-foundation/` + `ADR-004`  
 > 当前阶段：`iterative-development` / `phase-2-dual-evaluation`  
-> 当前目标：在不破坏现有机器 Contract 和 Pilot 的前提下，将嵌入式 `1+7` 从“目标组织结构”迁移为“嵌入式专家内部能力 + 可信保障职责”的兼容执行面，并用旧路由 + Golden Case 对新责任语义做双轨评测。
+> 当前目标：在不破坏现有机器 Contract 和 Pilot 的前提下，将嵌入式 `1+7` 从“目标组织结构”迁移为“嵌入式专家内部能力 + 可信保障职责”的兼容执行面；静态/Golden 双轨评测与 phase-3 readiness 机制已落地，当前等待真实三轨 Pilot evidence。
 
 本文件仍是**唯一第一入口**。核心参考按“数字组织 → 架构 → 流程 → 专业能力 → 工程交付 → 治理评审 → 案例 → 附录”组织；现有详细机器规则仍由 `expert-groups/embedded-system/` 执行，新目标责任模型以 `docs/adr/ADR-004-edge-foundation-digital-responsibility-architecture.md` 和 `domains/edge-foundation/domain.yaml` 为准。
 
@@ -25,6 +25,8 @@
 现有 `1+7 / 8 个数字岗位 / 23 P0 Skill / 14 Task / 7 Mode / 8 Gate / A0-A7 / 7 层 Verification` 是**迁移期机器兼容基线**，不是新的端侧目标组织语义。旧身份与新模型的 8/8 显式映射见 `domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml`。
 
 当前双轨评测只读 `domains/edge-foundation/routing-shadow.yaml`：它把现有 14 类 Task 映射到新的 Domain / Expert / Capability / 高层工作流语义，但明确 `canonical_routing: false`，不会改变旧执行路径和动作权限。
+
+真实 Pilot 完成后通过 `scripts/evaluate_edge_foundation_pilot_shadow.py` 生成单次 shadow receipt；再由 `scripts/evaluate_edge_foundation_phase3_readiness.py` 聚合判断是否达到 `ELIGIBLE_FOR_REVIEW`。Synthetic receipt 永远不能计入 phase-3，readiness PASS 也不会自动切换 canonical routing。
 
 三条迁移红线：
 
@@ -98,6 +100,8 @@ ADR-004 + domains/edge-foundation/（目标责任模型）
    ↓
 routing-shadow + evaluator（双轨评测，不切执行路由）
    ↓
+Pilot shadow receipt + phase-3 readiness（真实证据门槛，不自动切路由）
+   ↓
 README（唯一人类入口）
    ↓
 01~07 + 附录（迁移期职责、方法、流程、治理和案例）
@@ -113,10 +117,10 @@ expert-groups/embedded-system/（旧机器 Contract 兼容执行面）
 
 当前迁移顺序：
 
-`phase-1 shadow model（已完成） → phase-2 dual evaluation（当前） → real Pilot evidence → canonical routing switch → legacy identity deprecation → proven removal`
+`phase-1 shadow model（已完成） → phase-2 static/Golden dual evaluation（已完成） → real Pilot evidence（当前 blocker） → phase-3 readiness = ELIGIBLE_FOR_REVIEW → canonical routing switch 独立评审 → legacy identity deprecation → proven removal`
 
 同时真实工程证据链继续推进：
 
 `Debug → Feature → Review/Release → Knowledge reuse / 外部 Source → Multi-runtime → Productionization Review`
 
-只有真实任务暴露稳定、重复的职责/Skill/流程/Evidence 缺口时，才调整核心 Contract；不能仅为了让组织图更整齐而增加 Expert 或 Agent。
+当前仓库内已经具备 shadow receipt 与 readiness 机器判据；缺口不再是“再设计验收格式”，而是 #6 / #7 / #8 的真实 completed Pilot evidence。只有真实任务暴露稳定、重复的职责/Skill/流程/Evidence 缺口时，才调整核心 Contract；不能仅为了让组织图更整齐而增加 Expert 或 Agent。
