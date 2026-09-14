@@ -7,6 +7,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 EMB = ROOT / "expert-groups" / "embedded-system"
+CORE = ROOT / "嵌入式系统专家团-核心参考"
 
 
 def require(condition: bool, message: str) -> None:
@@ -27,9 +28,10 @@ def main() -> None:
     adr1 = ROOT / "docs/adr/ADR-001-workbuddy-codex-integration-boundary.md"
     adr2 = ROOT / "docs/adr/ADR-002-embedded-system-expert-team-architecture.md"
     adr3 = ROOT / "docs/adr/ADR-003-provider-neutral-ai-rd-target-architecture.md"
-    core16 = ROOT / "嵌入式系统专家团-核心参考/16 总体架构与Provider选型评审.md"
+    core_arch = CORE / "01-架构设计/01 总体架构设计.md"
+    core_boundary = CORE / "01-架构设计/02 系统边界与控制面.md"
 
-    for path in [workflow_doc, adr1, adr2, adr3, core16]:
+    for path in [workflow_doc, adr1, adr2, adr3, core_arch, core_boundary]:
         require(path.is_file(), f"missing architecture asset: {path.relative_to(ROOT)}")
 
     workflow_text = text(workflow_doc)
@@ -41,8 +43,10 @@ def main() -> None:
     require("- Status: superseded-in-part" in text(adr1), "ADR-001 must be superseded-in-part")
     require("ADR-003" in text(adr1), "ADR-001 must point to ADR-003")
     require("ADR-003-provider-neutral-ai-rd-target-architecture.md" in text(adr2), "ADR-002 must relate to ADR-003")
-    require("Provider-neutral" in text(adr2) or "Provider-neutral" in text(adr3), "provider-neutral architecture declaration missing")
-    require("- Status: proposed-for-review" in text(adr3), "ADR-003 must remain proposed-for-review until internal review accepts it")
+    require("Provider-neutral" in text(adr3), "provider-neutral architecture declaration missing")
+    require("- Status: proposed-for-review" in text(adr3), "ADR-003 status must remain truthful until formally accepted")
+    require("Provider-neutral" in text(core_arch), "human architecture guide must explain provider-neutral behavior")
+    require("Knowledge Source" in text(core_boundary) and "Knowledge Provider" in text(core_boundary), "human boundary guide must separate knowledge sources/providers")
 
     expert_group = load_yaml(EMB / "expert-group.yaml")
     require(expert_group.get("architecture_model") == "provider-neutral", "expert-group architecture_model must be provider-neutral")
@@ -64,24 +68,18 @@ def main() -> None:
     require(exec_handoff.get("executor_role") == "engineer-plus-engineering-agent", "engineering handoff executor role must be provider-neutral")
     require(exec_handoff.get("runtime_provider") == "selectable", "engineering handoff runtime provider must be selectable")
 
-    forbidden_machine_tokens = {
-        "engineer-plus-codex": "legacy Codex-bound execution role",
-        "direct_workbuddy_control": "legacy WorkBuddy-specific control flag",
-        "human_canonical_store": "legacy fixed human knowledge store",
-        "ai_retrieval_layer": "legacy fixed AI retrieval layer",
-    }
-    machine_suffixes = {".yaml", ".yml", ".json", ".py"}
+    forbidden_machine_tokens = {"engineer-plus-codex", "direct_workbuddy_control", "human_canonical_store", "ai_retrieval_layer"}
     violations: list[str] = []
     for path in EMB.rglob("*"):
-        if not path.is_file() or path.suffix.lower() not in machine_suffixes:
+        if not path.is_file() or path.suffix.lower() not in {".yaml", ".yml", ".json", ".py"}:
             continue
         content = text(path)
-        for token, reason in forbidden_machine_tokens.items():
+        for token in forbidden_machine_tokens:
             if token in content:
-                violations.append(f"{path.relative_to(ROOT)} -> {token} ({reason})")
+                violations.append(f"{path.relative_to(ROOT)} -> {token}")
     require(not violations, "provider-specific compatibility residue found: " + "; ".join(violations))
 
-    print("provider-neutral architecture validation PASS: overall proposal, embedded runtime, knowledge policy and handoff are decoupled from concrete providers")
+    print("provider-neutral architecture validation PASS: machine contracts and human architecture guide remain provider-independent")
 
 
 if __name__ == "__main__":

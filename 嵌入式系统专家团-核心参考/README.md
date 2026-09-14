@@ -1,72 +1,108 @@
-# 嵌入式系统专家团-核心参考
+# 嵌入式系统专家团核心参考
 
-> **用途：内部讨论与评审。**
->
-> 文档状态：`review-ready`
->
-> 实现基线：`expert-groups/embedded-system/` v0.7.0 / `pilot-operations-ready`
->
-> 总体架构：`provider-neutral / proposed-for-review`
+> 文档状态：**运行参考（operational reference）**  
+> 对应实现：`expert-groups/embedded-system/` v0.7.0  
+> 当前阶段：`iterative-development`，推进真实 Debug / Feature / Review-Release 闭环  
+> 文档用途：架构评审、团队培训、研发协作和日常查阅
 
-本目录是嵌入式系统专家团机器资产的人类可读解释层，与 `产品专家团-核心参考/` 同类型；不是第二套实现，也不是第二套 SSOT。
+本目录是嵌入式系统专家团的**人类可读说明**。机器执行规则仍以 `expert-groups/embedded-system/` 下的配置、Contract、Schema 和策略文件为准；本文档负责解释设计理由、工作方法、流程、责任边界和典型场景，不重复维护第二套机器配置。
 
-正式 Architecture Review 请从 [`docs/review/`](../docs/review/) 开始。`docs/review/` 提供 Pre-read、Decision Matrix、Evidence Gap、RACI 与端到端 Walkthrough；本目录用于需要深入追溯专家团细节时查阅。
+## 1. 先看什么
 
-## 当前同步状态
+### 做架构或管理评审
 
-01~16 已统一按 ADR-003 的 Provider-neutral 架构解释：
+1. [`00-评审入口/01 评审说明与决策清单.md`](00-评审入口/01%20评审说明与决策清单.md)
+2. [`01-架构设计/01 总体架构设计.md`](01-架构设计/01%20总体架构设计.md)
+3. [`01-架构设计/02 系统边界与控制面.md`](01-架构设计/02%20系统边界与控制面.md)
+4. [`02-流程与运行/01 任务生命周期与Gate.md`](02-流程与运行/01%20任务生命周期与Gate.md)
+5. [`05-治理与评测/02 Pilot指标成熟度与生产化.md`](05-治理与评测/02%20Pilot指标成熟度与生产化.md)
 
-- WorkBuddy 只是候选 Interaction / Office Agent Provider；
-- 飞书是重要 Collaboration / Work Item 候选，但不是架构硬依赖；
-- 飞书知识库、NAS、Git、CI/HIL、Artifact Store 等按事实类型分别保持权威；
-- WeKnora 是候选 Knowledge Provider，不自动成为企业知识唯一 SSOT；
-- Codex、Claude Code、IDE Agent、内部 Agent 等均可作为 Engineering Agent Runtime；
-- Expert / Workflow / Gate / Evidence / Verification 与 Runtime 解耦；
-- Provider 选型必须基于 Source Inventory、Capability Matrix 与 PoC evidence。
+### 做研发任务
 
-## 权威顺序
+- 缺陷、长稳、现场问题：[`02 Debug问题闭环流程`](02-流程与运行/02%20Debug问题闭环流程.md)
+- 功能、驱动、Bring-up、多仓协同：[`03 功能开发Bring-up与多仓协同`](02-流程与运行/03%20功能开发Bring-up与多仓协同.md)
+- 验证、评审、OTA/发布：[`04 验证评审发布与异常恢复`](02-流程与运行/04%20验证评审发布与异常恢复.md)
+- Linux / MCU / 驱动领域方法：[`03-角色与领域/02 ...领域指南`](03-角色与领域/02%20架构LinuxBSPMCURTOS与驱动领域指南.md)
+- 调试、验证和独立审查方法：[`03-角色与领域/03 ...领域指南`](03-角色与领域/03%20调试验证与独立评审领域指南.md)
 
-1. `研发中心AI数字员工研发流程规划.md` + ADR-003；
+### 看工程交付和权限边界
+
+- 23 个 P0 Skill：[`04-工程交付/01 Skill能力地图.md`](04-工程交付/01%20Skill能力地图.md)
+- 工程任务包、执行工具、产物：[`04-工程交付/02 工程交接Runtime与关键产物.md`](04-工程交付/02%20工程交接Runtime与关键产物.md)
+- A0-A7、敏感数据、风险例外：[`05-治理与评测/01 权限安全风险与例外.md`](05-治理与评测/01%20权限安全风险与例外.md)
+
+## 2. 当前稳定基线
+
+当前不再讨论“是否要建立专家团”这类基础问题，稳定项如下：
+
+- 组织采用 **1 名主理人 + 7 个专业角色**；
+- 当前注册 **23 个 P0 Skill**；
+- 任务先分类，再选择最短正确流程，不默认走完整链；
+- 工程判断、代码实施、验证、独立审查分开；
+- 项目事实以工程证据为准，不以语言表达的确定程度代替验证；
+- Runtime/工具可以替换，`task / gate / evidence / verification` 规则不随工具变化；
+- 知识原文仍由原系统负责，索引和检索不改变原始事实的权威；
+- A6 设备写入、A7 发布必须保留人工批准；
+- 当前目标是完成 E2 工程闭环，并为 E3 知识复用闭环建立真实证据；
+- 在真实 Pilot 完成前，不声明 Production Ready。
+
+## 3. 当前阶段最小闭环
+
+每个真实任务至少要能回答七个问题：
+
+1. 这是哪个 `work_item_id / run_id`？
+2. 使用的是哪一份板卡、平台、仓库、源码和工具链上下文？
+3. Debug 类任务是否共用一份 Hypothesis Registry？
+4. 源码、构建产物、设备和测试证据能否串起来？
+5. 每条验收要求由什么证据证明？
+6. 任务结束后是否有值得沉淀的知识；如果没有，是否明确 `NO_KNOWLEDGE_DELTA`？
+7. 新知识能否在后续任务被实际引用，而不是只登记在清单里？
+
+## 4. 文档与机器资产的权威顺序
+
+发生冲突时，按以下顺序处理：
+
+1. `研发中心AI数字员工研发流程规划.md` 与正式 ADR；
 2. `expert-groups/embedded-system/expert-group.yaml`；
-3. `config/workflow.yaml`；
-4. `config/task-modes.yaml`；
-5. `config/action-policy.yaml`；
-6. `config/gate-policy.yaml` / `config/material-requirements.yaml`；
-7. `contracts/**/*.yaml`；
-8. `schemas/*.schema.json`；
-9. `agents/*.md`；
-10. `skills/*/SKILL.md`；
-11. 本目录说明文档；
-12. `docs/review/`（评审准备材料，不覆盖上位权威）；
-13. `docs/archive/` 与 `docs/source-materials/`。
+3. `config/workflow.yaml`、`task-modes.yaml`、`action-policy.yaml`、`gate-policy.yaml`、`material-requirements.yaml`；
+4. `contracts/**/*.yaml` 与 `schemas/*.schema.json`；
+5. 专家定义、Skill 和运行脚本；
+6. 本目录的人类可读说明；
+7. brainstorming / archive / source-materials。
 
-## 文档索引
+因此，本目录可以解释“为什么这样设计”，但不能用文字覆盖机器 Contract。
 
-|编号|文档|主要用途|
-|---|---|---|
-|01|嵌入式系统专家团整体架构|1+7、Provider-neutral 主链、Gate、边界|
-|02|主理人专家工作逻辑|接诊、路由、Gate、Runtime-neutral Handoff、收口|
-|03|嵌入式架构专家工作逻辑|架构/可行性/资源与接口职责|
-|04|Linux BSP 专家工作逻辑|Boot/BSP/Kernel/DT/IRQ/DMA/Storage|
-|05|MCU RTOS 专家工作逻辑|MCU/RTOS/Bare-metal/Linker/ISR|
-|06|驱动与组件专家工作逻辑|驱动、外设、组件集成与复用|
-|07|调试与可靠性专家工作逻辑|Evidence/Hypothesis/Root Cause|
-|08|验证专家工作逻辑|Host/Cross-build/SIL/Device/HIL/Release|
-|09|独立审查专家工作逻辑|Independent Review / Release Readiness|
-|10|全量原子能力（Skill）清单|23 个 P0 Skills 与扩展原则|
-|11|Workflow、Gate 与工程交接|Mode、Gate、Engineering Agent Runtime 边界|
-|12|Evidence、知识、自治与安全边界|Evidence、Source-of-Truth、Knowledge Provider、A0-A7|
-|13|Pilot、评测与生产化评审|三轨 Pilot、Multi-runtime、生产化门槛|
-|14|跨专家团协作与职责边界|跨团 Contract、Runtime、Knowledge/Work Item Provider 边界|
-|15|内部评审问题清单|组织、治理、Provider-neutral 决策清单|
-|16|总体架构与 Provider 选型评审|Knowledge/Provider/Runtime PoC 与 Capability Matrix|
+## 5. 文档结构
 
-## 当前事实
+```text
+00-评审入口     评审范围、关键决策、证据缺口
+01-架构设计     总体架构、系统边界、身份/证据/知识
+02-流程与运行   任务生命周期、Debug、开发、验证与恢复
+03-角色与领域   组织职责、RACI、各专业工作方法
+04-工程交付     Skill、工程交接、关键产物
+05-治理与评测   权限安全、Pilot、成熟度、架构取舍
+06-案例         典型嵌入式场景的完整走查
+```
 
-- 1+7、23 P0 Skills、Engineering Handoff、Cross-Team Contract、Golden Cases、Pilot CLI/CI 已落地；
-- Engineering Handoff 已是 `Engineer + Engineering Agent Runtime`；
-- Provider / Knowledge 方案 / 默认 Coding Runtime 仍 `not-frozen`；
-- #16 Knowledge Source Inventory、#17 Provider Capability Matrix、#18 Multi-runtime Pilot 已登记；
-- #6/#7/#8 real Pilot 仍待真实任务绑定；
-- #11 端侧底座 ownership、#12 main protection、#19 merged branch GC 尚未完成；
-- 当前禁止声明 `Production Ready`。
+## 6. 当前需要真实工程证明的事项
+
+当前主要缺口不是再写一轮架构，而是取得真实运行证据：
+
+- Debug、Feature、Review/Release 三条真实任务链；
+- 至少一次真实知识复用；
+- 至少两种 Engineering Runtime 在同一 Contract 下的对照；
+- NAS / 协作文档 / CI-HIL 等真实外部来源的权限、版本、时效和引用验证；
+- 进入 Productionization 前再执行严格仓库治理和 server-side protection。
+
+这些事项未完成时，文档应明确写“未证明”，不得用设计完整度替代运行结果。
+
+## 7. 写作约定
+
+本目录面向研发人员，不写成提示词或模型说明书。原则是：
+
+- 先讲工程问题，再讲机制；
+- 用职责、输入、输出、判断条件和失败处理描述流程；
+- 能用中文工程术语说清楚的，不堆叠英文概念；
+- 产品名只在确有实现关系时出现，不把品牌写成架构；
+- 示例必须标明“示例”还是“真实证据”；
+- 历史变更由 Git 记录，不在活动文档中保留兼容段落和失效结论。
