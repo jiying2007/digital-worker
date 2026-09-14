@@ -20,7 +20,10 @@ def require(cond: bool, msg: str) -> None:
 
 
 def compact(value: object) -> str:
-    return "".join(str(value).replace("`", "").replace("*", "").split())
+    text = str(value)
+    for token in ["`", "*", "“", "”", '"', "‘", "’"]:
+        text = text.replace(token, "")
+    return "".join(text.split())
 
 
 def contains_compact(text: str, value: object) -> bool:
@@ -79,7 +82,6 @@ def main() -> None:
         boundary = str(item["boundaries"]).split("；", 1)[0]
         require(contains_compact(text, boundary), f"overview role boundary drift: {role_id} -> {boundary}")
 
-    # Digital positions are a human composition view over the existing 1+7 Agent model.
     modules = human.get("modules", {})
     positions = human.get("positions", {})
     require(set(modules) == {f"M{i}" for i in range(1, 7)}, f"expected M1-M6 modules, got {sorted(modules)}")
@@ -108,7 +110,6 @@ def main() -> None:
         for value in [role_id, item["position_id"], item["name"], item["module"], item["real_world_analogy"]]:
             require(contains_compact(position_text, value), f"position doc identity drift: {role_id} -> {value}")
 
-    # Each existing Expert I/O contract remains the machine authority behind the position view.
     require((EMB / expert_group["team_lead"]["contract"]).is_file(), "team-lead I/O contract missing")
     for expert in expert_group["experts"]:
         require((EMB / expert["contract"]).is_file(), f"expert I/O contract missing: {expert['id']}")
@@ -123,7 +124,6 @@ def main() -> None:
         skills_by_owner[item["owner"]].append(item["id"])
     for role_id, owned_skills in skills_by_owner.items():
         require(owned_skills, f"digital position has no registered P0 Skill: {role_id}")
-        # Skills are deliberately not duplicated in overview-human.yaml; p0-skills.yaml remains the authority.
         require(role_id in positions, f"skill owner lacks digital position: {role_id}")
 
     task_doc = yaml.safe_load((EMB / "config/task-modes.yaml").read_text(encoding="utf-8"))
