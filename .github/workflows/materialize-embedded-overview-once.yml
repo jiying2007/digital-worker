@@ -1,0 +1,41 @@
+name: Materialize Embedded Overview Once
+
+on:
+  push:
+    branches: [docs/embedded-overview-workbook]
+    paths:
+      - '.tmp-overview/**'
+
+permissions:
+  contents: write
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+      - name: Materialize exact workbook
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f .tmp-overview/part00 ]; then
+            echo "temporary chunks already retired; nothing to do"
+            exit 0
+          fi
+          test "$(find .tmp-overview -maxdepth 1 -name 'part*' -type f | wc -l)" -eq 10
+          target='嵌入式系统专家团-核心参考/00-总览/嵌入式系统专家团-架构与运行总览.xlsx'
+          mkdir -p "$(dirname "$target")"
+          cat .tmp-overview/part00 .tmp-overview/part01 .tmp-overview/part02 .tmp-overview/part03 .tmp-overview/part04 \
+              .tmp-overview/part05 .tmp-overview/part06 .tmp-overview/part07 .tmp-overview/part08 .tmp-overview/part09 \
+              | base64 -d > "$target"
+          actual="$(git hash-object "$target")"
+          expected='2aa814a0e80791efd9ff9298536ec911ce7a4a71'
+          test "$actual" = "$expected"
+          git rm -r .tmp-overview
+          git add "$target"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'docs: materialize embedded overview workbook'
+          git push origin HEAD:docs/embedded-overview-workbook
