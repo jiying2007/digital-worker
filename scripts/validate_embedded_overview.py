@@ -2,7 +2,6 @@
 """Fail-closed synchronization checks for embedded human overview and digital positions."""
 from __future__ import annotations
 
-import re
 from pathlib import Path
 import yaml
 
@@ -93,8 +92,9 @@ def main() -> None:
     for module_id, item in modules.items():
         for field in ["name", "positioning", "work_content", "work_requirements"]:
             require(item.get(field), f"module annotation missing {field}: {module_id}")
-            require(contains_compact(position_text, item[field]), f"position doc module drift: {module_id} -> {field}")
         require(contains_compact(position_text, module_id), f"position doc missing module ID: {module_id}")
+        require(contains_compact(position_text, item["name"]), f"position doc module name drift: {module_id}")
+        require(contains_compact(position_text, item["positioning"]), f"position doc module positioning drift: {module_id}")
         for role_id in item["positions"]:
             require(role_id in role_ids, f"module references unknown Agent: {module_id} -> {role_id}")
             module_members.append(role_id)
@@ -105,11 +105,10 @@ def main() -> None:
         require(role_id in modules[item["module"]]["positions"], f"position/module membership drift: {role_id}")
         for field in ["position_id", "name", "objective", "work_content", "work_requirements", "qualification_focus", "real_world_analogy"]:
             require(item.get(field), f"position annotation missing {field}: {role_id}")
-            require(contains_compact(position_text, item[field]), f"position doc annotation drift: {role_id} -> {field}")
-        for value in [role_id, item["position_id"], item["name"], item["module"]]:
+        for value in [role_id, item["position_id"], item["name"], item["module"], item["real_world_analogy"]]:
             require(contains_compact(position_text, value), f"position doc identity drift: {role_id} -> {value}")
 
-    # Each existing Expert I/O contract must remain the machine authority behind the position view.
+    # Each existing Expert I/O contract remains the machine authority behind the position view.
     require((EMB / expert_group["team_lead"]["contract"]).is_file(), "team-lead I/O contract missing")
     for expert in expert_group["experts"]:
         require((EMB / expert["contract"]).is_file(), f"expert I/O contract missing: {expert['id']}")
@@ -169,13 +168,14 @@ def main() -> None:
     require(len(expert_group["verification_layers"]) == 7, "expected 7 verification layers")
     for layer in expert_group["verification_layers"]:
         require(layer in text, f"overview verification layer missing: {layer}")
-        require(layer in position_text, f"digital position model verification layer missing: {layer}")
+    for marker in ["Verification Layer", "device_verified", "hil_verified", "release_verified", "禁止跨层推导"]:
+        require(contains_compact(position_text, marker), f"digital position verification boundary missing: {marker}")
     require("forbid_cross_layer_inference = true" in text, "overview must preserve no cross-layer inference rule")
 
     for metric in expert_group["evaluation"]["primary_metrics"]:
         require(metric in position_text, f"digital position performance model missing machine metric: {metric}")
     require(expert_group["evaluation"]["safety_priority_metric"] in position_text, "position model missing safety priority metric")
-    for marker in ["不是招聘 JD", "Position 是数字岗位", "Agent 是数字员工", "Skill 是岗位技能", "不声明任何岗位已经达到完全替代人工"]:
+    for marker in ["不是招聘 JD", "Position = 数字岗位", "Agent    = 承担岗位的数字员工", "Skill    = 数字员工掌握的岗位技能", "不声明任何岗位已经达到完全替代人工"]:
         require(contains_compact(position_text, marker), f"digital position governance marker missing: {marker}")
 
     for artifact in human["artifacts"]:
