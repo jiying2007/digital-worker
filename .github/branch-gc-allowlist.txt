@@ -3,10 +3,7 @@
 # Eligibility is fail-closed: current tip must be an exact merged-PR head OR already contained by main.
 # After deletion this ledger returns to the healthy empty steady state in a follow-up cleanup.
 
-codex/core-reference-status-ratchet
-codex/defer-main-protection
-codex/embedded-core-reference-review-package
-codex/final-target-operating-model
-codex/r0-post-merge-cleanup
-codex/source-set-terminal-migration
-codex/branch-gc-convergence
+docs/embedded-overview-workbook
+noop-cleanup-marker
+noop-do-not-use
+codex/final-branch-gc
