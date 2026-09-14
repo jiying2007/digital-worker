@@ -9,6 +9,7 @@
 - [AI R&D Target Operating Model — Final Baseline](docs/strategy/ai-rd-target-operating-model.md)：长期 Operating Model；冻结 4 个稳定控制面 + N Runtime Binding + Thin Session Bootstrap、L0/L1/L2 和 exact-source-set 终态语义；
 - [R0 Trust Closure](docs/strategy/r0-trust-closure.md)：当前 real Pilot 的 trust baseline；
 - [Embedded Domain Closed Loop V1](docs/strategy/embedded-domain-closed-loop-v1.md)：当前阶段嵌入式落地策略基线；
+- [Architecture Review Readiness Pack](docs/review/)：架构评审的 Pre-read、Decision Matrix、Evidence Gap、RACI 与端到端 Walkthrough；
 - [嵌入式系统专家团机器资产](expert-groups/embedded-system/README.md)：`0.7.0 / tooling-ready / real-pilot-evidence-pending / provider-neutral`；
 - [嵌入式系统专家团-核心参考](嵌入式系统专家团-核心参考/)：`review-ready / synchronized-v0.7.0`；
 - [Contract Catalog](contracts/catalog.json)：本仓 authoritative Contract 的机器账本；
