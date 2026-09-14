@@ -65,6 +65,15 @@ jobs:
         run: python scripts/validate_provider_neutral_architecture.py
       - name: Validate Edge Foundation target architecture
         run: python scripts/validate_edge_foundation_architecture.py
+      - name: Evaluate Edge Foundation shadow routing
+        run: python scripts/evaluate_edge_foundation_shadow.py --output /tmp/edge-foundation-shadow.json
+      - name: Upload Edge Foundation shadow evaluation
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: edge-foundation-shadow-evaluation
+          path: /tmp/edge-foundation-shadow.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Validate core-reference synchronization
         run: python scripts/validate_core_reference.py
       - name: Validate Branch GC safety contract
