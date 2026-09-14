@@ -135,17 +135,17 @@ def main() -> None:
     require(compatibility["direct_big_bang_removal_forbidden"] is True, "big-bang removal must remain forbidden")
 
     adr_text = adr_path.read_text(encoding="utf-8")
-    required_terms = [
+    bilingual_markers = [
         "领域（Domain）",
         "能力域（Capability）",
         "编排平面（Orchestration Plane）",
         "可信保障平面（Assurance Plane）",
         "运行时（Runtime）",
-        "契约（Contract）",
-        "渐进式披露 / 按需加载",
+        "|Contract|契约|",
+        "|Progressive Disclosure|渐进式披露 / 按需加载|",
     ]
-    for term in required_terms:
-        require(term in adr_text, f"ADR-004 missing Chinese/English terminology pair: {term}")
+    for marker in bilingual_markers:
+        require(marker in adr_text, f"ADR-004 missing normalized bilingual terminology marker: {marker}")
 
     print(
         "edge-foundation architecture validation PASS: "
