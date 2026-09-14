@@ -28,8 +28,8 @@ def main() -> None:
     adr1 = ROOT / "docs/adr/ADR-001-workbuddy-codex-integration-boundary.md"
     adr2 = ROOT / "docs/adr/ADR-002-embedded-system-expert-team-architecture.md"
     adr3 = ROOT / "docs/adr/ADR-003-provider-neutral-ai-rd-target-architecture.md"
-    core_arch = CORE / "01-架构设计/01 总体架构设计.md"
-    core_boundary = CORE / "01-架构设计/02 系统边界与控制面.md"
+    core_arch = CORE / "02-架构设计/01 总体架构设计.md"
+    core_boundary = CORE / "02-架构设计/02 系统边界与控制面.md"
 
     for path in [workflow_doc, adr1, adr2, adr3, core_arch, core_boundary]:
         require(path.is_file(), f"missing architecture asset: {path.relative_to(ROOT)}")
