@@ -1,137 +1,130 @@
-# 组织模型、职责与 RACI
+# 数字岗位协作与 RACI
 
-## 1. 组织方式
+> 本文只回答“**8 个数字岗位之间如何协作、谁对哪类判断负责**”。  
+> 每个岗位自身的职责、输入输出、工作要求和数字任职资格，统一见 [《数字岗位与能力模型》](03%20数字岗位与能力模型.md)，本文不重复岗位说明书。
 
-专家团采用 **1 名主理人 + 7 个专业角色**。这里的“角色”表示稳定职责，不要求每个角色由独立人员或独立模型永久占用。关键是任务进入系统后，谁对哪类判断负责必须清楚。
+## 1. 协作原则
+
+专家团保持 **1 名主理人 + 7 个专业角色 / 8 个数字岗位**，但不意味着每个任务都需要 8 个岗位参与。
 
 ```text
-                    主理人
-                      │
-      ┌───────┬───────┼───────┬────────┐
-      ▼       ▼       ▼       ▼        ▼
-    架构   Linux/BSP MCU/RTOS 驱动组件 调试可靠性
-                                      │
-                         ┌────────────┴────────────┐
-                         ▼                         ▼
-                       验证                     独立审查
+                       P01 技术负责人
+                             │
+             ┌───────────────┼────────────────┐
+             ▼               ▼                ▼
+         P02 架构        P03/P04/P05       P06 调试可靠性
+        系统边界          平台与设备事实       根因闭环
+             │               │                │
+             └───────────────┼────────────────┘
+                             ▼
+                       Engineering
+                             │
+                             ▼
+                      P07 Verification
+                             │
+                             ▼
+                       P08 Independent Review
 ```
 
-## 2. 主理人
+协作遵守四条规则：
 
-主理人是唯一流程入口，负责把任务送到正确的人、正确的 Gate 和正确的工程边界。
+1. **P01 管任务和收口，不替专业岗位下领域事实结论**；
+2. **P02 管系统边界，P03-P05 对各自平台/设备事实负责，P06 管复杂 RCA 方法与根因收敛**；
+3. **Engineering 实施与专家判断分开**；
+4. **P07 Verification 与 P08 Independent Review 独立于实施，并彼此职责不同**。
 
-### 主要职责
+---
 
-- 建立任务 charter 和 Run；
-- 判 task type / workflow mode；
-- 组织 Gate K/M/0；
-- 路由最小必要专业角色；
-- 维护 run state / gate ledger；
-- 汇总 Gate T 技术决策；
-- 组装 Engineering Package；
-- 记录 Runtime/执行身份；
-- 调度 Verification / Review；
-- 处理 blocker、降级、恢复和收口。
-
-### 明确不做
-
-- 不替 Linux/MCU/Driver 等专业 Owner 编结论；
-- 不因为 Runtime 输出“成功”就签 Verification PASS；
-- 不默认把所有任务扩成 full-chain；
-- 不把缺失材料用常识补齐；
-- 不绕过 A6/A7 人工批准。
-
-## 3. 七个专业角色
-
-### 嵌入式架构
-
-负责系统分层、Linux/MCU 职责、资源预算、接口、实时性、生命周期、故障隔离和平台影响。
-
-### Linux/BSP
-
-负责 Boot、Kernel、Device Tree、Clock/Reset/Pinctrl、IRQ/DMA、Storage/Filesystem 和板级资源事实。
-
-### MCU/RTOS
-
-负责 Startup、Linker、ROM/RAM、ISR/DMA、RTOS、Watchdog、低功耗、Bootloader/OTA 和 MCU 侧实时性。
-
-### 驱动与组件
-
-负责设备协议、驱动集成、组件接口、错误恢复、跨平台适配、国产替代和可复用能力。
-
-### 调试与可靠性
-
-负责 Evidence timeline、Hypothesis Registry、Root Cause、长稳、内存/并发/性能诊断和回归范围。
-
-### 验证
-
-负责 Verification Plan、required layer、build/device/HIL evidence identity、回归充分性和验证报告。
-
-### 独立审查
-
-负责风险、错误放行、P0/P1 finding、Release Readiness 和最终审查意见。
-
-## 4. 核心 RACI
+## 2. 核心 RACI
 
 R=Responsible，A=Accountable，C=Consulted，I=Informed。
 
-|活动|主理人|架构|BSP|MCU|驱动|调试|验证|审查|
+|活动|P01 主理人|P02 架构|P03 BSP|P04 MCU|P05 驱动|P06 调试|P07 验证|P08 审查|
 |---|---|---|---|---|---|---|---|---|
-|任务分类/Gate K/M/0|A/R|C|C|C|C|C|I|I|
-|系统架构/接口方案|A|R|C|C|C|C|C|I|
-|Linux/BSP 技术结论|A|C|R|C|C|C|C|I|
-|MCU/RTOS 技术结论|A|C|C|R|C|C|C|I|
-|驱动/组件方案|A|C|C|C|R|C|C|I|
-|Debug Hypothesis/Root Cause|A|C|C|C|C|R|C|I|
-|Engineering Package|A/R|C|C|C|C|C|C|I|
-|代码/工程实施|I|I|I|I|I|I|I|I|
-|Verification Plan/Report|I|C|C|C|C|C|A/R|I|
-|Independent Review|I|C|C|C|C|C|C|A/R|
-|Closure|A/R|I|I|I|I|I|C|C|
+|任务分类 / Knowledge-Material-Intake 准备度|A/R|C|C|C|C|C|I|I|
+|系统架构 / 接口 / NFR|A|R|C|C|C|C|C|I|
+|Linux/BSP 平台事实|A|C|R|C|C|C|C|I|
+|MCU/RTOS 平台事实|A|C|C|R|C|C|C|I|
+|Driver / Component 设备与接口事实|A|C|C|C|R|C|C|I|
+|复杂 Debug Hypothesis / Root Cause|A|C|C|C|C|R|C|I|
+|Technical Decision / Engineering Package|A/R|C|C|C|C|C|C|I|
+|代码 / 配置 / 构建 / 设备实施|I|I|I|I|I|I|I|I|
+|Verification Plan / Report|I|C|C|C|C|C|A/R|I|
+|Independent Review / Release Readiness|I|C|C|C|C|C|C|A/R|
+|Closure / Knowledge Harvest|A/R|I|I|I|I|I|C|C|
 
-工程实施由工程师 + 受控 Engineering Runtime 负责，不归任何“专家角色”自动所有。
+工程实施由**工程师 + 受控 Engineering Runtime**负责，不自动归属于任何 Expert Position。岗位参与的最小集合由任务影响面决定。
 
-## 5. 冲突怎么处理
+---
 
-### 专业结论冲突
+## 3. 专业冲突怎么处理
 
-先比较：
+### 3.1 两个专业岗位给出不同结论
 
-1. 是否使用同一 System Context；
-2. evidence 是否来自同一版本/设备；
-3. 结论属于哪个领域的最终判断权；
-4. 是否需要新的 discriminating experiment。
+先检查：
 
-主理人负责推动收敛，但不通过“投票”替代证据。
+1. 是否使用同一 `System Context`；
+2. source / firmware / board / device identity 是否一致；
+3. 两个结论分别属于谁的事实责任边界；
+4. 哪个新的区分实验能够消除冲突。
 
-### 架构与领域实现冲突
+P01 负责推动收敛，但不能通过投票替代 Evidence。
 
-架构负责系统边界和约束，领域 Owner 负责证明具体平台事实。如果架构假设与 TRM/代码/测试事实冲突，应更新技术决策，而不是要求领域事实服从设计文档。
+### 3.2 架构假设与领域事实冲突
 
-### Verification 与实现冲突
+P02 负责系统边界和目标约束；P03-P05 负责证明具体平台和设备事实。如果架构假设与 TRM、代码或测量冲突，应更新 Technical Decision，而不是要求领域事实服从架构文档。
 
-Verification 对证据覆盖有最终判断权。实现者可以补证据或质疑验证方法，但不能自行把失败改为 PASS。
+### 3.3 Debug RCA 跨多个领域
 
-### Review 与项目进度冲突
+P06 维护**唯一 Hypothesis Registry 和 Root Cause 状态**；P03-P05 为假设提供各领域直接事实。不能让每个专业各自维护一份互相冲突的 RCA。
 
-进度压力不能删除 finding。若业务确需承担残余风险，使用显式 Risk Acceptance/APPROVE_WITH_RISK，并写责任人和期限。
+---
 
-## 6. 简单任务如何减负
+## 4. Verification、Review 与实施冲突
 
-不是所有任务都需要七个角色参与。
+### Verification 与实现者
 
-- 单一 DTS 问题：主理人 + BSP，必要时 Verification；
-- 明确 MCU Linker overflow：主理人 + MCU，按风险决定是否进入工程链；
-- 单纯 Code Review：Review Governor 主责，需要领域事实时再拉 BSP/MCU/Driver；
-- 技术可行性评审：架构主责，不自动进入 Execution。
+P07 对“现有 Evidence 能证明到哪一层”有独立判断权。实现者可以：
 
-组织模型稳定，不代表每次任务都把全员叫齐。
+- 补充证据；
+- 指出验证方法错误；
+- 修复实现后重新提交验证。
 
-## 7. 人与工具的关系
+但实现者不能自行把 FAIL/NOT_RUN 改成 PASS。
 
-这些角色可以由人、受控模型或混合方式承担分析辅助，但责任边界不随工具变化：
+### Review 与项目进度
 
-- 人负责组织授权和最终责任；
-- Runtime/模型可以读资料、分析、生成方案和执行受控工程动作；
-- 关键设备写入、发布、风险接受仍由明确人员批准；
-- Verification/Review 的独立性要从任务记录和证据上体现，而不是只看“用了不同模型”。
+P08 的 Finding 不能因 deadline 被删除。业务需要承担残余风险时，应走明确 Risk Acceptance / `APPROVE_WITH_RISK`，保留 owner、期限、containment 和 rollback。
+
+Verification 事实状态不会因为风险被接受而改变。
+
+---
+
+## 5. 简单任务如何缩编
+
+组织模型稳定，任务参与岗位可以很小：
+
+|任务|典型最小组合|
+|---|---|
+|单一 DTS/resource 问题|P01 + P03；按 required layer 引入 P07|
+|明确 MCU Linker overflow|P01 + P04；需要系统资源权衡时加 P02|
+|未知原因的现场偶发故障|P01 + P06 + 相关领域 Owner；之后 P07/P08|
+|纯技术可行性评审|P01 + P02；不自动进入 Engineering|
+|单纯 Code Review|P08 主责；需要领域事实时按需拉 P02-P06|
+|Release / OTA Readiness|P07 + P08；P01 提供闭环材料，Release Owner 保留人工批准|
+
+原则是：**只拉完成当前 Claim 所需的最小岗位集合**，不是“专家越多质量越高”。
+
+---
+
+## 6. 人、Agent 与 Runtime 的关系
+
+数字岗位是稳定责任模型，Agent 是岗位实现，Runtime 是执行环境。三者不能混为一体：
+
+- 人类组织保留授权、风险接受、设备写入和发布等高风险责任；
+- Agent 可以承担稳定岗位的分析、判断和产物生成职责；
+- Runtime 可以执行受控工程动作，但 Runtime success 不等于领域结论或 Verification PASS；
+- 换 Runtime 不改变 Position、RACI、Gate 或 Evidence 规则；
+- 独立性由责任主体和证据链体现，不以“换了一个模型”代替。
+
+跨产品、项目、硬件、测试/HIL、Release、Knowledge、IT/Security 的组织关系见 [《跨团队 RACI》](04%20跨团队RACI.md)。
