@@ -1,5 +1,5 @@
 schema_version: 1
-workbook_view_version: 1.0.0
+overview_view_version: 1.0.0
 status: operational-overview
 purpose: 仅保存总览层的人类可读标签、短说明和类比；机器规则仍以 expert-groups/embedded-system 下的 Contract/Policy/Schema 为准。
 

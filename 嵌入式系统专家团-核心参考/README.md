@@ -7,13 +7,13 @@
 
 本目录采用三层信息体系：**总览负责快速理解，Markdown 手册负责工程方法，机器 Contract 负责精确执行**。三层不能互相替代。
 
-## 1. 第一次看：先打开总览
+## 1. 第一次看：先看总览
 
-优先阅读 [`00-总览/README.md`](00-总览/README.md)，并打开：
+优先阅读：
 
-**[`嵌入式系统专家团-架构与运行总览.xlsx`](00-总览/嵌入式系统专家团-架构与运行总览.xlsx)**
+**[`00-总览/00 架构与运行总览.md`](00-总览/00%20架构与运行总览.md)**
 
-总览用 8 张表回答最常见的问题：
+这一个入口集中回答八类最常见问题：
 
 1. 整套体系是什么、当前成熟度在哪里；
 2. 1+7 各角色负责什么、输入输出是什么；
@@ -24,7 +24,7 @@
 7. 产品、项目、开发、硬件、测试/HIL、Verification、Review、Release 如何分工；
 8. 常用术语以及一次完整任务如何走通。
 
-**Excel 只是视图，不是第二个 SSOT。** 其中机器字段来自或校验于 `expert-group.yaml`、`task-modes.yaml`、`workflow.yaml`、`gate-policy.yaml`、`action-policy.yaml` 和 `p0-skills.yaml`；CI 会检查它们是否漂移。
+总览是**视图，不是第二个 SSOT**。其中 task / mode / role / gate / action / verification 等机器字段由 CI 与 `expert-group.yaml`、`task-modes.yaml`、`workflow.yaml`、`gate-policy.yaml`、`action-policy.yaml`、`p0-skills.yaml` 做同步校验。
 
 ## 2. 做具体任务：再下钻工程手册
 
