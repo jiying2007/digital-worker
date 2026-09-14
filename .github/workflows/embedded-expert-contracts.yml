@@ -74,6 +74,29 @@ jobs:
           path: /tmp/edge-foundation-shadow.json
           if-no-files-found: error
           retention-days: 14
+      - name: Evaluate synthetic Pilot shadow receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/evaluate_edge_foundation_pilot_shadow.py \
+            tests/fixtures/pilot-run.valid.json \
+            --pilot-result tests/fixtures/pilot-result.valid.json \
+            --output /tmp/edge-foundation-pilot-shadow.json
+          python - /tmp/edge-foundation-pilot-shadow.json <<'PY'
+          import json, sys
+          receipt = json.load(open(sys.argv[1], encoding='utf-8'))
+          assert receipt['routing_authority'] == 'legacy', receipt
+          assert receipt['canonical_routing_changed'] is False, receipt
+          assert receipt['phase3_evidence_eligible'] is False, receipt
+          assert 'synthetic-source-not-eligible' in receipt['eligibility_reasons'], receipt
+          PY
+      - name: Upload Edge Foundation Pilot shadow receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: edge-foundation-pilot-shadow-receipt
+          path: /tmp/edge-foundation-pilot-shadow.json
+          if-no-files-found: error
+          retention-days: 14
       - name: Validate core-reference synchronization
         run: python scripts/validate_core_reference.py
       - name: Validate Branch GC safety contract
@@ -87,7 +110,7 @@ jobs:
       - name: Verify exact cross-repo checkouts and contract digests
         run: python scripts/verify_cross_repo_checkouts.py --root "$RUNNER_TEMP/dw-integrations" --fetch --output /tmp/cross-repo-verification.json
       - name: Upload cross-repo verification receipt
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@ea165f8d65b540449e92b4886f43607fa02
         with:
           name: cross-repo-verification
           path: /tmp/cross-repo-verification.json
