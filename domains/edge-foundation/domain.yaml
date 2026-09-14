@@ -160,3 +160,7 @@ legacy_compatibility:
   canonical_new_responsibility_model: true
   legacy_machine_contract_preserved: true
   direct_big_bang_removal_forbidden: true
+  migration_phase: phase-2-dual-evaluation
+  shadow_routing: routing-shadow.yaml
+  shadow_evaluator: ../../scripts/evaluate_edge_foundation_shadow.py
+  canonical_routing_switched: false
