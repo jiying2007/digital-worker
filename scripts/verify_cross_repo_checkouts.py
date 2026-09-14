@@ -49,6 +49,21 @@ def checkout(repo: str, commit: str, destination: Path) -> None:
     run("git", "-C", str(destination), "checkout", "--quiet", "--detach", "FETCH_HEAD")
 
 
+def fetch_exact_tag(destination: Path, tag: str) -> None:
+    """Fetch exactly one tag ref without relying on Git's positional `tag` syntax."""
+    if not re_full_tag(tag):
+        fail(f"invalid release tag name: {tag}")
+    tag_ref = f"refs/tags/{tag}"
+    run("git", "-C", str(destination), "fetch", "--quiet", "origin", f"{tag_ref}:{tag_ref}")
+
+
+def re_full_tag(tag: str) -> bool:
+    # Release tags are intentionally simple and must never be interpreted as refspec fragments.
+    import re
+
+    return re.fullmatch(r"v[0-9]+(?:\.[0-9]+){2}(?:[-+][0-9A-Za-z.-]+)?", tag) is not None
+
+
 def verify_contract(
     *,
     name: str,
@@ -115,7 +130,7 @@ def verify_one(name: str, entry: dict, destination: Path, fetch: bool) -> dict:
         baseline = entry["release_baseline"]
         if fetch:
             run("git", "-C", str(destination), "fetch", "--quiet", "--depth=1", "origin", baseline["commit"])
-            run("git", "-C", str(destination), "fetch", "--quiet", "--depth=1", "origin", "tag", baseline["tag"])
+            fetch_exact_tag(destination, baseline["tag"])
         actual_tree = run("git", "-C", str(destination), "rev-parse", f"{baseline['commit']}^{{tree}}")
         actual_manifest_blob = run("git", "-C", str(destination), "rev-parse", f"{baseline['commit']}:manifest.json")
         actual_tag_commit = run("git", "-C", str(destination), "rev-parse", f"{baseline['tag']}^{{}}")
