@@ -1,6 +1,6 @@
 # 嵌入式系统专家核心参考
 
-> 文档状态：**运行参考（operational reference）**  
+> 文档状态：**运行参考（Operational Reference）** / `operational reference`  
 > 目标责任架构：`domains/edge-foundation/` + `ADR-004`  
 > 当前兼容执行面：`expert-groups/embedded-system/` v0.7.0  
 > 当前阶段：`iterative-development`
