@@ -1,0 +1,162 @@
+schema_version: 1
+id: edge-foundation
+name: 端侧底座领域
+name_en: Edge Foundation Domain
+status: target-v1
+architecture_model: provider-neutral
+responsibility_model: contract-first
+runtime_topology: not_frozen
+
+canonical_adr: ../../docs/adr/ADR-004-edge-foundation-digital-responsibility-architecture.md
+source_material: ../../docs/source-materials/端侧底座专家团创建.docx
+
+orchestration:
+  name: 编排平面
+  name_en: Orchestration Plane
+  provider_binding: not_frozen
+  implementation_binding: not_frozen
+  responsibilities:
+    - domain-routing
+    - state-management
+    - gate-control
+    - context-selection
+    - budget-control
+    - retry-resume
+    - escalation
+  forbidden_assumptions:
+    - workbuddy-is-required
+    - one-expert-equals-one-agent
+    - capability-equals-agent
+
+coordination_role:
+  id: edge-coordination
+  name: 端侧协调角色
+  name_en: Edge Coordination Role
+  type: role
+  is_domain_expert: false
+  responsibilities:
+    - intake
+    - triage
+    - domain-routing
+    - cross-domain-synthesis
+    - conflict-resolution
+    - closure
+  runtime_binding: not_frozen
+
+experts:
+  - id: structure-expert
+    name: 结构专家
+    name_en: Structure Expert
+    responsibility: structure
+  - id: hardware-expert
+    name: 硬件专家
+    name_en: Hardware Expert
+    responsibility: hardware
+  - id: embedded-system-expert
+    name: 嵌入式系统专家
+    name_en: Embedded System Expert
+    responsibility: embedded-system
+    capabilities:
+      - embedded.architecture
+      - embedded.linux-bsp
+      - embedded.mcu-rtos
+      - embedded.driver-component
+      - embedded.debug-reliability
+
+capability_policy:
+  capability_is_agent: false
+  default_growth: capability_or_skill
+  expert_promotion_requires_adr: true
+  expert_promotion_criteria:
+    - independent-responsibility-boundary
+    - independent-task-entry
+    - independent-lifecycle
+    - independent-core-deliverables
+    - independent-knowledge-domain
+    - substantial-stable-skills
+    - recurring-direct-routing
+    - explicit-cross-expert-io-contract
+
+execution:
+  name: 执行平面
+  name_en: Execution Plane
+  runtime_binding: not_frozen
+  allowed_implementations:
+    - engineer
+    - engineering-agent-runtime
+    - codex
+    - adk
+    - ide-agent
+    - ci
+    - hil
+    - script
+    - device
+    - other
+  responsibility_separation_required: true
+
+assurance:
+  name: 可信保障平面
+  name_en: Assurance Plane
+  independent_from_execution: true
+  responsibilities:
+    verification:
+      name: 验证
+      name_en: Verification
+      self_approval_by_implementation: false
+    review:
+      name: 独立审查
+      name_en: Independent Review
+      independent_from_domain_decision_and_execution: true
+    evidence:
+      name: 证据
+      name_en: Evidence
+      source_of_truth_stays_at_source: true
+    evaluation:
+      name: 评测
+      name_en: Evaluation
+
+workflow_semantics:
+  frozen_high_level_modes:
+    - single_domain
+    - multi_domain
+    - diagnostic
+    - review
+  concrete_workflows_not_frozen: true
+  minimal_required_path: true
+
+cross_domain_collaboration:
+  model: claim-evidence-driven
+  shared_objects:
+    - claim
+    - hypothesis
+    - evidence
+    - finding
+    - decision
+    - verification
+    - closure
+  fact_states:
+    - observed
+    - inferred
+    - confirmed
+
+knowledge:
+  source_of_truth_policy: stays_at_source
+  knowledge_provider_binding: not_frozen
+  canonical_source_examples:
+    - git
+    - issue-pr
+    - ci
+    - artifact-store
+    - hil
+    - datasheet-trm
+    - schematic
+    - measurement
+    - collaboration-docs
+
+legacy_compatibility:
+  embedded_system_surface: ../../expert-groups/embedded-system/expert-group.yaml
+  mapping: compatibility/embedded-1plus7-mapping.yaml
+  mode: shadow
+  canonical_new_responsibility_model: true
+  legacy_machine_contract_preserved: true
+  direct_big_bang_removal_forbidden: true
