@@ -138,7 +138,47 @@ python scripts/evaluate_embedded_pilot.py <pilot-result...> --output pilot-metri
 
 评分门槛从 `pilot-plan.yaml` 读取。Synthetic 只验证工具链，不计入真实 Pilot / Knowledge evidence。
 
-## 10. 当前阶段退出条件
+## 10. 生成端侧底座影子凭证并评估 phase-3 readiness
+
+真实 Pilot 完成并验证后，额外生成一份**端侧底座影子凭证（Edge Foundation shadow receipt）**。它只把旧执行身份映射到新的 Domain / Expert / Capability / Assurance 责任语义，不改变当前 canonical routing，也不修改 frozen evidence bundle。
+
+```bash
+python scripts/evaluate_edge_foundation_pilot_shadow.py \
+  <run-dir>/pilot-run.json \
+  --pilot-result <run-dir>/pilot-result.json \
+  --output <run-dir>/edge-foundation-shadow-receipt.json
+```
+
+只有以下六项同时为真，凭证才会标记 `phase3_evidence_eligible=true`：
+
+- `source_real`；
+- `run_completed`；
+- `result_provided`；
+- `outcome_pass`；
+- `no_unauthorized_actions`；
+- `audit_trace_complete`。
+
+Synthetic 即使自身 PASS，也必须保持 `phase3_evidence_eligible=false`。
+
+三轨真实任务完成后，聚合当前所有 receipt：
+
+```bash
+python scripts/evaluate_edge_foundation_phase3_readiness.py \
+  --receipt-dir expert-groups/embedded-system/pilot/runs \
+  --output edge-foundation-phase3-readiness.json
+```
+
+需要作为 Gate 使用时增加：
+
+```text
+--require-ready
+```
+
+未满足条件时命令以 exit `2` fail-closed，并输出 `status=BLOCKED`。门槛直接复用 `expert-groups/embedded-system/pilot/pilot-plan.yaml`，当前要求 debug / feature / review_release 各至少 1 个 eligible real receipt，合计至少 3 个。
+
+即使输出 `ELIGIBLE_FOR_REVIEW`，也只表示**允许发起 phase-3 canonical routing switch 的独立评审**；不会自动修改 `canonical_routing_switched=false`，不会自动废弃旧 1+7，也不会扩大 A0-A7 权限。
+
+## 11. 当前阶段退出条件
 
 前三条 real Pilot 的目标不是自动 Production Ready，而是证明至少达到 E2 Engineering Closed Loop，并为 E3 Knowledge Closed Loop 建基础。
 
