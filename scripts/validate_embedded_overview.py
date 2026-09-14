@@ -144,13 +144,15 @@ def main() -> None:
 
     workflow = yaml.safe_load((EMB / "config/workflow.yaml").read_text(encoding="utf-8"))
     for gate in expert_group["core_gates"]:
-        require(gate in workflow_guide, f"workflow guide missing core gate: {gate}")
+        gate_name = gate.split(".", 1)[1].upper() if "." in gate else gate.upper()
+        require(f"Gate {gate_name}" in workflow_guide, f"workflow guide missing human-readable core gate: {gate}")
     require("任务生命周期与 Gate" in overview, "overview must link to the detailed Gate source")
 
     action_doc = yaml.safe_load((EMB / "config/action-policy.yaml").read_text(encoding="utf-8"))
     require(len(action_doc["levels"]) == 8, "expected A0-A7 action policy")
     for action_id in action_doc["levels"]:
-        require(action_id in action_guide, f"action governance guide missing: {action_id}")
+        human_level = action_id.split("_", 1)[0]
+        require(f"|{human_level}|" in action_guide, f"action governance guide missing human-readable level: {action_id}")
     require(not [action_id for action_id in action_doc["levels"] if action_id in overview], "overview must not mirror the detailed action table")
     require("A6_DEVICE_WRITE" in positions_text and "A7_RELEASE" in positions_text, "position qualification model must preserve A6/A7 human boundary")
 
@@ -168,10 +170,11 @@ def main() -> None:
 
     for marker in [
         "不是招聘 JD", "Position = 数字岗位", "Agent    = 承担岗位的数字员工",
-        "Skill    = 数字员工掌握的岗位技能", "数字任职资格模型", "岗位替代",
-        "positions.yaml", "不声明任何岗位已经达到完全替代人工",
+        "Skill    = 数字员工掌握的岗位技能", "不声明任何岗位已经达到完全替代人工",
     ]:
         require(contains_compact(positions_text, marker), f"position governance marker missing: {marker}")
+    for marker in ["数字任职资格模型", "岗位替代", "positions.yaml"]:
+        require(marker in positions_text, f"position governance marker missing: {marker}")
 
     for link_marker in [
         "数字岗位与能力模型", "Skill 能力地图", "任务类型运行矩阵", "任务生命周期与 Gate",
