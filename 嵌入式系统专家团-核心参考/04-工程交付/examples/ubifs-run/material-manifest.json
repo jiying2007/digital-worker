@@ -1,0 +1,15 @@
+{
+  "run_id": "EXAMPLE-UBIFS-001",
+  "items": [
+    {"kind": "repo", "required": true, "status": "available", "source": "firmware/main", "version": "example", "evidence_ref": "task-brief.json"},
+    {"kind": "base_commit", "required": true, "status": "available", "source": "firmware/main", "version": "1111111111111111111111111111111111111111", "evidence_ref": "task-brief.json"},
+    {"kind": "board_revision", "required": true, "status": "available", "source": "example-board", "version": "rev-a", "evidence_ref": "task-brief.json"},
+    {"kind": "soc_mcu", "required": true, "status": "available", "source": "example-soc", "version": "v1", "evidence_ref": null},
+    {"kind": "firmware", "required": true, "status": "available", "source": "example-firmware", "version": "sha256:example-fw", "evidence_ref": null},
+    {"kind": "device_identity", "required": true, "status": "available", "source": "example-device", "version": "EXAMPLE-DEVICE-001", "evidence_ref": null},
+    {"kind": "test_environment", "required": true, "status": "available", "source": "example-lab", "version": "controlled-write-stress", "evidence_ref": null}
+  ],
+  "readiness": "READY",
+  "missing_critical": [],
+  "degradation_approved_by": null
+}

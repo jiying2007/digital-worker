@@ -1,0 +1,14 @@
+{
+  "decision_id": "TD-EXAMPLE-UBIFS-001",
+  "run_id": "EXAMPLE-UBIFS-001",
+  "solution": "Correct the confirmed ECC status-to-MTD return mapping in the affected read path without changing UBIFS semantics.",
+  "alternatives_rejected": ["Suppress UBIFS remount behavior", "Replace flash without media-failure evidence"],
+  "impact": ["SPI-NAND/MTD read error mapping", "Storage regression scope"],
+  "dependencies": ["Exact controller ECC status definition"],
+  "risks": ["True uncorrectable ECC must remain fail-closed"],
+  "verification_plan": ["Cross-build", "Correctable ECC case", "Uncorrectable ECC negative case", "Original device reproduction"],
+  "rollback": "Revert the scoped mapping change and restore the previous artifact if any storage regression appears.",
+  "unresolved_items": [],
+  "evidence_refs": ["technical-analysis.json", "hypothesis-registry.json"],
+  "consumed_refs": ["technical-analysis.json", "hypothesis-registry.json"]
+}

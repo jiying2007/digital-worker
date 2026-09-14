@@ -1,0 +1,15 @@
+{
+  "analysis_id": "AN-EXAMPLE-UBIFS-001",
+  "run_id": "EXAMPLE-UBIFS-001",
+  "expert": "debug-reliability-expert",
+  "claims": [
+    {"statement": "The observed read-only transition occurs after an MTD/UBI I/O error chain.", "fact_state": "observed", "confidence": "high", "evidence_refs": ["evidence://example/timeline"]},
+    {"statement": "The current strongest hypothesis is incorrect ECC status mapping rather than confirmed media failure.", "fact_state": "inferred", "confidence": "medium", "evidence_refs": ["hypothesis-registry.json"]}
+  ],
+  "recommendations": ["Run discriminating correctable/uncorrectable ECC cases before changing UBIFS behavior"],
+  "risks": ["A bad fix could suppress true uncorrectable media errors"],
+  "verification_requirements": ["Cross-build", "Target reproduction", "Uncorrectable ECC negative case"],
+  "unverified_items": ["Whether BDMA and RIU paths interpret the same ECC status identically"],
+  "consumed_refs": ["material-manifest.json", "hypothesis-registry.json"],
+  "downstream_contract": ["technical-decision"]
+}

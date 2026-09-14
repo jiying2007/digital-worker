@@ -1,0 +1,12 @@
+{
+  "run_id": "EXAMPLE-UBIFS-001",
+  "verifier": "verification-expert",
+  "implementation_owner": "engineer-plus-engineering-agent",
+  "independence_confirmed": true,
+  "layers": {"implemented": "pass", "host": "not_applicable", "cross_build": "pass", "sil": "not_applicable", "device": "pass", "hil": "pass", "release": "not_applicable"},
+  "overall": "PASS",
+  "evidence_refs": ["delivery-receipt.json", "acceptance-evidence-matrix.md"],
+  "failures": [],
+  "unverified_items": [],
+  "risks": []
+}

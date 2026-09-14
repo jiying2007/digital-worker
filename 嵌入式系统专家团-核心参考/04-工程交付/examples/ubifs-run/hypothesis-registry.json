@@ -1,0 +1,7 @@
+{
+  "run_id": "EXAMPLE-UBIFS-001",
+  "hypotheses": [
+    {"hypothesis_id": "H1", "statement": "A real uncorrectable ECC event is correctly propagated and triggers the filesystem protection path.", "status": "supported", "confidence": "medium", "evidence_for": ["evidence://example/io-error"], "evidence_against": ["evidence://example/raw-read-stable"], "experiment": "Inject a controlled uncorrectable ECC case and compare controller status with MTD return code.", "experiment_result": null, "owner": "linux-bsp-expert"},
+    {"hypothesis_id": "H2", "statement": "Correctable ECC status is misinterpreted as uncorrectable in one read path.", "status": "supported", "confidence": "high", "evidence_for": ["evidence://example/status-mismatch"], "evidence_against": [], "experiment": "Run paired correctable ECC reads through the relevant read paths and compare status mapping.", "experiment_result": "The affected path returns an uncorrectable result for a correctable status while the control path does not.", "owner": "debug-reliability-expert"}
+  ]
+}
