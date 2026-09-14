@@ -28,10 +28,11 @@ def plan() -> dict:
         "proposed_canonical_authority": "edge-foundation",
         "canonical_routing_switched": False,
         "apply_allowed": False,
-        "allowed_change_classes": ["canonical-routing-authority", "migration-phase-status", "routing-selector-entrypoint"],
+        "allowed_change_classes": ["canonical-routing-authority", "routing-selector-entrypoint"],
         "forbidden_change_classes": [
             "legacy-identity-removal",
             "legacy-identity-deprecation",
+            "compatibility-mapping-rewrite",
             "skill-owner-rewrite",
             "pilot-threshold-change",
             "action-authority-expansion",
@@ -54,10 +55,19 @@ def plan() -> dict:
 
 
 class CanonicalSwitchCandidateTests(unittest.TestCase):
-    def _files(self, root: Path, changed: list[str]):
+    def _files(self, root: Path, changed: list[str], include_compat: bool = False):
         plan_path = root / "plan.json"
         plan_path.write_text(json.dumps(plan()), encoding="utf-8")
         digest = hashlib.sha256(plan_path.read_bytes()).hexdigest()
+        changes = [
+            {"path": "domains/edge-foundation/domain.yaml", "change_class": "canonical-routing-authority"},
+            {"path": "domains/edge-foundation/canonical-routing.yaml", "change_class": "routing-selector-entrypoint"},
+        ]
+        if include_compat:
+            changes.append({
+                "path": "domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml",
+                "change_class": "routing-selector-entrypoint",
+            })
         manifest = {
             "schema_version": 1,
             "status": "CANDIDATE_ONLY",
@@ -72,11 +82,7 @@ class CanonicalSwitchCandidateTests(unittest.TestCase):
             "verification_independence_changed": False,
             "review_independence_changed": False,
             "provider_binding_changed": False,
-            "changes": [
-                {"path": "domains/edge-foundation/domain.yaml", "change_class": "canonical-routing-authority"},
-                {"path": "domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml", "change_class": "migration-phase-status"},
-                {"path": "domains/edge-foundation/canonical-routing.yaml", "change_class": "routing-selector-entrypoint"},
-            ],
+            "changes": changes,
         }
         manifest_path = root / "manifest.json"
         manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
@@ -89,7 +95,6 @@ class CanonicalSwitchCandidateTests(unittest.TestCase):
             root = Path(tmp)
             expected = [
                 "domains/edge-foundation/domain.yaml",
-                "domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml",
                 "domains/edge-foundation/canonical-routing.yaml",
             ]
             manifest, switch_plan, changed = self._files(root, expected)
@@ -97,12 +102,23 @@ class CanonicalSwitchCandidateTests(unittest.TestCase):
             self.assertEqual(result["status"], "PASS")
             self.assertTrue(result["legacy_compatibility_preserved"])
 
+    def test_compatibility_mapping_change_fails_closed(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            changed_files = [
+                "domains/edge-foundation/domain.yaml",
+                "domains/edge-foundation/canonical-routing.yaml",
+                "domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml",
+            ]
+            manifest, switch_plan, changed = self._files(root, changed_files, include_compat=True)
+            with self.assertRaises(Exception):
+                candidate.validate_candidate(manifest, switch_plan, changed)
+
     def test_extra_legacy_file_fails_closed(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             changed_files = [
                 "domains/edge-foundation/domain.yaml",
-                "domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml",
                 "domains/edge-foundation/canonical-routing.yaml",
                 "expert-groups/embedded-system/expert-group.yaml",
             ]
