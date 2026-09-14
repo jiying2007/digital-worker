@@ -163,4 +163,8 @@ legacy_compatibility:
   migration_phase: phase-2-dual-evaluation
   shadow_routing: routing-shadow.yaml
   shadow_evaluator: ../../scripts/evaluate_edge_foundation_shadow.py
+  pilot_shadow_evaluator: ../../scripts/evaluate_edge_foundation_pilot_shadow.py
+  pilot_shadow_receipt_schema: ../../schemas/edge-foundation-shadow-receipt.v1.schema.json
+  phase3_evidence_requires_real_pilot: true
+  synthetic_pilot_must_not_count_for_phase3: true
   canonical_routing_switched: false

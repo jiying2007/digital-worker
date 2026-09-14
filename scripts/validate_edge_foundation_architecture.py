@@ -23,10 +23,21 @@ def require(condition: bool, message: str) -> None:
 def main() -> None:
     domain_path = DOMAIN_ROOT / "domain.yaml"
     mapping_path = DOMAIN_ROOT / "compatibility" / "embedded-1plus7-mapping.yaml"
+    shadow_routing_path = DOMAIN_ROOT / "routing-shadow.yaml"
+    pilot_shadow_evaluator_path = ROOT / "scripts" / "evaluate_edge_foundation_pilot_shadow.py"
+    pilot_shadow_schema_path = ROOT / "schemas" / "edge-foundation-shadow-receipt.v1.schema.json"
     adr_path = ROOT / "docs" / "adr" / "ADR-004-edge-foundation-digital-responsibility-architecture.md"
     legacy_path = LEGACY_ROOT / "expert-group.yaml"
 
-    for path in (domain_path, mapping_path, adr_path, legacy_path):
+    for path in (
+        domain_path,
+        mapping_path,
+        shadow_routing_path,
+        pilot_shadow_evaluator_path,
+        pilot_shadow_schema_path,
+        adr_path,
+        legacy_path,
+    ):
         require(path.is_file(), f"missing required edge-foundation architecture asset: {path.relative_to(ROOT)}")
 
     domain = load_yaml(domain_path)
@@ -128,11 +139,25 @@ def main() -> None:
     require("no-review-independence-regression" in invariants, "missing Review independence migration invariant")
     require("no-provider-binding-regression" in invariants, "missing provider-neutral migration invariant")
     require("source-of-truth-stays-at-source" in invariants, "missing knowledge authority migration invariant")
+    require("shadow-routing-does-not-change-execution" in invariants, "missing shadow non-canonical migration invariant")
 
     compatibility = domain["legacy_compatibility"]
-    require(compatibility["mode"] == "shadow", "first migration stage must remain shadow mode")
-    require(compatibility["legacy_machine_contract_preserved"] is True, "legacy machine contract must remain preserved during phase 1")
+    require(compatibility["mode"] == "shadow", "migration must remain shadow until canonical switch review")
+    require(compatibility["legacy_machine_contract_preserved"] is True, "legacy machine contract must remain preserved during migration")
     require(compatibility["direct_big_bang_removal_forbidden"] is True, "big-bang removal must remain forbidden")
+    require(compatibility["migration_phase"] == "phase-2-dual-evaluation", "unexpected Edge Foundation migration phase")
+    require(compatibility["shadow_routing"] == "routing-shadow.yaml", "shadow routing path drift")
+    require(compatibility["shadow_evaluator"] == "../../scripts/evaluate_edge_foundation_shadow.py", "shadow evaluator path drift")
+    require(compatibility["pilot_shadow_evaluator"] == "../../scripts/evaluate_edge_foundation_pilot_shadow.py", "pilot shadow evaluator path drift")
+    require(compatibility["pilot_shadow_receipt_schema"] == "../../schemas/edge-foundation-shadow-receipt.v1.schema.json", "pilot shadow receipt schema path drift")
+    require(compatibility["phase3_evidence_requires_real_pilot"] is True, "phase-3 must require real Pilot evidence")
+    require(compatibility["synthetic_pilot_must_not_count_for_phase3"] is True, "synthetic Pilot must never count for phase-3 evidence")
+    require(compatibility["canonical_routing_switched"] is False, "canonical routing must remain unswitched in phase-2")
+
+    phases = {item["id"]: item for item in mapping["phases"]}
+    require(phases["phase-1-shadow"]["status"] == "completed", "phase-1 evidence must remain completed")
+    require(phases["phase-2-dual-evaluation"]["status"] == "active", "phase-2 must remain active until real Pilot evidence exists")
+    require(phases["phase-3-canonical-switch"]["status"] == "blocked-on-evidence", "phase-3 must remain blocked on evidence")
 
     adr_text = adr_path.read_text(encoding="utf-8")
     bilingual_markers = [
@@ -150,7 +175,8 @@ def main() -> None:
     print(
         "edge-foundation architecture validation PASS: "
         f"{len(expert_ids)} Domain Experts, {len(embedded_capabilities)} embedded core Capabilities, "
-        f"{len(mapped_ids)}/8 legacy identities mapped, provider-neutral orchestration/runtime, independent Assurance"
+        f"{len(mapped_ids)}/8 legacy identities mapped, phase-2 shadow/pilot evidence guarded, "
+        "provider-neutral orchestration/runtime, independent Assurance"
     )
 
 
