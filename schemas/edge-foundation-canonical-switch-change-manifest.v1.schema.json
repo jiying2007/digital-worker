@@ -37,7 +37,7 @@
     "changes": {
       "type": "array",
       "minItems": 1,
-      "maxItems": 3,
+      "maxItems": 2,
       "items": {
         "type": "object",
         "additionalProperties": false,
@@ -46,7 +46,6 @@
           "path": {"type": "string", "minLength": 1},
           "change_class": {"enum": [
             "canonical-routing-authority",
-            "migration-phase-status",
             "routing-selector-entrypoint"
           ]}
         }
