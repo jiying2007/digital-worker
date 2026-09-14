@@ -1,10 +1,7 @@
 schema_version: 1
 id: embedded-1plus7-to-edge-foundation-v1
-status: active-compatibility
 source_model: ../../../expert-groups/embedded-system/expert-group.yaml
 target_model: ../domain.yaml
-migration_mode: shadow
-shadow_routing: ../routing-shadow.yaml
 
 legacy_identities:
   - legacy_id: embedded-system-team-lead
@@ -72,23 +69,5 @@ migration_invariants:
   - source-of-truth-stays-at-source
   - shadow-routing-does-not-change-execution
 
-phases:
-  - id: phase-1-shadow
-    description: 新责任模型与旧 1+7 同时校验，旧路由继续 canonical
-    status: completed
-    evidence:
-      main_commit: 0977b8833c7fdcb0d11848bb713820678205a929
-      fresh_main_run: 34845537811
-  - id: phase-2-dual-evaluation
-    description: 用 Golden Case 与真实 Pilot 同时评估旧路由和新责任语义
-    status: active
-    machine_evaluator: ../../../scripts/evaluate_edge_foundation_shadow.py
-  - id: phase-3-canonical-switch
-    description: 切换到端侧 Domain / Expert / Capability canonical routing
-    status: blocked-on-evidence
-  - id: phase-4-deprecation
-    description: 标记旧 1+7 身份 deprecated，继续兼容历史记录
-    status: blocked-on-phase-3
-  - id: phase-5-removal
-    description: 删除不再被 Contract / Pilot / Artifact 引用的旧身份
-    status: blocked-on-real-pilot
+# Mutable migration/readiness status is intentionally not stored here.
+# Real Pilot receipts + phase-3 readiness are the authority for promotion state.
