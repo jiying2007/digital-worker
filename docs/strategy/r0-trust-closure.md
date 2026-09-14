@@ -1,13 +1,16 @@
-# R0 Trust Closure — Real Pilot 前置信任闭环
+# R0 Trust Closure — Real Pilot 信任基线
 
-- Status: `current-stage-gate`
-- Date: 2026-09-13
-- Applies before: acceptance of the first real Debug / Feature / Review-Release Pilot
+- Status: `current-stage-trust-baseline`
+- Date: 2026-09-14
+- Applies before: acceptance of real Debug / Feature / Review-Release Pilot evidence
+- Current repository stage: `iterative-development`
 - Architecture: unchanged — 4 stable control planes + N replaceable Runtime Bindings + thin Session Bootstrap inside each Runtime Binding
 
 ## Why R0 exists
 
-`digital-worker` 的 Contract/Tooling 成熟度已经高于真实运行证据成熟度。进入 real Pilot 前先补齐证据完整性、跨仓身份和 GitHub server governance，避免第一个真实 run 完成后再返工可信链。
+`digital-worker` 的 Contract/Tooling 成熟度已经高于真实运行证据成熟度。R0 先闭合 evidence integrity、跨仓 exact identity、Knowledge identity 与 Runtime identity，避免真实 Pilot 开始后再返工可信链。
+
+当前阶段以快速迭代和真实证据积累为优先。**GitHub main server-side enforcement 不再作为 real Pilot acceptance 的当前前置条件**；它保留为 Productionization / 多人受保护协作前的治理 Gate。仓库内 CI、Evidence、Verification/Review、Action Policy 与 fail-closed identity 仍然必须执行。
 
 R0 不扩 Expert、Skill、Provider、Context Broker 或 Knowledge Platform；只把已经声明的 fail-closed 语义变成可验证事实。
 
@@ -96,40 +99,55 @@ Permanent contract CI requires:
 - real cross-repo exact-SHA fetch + digest verification；
 - immutable ADK release / Codex Session Bootstrap verification；
 - verification receipt artifact；
-- live repository governance report。
+- stage-aware live repository governance report。
 
 Branch GC 保留独立最小 write permission，并 pin Action SHA。
 
-## R0.7 GitHub server governance
+## R0.7 GitHub server governance — deferred for current stage
 
-Repository-local CI 不能替代 GitHub server-side enforcement。
+Repository-local CI 不能替代 GitHub server-side enforcement；但是否立即启用 server-side protection 是**阶段策略**，不是架构真理。
 
-`.github/repository-governance-contract.json` 定义最低目标：
+当前 `iterative-development` 阶段：
+
+- `main` 可以保持 unprotected；
+- 缺少 ruleset **不阻塞** #6/#7/#8 real Pilot acceptance；
+- `Repository Governance Audit` 默认以 advisory 模式运行，未保护时返回 `DEFERRED_CURRENT_STAGE` 而非失败；
+- repo-local Contract CI、cross-repo identity、Pilot evidence integrity、Verification/Review 和 Action Policy 仍然是硬门禁。
+
+进入 `productionization`、多人长期协作或正式受保护发布阶段前，必须切换 strict audit，并满足：
 
 - Require PR；
 - Require `Embedded Expert Contracts / validate`；
-- block force push；
+- block force push / non-fast-forward；
 - block main deletion；
 - bounded bypass；
-- 当前单 owner 阶段 required approval 可为 0，多 contributor productionization 前提升。
+- required approval 按团队规模提升。
 
-`verify_repository_governance.py` 和 `Repository Governance Audit` 验证 live state。
+验证命令：
 
-当前 ChatGPT GitHub connector 没有 repository ruleset/branch-protection mutation surface，所以这一个动作必须由具有 GitHub repository administration 权限的主体设置；在 live audit PASS 前，状态是 **external governance blocker**，不得伪造完成。
+```bash
+# 当前迭代阶段：advisory
+python scripts/verify_repository_governance.py
 
-## R0 Exit Gate
+# Productionization 前：hard gate
+python scripts/verify_repository_governance.py --strict
+```
 
-R0 只有在以下条件全部满足后才允许“接受”第一个 real completed Pilot：
+`.github/repository-governance-contract.json` 保存当前 stage policy 与未来 strict target，避免把“暂不保护 main”误写成“永久不需要治理”。
+
+## R0 Exit Gate — current iterative stage
+
+当前阶段接受 real completed Pilot 需要：
 
 - Trust regression CI PASS；
 - exact cross-repo verification PASS；
 - Knowledge adapter identity fail-closed PASS；
 - ADK immutable release / Runtime source-set / Session Bootstrap identity PASS；
 - Contract Catalog PASS；
-- main server governance audit PASS；
 - Runtime Binding 执行任务时保留 Runtime distribution identity + Execution Receipt；
-- Runtime-local PASS 不越权成为 Domain Verification PASS。
+- Runtime-local PASS 不越权成为 Domain Verification PASS；
+- Acceptance -> Evidence、Independent Verification/Review 与 terminal evidence integrity PASS。
 
-代码侧 R0 trust/source-set migration 已可闭合；在 live server governance PASS 之前，**real completed Pilot 仍不得被正式接受**。
+**当前不要求 main server governance audit PASS。** Repository Governance strict PASS 被移动到 Productionization Gate，不再阻塞真实 Pilot 的迭代落地。
 
-R0 后续证据顺序保持：#6 Debug → #7 Feature → #8 Review/Release → #16 Knowledge reuse → #18 multi-runtime。
+R0 代码侧 trust/source-set migration 已闭合。后续证据顺序：#6 Debug → #7 Feature → #8 Review/Release → #16 Knowledge reuse → #18 multi-runtime → Productionization Review / strict governance。
