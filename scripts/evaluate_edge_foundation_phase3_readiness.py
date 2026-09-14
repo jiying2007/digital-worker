@@ -54,10 +54,10 @@ def evaluate(receipt_paths: list[Path]) -> dict:
     pilot_plan = load_yaml(PILOT_ROOT / "pilot-plan.yaml")
     receipt_schema = ROOT / "schemas" / "edge-foundation-shadow-receipt.v1.schema.json"
 
-    compatibility = domain["legacy_compatibility"]
-    require(compatibility["canonical_routing_switched"] is False, "readiness must run before canonical routing is switched")
-    require(compatibility["phase3_evidence_requires_real_pilot"] is True, "phase-3 must require real Pilot evidence")
-    require(compatibility["synthetic_pilot_must_not_count_for_phase3"] is True, "synthetic Pilot evidence must remain excluded")
+    migration = domain["migration"]
+    require(migration["canonical_routing_switched"] is False, "readiness must run before canonical routing is switched")
+    require(migration["real_pilot_evidence_required"] is True, "phase-3 must require real Pilot evidence")
+    require(migration["synthetic_pilot_counts_for_promotion"] is False, "synthetic Pilot evidence must remain excluded")
 
     known_experts = {item["id"] for item in domain["experts"]}
     embedded = next(item for item in domain["experts"] if item["id"] == "embedded-system-expert")
