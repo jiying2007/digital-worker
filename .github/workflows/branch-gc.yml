@@ -53,11 +53,11 @@ jobs:
             fi
 
             encoded="$(jq -rn --arg v "${branch}" '$v|@uri')"
-            ref_json="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${encoded}" 2>/dev/null || true)"
-            if [[ -z "${ref_json}" ]]; then
-              echo "${branch}: already absent"; continue
+            if ! ref_json="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/heads/${encoded}" 2>/dev/null)"; then
+              echo "${branch}: already absent"
+              continue
             fi
-            tip_sha="$(jq -r '.object.sha' <<<"${ref_json}")"
+            tip_sha="$(jq -r '.object.sha // empty' <<<"${ref_json}")"
             if [[ ! "${tip_sha}" =~ ^[0-9a-f]{40}$ ]]; then
               echo "${branch}: invalid branch tip identity"; exit 1
             fi
