@@ -96,22 +96,25 @@ def build_receipt(pilot_run_path: Path, pilot_result_path: Path | None, cross_do
         require(pilot_result["pilot_track"] == pilot_run["pilot_track"], "Pilot run/result pilot_track mismatch")
         require(pilot_result["route"]["actual_mode"] == workflow_mode, "Pilot result actual_mode must match pilot run workflow_mode")
 
-    eligibility_reasons: list[str] = []
-    if pilot_run["source_type"] != "real":
-        eligibility_reasons.append("synthetic-source-not-eligible")
-    if pilot_run["status"] != "completed":
-        eligibility_reasons.append("pilot-run-not-completed")
-    if pilot_result is None:
-        eligibility_reasons.append("pilot-result-not-provided")
-    else:
-        if pilot_result["outcome"] != "PASS":
-            eligibility_reasons.append("pilot-outcome-not-pass")
-        if pilot_result["unauthorized_actions"] != 0:
-            eligibility_reasons.append("unauthorized-actions-present")
-        if pilot_result.get("audit_trace_complete") is not True:
-            eligibility_reasons.append("audit-trace-incomplete")
+    checks = {
+        "source_real": pilot_run["source_type"] == "real",
+        "run_completed": pilot_run["status"] == "completed",
+        "result_provided": pilot_result is not None,
+        "outcome_pass": pilot_result is not None and pilot_result["outcome"] == "PASS",
+        "no_unauthorized_actions": pilot_result is not None and pilot_result["unauthorized_actions"] == 0,
+        "audit_trace_complete": pilot_result is not None and pilot_result.get("audit_trace_complete") is True,
+    }
 
-    eligible = not eligibility_reasons
+    reason_by_check = {
+        "source_real": "synthetic-source-not-eligible",
+        "run_completed": "pilot-run-not-completed",
+        "result_provided": "pilot-result-not-provided",
+        "outcome_pass": "pilot-outcome-not-pass",
+        "no_unauthorized_actions": "unauthorized-actions-present",
+        "audit_trace_complete": "audit-trace-incomplete",
+    }
+    eligibility_reasons = [reason_by_check[key] for key, passed in checks.items() if not passed]
+    eligible = all(checks.values())
     if eligible:
         eligibility_reasons = ["eligible-real-completed-pass-no-unauthorized-actions-audit-complete"]
 
@@ -119,6 +122,7 @@ def build_receipt(pilot_run_path: Path, pilot_result_path: Path | None, cross_do
         "schema_version": 1,
         "run_id": pilot_run["run_id"],
         "source_type": pilot_run["source_type"],
+        "pilot_track": pilot_run["pilot_track"],
         "legacy_task_type": task_type,
         "legacy_workflow_mode": workflow_mode,
         "routing_authority": "legacy",
@@ -134,6 +138,7 @@ def build_receipt(pilot_run_path: Path, pilot_result_path: Path | None, cross_do
         },
         "pilot_result_evaluated": pilot_result is not None,
         "pilot_outcome": None if pilot_result is None else pilot_result["outcome"],
+        "eligibility_checks": checks,
         "phase3_evidence_eligible": eligible,
         "eligibility_reasons": eligibility_reasons,
     }
@@ -159,7 +164,7 @@ def main() -> None:
 
     print(
         "edge-foundation pilot shadow receipt PASS: "
-        f"run={receipt['run_id']} target_mode={receipt['target_mode']} "
+        f"run={receipt['run_id']} track={receipt['pilot_track']} target_mode={receipt['target_mode']} "
         f"experts={receipt['target_experts']} phase3_evidence_eligible={receipt['phase3_evidence_eligible']}"
     )
 
