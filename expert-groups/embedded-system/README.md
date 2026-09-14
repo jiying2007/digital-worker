@@ -1,103 +1,119 @@
-# 嵌入式系统专家团
+# 嵌入式兼容执行面（Embedded Legacy Compatibility Surface）
 
-- Architecture status: `frozen`
+- Machine version: `0.7.0`
 - Implementation status: `pilot-operations-ready`
-- Version: `0.7.0`
-- Architecture model: `provider-neutral`
-- Date: 2026-09-11
-- Owner domain: 研发中心 / 嵌入式系统（软件）
-- Current stage strategy: `docs/strategy/embedded-domain-closed-loop-v1.md`
+- Semantic lifecycle: `legacy-compatibility-surface`
+- Target responsibility model: `../../domains/edge-foundation/domain.yaml`
+- Target ADR: `../../docs/adr/ADR-004-edge-foundation-digital-responsibility-architecture.md`
+- Current stage strategy: `../../docs/strategy/embedded-domain-closed-loop-v1.md`
 
-## 当前能力
+## 这是什么
 
-当前已经具备从结构化接单到真实 Pilot 操作的完整基础设施：1+7 核心专家、23 个 P0 Skills、Gate/Action/Material 治理、Engineering Handoff、Product Cross-Team Contract、Golden Cases、Pilot Run/Result/Metrics，以及 fail-closed CI。
+本目录保存当前仍在运行的嵌入式 `1+7` Task / Gate / Skill / Contract / Golden Case / Pilot 机器资产。它继续承担 **canonical execution 与 rollback**，但不再代表端侧目标组织结构，也不再扩展新的 legacy Expert identity。
 
-当前阶段不再继续扩 Agent/平台，而是推进 **Embedded Domain Closed Loop V1**：先让嵌入式自身形成 Task / Engineering / Quality / Knowledge / Capability 五个闭环，再通过 Adapter 向企业上下游扩展。
+目标责任模型是：
 
-V1 最小执行集固定为：
+```text
+Edge Foundation Domain
+├─ Structure Expert
+├─ Hardware Expert
+└─ Embedded System Expert
+    └─ Capability → Skill
+```
+
+旧 8 个身份到目标模型的唯一桥接表：
+
+`../../domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml`
+
+该 mapping 只保存静态 8/8 identity binding、removal gate 和 migration invariants，**不保存 mutable phase/readiness 状态**。真实晋级状态由 Pilot receipt + `evaluate_edge_foundation_phase3_readiness.py` 计算。
+
+## 当前仍保留的能力资产
+
+现有兼容面仍包含：
+
+- 8 个 legacy digital identities；
+- 23 个 P0 Skills；
+- 14 类 Task 与现有 Workflow Mode；
+- Gate / Action / Material / Evidence 治理；
+- Engineering Handoff；
+- Golden Cases；
+- Pilot Run / Result / Metrics / Evidence Bundle；
+- Verification / Independent Review 独立性；
+- Knowledge Registry；
+- fail-closed CI。
+
+这些资产会按证据逐步迁移为 Embedded Expert 的 Capability / Skill 或 Assurance contract，而不是一次性删除。
+
+## Provider-neutral 与 Runtime 边界
+
+- Expert identity 不绑定 Codex / Claude / WorkBuddy / 其他模型；
+- Engineering execution 是 `Engineer + Engineering Agent Runtime`；
+- Runtime Provider 为 `not-frozen`；
+- Knowledge Provider 不自动成为所有知识 SSOT；
+- Source 遵循 `source_of_truth_stays_at_source`；
+- Provider 切换不得改变 Task taxonomy、Gate、Evidence、Verification、Review 或 A0-A7 语义。
+
+所有 Runtime 消费 `engineering-task-package`，输出 `delivery-receipt + evidence`，并继续经过独立 Verification / Review。
+
+## 真实 Pilot 当前进度
+
+| Track | 状态 | 剩余项 |
+|---|---|---|
+| Debug | 已选 SSC305 / SPI-NAND / UBI-UBIFS 只读问题 | 产品 repo exact SHA、原始日志、device/flash/kernel/test identity |
+| Feature | PCR02 OTA artifact identity 已完成真实 Engineering + repeatable Verification | Independent Review + structured terminal bundle |
+| Review / Release | PCR02 v1.1.21 artifact identity + HTTP/HTTPS distribution evidence 已完成 | device download/install/boot/rollback、Independent Review、human release gate |
+
+Synthetic 只验证工具链，不计入 productionization / phase-3 promotion。
+
+## 真实 Run 最小闭环
 
 ```text
 One Work Item / Run
 + Shared Material/System Context
-+ One Hypothesis Registry for Debug
 + Exact Source / Artifact Identity
-+ Acceptance -> Evidence
++ Acceptance → Evidence
++ Engineering Delivery
++ Verification
++ Independent Review
 + Knowledge Harvest
-+ Embedded Knowledge Registry
 ```
 
-## Provider-neutral 基线
+Debug 另外要求共享 `hypothesis_registry`。
 
-v0.7.0 的关键变化不是扩 Agent/Skill，而是把专家团与具体 Provider 解耦：
+Material Manifest 规则：
 
-- Expert identity 不绑定 Codex / Claude / 其他模型；
-- `phase.execution` 统一为 `Engineer + Engineering Agent Runtime`；
-- Runtime Provider 当前 `not-frozen`；
-- Gate K 不绑定 WeKnora/飞书等具体 Knowledge Provider；
-- Knowledge Source 遵循 `source_of_truth_stays_at_source`；
-- Provider 切换不得改变 task taxonomy、Gate、Evidence、Verification 和 Review 语义。
+- planned/running/blocked 可诚实保持 `BLOCKED`；
+- `complete` 前必须 `READY` 或明确批准的 `DEGRADED`；
+- Debug 接受 `reproduction OR authoritative log`；
+- completed run 会重新校验 Material Manifest 和 frozen evidence bundle；
+- Material readiness 不替代 Verification / Independent Review。
 
-## Engineering Runtime
-
-允许候选包括：Codex、Claude Code、IDE Agent、Internal Agent 和未来受控 Runtime Gateway。
-
-所有 Runtime 必须消费相同 `engineering-task-package`，输出 `delivery-receipt + evidence`，并继续经过独立 Verification / Review。Interaction / Work Item Provider 默认不得直接控制个人开发机和 A6/A7 高风险动作。
+唯一详细操作说明：`../../docs/runbooks/embedded-pilot.md`。
 
 ## Knowledge / Context
 
-专家团当前只冻结原则，不冻结知识平台：
+- 当前 Registry：`knowledge/registry.yaml`；
+- Registry 只做索引和 authority pointer，不复制权威原文；
+- 外部 Source 必须保留 source/version/ACL/provenance；
+- 原始现场日志、core、固件等默认保留在受控权威系统，本仓只引用 identity/evidence。
 
-- 飞书/协作文档、NAS、Git、CI/HIL、Artifact Store 等按事实类型分别保留权威；
-- WeKnora 或其他系统可以成为 Knowledge Provider，但不自动成为所有知识 SSOT；
-- 关键上下文必须保留 source/version/ACL/provenance；
-- 当前 Embedded Knowledge Registry：`knowledge/registry.yaml`；
-- Registry 首版状态为 `internal-seed`，50 条均来自仓库内可核验 Source；
-- NAS / 飞书 / CI-HIL / 历史 RCA 等真实外部 Source 继续由 #16 扩展；
-- Registry 只做索引和 authority pointer，不复制原始权威形成第二 SSOT。
+## Canonical routing 迁移边界
 
-## 真实 Pilot 关键规则
-
-- `real` run 必须绑定 `repo_root + exact base_commit`，不能只写漂移分支名；
-- 所有运行期 artifact ref 必须位于当前 run directory 内，禁止路径逃逸；
-- completed run 必须生成带 SHA256 的 `evidence-bundle.json`；
-- 三条轨道都必须附加 `material_manifest`、`acceptance_evidence_matrix`、`knowledge_harvest`；
-- `debug` 另外必须包含共享 Hypothesis Registry；
-- `feature` 必须包含 engineering-task-package、delivery-receipt、verification、independent review 和 pilot-result；
-- `review_release` 必须包含 verification/review/pilot-result；
-- Knowledge Harvest 允许 `NO_KNOWLEDGE_DELTA`，禁止为了流程制造伪知识；
-- 原始现场日志、core、固件等默认不提交到本仓，保留受控系统中的权威引用。
-
-## 操作示例
-
-```bash
-python scripts/embedded_pilot.py init \
-  --run-id PILOT-DEBUG-001 \
-  --track debug --source-type real \
-  --task-type defect_debugging --workflow-mode diagnostic_chain \
-  --human-owner <owner> --task-brief <task-brief.json> \
-  --repo-root <repo-root> --base-commit <exact-sha>
-
-python scripts/embedded_pilot.py status expert-groups/embedded-system/pilot/runs/PILOT-DEBUG-001 running
-```
-
-收口时除原有 track artifacts 外，至少附加：
+当前仍保持：
 
 ```text
---extra material_manifest=<material-manifest.json>
---extra acceptance_evidence_matrix=<acceptance-evidence-matrix.md>
---extra knowledge_harvest=<knowledge-harvest.md>
+canonical_routing_switched = false
 ```
 
-Debug 再附加：
+Phase-3 只有三轨 eligible real evidence + 独立评审后才能发起，并且只允许：
 
-```text
---extra hypothesis_registry=<hypothesis-registry.json>
-```
+1. 切换 canonical routing authority；
+2. 引入 `canonical-routing.yaml` selector entrypoint。
 
-详细说明见 `docs/runbooks/embedded-pilot.md`。
+Phase-3 禁止改写 compatibility mapping、废弃/删除旧 identity、重写 Skill owner、扩大 A0-A7、改变 Verification / Review 独立性或绑定 Provider。
 
-## Pilot 生产化边界
+旧 identity deprecation 与 removal 必须分别进入后续独立阶段；在此之前本目录仍是合法执行/rollback surface，不能直接删除。
 
-真实 Pilot 仍要求 debug / feature / review_release 三轨各至少 1 个 completed run，`incorrect_pass_rate=0`、`unauthorized_actions=0`、`audit_trace_completeness=1.0`。
+## 成熟度边界
 
-当前阶段只目标推进到 **E2 Engineering Closed Loop，并为 E3 Knowledge Closed Loop 建基础**。即使满足所有门槛，也只允许进入独立人工 productionization review，不自动成为 Production Ready，不自动扩大 A3-A7。
+当前只目标推进到 **E2 Engineering Closed Loop，并为 E3 Knowledge Closed Loop 建基础**。即使三轨门槛全部满足，也只进入独立 productionization / canonical-routing review；不自动成为 Production Ready，不自动扩大 A3-A7。
