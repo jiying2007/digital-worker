@@ -87,6 +87,9 @@ jobs:
           receipt = json.load(open(sys.argv[1], encoding='utf-8'))
           assert receipt['routing_authority'] == 'legacy', receipt
           assert receipt['canonical_routing_changed'] is False, receipt
+          assert receipt['pilot_track'] == 'debug', receipt
+          assert receipt['eligibility_checks']['source_real'] is False, receipt
+          assert receipt['eligibility_checks']['result_provided'] is True, receipt
           assert receipt['phase3_evidence_eligible'] is False, receipt
           assert 'synthetic-source-not-eligible' in receipt['eligibility_reasons'], receipt
           PY
@@ -95,6 +98,41 @@ jobs:
         with:
           name: edge-foundation-pilot-shadow-receipt
           path: /tmp/edge-foundation-pilot-shadow.json
+          if-no-files-found: error
+          retention-days: 14
+      - name: Prove phase-3 readiness stays blocked without real Pilot evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$(mktemp -d)"
+          mkdir -p "$root/synthetic-run"
+          cp /tmp/edge-foundation-pilot-shadow.json "$root/synthetic-run/edge-foundation-shadow-receipt.json"
+          set +e
+          python scripts/evaluate_edge_foundation_phase3_readiness.py \
+            --receipt-dir "$root" \
+            --output /tmp/edge-foundation-phase3-readiness.json \
+            --require-ready
+          status=$?
+          set -e
+          if [ "$status" -ne 2 ]; then
+            echo "expected phase-3 readiness without real Pilot evidence to exit 2, got $status"
+            exit 1
+          fi
+          python - /tmp/edge-foundation-phase3-readiness.json <<'PY'
+          import json, sys
+          readiness = json.load(open(sys.argv[1], encoding='utf-8'))
+          assert readiness['status'] == 'BLOCKED', readiness
+          assert readiness['eligible_for_phase3_review'] is False, readiness
+          assert readiness['canonical_routing_switched'] is False, readiness
+          assert readiness['receipts_scanned'] == 1, readiness
+          assert readiness['eligible_real_receipts'] == 0, readiness
+          assert readiness['blockers'], readiness
+          PY
+      - name: Upload Edge Foundation phase-3 readiness
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: edge-foundation-phase3-readiness
+          path: /tmp/edge-foundation-phase3-readiness.json
           if-no-files-found: error
           retention-days: 14
       - name: Validate core-reference synchronization
