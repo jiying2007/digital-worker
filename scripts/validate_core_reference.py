@@ -1,7 +1,14 @@
 #!/usr/bin/env python3
-"""Validate the human-facing embedded-system core reference against machine baselines."""
+"""Fail-closed validation for the human-facing embedded-system core reference."""
+from __future__ import annotations
+
+import json
+import re
 from pathlib import Path
+from urllib.parse import unquote
+
 import yaml
+from jsonschema import Draft202012Validator
 
 ROOT = Path(__file__).resolve().parents[1]
 CORE = ROOT / "嵌入式系统专家团-核心参考"
@@ -17,32 +24,76 @@ def read(rel: str) -> str:
     return (CORE / rel).read_text(encoding="utf-8")
 
 
+def load_json(path: Path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def validate_json(instance_path: Path, schema_path: Path) -> dict:
+    schema = load_json(schema_path)
+    instance = load_json(instance_path)
+    Draft202012Validator.check_schema(schema)
+    Draft202012Validator(schema).validate(instance)
+    return instance
+
+
+def validate_links() -> None:
+    pattern = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
+    broken: list[str] = []
+    for doc in CORE.rglob("*.md"):
+        for raw in pattern.findall(doc.read_text(encoding="utf-8")):
+            target = raw.strip()
+            if target.startswith(("http://", "https://", "mailto:", "#")):
+                continue
+            target = unquote(target.split("#", 1)[0])
+            if not target:
+                continue
+            resolved = (doc.parent / target).resolve()
+            if ROOT.resolve() not in resolved.parents and resolved != ROOT.resolve():
+                broken.append(f"{doc.relative_to(ROOT)} -> escapes repo: {raw}")
+            elif not resolved.exists():
+                broken.append(f"{doc.relative_to(ROOT)} -> missing: {raw}")
+    require(not broken, "broken core-reference links: " + "; ".join(broken))
+
+
 def main() -> None:
     required = [
         "README.md",
         "00-评审入口/01 评审说明与决策清单.md",
+        "00-评审入口/02 术语与缩写.md",
         "01-架构设计/01 总体架构设计.md",
         "01-架构设计/02 系统边界与控制面.md",
         "01-架构设计/03 身份证据与知识架构.md",
+        "01-架构设计/04 质量属性与非功能约束.md",
         "02-流程与运行/01 任务生命周期与Gate.md",
         "02-流程与运行/02 Debug问题闭环流程.md",
         "02-流程与运行/03 功能开发Bring-up与多仓协同.md",
         "02-流程与运行/04 验证评审发布与异常恢复.md",
+        "02-流程与运行/05 任务类型运行矩阵.md",
         "03-角色与领域/01 组织模型职责与RACI.md",
-        "03-角色与领域/02 架构LinuxBSPMCURTOS与驱动领域指南.md",
-        "03-角色与领域/03 调试验证与独立评审领域指南.md",
+        "03-角色与领域/02 跨团队RACI.md",
+        "03-角色与领域/03 嵌入式架构领域指南.md",
+        "03-角色与领域/04 Linux BSP领域指南.md",
+        "03-角色与领域/05 MCU RTOS领域指南.md",
+        "03-角色与领域/06 驱动与组件领域指南.md",
+        "03-角色与领域/07 调试与可靠性领域指南.md",
+        "03-角色与领域/08 验证领域指南.md",
+        "03-角色与领域/09 独立审查领域指南.md",
         "04-工程交付/01 Skill能力地图.md",
         "04-工程交付/02 工程交接Runtime与关键产物.md",
+        "04-工程交付/03 完整任务产物样例.md",
         "05-治理与评测/01 权限安全风险与例外.md",
         "05-治理与评测/02 Pilot指标成熟度与生产化.md",
         "05-治理与评测/03 架构取舍与演进原则.md",
         "06-案例/01 UBIFS只读问题走查.md",
         "06-案例/02 多仓功能与OTA发布走查.md",
+        "06-案例/03 MCU HardFault与RTOS并发走查.md",
+        "06-案例/04 新板Bring-up走查.md",
+        "06-案例/05 器件替代兼容性走查.md",
     ]
     for rel in required:
         path = CORE / rel
         require(path.is_file(), f"missing core reference: {rel}")
-        require(len(path.read_text(encoding='utf-8').strip()) >= 500, f"core reference too thin: {rel}")
+        require(len(path.read_text(encoding="utf-8").strip()) >= 500, f"core reference too thin: {rel}")
 
     index = read("README.md")
     require("operational reference" in index, "core reference must declare operational reference status")
@@ -74,6 +125,17 @@ def main() -> None:
     for gate in ["Gate K", "Gate M", "Gate 0", "Gate T", "Gate E", "Gate V", "Gate R", "Gate C"]:
         require(gate in workflow, f"workflow doc missing {gate}")
 
+    # The human routing matrix must cover every machine task type and its allowed modes.
+    matrix_text = read("02-流程与运行/05 任务类型运行矩阵.md")
+    routing = yaml.safe_load((EMB / "config/task-modes.yaml").read_text(encoding="utf-8"))["routing"]
+    require(len(routing) == 14, f"expected 14 task types, got {len(routing)}")
+    for task_type, cfg in routing.items():
+        row = next((line for line in matrix_text.splitlines() if line.startswith(f"|`{task_type}`|")), None)
+        require(row is not None, f"task matrix missing task type: {task_type}")
+        require(cfg["default_mode"] in row, f"task matrix default mode drift for {task_type}")
+        for mode in cfg["allowed_modes"]:
+            require(mode in row, f"task matrix allowed mode drift for {task_type}: {mode}")
+
     safety = read("05-治理与评测/01 权限安全风险与例外.md")
     for level in [f"A{i}" for i in range(8)]:
         require(level in safety, f"safety doc missing {level}")
@@ -85,7 +147,47 @@ def main() -> None:
     review = read("00-评审入口/01 评审说明与决策清单.md")
     for decision in [f"D{i:02d}" for i in range(1, 11)]:
         require(decision in review, f"review guide missing decision: {decision}")
+    for evidence_id in [f"E{i:02d}" for i in range(1, 9)]:
+        require(evidence_id in review, f"review guide missing evidence register entry: {evidence_id}")
 
+    # Human-readable artifact chain has a machine-validated sample set.
+    example = CORE / "04-工程交付/examples/ubifs-run"
+    schema_map = {
+        "task-brief.json": ROOT / "schemas/task-brief.v1.schema.json",
+        "material-manifest.json": EMB / "schemas/material-manifest.schema.json",
+        "task-charter.json": EMB / "schemas/task-charter.schema.json",
+        "routing-decision.json": EMB / "schemas/routing-decision.schema.json",
+        "technical-analysis.json": EMB / "schemas/technical-analysis.schema.json",
+        "hypothesis-registry.json": EMB / "schemas/hypothesis-registry.schema.json",
+        "technical-decision.json": EMB / "schemas/technical-decision.schema.json",
+        "engineering-task-package.json": EMB / "schemas/engineering-task-package.schema.json",
+        "delivery-receipt.json": ROOT / "schemas/delivery-receipt.v1.schema.json",
+        "verification-report.json": EMB / "schemas/verification-report.schema.json",
+        "review-report.json": EMB / "schemas/review-report.schema.json",
+        "deliverable-manifest.json": EMB / "schemas/deliverable-manifest.schema.json",
+    }
+    docs = {name: validate_json(example / name, schema) for name, schema in schema_map.items()}
+    run_id = "EXAMPLE-UBIFS-001"
+    for name in ["material-manifest.json", "task-charter.json", "routing-decision.json", "technical-analysis.json", "hypothesis-registry.json", "technical-decision.json", "engineering-task-package.json", "verification-report.json", "review-report.json", "deliverable-manifest.json"]:
+        require(docs[name].get("run_id") == run_id, f"example run_id drift: {name}")
+    work_item = docs["task-brief.json"]["work_item_id"]
+    require(docs["delivery-receipt.json"]["work_item_id"] == work_item, "example work_item identity drift")
+    base = docs["task-brief.json"]["base_branch_or_commit"]
+    require(docs["engineering-task-package.json"]["base_commit"] == base, "example package base drift")
+    require(docs["delivery-receipt.json"]["base_commit"] == base, "example receipt base drift")
+    acceptance = (example / "acceptance-evidence-matrix.md").read_text(encoding="utf-8")
+    harvest = (example / "knowledge-harvest.md").read_text(encoding="utf-8")
+    require(run_id in acceptance and "PASS" in acceptance, "example acceptance/evidence matrix invalid")
+    require(run_id in harvest and "KNOWLEDGE_CANDIDATE" in harvest, "example knowledge harvest invalid")
+
+    validate_links()
+
+    # Superseded combined/flat documents must not come back.
+    forbidden_paths = [
+        CORE / "03-角色与领域/02 架构LinuxBSPMCURTOS与驱动领域指南.md",
+        CORE / "03-角色与领域/03 调试验证与独立评审领域指南.md",
+    ]
+    require(not any(path.exists() for path in forbidden_paths), "superseded combined domain guides must stay removed")
     stale_root_files = [path.name for path in CORE.glob("[0-9][0-9] *.md")]
     require(not stale_root_files, f"legacy flat core-reference files must be removed: {stale_root_files}")
     require(not (ROOT / "docs/review").exists(), "legacy docs/review pack must be removed")
@@ -99,7 +201,7 @@ def main() -> None:
                 violations.append(f"{path.relative_to(ROOT)} -> {token}")
     require(not violations, "stale core-reference wording found: " + "; ".join(violations))
 
-    print("core reference validation PASS: operational human reference synchronized with embedded v0.7.0")
+    print("core reference validation PASS: 14 task types, 7 modes, split domain guides, valid artifact chain, links and v0.7.0 baseline")
 
 
 if __name__ == "__main__":
