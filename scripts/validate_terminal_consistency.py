@@ -38,7 +38,7 @@ FORBIDDEN_ACTIVE_SEMANTICS = [
     "generate_edge_foundation_canonical_switch_plan.py",
     "evaluate_edge_foundation_phase3_readiness.py",
     "compatibility/embedded-1plus7-mapping.yaml",
-    "expert-groups/embedded-system/",
+    "expert-groups" + "/embedded-system/",
 ]
 
 EXPECTED_PRODUCT_READINESS_EVALUATOR = "../../scripts/evaluate_edge_foundation_product_readiness.py"
