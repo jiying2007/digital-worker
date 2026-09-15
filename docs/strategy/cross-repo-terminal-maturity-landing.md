@@ -2,6 +2,7 @@
 
 - Status: `active / implementation-baseline`
 - Date: 2026-09-15
+- Last reviewed: 2026-09-15
 - Architecture authority: `../adr/ADR-003-provider-neutral-ai-rd-target-architecture.md`
 - Semantic ownership authority: `../adr/ADR-005-cross-repo-semantic-ownership-and-evidence-federation.md`
 - Domain architecture: `../adr/ADR-004-edge-foundation-digital-responsibility-architecture.md`
@@ -17,12 +18,13 @@
 终态不是把所有仓合并成一个平台，也不是要求所有任务走固定流水线，而是做到：
 
 1. 每类语义只有一个 canonical owner；
-2. 每次 Formal Run 有可重放的 exact identity spine；
-3. source facts、provider receipts、verification/review reports 和 qualification 不混层；
-4. Runtime / Assurance / Interaction / Knowledge Provider 都可以在不改变 Domain semantics 的前提下替换；
+2. 每次 Formal Run 有可重放的 exact identity spine，并能精确回答“按哪一版 Digital Worker Domain/Governance 语义执行”；
+3. source facts、provider receipts、verification/review reports、qualification 与 run-specific decision 不混层；
+4. Runtime / Assurance / Knowledge Provider 可以在不改变 Domain semantics 的前提下替换；Interaction Provider 的“可替换”若要宣称为已实证，也必须有真实第二入口证据；
 5. `llm_agent` 只影响下一代能力演进，不阻塞日常生产链；
 6. 真实 Debug / Feature / Release / Evolution evidence 能长期被机器和人复核；
-7. 缺关键 identity/evidence 时 fail-closed，不以 synthetic evidence 或“文件存在”冒充成熟。
+7. 缺关键 identity/evidence 时 fail-closed，不以 synthetic evidence 或“文件存在”冒充成熟；
+8. 同一系统可以产生不同 authority/evidence kind 的 artifact，分类以 artifact 为粒度，而不是由 producer 名称推断。
 
 ## 2. 成熟度定义
 
@@ -31,10 +33,10 @@
 | 轴 | 终态要求 |
 | --- | --- |
 | Architecture | ADR / semantic ownership / dependency direction 稳定，无第二控制面和 legacy live path |
-| Identity | Work、Knowledge、ADK、Runtime、Engineering、Artifact、Device、Verification 均可 exact trace |
+| Identity | Work、Digital Worker Domain/Governance、Knowledge、ADK、Runtime、Engineering、Artifact、Device、Verification 均可 exact trace |
 | Delivery | 代表性工程任务可从 intake 到 closure 重放，不依赖人工记忆补链 |
-| Assurance | Fact / Receipt / Report / Qualification 分层稳定，Verifier/Reviewer 独立性有证据 |
-| Replaceability | Runtime / Assurance / Knowledge Provider 替换不改变 Domain Contract，失败可退回 |
+| Assurance | Fact / Receipt / Report / Qualification 分层稳定，Decision Authority 正交，Verifier/Reviewer 独立性有证据 |
+| Replaceability | Binding conformance 与真实 Provider substitution 分层；真实 Runtime / Assurance / Knowledge 替换证据不改变 Domain Contract，失败可退回 |
 | Operations | repository governance、release、rollback、drift、freshness、knowledge lifecycle、owner 机制长期可运营 |
 
 任何单轴未闭环时，只能声明对应轴已成熟，不得声明整体 terminal maturity。
@@ -50,7 +52,9 @@
 - 不把 Codex Safe 变成强制 Assurance authority；
 - 不让 `llm_agent` 进入 Formal Run 热路径；
 - 不为尚无真实 consumer 的接口预建兼容层；
-- 不为了“统一”复制 Skill、Workflow、Profile、Gate 或 Evidence 到多个仓。
+- 不为了“统一”复制 Skill、Workflow、Profile、Gate 或 Evidence 到多个仓；
+- 不通过破坏性重命名 `four-control-planes-plus-replaceable-runtime-bindings` 来解决文档术语问题；现有 machine baseline 兼容保留，后续只增加向后兼容的 responsibility/semantic ownership 标记；
+- 不把 fake/controlled adapter 的通过结果包装成真实 Provider substitution evidence。
 
 ## 4. 终态生产链
 
@@ -62,6 +66,7 @@ Intent / Work Item
 Digital Worker task / domain / policy / acceptance
     ↓
 Context resolution
+  ├─ Digital Worker exact governance refs
   ├─ Knowledge Hub refs / authority / freshness
   ├─ Project source identity
   └─ Material / system context
@@ -92,6 +97,8 @@ Knowledge Hub lifecycle / promotion
 ```
 
 `llm_agent` 不出现在这条必经链路中。
+
+注意：CI/HIL 等系统可以同时承担“产生原始 fact”和“执行 assurance step”的角色，但每个具体 artifact 必须显式区分 `authority_kind` / `evidence_layer`，不能因为 producer 相同就混层。
 
 ## 5. 能力演进链
 
@@ -131,20 +138,23 @@ real adoption evidence
 - legacy 1+7、shadow routing、migration switch 等已退役 surface 不回到活动执行面；
 - 同名对象在文档和机器 contract 中明确 Domain / Reusable / Runtime 语义；
 - 新增 cross-repo 资产必须声明 canonical owner；
-- 不再创建 `_final/_v2` 平行活动文档。
+- 不再创建 `_final/_v2` 平行活动文档；
+- 现有 machine baseline 的 `architecture_model` / `planes` 明确被解释为 repository responsibility projection，而不是新一套 architecture-plane authority；机器契约后续自然演进时只补兼容元数据，不做无收益破坏性改名。
 
 退出条件：
 
 - 新任务不需要通过口头解释判断“哪个仓说了算”；
-- 任意一个 Skill / Workflow / Profile / Gate / Evidence 对象能明确回答 semantic kind 与 owner。
+- 任意一个 Skill / Workflow / Profile / Gate / Evidence 对象能明确回答 semantic kind 与 owner；
+- 任意一个关键 artifact 能明确回答 producer/source、semantic owner、authority kind，以及适用时的 evidence layer。
 
 ### 阶段 1：Identity Spine / Source Set 闭环
 
-目标：任何 Formal Run 都能回答“这次到底用了什么”。
+目标：任何 Formal Run 都能回答“这次到底用了什么、按哪一版规则执行”。
 
 必须具备：
 
 - `work_item_id` / `run_id`；
+- **exact Digital Worker Domain/Governance identity**：provider commit、contract/catalog identity/digest、selected Domain/routing refs、materially-used Domain Skill refs/digests；
 - exact project source/base identity；
 - Knowledge provider identity + context/evidence fingerprint；
 - immutable ADK release identity；
@@ -157,12 +167,13 @@ real adoption evidence
 实施原则：
 
 - 优先扩展现有 `identity-envelope` / source-set refs；
+- Digital Worker identity 只保存 exact ref/digest，不复制 Domain Contract 正文形成第二 SSOT；
 - 没有真实需求时不新增大 Schema；
 - ref 指向 authority，不复制权威正文/事实。
 
 退出条件：
 
-从一个 `run_id` 能沿 refs 追到 materially-used source、knowledge、ADK、runtime、engineering facts 与 decision reports；缺项时状态显式 BLOCKED/NEEDS_REVIEW。
+从一个 `run_id` 能沿 refs 追到 materially-used 的 Digital Worker governance、project source、knowledge、ADK、runtime、engineering facts 与 decision reports；缺项时状态显式 BLOCKED/NEEDS_REVIEW。
 
 ### 阶段 2：四类真实 Pilot 闭环
 
@@ -170,6 +181,7 @@ real adoption evidence
 
 验证：
 
+- exact Digital Worker Domain/Governance identity；
 - Knowledge Context；
 - Material Manifest；
 - Hypothesis Registry；
@@ -194,7 +206,7 @@ engineering-task-package
 → closure
 ```
 
-成功标准：实现 owner 与 verifier 分离；Runtime receipt 不含 `verification_pass`；acceptance criteria 到 evidence 有完整映射。
+成功标准：实现 owner 与 verifier 分离；Runtime receipt 不含 `verification_pass`；acceptance criteria 到 evidence 有完整映射；本次使用的 Domain Contract/Skill 版本可 exact trace。
 
 #### Pilot C — Review / Release
 
@@ -206,7 +218,7 @@ engineering-task-package
 - Independent Review；
 - A6/A7 policy 与人工最终授权。
 
-成功标准：Provider READY/PASS 不能绕过 Verification / Review / Human Gate；回滚或阻断路径真实可用。
+成功标准：Provider READY/PASS 不能绕过 Verification / Review / Human Gate；Review decision 不能自动等价于 Product Qualification；回滚或阻断路径真实可用。
 
 #### Pilot D — Evolution
 
@@ -224,17 +236,38 @@ engineering-task-package
 
 ### 阶段 3：Replaceability / Failure Drill
 
-目标：证明 Provider-neutral 不是文档口号。
+目标：证明 Provider-neutral 不是文档口号，并严格区分“接口可替换”与“真实 Provider 已替换”。
 
-至少完成：
+#### R1 — Binding Conformance
 
-1. **Runtime Binding 替换/对比演练**：同一受控任务在当前 Codex Binding 与第二实现/受控替代 Binding 上执行，Domain acceptance / verification semantics 不变；
-2. **Assurance Provider 替换演练**：至少一次不依赖 Codex Safe 的 Verification/Review 仍能完成；
-3. **Knowledge Provider degradation drill**：Provider unavailable/stale/ACL unresolved 时显式 degrade/BLOCKED，不回退到未治理 cache 冒充事实；
-4. **Runtime drift / rollback drill**：source set、distribution 或 live state 漂移可检测并可回滚；
-5. **Missing evidence drill**：删除/缺失关键 fact/receipt 后，terminal qualification 必须 fail-closed。
+允许使用 fake / controlled alternate adapter 验证：
 
-退出条件：Provider 替换只改变 Adapter/Binding identity，不要求改 Domain Contract；失败路径可恢复且有 receipt。
+- contract/input/output shape；
+- exact identity；
+- failure semantics；
+- rollback/degradation；
+- Domain semantics 未被 Binding 改写。
+
+R1 只能证明 **binding/adapter conformance**，不能作为真实 Provider-neutral 已实证的终态证据。
+
+#### R2 — Real Provider Substitution
+
+整体 Replaceability 轴进入 terminal maturity 前，至少需要：
+
+1. **真实 Runtime Binding 替换/对比**：同一受控任务在当前 Codex Binding 与第二个真实 Runtime/Provider Binding 上执行，Domain acceptance / verification semantics 不变；
+2. **Assurance Provider 替换演练**：至少一次不依赖 Codex Safe 的 Verification/Review 仍能由真实替代 Provider/Human 路径完成；
+3. **Knowledge Provider degradation drill**：Provider unavailable/stale/ACL unresolved 时显式 degrade/BLOCKED，不回退到未治理 cache 冒充事实；如果要宣称“Knowledge Provider 已实证可替换”，还需第二真实 Provider/迁移证据，而不仅是 degradation；
+4. **Interaction handoff drill**：架构始终保持 Interaction Provider 可替换；若 terminal claim 使用“已实证可替换”措辞，则至少一次第二真实入口/Provider 消费同一稳定 task/work-item contract。未执行时只能声明 interaction contract-ready；
+5. **Runtime drift / rollback drill**：source set、distribution 或 live state 漂移可检测并可回滚；
+6. **Missing evidence drill**：删除/缺失关键 fact/receipt/report 后，terminal qualification 必须 fail-closed。
+
+退出条件：
+
+- 至少一次 R2 真实第二 Runtime/Provider 证据成立；
+- Assurance 不依赖单一 Codex Safe 实现；
+- failure/drift/missing-evidence 路径可恢复且有 receipt；
+- Provider 替换只改变 Adapter/Binding identity，不要求改 Domain Contract；
+- 对 Interaction/Knowledge 的“demonstrated replaceability”声明范围与实际证据严格一致。
 
 ### 阶段 4：Productionization Governance
 
@@ -263,17 +296,18 @@ engineering-task-package
 只有以下条件同时满足，才可以声明整体 terminal maturity：
 
 - Architecture 轴闭环；
-- Identity 轴闭环；
+- Identity 轴闭环，包含 exact Digital Worker Domain/Governance identity；
 - Delivery 轴闭环；
 - Assurance 轴闭环；
-- Replaceability 轴闭环；
+- Replaceability 轴闭环，并至少取得一次 R2 真实第二 Runtime/Provider substitution evidence；
 - Operations 轴闭环；
 - 没有高优先级未声明 owner 的 cross-repo semantic debt；
 - 没有 active legacy compatibility/shadow control path；
 - 没有用 synthetic evidence 冒充真实 product evidence；
 - 没有将 Provider receipt/local gate 自动提升为 product qualification；
 - 定期 drift/freshness/governance 检查可重复执行；
-- 新成员仅依赖文档 + machine contract + runbook 就能完成代表性 Run，而不需要作者口头补充隐藏规则。
+- **Fresh-operator drill 通过**：至少一名未参与体系设计/实现的操作者，仅依赖 canonical docs + machine contract + runbook 完成一个代表性 L1/L2 governed/formal Run，并生成可审计 receipt/evidence，不需要作者口头补充隐藏规则；
+- 对 Interaction / Knowledge Provider 的 replaceability 声明不超过实际取得的证据等级。
 
 Terminal maturity 不是“不再变化”。进入 steady state 后仍允许 Provider、Runtime、Skill、模型和内部实现持续演进，但稳定 Contract 和 authority boundary 不应随供应商变化而重构。
 
@@ -286,20 +320,23 @@ Terminal maturity 不是“不再变化”。进入 steady state 后仍允许 Pr
 - Runtime Receipt 声称 Verification PASS；
 - Runtime/Asset local gate 被映射为 Domain Gate PASS；
 - Knowledge candidate 自动 active promotion；
-- missing exact identity 被判为 Formal PASS；
+- missing exact identity（含 materially-used Digital Worker governance identity）被判为 Formal PASS；
 - retired legacy live path 回归；
 - Runtime Binding 拥有 reusable asset SSOT；
-- `llm_agent` 成为 production runtime dependency。
+- `llm_agent` 成为 production runtime dependency；
+- fake/controlled Binding 被标记为 R2 real-provider substitution evidence。
 
 ### P1 — 应机器检查
 
 - semantic owner 唯一性；
 - Domain / Reusable / Runtime artifact kind；
-- authority kind：contract / fact / decision；
+- artifact-level authority kind：contract / fact / decision；
 - evidence layer：fact / receipt / report / qualification；
+- Digital Worker provider commit / contract catalog / Domain-routing-skill refs 完整性；
 - source-set composition completeness；
 - verifier/reviewer independence fields；
-- refs 指向的 exact identity 可解析。
+- refs 指向的 exact identity 可解析；
+- machine baseline 中 repository responsibility projection 与 architecture plane 语义不会被 consumer 混淆。
 
 ### P2 — 观察后再固化
 
@@ -315,8 +352,9 @@ P2 在真实 adoption evidence 不足前保持建议/人工选择，不进入不
 
 ### 每次 Formal Run
 
-- 冻结 source / context / asset / runtime identities；
+- 冻结 Digital Worker governance / project source / context / asset / runtime identities；
 - 保留 delivery / execution / verification / review refs；
+- 对关键 artifact 保留可解析的 authority/evidence kind；
 - closure 后产生 Knowledge Candidate，不直接 active promotion。
 
 ### 每次 ADK / Runtime / Provider 升级
@@ -332,7 +370,8 @@ P2 在真实 adoption evidence 不足前保持建议/人工选择，不进入不
 - Knowledge freshness / review queue；
 - Runtime drift / health；
 - unresolved semantic debt；
-- evolution intake / adoption outcomes。
+- evolution intake / adoption outcomes；
+- R1/R2 replaceability evidence freshness 与 claim scope。
 
 ### 正式发布/高风险动作前
 
@@ -347,18 +386,25 @@ P2 在真实 adoption evidence 不足前保持建议/人工选择，不进入不
 整体 terminal maturity 的最终评审只回答以下问题：
 
 - [ ] 能否从 Work/Run 一跳跳追到所有 materially-used authority refs？
+- [ ] 是否能 exact trace 到本次使用的 Digital Worker provider commit、contract/catalog、Domain/routing 与 materially-used Domain Skill refs？
 - [ ] Git/CI/HIL/Device/Artifact facts 是否仍由原系统拥有？
+- [ ] 对同一 producer 产生的不同 artifact，是否能显式区分 authority/evidence kind？
 - [ ] Runtime receipt 是否与 Verification verdict 分离？
 - [ ] Provider review receipt 是否与 Independent Review decision 分离？
+- [ ] Review/approval decision 是否不会自动等价于 Product Qualification？
 - [ ] Knowledge candidate 是否需要 owner lifecycle promotion？
 - [ ] ADK asset release 是否不会自动提升 Product Qualification？
 - [ ] Runtime Profile 是否不会隐式改变 Asset Profile semantics？
 - [ ] `llm_agent` 离线时 production delivery 是否仍可运行？
 - [ ] 不使用 Codex Safe 时 assurance architecture 是否仍成立？
+- [ ] 是否至少有一次 R2 真实第二 Runtime/Provider 的 substitution evidence？
+- [ ] fake/controlled alternate Binding 是否只被标记为 R1 conformance？
 - [ ] 替换 Runtime Binding 时 Domain Contract 是否保持不变？
+- [ ] 若声明 Interaction/Knowledge Provider 已“实证可替换”，是否有对应真实第二 Provider evidence？
 - [ ] missing evidence / provider outage / drift 是否 fail-closed？
 - [ ] release/rollback/repository governance 是否有真实 production evidence？
 - [ ] 是否不存在第二套 live routing / compatibility / shadow authority？
+- [ ] fresh-operator drill 是否通过，并证明无需作者口头补充即可完成代表性 Run？
 - [ ] 是否可以仅靠 canonical docs + contracts + runbooks 重放代表性任务？
 
 任意答案为“否”时，不声明整体 terminal maturity。
@@ -368,13 +414,15 @@ P2 在真实 adoption evidence 不足前保持建议/人工选择，不进入不
 - 本文是当前成熟落地策略基线；被新的阶段策略替代时，从活动 `strategy/` 删除，由 Git history 保存，不保留 `_v2/_final` 平行活动副本；
 - 长期语义改变进入 ADR，而不是直接改 Strategy 绕过架构评审；
 - 机器语义改变优先修改 canonical contract/schema，并保留 compatibility / migration evidence；
+- 本次审核发现的 Digital Worker exact identity、artifact-level authority/evidence kind、repository responsibility projection machine marker，应在真实 Pilot 证明字段需求后以向后兼容方式进入 machine contract；
 - 临时 Pilot adapter、one-shot migration、shadow scaffolding 完成后应物理退役，不长期留在活动面；
-- 新 Provider 以 Adapter/Binding 接入，不因产品名称进入上位 Domain architecture。
+- 新 Provider 以 Adapter/Binding 接入，不因产品名称进入上位 Domain architecture；
+- replaceability claim 必须携带 evidence level：至少区分 `R1 binding-conformance` 与 `R2 real-provider-substitution`。
 
 ## 11. 最终结论
 
 成熟落地的重点不再是增加新的 Agent、控制面或编排器，而是证明以下闭环长期成立：
 
-> **正确语义由正确 owner 持有；本次执行通过 exact Source Set 组合；真实 facts 保留在原系统；Provider 只提供 receipt/evidence；Verifier/Reviewer/Approver 独立做 run-specific decision；Knowledge 经过生命周期沉淀；能力通过 `llm_agent` 的慢环持续演进，而生产快环不依赖该实验室。**
+> **正确语义由正确 owner 持有；本次执行通过包含 exact Digital Worker governance identity 的 Source Set 组合；真实 facts 保留在原系统；每个 artifact 的 authority/evidence kind 可解释；Provider 只提供受边界约束的 fact/receipt/report；Verifier/Reviewer/Approver 独立做 run-specific decision；Qualification 不从局部 PASS 自动继承；Knowledge 经过生命周期沉淀；能力通过 `llm_agent` 的慢环持续演进，而生产快环不依赖该实验室；Provider-neutral 的设计声明最终由 R2 真实替换证据证明。**
 
 达到本方案全部 terminal exit criteria 后，体系进入 steady-state evolution，而不是继续进行顶层架构重构。
