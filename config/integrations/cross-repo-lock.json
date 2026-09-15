@@ -43,7 +43,13 @@
       "contract": "manifests/digital_worker_runtime_pilot.json",
       "contract_version": "1.3",
       "contract_canonical_sha256": "315123bc8064fdcb156edd4a5fbc5ea083d04c93fb3c5df2c14385ae41785674",
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_R2_POLICY_BLOCKER_PRESERVED"
+      "runtime_portability_certifier": "tools/control_plane/runtime_portability.py",
+      "runtime_portability_certifier_test": "tests/test_runtime_portability_certifier.sh",
+      "runtime_portability_qualification_manifest": "manifests/long_term_asset_qualification.json",
+      "runtime_portability_cli_contract": "tools/control_plane/cli.py",
+      "runtime_portability_evidence_level": "R2-real-provider-substitution",
+      "runtime_portability_status": "certifier-ready-real-evidence-pending",
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_R2_CERTIFIER_READY_REAL_EVIDENCE_PENDING_BLOCKER_PRESERVED"
     }
   },
   "runtime_bindings": {
@@ -89,6 +95,7 @@
     "runtime_execution_receipt_must_not_contain_verification_pass": true,
     "terminal_replaceability_requires_r2_real_provider_substitution": true,
     "r1_binding_conformance_is_not_terminal_replaceability": true,
+    "r2_certifier_readiness_does_not_imply_terminal_replaceability": true,
     "governed_knowledge_route_registration_does_not_imply_real_reuse": true,
     "knowledge_closed_loop_requires_real_reuse_evidence": true,
     "pin_freshness_does_not_imply_compatibility": true,
