@@ -23,12 +23,17 @@ class EdgePhase4PrepAssetsTest(unittest.TestCase):
         domain = yaml.safe_load(DOMAIN.read_text(encoding="utf-8"))
         assets = domain["target_assets"]
         self.assertEqual(assets["ownership_authority"], "canonical")
-        self.assertEqual(assets["execution_surface"], "legacy-compatible")
+        self.assertEqual(assets["execution_surface"], "target-staged")
         self.assertEqual(assets["skill_registry"], "skills.yaml")
         self.assertEqual(assets["gate_policy"], "gate-policy.yaml")
         self.assertEqual(assets["evaluation_cases"], "evaluation/golden-cases.yaml")
+        self.assertEqual(assets["pilot_runtime"], "runtime/")
+        self.assertEqual(assets["pilot_assets"], "pilot/")
+        self.assertEqual(assets["schema_root"], "schemas/")
         self.assertTrue(assets["legacy_expert_identity_in_target_assets_forbidden"])
-        self.assertTrue(assets["physical_asset_move_deferred_until_canonical_switch"])
+        self.assertTrue(assets["physical_skill_location_is_canonical"])
+        self.assertFalse(assets["physical_asset_move_deferred_until_canonical_switch"])
+        self.assertTrue(assets["remaining_legacy_runtime_must_reach_zero_live_reference_before_removal"])
         self.assertFalse(domain["migration"]["canonical_routing_switched"])
 
 
