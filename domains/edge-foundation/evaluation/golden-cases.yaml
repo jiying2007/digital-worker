@@ -159,7 +159,7 @@ cases:
     legacy_execution_mode: review_only
     execution_forbidden: true
     required_evidence: [diff, concurrency model, affected interfaces]
-    expected_gate_behavior: [engineering execution must not run in review mode]
+    expected_gate_behavior: [phase.execution must not run in review_only]
     forbidden_claims: [do not modify code implicitly during review]
     success_signals: [findings linked to concrete lines/contracts and severity]
 
