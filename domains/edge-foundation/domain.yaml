@@ -167,6 +167,7 @@ knowledge:
 
 migration:
   legacy_surface: ../../expert-groups/embedded-system/expert-group.yaml
+  legacy_scope: ../../expert-groups/embedded-system/compatibility-scope.yaml
   identity_mapping: compatibility/embedded-1plus7-mapping.yaml
   shadow_routing: routing-shadow.yaml
   readiness_evaluator: ../../scripts/evaluate_edge_foundation_phase3_readiness.py
