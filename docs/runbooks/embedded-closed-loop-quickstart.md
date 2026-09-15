@@ -134,3 +134,13 @@ Always preserve:
 - Source of Truth stays at source;
 - product maturity and routing authority are separate concerns;
 - repeated real evidence is required before adding new Schema/Skill/Capability/Expert/platform layer.
+
+## 11. Repository governance boundary
+
+Current `iterative-development` stage still requires repository-local CI, but server-side main protection is intentionally not a real-Pilot completion gate. Before Productionization or protected multi-contributor operation, strict governance must pass:
+
+```bash
+python scripts/verify_repository_governance.py --strict
+```
+
+A deferred server-side governance state must never be misreported as strict production governance PASS.
