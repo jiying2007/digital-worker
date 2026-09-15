@@ -79,10 +79,11 @@ def main() -> None:
     require(codex.get("required_asset_profile") == "embedded-fullstack", "Codex must consume the ADK embedded-fullstack Asset Profile")
     require(codex.get("source_identity_mode") == "exact-release-source-blobs", "Codex source identity mode drift")
     require(codex.get("runtime_readiness") == "SOURCE_SET_BOUND", "Codex source-set readiness drift")
-    require(codex.get("session_bootstrap_contract_version") == "1.0", "Codex Session Bootstrap version drift")
+    require(codex.get("session_bootstrap_contract_version") == "1.1", "Codex Session Bootstrap version drift")
     require(digest(codex.get("session_bootstrap_contract_canonical_sha256")), "Codex Session Bootstrap digest missing")
     require(codex.get("execution_receipt_schema") == "schemas/runtime-execution-receipt.schema.json", "Codex receipt schema missing")
     require("SOURCE_SET_BOUND" in codex.get("validation", ""), "Codex source-set binding must be promoted")
+    require("FORMAL_IDENTITY" in codex.get("validation", ""), "Codex formal identity capability must be explicitly promoted")
     require("runtime_profile_examples" not in codex, "digital-worker lock must not mirror mutable Codex runtime profile examples")
 
     rendered_lock = json.dumps(lock, ensure_ascii=False, sort_keys=True)
@@ -94,7 +95,8 @@ def main() -> None:
         "contract_digest_required", "source_of_truth_stays_at_source", "provider_failure_must_not_be_reported_as_pass",
         "asset_profile_must_be_separate_from_runtime_profile", "immutable_adk_release_required", "exact_source_set_identity_required",
         "runtime_distribution_identity_required_when_executed", "monolithic_runtime_bundle_not_required_identity",
-        "formal_mode_requires_exact_pinned_knowledge", "runtime_local_gate_is_not_domain_gate",
+        "formal_mode_requires_exact_pinned_knowledge", "formal_mode_requires_exact_digital_worker_governance_identity",
+        "l1_to_l2_requires_new_bootstrap_and_execution_source_set", "runtime_local_gate_is_not_domain_gate",
         "runtime_output_is_not_verification_pass", "runtime_execution_receipt_must_not_contain_verification_pass",
         "pin_freshness_does_not_imply_compatibility", "pin_promotion_requires_checkout_verification",
     ]:
