@@ -49,9 +49,9 @@ def main() -> None:
         leaked = sorted(identity for identity in legacy_ids if identity in text)
         require(not leaked, f"legacy expert identity leaked into target Assurance contract {path.relative_to(ROOT)}: {leaked}")
 
-    for target, legacy, label in [
-        (verification, legacy_verification, "Verification"),
-        (review, legacy_review, "Review"),
+    for target_path, target, legacy_path, legacy, label in [
+        (verification_path, verification, legacy_verification_path, legacy_verification, "Verification"),
+        (review_path, review, legacy_review_path, legacy_review, "Review"),
     ]:
         require(target["kind"] == "assurance", f"{label} must be Assurance")
         require(target["status"] == "phase4-prep-target", f"{label} prep status drift")
@@ -60,8 +60,8 @@ def main() -> None:
         require(target["consumes"] == legacy["consumes"], f"{label} consumes semantic drift")
         require(target["produces"] == legacy["produces"], f"{label} produces semantic drift")
         require(target["constraints"] == legacy["constraints"], f"{label} constraints semantic drift")
-        adapter = (EDGE / target["legacy_execution_adapter"]).resolve()
-        require(adapter == (legacy_verification_path if label == "Verification" else legacy_review_path).resolve(), f"{label} legacy adapter pointer drift")
+        adapter = (target_path.parent / target["legacy_execution_adapter"]).resolve()
+        require(adapter == legacy_path.resolve(), f"{label} legacy adapter pointer drift")
         require(target["rules"]["legacy_expert_identity_forbidden"] is True, f"{label} must forbid legacy expert identity")
         require(target["rules"]["execution_adapter_does_not_define_responsibility"] is True, f"{label} adapter must not define responsibility")
         require(target["rules"]["evidence_source_of_truth_stays_at_source"] is True, f"{label} evidence authority drift")
