@@ -27,6 +27,8 @@ Domain（领域）
 
 因此当前 **Product readiness = 1/3 eligible，仍为 BLOCKED**。Synthetic evidence 只验证工具链，不计入产品成熟度；Product readiness 不会切换、回滚或决定 canonical routing，也不能自动声明 Production Ready / Release Ready。
 
+Product Readiness 只描述具体产品证据轨；它与 cross-repo Terminal Maturity、Runtime Qualification、ADK Release Qualification 相互正交，任何一项 PASS/READY 都不得自动提升另一项状态。
+
 当前目标仍是 **E2 Engineering Closed Loop，并为 E3 Knowledge Closed Loop 建基础**。
 
 ## 主要入口
@@ -34,6 +36,8 @@ Domain（领域）
 - [研发中心 AI 数字员工研发流程规划](研发中心AI数字员工研发流程规划.md)：研发中心总体流程和 Provider-neutral 原则；
 - [ADR-003：Provider-neutral AI R&D Target Architecture](docs/adr/ADR-003-provider-neutral-ai-rd-target-architecture.md)：总体 Provider-neutral 架构决策；
 - [ADR-004：端侧底座数字责任架构](docs/adr/ADR-004-edge-foundation-digital-responsibility-architecture.md)：端侧责任模型与中英术语；
+- [ADR-005：跨仓语义所有权、执行身份与证据联邦](docs/adr/ADR-005-cross-repo-semantic-ownership-and-evidence-federation.md)：跨仓 semantic ownership、identity、evidence 与 decision 边界；
+- [Cross-Repo Terminal Maturity Landing](docs/strategy/cross-repo-terminal-maturity-landing.md)：跨仓终态成熟落地与验收基线；
 - [Edge Foundation Domain](domains/edge-foundation/domain.yaml)：三 Domain Expert、Coordination、Execution、Assurance 与 Product readiness 边界；
 - [Canonical Routing](domains/edge-foundation/routing.yaml)：14 个任务类型到 Expert / Capability / Assurance 的正式路由；
 - [Runtime Policy](domains/edge-foundation/runtime/task-modes.yaml)：具体 workflow mode 与 execution 约束；
@@ -52,14 +56,15 @@ Domain（领域）
 
 稳定模型是 **责任/控制面稳定 + Runtime 可替换 + Thin Session Bootstrap**：
 
-- `digital-worker`：Domain / Role / Expert / Capability / Skill、Work/Run、Gate、Action Policy、Engineering handoff、Identity/Evidence、Verification、Review、Pilot/Product readiness；
+- `digital-worker`：Domain / Role / Expert / Capability / Skill、Work/Run、Gate、Action Policy、Engineering handoff、Identity/Evidence、Verification/Review Contract、Pilot/Product readiness；
 - `knowledge-hub`：Knowledge Registry、authority、ACL、freshness、context/evidence 查询与知识生命周期；
 - `agent-dev-kit`：通用 Agent/Skill、Asset Profile、immutable release、资产校验与回滚；
 - `llm_agent`：外部实践 intake、采用/健康度观察、Runtime 对比；
-- Runtime Binding：Codex、Claude Code、IDE/Internal Runtime、WorkBuddy 或未来其他实现；
+- Runtime Binding：Codex、Claude Code、IDE/Internal Engineering Runtime 或未来其他满足 Runtime Binding Contract 的实现；
+- Interaction Provider：WorkBuddy、飞书、Web、CLI/IDE 入口或未来其它协作入口；Interaction Provider 不因“能发起任务”自动成为 Engineering Runtime Binding；
 - Thin Session Bootstrap：单次会话装配 project/mode/contract/skill/provider identity，不成为新的控制面。
 
-稳定原则：**Responsibility ≠ Runtime；Expert ≠ Agent；Capability 不默认等于 Agent；Knowledge index 不替代 authoritative Source；Product readiness 不决定 routing authority。**
+稳定原则：**Responsibility ≠ Runtime；Expert ≠ Agent；Capability 不默认等于 Agent；Knowledge index 不替代 authoritative Source；Product readiness 不决定 routing authority；Governance escalation 不提升既有 evidence 等级；Product Readiness / Terminal Maturity / Runtime Qualification / ADK Qualification 互不继承。**
 
 ## 真实 Run 最小闭环
 
@@ -75,6 +80,8 @@ One Work Item / Run
 ```
 
 Debug 另外要求共享 Hypothesis Registry。Material Manifest 在 `planned/running/blocked` 可诚实保持 `BLOCKED`；进入 `complete` 前必须为 `READY` 或经明确批准的 `DEGRADED`。completed run 会重新校验终态材料与 frozen evidence bundle，禁止通过“文件存在”推导材料已充分。
+
+当任务从较低治理等级升级到更高等级（特别是 L1 → L2 Formal Evidence）时，必须重新解析 exact Digital Worker / Knowledge / ADK / Runtime / project identities 并重新冻结 Execution Source Set；升级前的 session/context 可保留为 prior observation/hypothesis，但不得自动提升为 Formal Evidence。
 
 ## 仓库治理
 
