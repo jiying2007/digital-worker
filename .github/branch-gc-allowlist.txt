@@ -2,3 +2,8 @@
 # One branch per line. `main` is forbidden by the workflow and validator.
 # Eligibility is fail-closed: current tip must be an exact merged-PR head OR already contained by main.
 # Empty is the healthy steady state after reviewed completed branches are removed.
+
+codex/edge-skill-physical-migration
+codex/pilot-runbook-current-policy
+codex/terminal-consistency-hardening-shadowcheck
+codex/terminal-branch-gc
