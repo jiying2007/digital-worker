@@ -30,6 +30,11 @@ REVIEW_POLICY = EDGE / "assurance" / "review.yaml"
 SOURCE_SET = "sha256:" + "1" * 64
 OLD_SOURCE_SET = "sha256:" + "0" * 64
 SESSION = "sha256:" + "2" * 64
+WORK_ITEM_ID = "EMB-001"
+RUN_ID = "RUN-001"
+PACKAGE_ID = "PKG-RUN-001"
+ETP_SHA256 = "3" * 64
+BASE_COMMIT = "4" * 40
 
 
 def bootstrap(source_set: str = SOURCE_SET) -> dict:
@@ -38,6 +43,11 @@ def bootstrap(source_set: str = SOURCE_SET) -> dict:
         "status": "ready",
         "mode": "L2",
         "session_bootstrap_identity": SESSION,
+        "work_identity": {
+            "work_item_id": WORK_ITEM_ID,
+            "run_id": RUN_ID,
+            "engineering_package_id": PACKAGE_ID,
+        },
         "digital_worker": {
             "governance_identity": {
                 "provider": "digital-worker",
@@ -55,7 +65,17 @@ def bootstrap(source_set: str = SOURCE_SET) -> dict:
         "execution_source_set": {
             "kind": "codex-execution-source-set/v1",
             "identity": source_set,
-            "materials": {},
+            "materials": {
+                "engineering": {
+                    "package_id": PACKAGE_ID,
+                    "work_item_id": WORK_ITEM_ID,
+                    "run_id": RUN_ID,
+                    "repo_root": "firmware/main",
+                    "base_commit": BASE_COMMIT,
+                    "engineering_task_package_ref": "/tmp/engineering-task-package.json",
+                    "engineering_task_package_sha256": ETP_SHA256,
+                }
+            },
         },
     }
 
@@ -63,13 +83,14 @@ def bootstrap(source_set: str = SOURCE_SET) -> dict:
 def verification(
     *,
     source_set: str = SOURCE_SET,
+    run_id: str = RUN_ID,
     report_id: str = "VR-RUN-001-1",
     sequence: int = 1,
     supersedes: str | None = None,
 ) -> dict:
     return {
         "report_id": report_id,
-        "run_id": "RUN-001",
+        "run_id": run_id,
         "verifier": "independent-verifier",
         "implementation_owner": "implementation-owner",
         "independence_confirmed": True,
@@ -150,10 +171,38 @@ class FormalAssuranceProvenanceTests(unittest.TestCase):
             verification=verification(),
         )
         self.assertEqual(result["validation_status"], "PASS")
+        self.assertEqual(result["work_item_id"], WORK_ITEM_ID)
+        self.assertEqual(result["run_id"], RUN_ID)
+        self.assertEqual(result["engineering_package_id"], PACKAGE_ID)
         self.assertEqual(result["execution_source_set_ref"], SOURCE_SET)
         self.assertIsNone(result["review_report_id"])
         self.assertFalse(result["claims"]["product_qualification_implied"])
         self.assertFalse(result["claims"]["release_authorization_implied"])
+
+    def test_missing_authoritative_work_identity_is_blocked(self) -> None:
+        boot = bootstrap()
+        del boot["work_identity"]
+        with self.assertRaisesRegex(FormalAssuranceError, "authoritative work_identity"):
+            validate_formal_assurance(bootstrap=boot, verification=verification())
+
+    def test_source_set_work_identity_mismatch_is_blocked(self) -> None:
+        boot = bootstrap()
+        boot["execution_source_set"]["materials"]["engineering"]["work_item_id"] = "EMB-OTHER"
+        with self.assertRaisesRegex(FormalAssuranceError, "source-set work_item_id does not match work_identity"):
+            validate_formal_assurance(bootstrap=boot, verification=verification())
+
+    def test_source_set_run_identity_mismatch_is_blocked(self) -> None:
+        boot = bootstrap()
+        boot["execution_source_set"]["materials"]["engineering"]["run_id"] = "RUN-OTHER"
+        with self.assertRaisesRegex(FormalAssuranceError, "source-set run_id does not match work_identity"):
+            validate_formal_assurance(bootstrap=boot, verification=verification())
+
+    def test_verification_run_id_must_match_frozen_formal_run(self) -> None:
+        with self.assertRaisesRegex(FormalAssuranceError, "run_id does not match frozen L2 Work/Run identity"):
+            validate_formal_assurance(
+                bootstrap=bootstrap(),
+                verification=verification(run_id="RUN-OTHER"),
+            )
 
     def test_stale_verification_source_set_is_blocked(self) -> None:
         with self.assertRaisesRegex(FormalAssuranceError, "stale or bound to a different Execution Source Set"):
