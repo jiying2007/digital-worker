@@ -18,6 +18,36 @@ independence:
 release_authority:
   review_is_release_approval: false
   human_release_gate_required: true
+formal_provenance:
+  applies_when: L2-formal-evidence
+  gate: scripts/validate_formal_assurance.py
+  current_stage_default_required: false
+  require_review_switch: --require-review
+  required_fields:
+    - report_id
+    - independence_confirmed
+    - independence_evidence_refs
+    - reviewed_subject.execution_source_set_ref
+    - reviewed_subject.result_identity_ref
+    - decision_actor_identity_ref
+    - input_evidence_refs
+    - report_sequence
+    - supersedes
+  exact_bindings:
+    execution_source_set_ref: session-bootstrap.execution_source_set.identity
+    verification_report_ref: verification-report:<report_id>
+    reviewed_result_identity: same-as-verification
+  sequence_policy:
+    first_report_sequence: 1
+    first_report_supersedes: null
+    rerun_requires_immediately_prior_report: true
+    rerun_requires_new_report_id: true
+    report_sequence_must_increment_by_one: true
+  stale_subject_policy: BLOCKED
 rules:
   legacy_expert_identity_forbidden: true
   evidence_source_of_truth_stays_at_source: true
+  formal_report_must_bind_exact_execution_source_set: true
+  formal_review_must_consume_exact_verification_report: true
+  formal_report_must_not_silently_reuse_stale_subject: true
+  formal_approval_requires_evidence_refs: true
