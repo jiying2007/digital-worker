@@ -31,17 +31,19 @@ class EdgeTargetRuntimeTests(unittest.TestCase):
         self.assertEqual(set(runtime), set(routing["routing"]))
         self.assertEqual(len(runtime), 14)
 
-    def test_target_pilot_schemas_skills_and_legacy_absence(self):
+    def test_target_pilot_schemas_skills_and_retired_surface_absence(self):
         self.assertTrue((EDGE / "pilot/pilot-plan.yaml").is_file())
         self.assertTrue((EDGE / "pilot/evidence/FEATURE-PCR02-OTA-001/task-brief.json").is_file())
         for name in ["material-manifest.schema.json", "verification-report.schema.json", "engineering-task-package.schema.json"]:
             self.assertTrue((EDGE / "schemas" / name).is_file(), name)
         self.assertEqual(len(list((EDGE / "skills").glob("*/SKILL.md"))), 23)
-        self.assertFalse((ROOT / "expert-groups/embedded-system").exists())
+        retired_root = ROOT / "expert-groups" / "embedded-system"
+        retired_shadow = EDGE / ("routing" + "-shadow.yaml")
+        self.assertFalse(retired_root.exists())
         self.assertFalse((EDGE / "compatibility").exists())
-        self.assertFalse((EDGE / "routing-shadow.yaml").exists())
+        self.assertFalse(retired_shadow.exists())
 
-    def test_target_cli_can_initialize_scaffold_and_generate_receipt_without_legacy_tree(self):
+    def test_target_cli_can_initialize_scaffold_without_retired_tree(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             subprocess.run([
