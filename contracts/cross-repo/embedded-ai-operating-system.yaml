@@ -3,6 +3,33 @@ status: current-stage-baseline
 architecture_provider_selection: not_frozen
 architecture_model: four-control-planes-plus-replaceable-runtime-bindings
 
+projection_semantics:
+  repository_responsibility_projection: true
+  not_equal_authority_architecture_planes: true
+  canonical_semantic_ownership_authority: docs/adr/ADR-005-cross-repo-semantic-ownership-and-evidence-federation.md
+
+artifact_semantics:
+  authority_kinds:
+    - contract
+    - fact
+    - decision
+  evidence_layers:
+    - fact
+    - receipt
+    - report
+    - qualification
+  decision_authority_is_orthogonal_to_evidence_layer: true
+  classification_is_artifact_level_not_producer_inferred: true
+
+qualification_isolation:
+  states:
+    - product-readiness
+    - terminal-maturity
+    - runtime-qualification
+    - adk-release-qualification
+    - knowledge-provider-qualification
+  cross_state_pass_inheritance: forbidden
+
 planes:
   digital-worker:
     role: rd-operating-model
@@ -146,3 +173,7 @@ stable_principles:
   - Runtime local gate 不等于 Domain Gate
   - Runtime output 不等于 Verification PASS
   - Knowledge candidate 不自动 promotion active
+  - repository responsibility projection 不等于 equal-authority architecture planes
+  - artifact authority/evidence classification 以 artifact 为粒度而不是由 producer 名称推断
+  - Decision Authority 与 Fact/Receipt/Report/Qualification evidence layer 正交
+  - Product Readiness、Terminal Maturity、Runtime/ADK/Knowledge qualification 互不继承 PASS
