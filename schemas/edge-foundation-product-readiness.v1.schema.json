@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://digital-worker.local/schemas/edge-foundation-product-readiness.v1.schema.json",
+  "title": "Edge Foundation Product Readiness",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "status", "eligible_for_product_review", "routing_authority", "canonical_routing",
+    "promotion_gate_source", "required_tracks", "track_coverage", "receipts_scanned",
+    "eligible_real_receipts", "evidence_run_ids", "blockers"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "status": {"enum": ["BLOCKED", "ELIGIBLE_FOR_PRODUCTIONIZATION_REVIEW"]},
+    "eligible_for_product_review": {"type": "boolean"},
+    "routing_authority": {"const": "edge-foundation"},
+    "canonical_routing": {"const": true},
+    "promotion_gate_source": {"type": "string", "minLength": 1},
+    "required_tracks": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"enum": ["debug", "feature", "review_release"]}},
+    "track_coverage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["debug", "feature", "review_release"],
+      "properties": {
+        "debug": {"$ref": "#/$defs/trackCoverage"},
+        "feature": {"$ref": "#/$defs/trackCoverage"},
+        "review_release": {"$ref": "#/$defs/trackCoverage"}
+      }
+    },
+    "receipts_scanned": {"type": "integer", "minimum": 0},
+    "eligible_real_receipts": {"type": "integer", "minimum": 0},
+    "evidence_run_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "blockers": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+  },
+  "$defs": {
+    "trackCoverage": {
+      "type": "object", "additionalProperties": false,
+      "required": ["minimum_required", "eligible_count", "run_ids"],
+      "properties": {
+        "minimum_required": {"type": "integer", "minimum": 1},
+        "eligible_count": {"type": "integer", "minimum": 0},
+        "run_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  }
+}

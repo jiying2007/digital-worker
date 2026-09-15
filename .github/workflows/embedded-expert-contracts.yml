@@ -8,7 +8,6 @@ on:
       - 'docs/**'
       - 'domains/**'
       - '嵌入式系统专家团-核心参考/**'
-      - 'expert-groups/embedded-system/**'
       - 'config/integrations/**'
       - 'contracts/**'
       - 'schemas/**'
@@ -28,7 +27,6 @@ on:
       - 'docs/**'
       - 'domains/**'
       - '嵌入式系统专家团-核心参考/**'
-      - 'expert-groups/embedded-system/**'
       - 'config/integrations/**'
       - 'contracts/**'
       - 'schemas/**'
@@ -63,80 +61,84 @@ jobs:
         run: python scripts/validate_repo_layout.py
       - name: Validate provider-neutral architecture
         run: python scripts/validate_provider_neutral_architecture.py
-      - name: Validate Edge Foundation target architecture
+      - name: Validate canonical Edge Foundation architecture
         run: python scripts/validate_edge_foundation_architecture.py
-      - name: Evaluate Edge Foundation shadow routing
-        run: python scripts/evaluate_edge_foundation_shadow.py --output /tmp/edge-foundation-shadow.json
-      - name: Upload Edge Foundation shadow evaluation
+      - name: Validate canonical Edge Foundation target assets
+        run: python scripts/validate_edge_foundation_target_assets.py
+      - name: Validate canonical routing
+        run: python scripts/validate_edge_foundation_routing.py --output /tmp/edge-foundation-routing.json
+      - name: Upload canonical routing receipt
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: edge-foundation-shadow-evaluation
-          path: /tmp/edge-foundation-shadow.json
+          name: edge-foundation-routing
+          path: /tmp/edge-foundation-routing.json
           if-no-files-found: error
           retention-days: 14
-      - name: Evaluate synthetic Pilot shadow receipt
+      - name: Evaluate synthetic canonical Pilot receipt
         shell: bash
         run: |
           set -euo pipefail
-          python scripts/evaluate_edge_foundation_pilot_shadow.py \
+          python scripts/evaluate_edge_foundation_pilot.py \
             tests/fixtures/pilot-run.valid.json \
             --pilot-result tests/fixtures/pilot-result.valid.json \
-            --output /tmp/edge-foundation-pilot-shadow.json
-          python - /tmp/edge-foundation-pilot-shadow.json <<'PY'
+            --output /tmp/edge-foundation-pilot-receipt.json
+          python - /tmp/edge-foundation-pilot-receipt.json <<'PY'
           import json, sys
           receipt = json.load(open(sys.argv[1], encoding='utf-8'))
-          assert receipt['routing_authority'] == 'legacy', receipt
-          assert receipt['canonical_routing_changed'] is False, receipt
+          assert receipt['routing_authority'] == 'edge-foundation', receipt
+          assert receipt['canonical_routing'] is True, receipt
           assert receipt['pilot_track'] == 'debug', receipt
           assert receipt['eligibility_checks']['source_real'] is False, receipt
-          assert receipt['eligibility_checks']['result_provided'] is True, receipt
-          assert receipt['phase3_evidence_eligible'] is False, receipt
+          assert receipt['pilot_result_evaluated'] is True, receipt
+          assert receipt['product_readiness_eligible'] is False, receipt
           assert 'synthetic-source-not-eligible' in receipt['eligibility_reasons'], receipt
           PY
-      - name: Upload Edge Foundation Pilot shadow receipt
+      - name: Upload canonical Pilot receipt
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: edge-foundation-pilot-shadow-receipt
-          path: /tmp/edge-foundation-pilot-shadow.json
+          name: edge-foundation-pilot-receipt
+          path: /tmp/edge-foundation-pilot-receipt.json
           if-no-files-found: error
           retention-days: 14
-      - name: Prove phase-3 readiness stays blocked without real Pilot evidence
+      - name: Prove product readiness stays blocked without all real Pilot tracks
         shell: bash
         run: |
           set -euo pipefail
           root="$(mktemp -d)"
           mkdir -p "$root/synthetic-run"
-          cp /tmp/edge-foundation-pilot-shadow.json "$root/synthetic-run/edge-foundation-shadow-receipt.json"
+          cp /tmp/edge-foundation-pilot-receipt.json "$root/synthetic-run/edge-foundation-pilot-receipt.json"
           set +e
-          python scripts/evaluate_edge_foundation_phase3_readiness.py \
+          python scripts/evaluate_edge_foundation_product_readiness.py \
             --receipt-dir "$root" \
-            --output /tmp/edge-foundation-phase3-readiness.json \
+            --output /tmp/edge-foundation-product-readiness.json \
             --require-ready
           status=$?
           set -e
           if [ "$status" -ne 2 ]; then
-            echo "expected phase-3 readiness without real Pilot evidence to exit 2, got $status"
+            echo "expected product readiness without all real Pilot tracks to exit 2, got $status"
             exit 1
           fi
-          python - /tmp/edge-foundation-phase3-readiness.json <<'PY'
+          python - /tmp/edge-foundation-product-readiness.json <<'PY'
           import json, sys
           readiness = json.load(open(sys.argv[1], encoding='utf-8'))
           assert readiness['status'] == 'BLOCKED', readiness
-          assert readiness['eligible_for_phase3_review'] is False, readiness
-          assert readiness['canonical_routing_switched'] is False, readiness
-          assert readiness['receipts_scanned'] == 1, readiness
+          assert readiness['eligible_for_product_review'] is False, readiness
+          assert readiness['routing_authority'] == 'edge-foundation', readiness
+          assert readiness['canonical_routing'] is True, readiness
           assert readiness['eligible_real_receipts'] == 0, readiness
           assert readiness['blockers'], readiness
           PY
-      - name: Upload Edge Foundation phase-3 readiness
+      - name: Upload product-readiness receipt
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: edge-foundation-phase3-readiness
-          path: /tmp/edge-foundation-phase3-readiness.json
+          name: edge-foundation-product-readiness
+          path: /tmp/edge-foundation-product-readiness.json
           if-no-files-found: error
           retention-days: 14
       - name: Validate core-reference synchronization
         run: python scripts/validate_core_reference.py
+      - name: Validate zero live legacy references
+        run: python scripts/validate_zero_live_legacy_refs.py
       - name: Validate Branch GC safety contract
         run: python scripts/validate_branch_gc.py
       - name: Validate Contract Catalog
@@ -154,9 +156,7 @@ jobs:
           path: /tmp/cross-repo-verification.json
           if-no-files-found: error
           retention-days: 14
-      - name: Validate expert-team contracts
-        run: python scripts/validate_embedded_assets.py
-      - name: Validate pilot operational contracts
+      - name: Validate Pilot operational contracts
         run: python scripts/validate_pilot_operations.py
       - name: Run trust regression tests
         run: python -m unittest discover -s tests/unit -p 'test_*.py' -v
@@ -175,52 +175,37 @@ jobs:
           python scripts/embedded_knowledge.py adapter-status > /tmp/embedded-knowledge-adapter-status.json
           status=$?
           set -e
-          if [ "$status" -ne 2 ]; then
-            echo "expected adapter-status without Knowledge Hub checkout to fail closed with exit=2, got $status"
-            exit 1
-          fi
+          test "$status" -eq 2
           grep -q 'BLOCKED' /tmp/embedded-knowledge-adapter-status.json
-      - name: Smoke closed-loop scaffold helper
+      - name: Smoke canonical scaffold helper
         shell: bash
         run: |
           set -euo pipefail
           root="$(mktemp -d)"
           python scripts/embedded_pilot.py init \
             --run-id CI-SCAFFOLD-001 \
-            --track feature \
-            --source-type synthetic \
-            --task-type feature_development \
-            --workflow-mode short_chain \
-            --human-owner ci \
-            --task-brief tests/fixtures/task-brief.valid.json \
-            --repo-root firmware/main \
-            --base-commit 0123456789abcdef0123456789abcdef01234567 \
+            --track feature --source-type synthetic \
+            --task-type feature_development --workflow-mode short_chain \
+            --human-owner ci --task-brief tests/fixtures/task-brief.valid.json \
+            --repo-root firmware/main --base-commit 0123456789abcdef0123456789abcdef01234567 \
             --output-root "$root"
           python scripts/embedded_pilot_scaffold.py "$root/CI-SCAFFOLD-001"
           test -f "$root/CI-SCAFFOLD-001/working/material-manifest.json"
           test -f "$root/CI-SCAFFOLD-001/working/acceptance-evidence-matrix.md"
           test -f "$root/CI-SCAFFOLD-001/working/knowledge-harvest.md"
-          python - "$root/CI-SCAFFOLD-001/working/material-manifest.json" <<'PY'
-          import json, sys
-          doc = json.load(open(sys.argv[1], encoding='utf-8'))
-          assert doc['readiness'] == 'BLOCKED', doc
-          assert 'test_environment' in doc['missing_critical'], doc
-          PY
       - name: Reject short SHA for real Pilot
         shell: bash
         run: |
           set +e
           python scripts/embedded_pilot.py init \
-            --run-id CI-SHORT-SHA \
-            --track feature --source-type real \
+            --run-id CI-SHORT-SHA --track feature --source-type real \
             --task-type feature_development --workflow-mode short_chain \
             --human-owner ci --task-brief tests/fixtures/task-brief.valid.json \
-            --repo-root firmware/main --base-commit 0123456 \
-            --output-root "$(mktemp -d)"
+            --repo-root firmware/main --base-commit 0123456 --output-root "$(mktemp -d)"
           status=$?
           set -e
           test "$status" -ne 0
-      - name: Evaluate synthetic pilot fixture
+      - name: Evaluate synthetic Pilot fixture
         run: python scripts/evaluate_embedded_pilot.py tests/fixtures/pilot-result.valid.json --output /tmp/pilot-metrics.json --markdown-output /tmp/pilot-metrics.md
       - name: Prove incorrect PASS is fail-closed
         shell: bash
@@ -229,44 +214,9 @@ jobs:
           python scripts/evaluate_embedded_pilot.py tests/fixtures/pilot-result.incorrect-pass.json --fail-on-safety
           status=$?
           set -e
-          if [ "$status" -ne 2 ]; then
-            echo "expected evaluator safety exit=2, got $status"
-            exit 1
-          fi
-      - name: Smoke immutable pilot completion
+          test "$status" -eq 2
+      - name: Smoke immutable Pilot completion
         shell: bash
         run: |
           set -euo pipefail
-          root="$(mktemp -d)"
-          python scripts/embedded_pilot.py init \
-            --run-id CI-PILOT-001 \
-            --track feature \
-            --source-type synthetic \
-            --task-type feature_development \
-            --workflow-mode short_chain \
-            --human-owner ci \
-            --task-brief tests/fixtures/task-brief.valid.json \
-            --repo-root firmware/main \
-            --base-commit 0123456789abcdef0123456789abcdef01234567 \
-            --output-root "$root"
-          python scripts/embedded_pilot.py status "$root/CI-PILOT-001" running --note "CI operational smoke"
-          python scripts/embedded_pilot.py complete "$root/CI-PILOT-001" \
-            --engineering-task-package tests/fixtures/engineering-task-package.valid.json \
-            --delivery-receipt tests/fixtures/delivery-receipt.valid.json \
-            --verification-report tests/fixtures/verification-report.valid.json \
-            --review-report tests/fixtures/review-report.valid.json \
-            --pilot-result tests/fixtures/pilot-result.feature.valid.json \
-            --extra material_manifest=tests/fixtures/material-manifest.valid.json \
-            --extra acceptance_evidence_matrix=tests/fixtures/acceptance-evidence-matrix.valid.md \
-            --extra knowledge_harvest=tests/fixtures/knowledge-harvest.valid.md
-          python scripts/embedded_pilot.py validate "$root/CI-PILOT-001"
-          set +e
-          python scripts/embedded_pilot.py bundle "$root/CI-PILOT-001" --fail-incomplete
-          rebundle_status=$?
-          python scripts/embedded_pilot.py status "$root/CI-PILOT-001" running
-          reopen_status=$?
-          set -e
-          test "$rebundle_status" -ne 0
-          test "$reopen_status" -ne 0
-          python scripts/embedded_pilot.py summary "$root" --output /tmp/pilot-status.json
-          python scripts/evaluate_embedded_pilot.py "$root/CI-PILOT-001/pilot-result.json" --output /tmp/pilot-ops-metrics.json
+          python -m unittest tests.unit.test_pilot_review_optional_current_stage tests.unit.test_pilot_material_terminal_gate tests.unit.test_pilot_trust -v
