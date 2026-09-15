@@ -2,46 +2,95 @@
 
 ## 1. 领域定位
 
-`embedded.mcu-rtos` 是 Embedded System Expert 内部负责 MCU 裸机、RTOS、启动、链接、实时性、低功耗和 MCU Bootloader/OTA 约束的 Capability。它不是独立 Expert，也不负责 Linux 平台事实。
+`embedded.mcu-rtos` 是 Embedded System Expert 内负责 Bare-metal/RTOS、Startup、Linker/Memory、ISR/DMA、实时性、Watchdog、Low Power 和 MCU Bootloader/OTA 的 Capability。
 
 ## 2. 典型任务
 
-Startup、Linker/ELF/MAP、ROM/RAM/Stack、ISR/DMA、RTOS task/queue/lock、Watchdog、Low Power、HardFault 上下文、Bootloader/OTA、MCU firmware development。
+MCU BSP、启动异常、ROM/RAM/Stack 优化、RTOS 并发、ISR/DMA 时序、HardFault、Watchdog/Reset、Low Power、Bootloader/App 契约、MCU OTA 与实时控制路径。
 
 ## 3. 必要输入
 
-exact firmware/source commit、MCU/board identity、startup/linker/map/ELF、datasheet/TRM、toolchain、RTOS config、fault registers/reset reason、相关时序 trace、Acceptance Criteria。
+- MCU / board / firmware exact identity；
+- startup/vector/linker script/MAP/ELF；
+- clock tree / memory map / datasheet；
+- RTOS config、task/priority/stack；
+- ISR/DMA/timer 配置；
+- watchdog/reset reason；
+- flash layout / Boot-App version contract；
+- fault context / log / trace / measurement；
+- toolchain 与编译配置。
 
 ## 4. 分析方法
 
-1. 从 exact image 建立 memory map 与 section 事实；
-2. 对启动问题按 reset → startup → init → scheduler/loop 分阶段确认；
-3. 对并发问题建立 task/ISR/lock/queue interaction 与 worst-case timing；
-4. HardFault 先解码上下文，再建立可证伪 hypotheses；
-5. ROM/RAM 优化使用 MAP/ELF 量化，不用源码体积估算；
-6. 实时性结论必须给出测量方法、时钟来源与测试环境；
-7. OTA 关注版本 identity、边界条件、恢复与 rollback 证据。
+```text
+Reset / Vector
+→ Clock / C runtime / data-bss
+→ HAL/BSP / basic IO
+→ ISR / Timer / DMA / Watchdog
+→ RTOS Scheduler / Tasks / IPC
+→ Application Control
+→ Low Power / Bootloader / OTA
+```
+
+### 4.1 Startup / Linker / Memory
+
+Reset 到 main/scheduler 依次核对 vector、stack、clock、`.data` copy、`.bss` zero、C runtime、HAL/BSP、watchdog、scheduler start。ROM/RAM 必须看 memory region、section placement、large symbols、orphan section、load/run address、stack/heap reserve 和 MAP/ELF，而不是只看 binary 总大小。
+
+### 4.2 RTOS / ISR / DMA
+
+按 task priority/period → blocking call → mutex/semaphore/queue → ISR-to-task handoff → critical section → priority inversion → lock order/race → timeout/watchdog 分析。明确 ISR 可调用 API、DMA buffer lifetime/cache、共享资源 owner 和 worst-case blocking。
+
+### 4.3 HardFault / Exception
+
+收集 fault status registers、stacked registers、PC/LR/SP、ELF/MAP、task/ISR context、stack watermark 和最近事件。PC 落点只说明现场，不自动等于 Root Cause；需要结合调用链、内存破坏、栈、DMA 和并发证据。
+
+### 4.4 实时性与控制周期
+
+对 deadline、jitter、ISR latency、task execution time、queue latency 说明测量方法，例如 GPIO、trace、timestamp、cycle counter。平均值不能替代 worst-case；优化前后必须同条件对比。
+
+### 4.5 Watchdog / Reset / Low Power
+
+明确 watchdog feed ownership、超时条件、reset reason、故障快照、sleep entry/exit、clock/peripheral restore、wakeup source 和恢复失败路径。
+
+### 4.6 MCU OTA
+
+核 Boot/App version contract、image/hash、flash layout、integrity/authenticity、power-loss recovery、rollback、boot success criteria、升级状态机和与主控版本协同。生产签名、Fuse/OTP、发布仍由人工 Gate 控制。
 
 ## 5. Evidence 要求
 
-PC/stack trace 只表示故障现场，不自动等于根因。实时性、功耗、内存余量都必须绑定目标 build/device/test identity。一次不复现不能证明 race/deadlock 已消失。
+实时性数字绑定测量方法；ROM/RAM 结论绑定 MAP/ELF；HardFault 结论绑定 exact firmware + fault context；OTA 绑定 image/hash、设备和失败恢复路径。Host 模拟或单元测试不能外推为 Device/HIL PASS。
 
 ## 6. 输出
 
-Startup/Linker/Concurrency Analysis、Memory/Timing Evidence、Fault Hypothesis、MCU OTA Constraints、Engineering Guidance、Regression Requirements、Unverified Items。
+Startup/Linker/Memory Analysis、Concurrency/Timing Analysis、Fault Context/Hypothesis、Watchdog/Power Constraint、OTA Contract、Regression Scope、Unverified Items、Residual Risk。
 
 ## 7. 协作与交接
 
-与 `embedded.architecture` 对齐 Linux/MCU 分工和接口；与 `embedded.driver-component` 处理设备/协议接入；复杂偶发问题交 `embedded.debug-reliability` 共同 RCA；Verification 独立判断 build/device/HIL 证据。
+- `embedded.architecture`：Linux/MCU 分工、接口、资源和生命周期；
+- `embedded.driver-component`：MCU device driver、协议、adapter；
+- `embedded.debug-reliability`：长期偶发、多假设 HardFault/并发问题；
+- Hardware Expert：clock、电源、波形、引脚、电气和器件事实；
+- `assurance.verification`：目标板时序、Device/HIL evidence 独立判断。
+
+### 7.1 Verification 关注点
+
+至少根据 scope 覆盖 startup、memory budget、ISR/DMA、并发/timeout、worst-case timing、watchdog/reset、low-power、OTA happy/failure/power-loss/rollback。涉及电机/控制闭环时还应验证低速、带载、正反切换、异常保护和长期温升等产品相关工况。
 
 ## 8. 常见错误
 
-- 用源码文件大小估算 ROM/RAM；
-- 把平均时延当 worst-case；
-- 只看 HardFault PC 就确认 root cause；
-- 只因问题未再次出现就宣称并发问题修复；
-- 把编译或单元测试 PASS 推导为目标 MCU 行为 PASS。
+- task stack 只按经验配置，不看 watermark；
+- ISR 做阻塞或长耗时操作；
+- critical section 扩大导致控制周期抖动；
+- mutex/queue 正确但 priority 设计造成饥饿；
+- Bootloader/App 协议升级忽略旧版本组合；
+- HardFault 只依据 PC 猜根因；
+- 平均周期正常就忽略 worst-case jitter；
+- OTA 只验证正常升级，不验证掉电/回滚。
 
 ## 9. BLOCK 条件
 
-缺 exact firmware/map/toolchain、fault context 与 image 不匹配、实时/并发结论缺直接测量、设备动作超出授权边界时必须 BLOCK 或保留为 unverified。
+firmware 与 ELF/MAP 不匹配、MCU/board identity 不清、实时性无测量条件却要求 verified 结论、HardFault 缺关键 context、Boot/App contract 不明、OTA rollback/power-loss 路径未定义时，应 BLOCK 或保持 evidence insufficient。
+
+## 10. Knowledge Harvest 与质量指标
+
+可沉淀 startup/linker checklist、memory rule、RTOS concurrency pattern、fault capture template、timing method、Boot-App contract、OTA recovery rule。主要指标：evidence coverage、deadline/jitter compliance、unsupported claim rate、correct block rate、复现与回归稳定性。
