@@ -1,0 +1,44 @@
+schema_version: 1
+id: embedded-legacy-compatibility-scope
+status: execution-adapter-only
+canonical_ownership: false
+canonical_routing_switched: false
+
+canonical_target:
+  domain: ../../domains/edge-foundation/domain.yaml
+  coordination: ../../domains/edge-foundation/coordination.yaml
+  skill_ownership: ../../domains/edge-foundation/skills.yaml
+  gate_ownership: ../../domains/edge-foundation/gate-policy.yaml
+  verification: ../../domains/edge-foundation/assurance/verification.yaml
+  review: ../../domains/edge-foundation/assurance/review.yaml
+  evaluation: ../../domains/edge-foundation/evaluation/golden-cases.yaml
+  identity_mapping: ../../domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml
+
+legacy_assets:
+  expert_group:
+    path: expert-group.yaml
+    mode: execution-and-rollback-adapter
+  expert_io:
+    path: contracts/experts
+    mode: execution-adapter-only
+  skill_registry:
+    path: config/p0-skills.yaml
+    mode: execution-registry-mirror
+  gate_policy:
+    path: config/gate-policy.yaml
+    mode: execution-policy-mirror
+  golden_cases:
+    path: tests/golden-cases.yaml
+    mode: migration-comparison-baseline
+  task_modes:
+    path: config/task-modes.yaml
+    mode: canonical-execution-until-switch
+
+rules:
+  no_new_legacy_expert_identity: true
+  no_new_canonical_ownership_in_legacy_surface: true
+  target_assets_must_not_depend_on_legacy_identity: true
+  legacy_execution_semantics_must_remain_regression_tested_until_switch: true
+  physical_removal_before_canonical_switch_forbidden: true
+  phase4_deprecation_after_switch_and_soak: true
+  phase5_physical_removal_after_zero-live-reference-proof: true

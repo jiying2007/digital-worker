@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-"""Evaluate legacy embedded routing against the Edge Foundation target semantics.
+"""Evaluate legacy embedded execution routing against Edge Foundation target semantics.
 
 This script is intentionally shadow-only: it must not mutate canonical routing.
+Target Golden Cases are authoritative for target evaluation; legacy routing remains
+an execution input until the canonical switch.
 """
 from __future__ import annotations
 
@@ -28,12 +30,15 @@ def evaluate() -> dict:
     domain = load_yaml(DOMAIN_ROOT / "domain.yaml")
     shadow = load_yaml(DOMAIN_ROOT / "routing-shadow.yaml")
     legacy = load_yaml(LEGACY_ROOT / "config" / "task-modes.yaml")
-    golden = load_yaml(LEGACY_ROOT / "tests" / "golden-cases.yaml")
+    golden = load_yaml(DOMAIN_ROOT / "evaluation" / "golden-cases.yaml")
 
     require(shadow["canonical_routing"] is False, "shadow routing must never be canonical during dual evaluation")
     require(shadow["status"] == "dual-evaluation", "shadow routing status drift")
     require(shadow["policy"]["must_not_change_execution_route"] is True, "shadow evaluator must not alter execution routing")
     require(shadow["policy"]["must_not_expand_action_authority"] is True, "shadow evaluator must not expand authority")
+    require(golden["status"] == "phase4-prep-target", "target Golden Case status drift")
+    require(golden["canonical_routing_switched"] is False, "target Golden Cases must remain shadow-only before switch")
+    require(golden["rules"]["legacy_expert_identity_forbidden"] is True, "target Golden Cases must reject legacy Expert identity")
 
     legacy_routes = legacy["routing"]
     target_routes = shadow["routing"]
@@ -43,6 +48,7 @@ def evaluate() -> dict:
     embedded = domain_experts["embedded-system-expert"]
     known_capabilities = set(embedded.get("capabilities", []))
     allowed_modes = set(domain["workflow_semantics"]["frozen_high_level_modes"])
+    assurance_ids = set(domain["assurance"]["responsibilities"])
     legacy_ids = {"embedded-system-team-lead"}
     legacy_ids.update(item["id"] for item in load_yaml(LEGACY_ROOT / "expert-group.yaml")["experts"])
 
@@ -63,6 +69,10 @@ def evaluate() -> dict:
         for capability_id in target.get("capabilities", []):
             if capability_id not in known_capabilities:
                 errors.append(f"{task_type}: unknown embedded capability {capability_id}")
+
+        for assurance_id in target.get("assurance", []):
+            if assurance_id not in assurance_ids:
+                errors.append(f"{task_type}: unknown Assurance responsibility {assurance_id}")
 
         legacy_default = legacy_route["default_mode"]
         translated = shadow["legacy_mode_translation"][legacy_default]
@@ -109,27 +119,39 @@ def evaluate() -> dict:
 
     golden_cases = golden["cases"]
     for case in golden_cases:
+        case_id = case["id"]
         task_type = case["task_type"]
         if task_type not in target_routes:
-            errors.append(f"golden case {case['id']}: task type is not mapped: {task_type}")
+            errors.append(f"golden case {case_id}: task type is not mapped: {task_type}")
             continue
         target = target_routes[task_type]
-        legacy_mode = case["workflow_mode"]
+        legacy_mode = case["legacy_execution_mode"]
         if legacy_mode not in shadow["legacy_mode_translation"]:
-            errors.append(f"golden case {case['id']}: legacy mode not translated: {legacy_mode}")
+            errors.append(f"golden case {case_id}: legacy mode not translated: {legacy_mode}")
             continue
         translated = shadow["legacy_mode_translation"][legacy_mode]
         allowed_target = set(target.get("allowed_target_modes", [target["target_mode"]]))
         if translated not in allowed_target:
-            errors.append(
-                f"golden case {case['id']}: translated target mode {translated} not allowed for {task_type}"
-            )
+            errors.append(f"golden case {case_id}: translated target mode {translated} not allowed for {task_type}")
+        if case["target_mode"] != target["target_mode"]:
+            errors.append(f"golden case {case_id}: target mode disagrees with routing shadow")
+        if case["expected_experts"] != target.get("primary_experts", []):
+            errors.append(f"golden case {case_id}: target Expert expectation disagrees with routing shadow")
+        if not set(target.get("capabilities", [])).issubset(set(case.get("expected_capabilities", []))):
+            errors.append(f"golden case {case_id}: target Capability expectation drops routed capability")
+        if case["required_assurance"] != target.get("assurance", []):
+            errors.append(f"golden case {case_id}: Assurance expectation disagrees with routing shadow")
+        for expert_id in case["expected_experts"]:
+            if expert_id in legacy_ids:
+                errors.append(f"golden case {case_id}: legacy Expert leaked into target evaluation")
 
     require(not errors, "edge-foundation shadow evaluation failed: " + "; ".join(errors))
 
     summary = {
         "status": "PASS",
         "canonical_routing_changed": False,
+        "golden_case_authority": "domains/edge-foundation/evaluation/golden-cases.yaml",
+        "legacy_execution_routing_authority": "expert-groups/embedded-system/config/task-modes.yaml",
         "task_types_evaluated": len(rows),
         "legacy_task_types": len(legacy_routes),
         "golden_cases_evaluated": len(golden_cases),
@@ -153,7 +175,7 @@ def main() -> None:
     print(
         "edge-foundation shadow evaluation PASS: "
         f"{summary['task_types_evaluated']} task types, "
-        f"{summary['golden_cases_evaluated']} golden cases, "
+        f"{summary['golden_cases_evaluated']} target golden cases, "
         f"cross-domain candidates={summary['cross_domain_candidates']}, canonical routing unchanged"
     )
 
