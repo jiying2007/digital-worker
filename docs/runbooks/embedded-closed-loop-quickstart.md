@@ -35,6 +35,22 @@ Scaffold creates Material Manifest, Acceptance→Evidence Matrix, Knowledge Harv
 
 Before Engineering execution, bind exact source, Engineering Task Package, provider locks, ADK immutable release/source-set, Runtime distribution/profile/host, Session Bootstrap, sandbox/approval and Execution Receipt. A Runtime-local PASS never means Verification PASS or Release Ready.
 
+Formal evidence work uses **L2 / formal-evidence** semantics. The cross-repo lock must report the selected Runtime Binding as `SOURCE_SET_BOUND`; ADK delivery remains `exact-source-set-reference`. Asset Profile and Runtime Profile are separate identities: current ADK Asset Profile is `embedded-fullstack`, while Codex Runtime Profile remains **default (runtime-owned)** unless the Runtime itself selects another profile.
+
+The frozen identity spine is described by `contracts/cross-repo/identity-envelope.yaml`. At minimum retain:
+
+```text
+source repo + exact commit
+ADK release / tree / manifest blob / exact source-set reference
+Runtime Binding repository + exact commit
+runtime target / Runtime Profile / runtime host
+runtime distribution identity
+Session Bootstrap reference
+Execution Receipt reference
+```
+
+For Codex formal sessions, the Runtime Binding owns the thin bootstrap surface such as `session-bootstrap.sh`; digital-worker does not duplicate Runtime-private home/config. The Session Bootstrap is not a fifth control plane and must not contain a domain Verification PASS.
+
 ## 4. Resolve Knowledge context
 
 ```bash
@@ -50,9 +66,13 @@ python scripts/edge_knowledge.py adapter-status
 python scripts/edge_knowledge.py context \
   --cwd "$PWD" --query "<platform symptom subsystem>" \
   --task-type general --context-budget small --limit 3
+
+python scripts/edge_knowledge.py evidence-pack \
+  --query "<platform symptom subsystem>" \
+  --scope-ref repository:<repo-id>
 ```
 
-Provider HEAD/contract digest drift must fail closed. Knowledge hit is a candidate, not automatic authority.
+Provider HEAD/contract digest drift must fail closed. Knowledge hit is a candidate, not automatic authority. The local Registry only indexes target contracts and human entrypoints; authoritative external content remains in Knowledge Hub or the original Source of Truth.
 
 ## 5. Execute against canonical responsibility
 
@@ -132,6 +152,8 @@ Always preserve:
 - no cross-layer PASS inference;
 - no unauthorized A5/A6/A7 action;
 - Source of Truth stays at source;
+- Asset Profile ≠ Runtime Profile;
+- Runtime execution receipt ≠ domain Verification PASS;
 - product maturity and routing authority are separate concerns;
 - repeated real evidence is required before adding new Schema/Skill/Capability/Expert/platform layer.
 
