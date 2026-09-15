@@ -50,7 +50,7 @@
     "codex": {
       "repository": "jiying2007/codex",
       "ref": "main",
-      "commit": "c215efb2a1724f9eb8d501d9cbdfe74dde0f08b5",
+      "commit": "d0725d01f6ed1561374fcb884eb0e66bd3a76e0e",
       "contract": "manifests/integrations/digital-worker-runtime-binding.json",
       "contract_version": "2.0",
       "contract_canonical_sha256": "fe031b99f9ee55be048f884f1a79618df38c929fbbf3ad27f3ef6a183ec24ea4",
@@ -59,10 +59,10 @@
       "source_identity_mode": "exact-release-source-blobs",
       "runtime_readiness": "SOURCE_SET_BOUND",
       "session_bootstrap_contract": "manifests/session_bootstrap.json",
-      "session_bootstrap_contract_version": "1.0",
-      "session_bootstrap_contract_canonical_sha256": "1b5473f5b5f8b9c5f31738916bb4075bd601988cede17caaffd607d28cb7d68e",
+      "session_bootstrap_contract_version": "1.1",
+      "session_bootstrap_contract_canonical_sha256": "246bbe1440a18fd4e1a32a72cf834f732ebf4fc33e50e9f02669d4eec70d35c9",
       "execution_receipt_schema": "schemas/runtime-execution-receipt.schema.json",
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_SOURCE_SET_BOUND"
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_SOURCE_SET_BOUND_FORMAL_IDENTITY"
     }
   },
   "rules": {
@@ -77,6 +77,8 @@
     "runtime_distribution_identity_required_when_executed": true,
     "monolithic_runtime_bundle_not_required_identity": true,
     "formal_mode_requires_exact_pinned_knowledge": true,
+    "formal_mode_requires_exact_digital_worker_governance_identity": true,
+    "l1_to_l2_requires_new_bootstrap_and_execution_source_set": true,
     "runtime_local_gate_is_not_domain_gate": true,
     "runtime_output_is_not_verification_pass": true,
     "runtime_execution_receipt_must_not_contain_verification_pass": true,
