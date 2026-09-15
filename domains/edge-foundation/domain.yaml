@@ -116,7 +116,7 @@ knowledge:
   canonical_source_examples: [git, issue-pr, ci, artifact-store, hil, datasheet-trm, schematic, measurement, collaboration-docs]
 
 product_readiness:
-  evaluator: ../../scripts/evaluate_edge_foundation_phase3_readiness.py
+  evaluator: ../../scripts/evaluate_edge_foundation_product_readiness.py
   pilot_plan: pilot/pilot-plan.yaml
   requires_real_pilot_evidence: true
   synthetic_pilot_counts: false
