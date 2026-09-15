@@ -39,6 +39,12 @@ python scripts/embedded_pilot_scaffold.py \
 
 Unknown context stays `missing / BLOCKED`.
 
+Before consuming bootstrap/local Knowledge candidates, keep the R0 fallback check available:
+
+```bash
+python scripts/embedded_knowledge.py verify
+```
+
 Debug supports `reproduction OR authoritative log`，但 source/device/build identity 仍必须可追溯。
 
 ## 3. Engineering / Runtime boundary
