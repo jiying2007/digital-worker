@@ -115,7 +115,9 @@ def main() -> None:
     }
     require(embedded_caps == expected_caps, f"Embedded Capability set drift: {sorted(embedded_caps)}")
     require(domain["coordination_role"]["id"] == "edge-coordination", "Edge Coordination role drift")
-    require(set(domain["assurance"]["responsibilities"]) == {"verification", "review"}, "Assurance responsibility drift")
+    assurance_responsibilities = set(domain["assurance"]["responsibilities"])
+    require({"verification", "review"}.issubset(assurance_responsibilities), "Assurance must retain verification and review responsibilities")
+    require({"evidence", "evaluation"}.issubset(assurance_responsibilities), "Assurance evidence/evaluation responsibilities drift")
     require(domain["migration"]["canonical_routing_switched"] is False, "core reference validator assumes canonical routing remains unswitched")
 
     index = read("README.md")
