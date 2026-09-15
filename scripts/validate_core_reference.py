@@ -91,12 +91,20 @@ def main() -> None:
     require(golden["canonical_routing"] is True and len(case_ids) == 12 and len(case_ids) == len(set(case_ids)), "Golden Case baseline drift")
 
     forbidden_hits = []; p_pattern = re.compile(r"\bP0[1-8]\b")
+    retired_tokens = [
+        "1+7",
+        "数字岗位",
+        "human-view" + ".yaml",
+        "expert-groups" + "/embedded-system",
+        "routing" + "-shadow",
+        "canonical_routing_switched" + "=false",
+    ]
     for path in list(CORE.rglob("*.md")) + list(CORE.rglob("*.yaml")) + list(CORE.rglob("*.yml")):
         text = path.read_text(encoding="utf-8")
         for legacy_id in sorted(LEGACY_IDS):
             if legacy_id in text: forbidden_hits.append(f"{path.relative_to(ROOT)} -> {legacy_id}")
         if p_pattern.search(text): forbidden_hits.append(f"{path.relative_to(ROOT)} -> P01-P08")
-        for token in ["1+7", "数字岗位", "human-view.yaml", "expert-groups/embedded-system", "routing-shadow", "canonical_routing_switched=false"]:
+        for token in retired_tokens:
             if token in text: forbidden_hits.append(f"{path.relative_to(ROOT)} -> {token}")
     require(not forbidden_hits, "retired migration/organization semantics leaked into core reference: " + "; ".join(sorted(set(forbidden_hits))))
     validate_links()
