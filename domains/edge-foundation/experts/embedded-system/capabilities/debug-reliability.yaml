@@ -1,0 +1,33 @@
+schema_version: 1
+id: embedded.debug-reliability
+name: 调试与可靠性能力域
+name_en: Debug and Reliability Capability
+kind: capability
+owner_expert: embedded-system-expert
+status: phase4-prep-target
+ownership_authority: canonical
+execution_surface: legacy-compatible
+legacy_execution_adapter: ../../../../../expert-groups/embedded-system/contracts/experts/debug-reliability.io.yaml
+
+consumes:
+  - task-charter
+  - material-manifest
+  - evidence-ref
+  - relevant-domain-analysis
+produces:
+  - hypothesis-registry
+  - diagnostic-report
+  - root-cause-assessment
+  - regression-requirements
+hands_off_to:
+  - edge-coordination
+  - assurance.verification
+constraints:
+  - observed-inferred-confirmed-must-remain-distinct
+  - confirmed-root-cause-requires-reproducible-evidence
+
+rules:
+  capability_is_not_agent: true
+  capability_is_not_domain_expert: true
+  legacy_expert_identity_forbidden: true
+  execution_adapter_does_not_define_responsibility: true
