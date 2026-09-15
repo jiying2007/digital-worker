@@ -49,7 +49,7 @@ def main():
         "Capability",
         "Assurance",
         "Domain → Expert → Capability → Skill",
-        "compatibility execution surface",
+        "Compatibility execution surface",
     ]:
         assert_true(marker in strategy, f"closed-loop strategy missing target responsibility marker: {marker}")
     for stale in [
