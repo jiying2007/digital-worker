@@ -22,6 +22,7 @@ EXPECTED_REPOS = {
     "agent_asset_control_plane": "jiying2007/agent-dev-kit",
     "runtime_practice_eval": "jiying2007/llm_agent",
     "codex": "jiying2007/codex",
+    "codex_review_safe": "jiying2007/codex-review",
 }
 
 
@@ -175,6 +176,67 @@ def verify_runtime_practice_eval(entry: dict, destination: Path) -> dict:
     }
 
 
+def verify_assurance_binding(name: str, entry: dict, destination: Path, fetch: bool) -> dict:
+    repo = entry["repository"]
+    if repo != EXPECTED_REPOS[name]:
+        fail(f"{name}: repository is not approved: {repo}")
+    commit = entry["commit"]
+    if fetch:
+        checkout(repo, commit, destination)
+        fetch_exact_tag(destination, entry["release_tag"])
+    if not destination.is_dir():
+        fail(f"{name}: checkout missing: {destination}")
+    actual_commit = run("git", "-C", str(destination), "rev-parse", "HEAD").lower()
+    if actual_commit != commit:
+        fail(f"{name}: checkout HEAD mismatch: expected {commit}, got {actual_commit}")
+    if entry["ref"] != entry["release_tag"]:
+        fail(f"{name}: assurance ref must equal immutable release tag")
+    actual_tag_commit = run("git", "-C", str(destination), "rev-parse", f"{entry['release_tag']}^{{}}")
+    if actual_tag_commit != commit:
+        fail(f"{name}: immutable release tag does not peel to locked commit")
+
+    contract_path = destination / entry["product_contract"]
+    if not contract_path.is_file():
+        fail(f"{name}: product contract missing")
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+    actual_digest = canonical_digest(contract_path)
+    if actual_digest != entry["product_contract_canonical_sha256"]:
+        fail(f"{name}: product contract canonical digest mismatch")
+    checks = {
+        "productContractVersion": entry["product_contract_version"],
+        "productId": entry["product_id"],
+        "productVersion": entry["product_version"],
+        "safeCoreCommit": entry["safe_core_commit"],
+        "safeCoreVersion": entry["safe_core_version"],
+        "safeCoreRuntimeDigest": entry["safe_core_runtime_digest"],
+        "safeCoreGovernanceDigest": entry["safe_core_governance_digest"],
+        "reviewReceiptVersion": entry["review_receipt_schema_version"],
+    }
+    for field, expected in checks.items():
+        if contract.get(field) != expected:
+            fail(f"{name}: product contract {field} mismatch")
+    actual_core_pin = run("git", "-C", str(destination), "rev-parse", "HEAD:src/codex-safe-core")
+    if actual_core_pin != entry["safe_core_commit"]:
+        fail(f"{name}: Safe Core gitlink mismatch")
+    if entry.get("release_immutable") is not True:
+        fail(f"{name}: assurance release must be declared immutable")
+    if entry.get("validation") != "PINNED_IMMUTABLE_RELEASE_PRODUCT_CONTRACT_VERIFIED_REAL_RUN_USAGE_PENDING":
+        fail(f"{name}: real-run usage pending boundary drift")
+    return {
+        "name": name,
+        "repository": repo,
+        "commit": actual_commit,
+        "release_tag": entry["release_tag"],
+        "product_contract": entry["product_contract"],
+        "product_contract_version": contract["productContractVersion"],
+        "product_contract_canonical_sha256": actual_digest,
+        "review_receipt_schema_version": contract["reviewReceiptVersion"],
+        "safe_core_commit": actual_core_pin,
+        "real_run_usage": "PENDING",
+        "status": "PASS",
+    }
+
+
 def verify_one(name: str, entry: dict, destination: Path, fetch: bool) -> dict:
     repo = entry["repository"]
     expected_repo = EXPECTED_REPOS[name]
@@ -276,6 +338,10 @@ def main() -> None:
     for name, entry in entries.items():
         destination = args.root / name
         results.append(verify_one(name, entry, destination, args.fetch))
+    assurance = lock.get("assurance_bindings", {}).get("codex_review_safe")
+    if not isinstance(assurance, dict):
+        fail("codex_review_safe assurance binding missing")
+    results.append(verify_assurance_binding("codex_review_safe", assurance, args.root / "codex_review_safe", args.fetch))
     report = {
         "schema_version": 2,
         "lock_schema_version": lock["schema_version"],

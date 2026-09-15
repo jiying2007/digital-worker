@@ -4,6 +4,7 @@
 This gate is intentionally separate from the Pilot lifecycle. Legacy/non-Formal
 reports continue to validate against their additive v1 schemas; only a report used
 as an L2 Formal decision is required to satisfy the stronger provenance rules.
+Optional external Assurance Provider evidence is validated as bounded input only.
 """
 from __future__ import annotations
 
@@ -17,6 +18,14 @@ from typing import Any
 from jsonschema import Draft202012Validator
 
 ROOT = Path(__file__).resolve().parents[1]
+SCRIPTS = Path(__file__).resolve().parent
+if str(SCRIPTS) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS))
+from validate_assurance_provider_evidence import (  # noqa: E402
+    AssuranceProviderEvidenceError,
+    validate_evidence as validate_assurance_provider_evidence,
+)
+
 VERIFICATION_SCHEMA = ROOT / "domains" / "edge-foundation" / "schemas" / "verification-report.schema.json"
 REVIEW_SCHEMA = ROOT / "domains" / "edge-foundation" / "schemas" / "review-report.schema.json"
 SHA256_ID = re.compile(r"^sha256:[0-9a-f]{64}$")
@@ -171,6 +180,30 @@ def _validate_formal_report(
         _require(_nonempty_strings(report.get("evidence_refs")), "Formal Independent Review approval requires evidence_refs")
 
 
+def _validate_optional_assurance_provider_evidence(
+    evidence: dict[str, Any],
+    *,
+    work_identity: dict[str, str],
+    verification: dict[str, Any],
+    review: dict[str, Any] | None,
+) -> dict[str, Any]:
+    _require(evidence.get("work_item_id") == work_identity["work_item_id"], "Assurance Provider evidence work_item_id does not match frozen L2 Work Item")
+    role = evidence.get("assurance_role")
+    if role == "independent-review-evidence":
+        _require(review is not None, "Independent Review Assurance Provider evidence requires a Review report")
+        report = review
+        report_kind = "review"
+    elif role == "verification-evidence":
+        report = verification
+        report_kind = "verification"
+    else:
+        raise FormalAssuranceError("Assurance Provider evidence role is unsupported")
+    try:
+        return validate_assurance_provider_evidence(evidence, report, report_kind)
+    except (AssuranceProviderEvidenceError, OSError, json.JSONDecodeError) as exc:
+        raise FormalAssuranceError(f"Assurance Provider evidence BLOCKED: {exc}") from exc
+
+
 def validate_formal_assurance(
     *,
     bootstrap: dict[str, Any],
@@ -179,6 +212,7 @@ def validate_formal_assurance(
     prior_verification: dict[str, Any] | None = None,
     prior_review: dict[str, Any] | None = None,
     require_review: bool = False,
+    assurance_provider_evidence: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     source_set_identity, work_identity = validate_l2_bootstrap(bootstrap)
     _validate_formal_report(
@@ -210,6 +244,15 @@ def validate_formal_assurance(
         expected_verification_ref = f"verification-report:{verification['report_id']}"
         _require(expected_verification_ref in review.get("input_evidence_refs", []), "Independent Review input_evidence_refs must include the exact Verification report_id")
 
+    assurance_validation = None
+    if assurance_provider_evidence is not None:
+        assurance_validation = _validate_optional_assurance_provider_evidence(
+            assurance_provider_evidence,
+            work_identity=work_identity,
+            verification=verification,
+            review=review,
+        )
+
     return {
         "kind": "formal-assurance-provenance-validation/v1",
         "validation_status": "PASS",
@@ -223,8 +266,12 @@ def validate_formal_assurance(
         "verification_decision": verification.get("overall"),
         "review_report_id": review.get("report_id") if review else None,
         "review_decision": review.get("decision") if review else None,
+        "assurance_provider_evidence_id": assurance_validation.get("evidence_id") if assurance_validation else None,
+        "assurance_provider_binding_ref": assurance_validation.get("provider_binding_ref") if assurance_validation else None,
         "claims": {
             "provenance_validated_only": True,
+            "provider_receipt_is_input_evidence_only": assurance_validation is not None,
+            "provider_receipt_decision_implied": False,
             "product_qualification_implied": False,
             "release_authorization_implied": False,
         },
@@ -238,6 +285,7 @@ def configure_parser() -> argparse.ArgumentParser:
     parser.add_argument("--review-report", type=Path)
     parser.add_argument("--prior-verification-report", type=Path)
     parser.add_argument("--prior-review-report", type=Path)
+    parser.add_argument("--assurance-provider-evidence", type=Path)
     parser.add_argument("--require-review", action="store_true")
     parser.add_argument("--output", type=Path)
     return parser
@@ -253,6 +301,7 @@ def main(argv: list[str] | None = None) -> int:
             prior_verification=_load_json(args.prior_verification_report) if args.prior_verification_report else None,
             prior_review=_load_json(args.prior_review_report) if args.prior_review_report else None,
             require_review=args.require_review,
+            assurance_provider_evidence=_load_json(args.assurance_provider_evidence) if args.assurance_provider_evidence else None,
         )
     except FormalAssuranceError as exc:
         print(json.dumps({"kind": "formal-assurance-provenance-validation/v1", "validation_status": "BLOCKED", "reason": str(exc)}, ensure_ascii=False), file=sys.stderr)

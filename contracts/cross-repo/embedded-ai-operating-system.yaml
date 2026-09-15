@@ -128,6 +128,37 @@ runtime_bindings:
       runtime_target: claude-code
       status: future
 
+assurance_bindings:
+  contract:
+    purpose: supply bounded external assurance evidence/receipts without owning Digital Worker Verification or Independent Review decisions
+    required_identity:
+      - assurance-provider-repository
+      - assurance-provider-commit-or-release
+      - product-contract-ref-and-digest
+      - receipt-kind-and-version
+      - receipt-ref-and-digest
+      - provider-subject-fingerprint
+      - digital-worker-reviewed-subject-ref
+      - subject-mapping-evidence
+    owns:
+      - provider-specific-assurance-execution
+      - provider-native-receipt
+    must_not_own:
+      - domain-verification-pass
+      - independent-review-decision
+      - release-authorization
+      - product-qualification
+      - terminal-maturity
+  candidates:
+    codex-review-safe:
+      repository: jiying2007/codex-review
+      role: independent-review-evidence-provider
+      status: contract-verified-real-run-usage-pending
+      identity_ref: config/integrations/cross-repo-lock.json#/assurance_bindings/codex_review_safe
+    human-or-other-provider:
+      role: provider-neutral-alternate-path
+      status: supported
+
 source_fact_planes:
   git_ci_hil_artifact_store:
     owns:
@@ -158,6 +189,14 @@ handoffs:
     to: digital-worker
     contract: source-set/distribution/session-bootstrap/runtime-execution-receipt
     failure: BLOCKED_or_FAILED
+  - from: digital-worker
+    to: assurance-binding
+    contract: exact-reviewed-subject-plus-bounded-assurance-request
+    failure: OPTIONAL_PROVIDER_UNAVAILABLE_OR_BLOCKED
+  - from: assurance-binding
+    to: digital-worker
+    contract: provider-native-receipt-by-ref-digest-plus-subject-mapping
+    failure: DOES_NOT_CREATE_PASS
   - from: runtime-binding
     to: llm_agent
     contract: runtime-health-and-comparison-evidence
@@ -170,6 +209,9 @@ stable_principles:
   - Asset Profile 与 Runtime Profile 分离
   - ADK immutable release 与 Runtime exact source-set/distribution identity 分层
   - Session Bootstrap 是 Runtime Binding 内的薄装配层，不是第五控制面
+  - Assurance Binding 是外部证据绑定层，不是第五控制面或 Decision Authority
+  - 外部 Assurance Provider receipt 只是 Verification/Review 的输入 evidence，不自动形成 PASS/APPROVE
+  - Codex Safe Family 不是唯一 Assurance Provider；human 或其它 provider 路径必须保持有效
   - Runtime local gate 不等于 Domain Gate
   - Runtime output 不等于 Verification PASS
   - Knowledge candidate 不自动 promotion active

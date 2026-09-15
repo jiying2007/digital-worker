@@ -72,6 +72,30 @@
       "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_SOURCE_SET_BOUND_FORMAL_IDENTITY_WORK_RUN_RECEIPT_V2"
     }
   },
+  "assurance_bindings": {
+    "codex_review_safe": {
+      "repository": "jiying2007/codex-review",
+      "ref": "v4.8.7",
+      "commit": "25f38b965968f2672cf526ef3d5fb7e823714dfe",
+      "product_contract": "product-contract.json",
+      "product_contract_version": 2,
+      "product_contract_canonical_sha256": "62e33a9a852cc8b13718e6753a56abcf0af47ae0790188275ca1a37671650578",
+      "product_id": "codex-review-safe",
+      "product_version": "4.8.7",
+      "safe_core_commit": "190651770a444b0693d82228afc66879dd57b0c0",
+      "safe_core_version": "4.18.1",
+      "safe_core_runtime_digest": "0b9c507ddb74bf40a0b950c3d8548ae747f547f76d3d2d37cebbd761cf28f5a0",
+      "safe_core_governance_digest": "aacf1f25695ac49489fd292ec79c32208d76c9bf3777311629796a1b1666741e",
+      "review_receipt_kind": "codex-review",
+      "review_receipt_schema_version": 5,
+      "supported_assurance_roles": ["independent-review-evidence"],
+      "release_tag": "v4.8.7",
+      "release_immutable": true,
+      "release_artifact_sha256": "7af39c098d2e678ea8dfa2fde271a82e52d15417300f8191a30ded54da317c7e",
+      "consumer_ci_receipt_sha256": "22e0245236f011232b360ece839e066f1957293c617965dd49bac97d8c45a60b",
+      "validation": "PINNED_IMMUTABLE_RELEASE_PRODUCT_CONTRACT_VERIFIED_REAL_RUN_USAGE_PENDING"
+    }
+  },
   "rules": {
     "exact_commit_required": true,
     "contract_digest_required": true,
@@ -93,6 +117,11 @@
     "runtime_local_gate_is_not_domain_gate": true,
     "runtime_output_is_not_verification_pass": true,
     "runtime_execution_receipt_must_not_contain_verification_pass": true,
+    "assurance_binding_is_not_control_plane": true,
+    "assurance_provider_receipt_is_input_evidence_not_decision": true,
+    "assurance_provider_receipt_must_bind_exact_reviewed_subject": true,
+    "assurance_provider_ready_does_not_imply_verification_or_review_pass": true,
+    "external_assurance_provider_is_optional_for_human_or_other_provider_path": true,
     "terminal_replaceability_requires_r2_real_provider_substitution": true,
     "r1_binding_conformance_is_not_terminal_replaceability": true,
     "r2_certifier_readiness_does_not_imply_terminal_replaceability": true,

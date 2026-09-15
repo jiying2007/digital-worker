@@ -80,6 +80,13 @@ governance_escalation:
   new_session_bootstrap_ref: null
   formal_evidence_start_ref: null
 
+assurance_provider_evidence:
+  bindings: []
+  # each optional item is refs-first and should identify:
+  # {assurance_role, provider_binding_ref, provider_receipt_ref, provider_receipt_sha256,
+  #  provider_subject_fingerprint, reviewed_subject_ref, subject_mapping_evidence_refs}
+  # Provider-native receipt bodies/verdicts stay with the provider; Digital Worker owns the decision report.
+
 verification:
   verification_run_id: null
   evidence_refs: []
@@ -110,6 +117,9 @@ rules:
   - asset_profile belongs to Agent Asset Control Plane and runtime_profile belongs to Runtime Binding; do not merge their semantics
   - L2 Formal Evidence requires exact-pinned Knowledge provider identity and contract digest
   - L1 to L2 governance escalation requires a new exact Execution Source Set and new session bootstrap; prior session/context remains provisional and is never promoted automatically
+  - when Assurance Provider evidence is used, it must bind exact immutable provider identity, receipt ref/digest and the same reviewed subject as the Digital Worker report
+  - Assurance Provider receipts are input evidence only; provider ready/no-findings/PASS-like states never become Digital Worker Verification PASS or Independent Review approval automatically
+  - Codex Safe Family is one candidate Assurance Binding; human or other provider paths remain valid
   - formal Verification and Review reports bind exact Execution Source Set, exact reviewed result/source identity, decision actor identity, report sequence and supersession provenance
   - when reviewed result or source-set identity changes, an earlier Verification or Review report remains historical and must not be silently reused for the new subject
   - Delivery Receipt validation is engineering self-validation and Delivery Receipt decisions are implementation decisions; neither implies Independent Verification, Independent Review, Qualification or A7 approval

@@ -60,6 +60,23 @@ roles:
         status: future-binding
     decision: codex-source-set-bound-default-not-frozen
 
+  assurance_binding:
+    candidates:
+      codex_review_safe:
+        identity_ref: config/integrations/cross-repo-lock.json#/assurance_bindings/codex_review_safe
+        supported_roles: [independent-review-evidence]
+        capabilities:
+          immutable_product_release_identity: native
+          native_review_receipt_v5: native
+          exact_provider_subject_fingerprint: native
+          consumer_subject_mapping: required
+          domain_verification_pass: unsupported-by-design
+          independent_review_decision: unsupported-by-design
+          product_qualification: unsupported-by-design
+      human_or_other_provider:
+        status: valid-provider-neutral-path
+    decision: codex-review-safe-candidate-not-default-real-run-evidence-pending
+
   runtime_practice_eval:
     candidate: llm_agent
     evidence:
@@ -91,6 +108,10 @@ rules:
   fallback_exit_plan_required_before_default: true
   contract_ci_success_does_not_imply_operational_readiness: true
   runtime_binding_is_not_control_plane: true
+  assurance_binding_is_not_control_plane: true
+  assurance_provider_receipt_is_input_evidence_only: true
+  provider_receipt_ready_does_not_imply_domain_review_pass: true
+  human_or_other_provider_path_must_remain_valid: true
   immutable_adk_release_required: true
   exact_source_set_identity_required: true
   runtime_distribution_identity_required_when_executed: true
