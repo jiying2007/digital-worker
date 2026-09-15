@@ -44,7 +44,7 @@ def main() -> None:
     require(lock["architecture_provider_selection"] == "not_frozen", "provider choice must remain not_frozen")
 
     expected = {
-        "knowledge_control_plane": ("jiying2007/knowledge-hub", "1.0"),
+        "knowledge_control_plane": ("jiying2007/knowledge-hub", "1.2"),
         "agent_asset_control_plane": ("jiying2007/agent-dev-kit", "2.0"),
         "runtime_practice_eval": ("jiying2007/llm_agent", "1.3"),
     }
@@ -55,6 +55,10 @@ def main() -> None:
         require(provider.get("contract_version") == contract_version, f"wrong contract version for {key}")
         require(digest(provider.get("contract_canonical_sha256")), f"{key} must pin canonical contract SHA256")
         require(provider.get("validation"), f"{key} validation state must be explicit")
+
+    knowledge = lock["providers"]["knowledge_control_plane"]
+    require("ROUTE_REGISTERED" in knowledge.get("validation", ""), "Knowledge Hub governed route must be explicitly promoted")
+    require("REUSE_PENDING" in knowledge.get("validation", ""), "Knowledge Hub real reuse evidence must remain explicitly pending")
 
     runtime_eval = lock["providers"]["runtime_practice_eval"]
     require("R2_POLICY" in runtime_eval.get("validation", ""), "llm_agent R2 portability policy must be explicitly promoted")
@@ -105,6 +109,7 @@ def main() -> None:
         "l1_to_l2_requires_new_bootstrap_and_execution_source_set", "runtime_local_gate_is_not_domain_gate",
         "runtime_output_is_not_verification_pass", "runtime_execution_receipt_must_not_contain_verification_pass",
         "terminal_replaceability_requires_r2_real_provider_substitution", "r1_binding_conformance_is_not_terminal_replaceability",
+        "governed_knowledge_route_registration_does_not_imply_real_reuse", "knowledge_closed_loop_requires_real_reuse_evidence",
         "pin_freshness_does_not_imply_compatibility", "pin_promotion_requires_checkout_verification",
     ]:
         require(rules[key] is True, f"required source-set rule disabled: {key}")
@@ -161,11 +166,72 @@ def main() -> None:
     require(capability["schema_version"] == 3, "capability matrix must use source-set schema v3")
     require(capability["provider_selection"] == "not_frozen", "capability matrix must not freeze provider choice")
     require(capability["rules"]["no_poc_evidence_no_pass"] is True, "provider matrix must be evidence-first")
-    require(capability["roles"]["knowledge_control_plane"]["capabilities"]["digital_worker_project_route"] == "pending-governed-registration", "Knowledge Hub route gap must remain explicit until proven")
-    require(capability["roles"]["agent_asset_control_plane"]["capabilities"]["exact_source_set_handoff"] == "native", "ADK source-set capability missing")
-    require(capability["roles"]["runtime_binding"]["candidates"]["codex"]["operational_readiness"] == "SOURCE_SET_BOUND", "Codex operational source-set readiness drift")
-    require(capability["roles"]["runtime_binding"]["candidates"]["codex"]["capabilities"]["thin_session_bootstrap_l0_l1_l2"] == "native", "Codex thin bootstrap capability missing")
-    require(capability["roles"]["runtime_practice_eval"]["capabilities"]["production_runtime"] == "unsupported-by-design", "llm_agent must not become production runtime")
+
+    cap_knowledge = capability["roles"]["knowledge_control_plane"]
+    require(
+        cap_knowledge["evidence"]
+        == {
+            "identity_ref": "config/integrations/cross-repo-lock.json#/providers/knowledge_control_plane",
+            "checkout_verification": "permanent-digital-worker-ci",
+        },
+        "Knowledge Hub capability projection must reference the authoritative cross-repo lock identity",
+    )
+    require(cap_knowledge["capabilities"]["digital_worker_project_route"] == "registered-governed-route", "Knowledge Hub governed project route must stay registered")
+    require(cap_knowledge["capabilities"]["digital_worker_real_reuse_evidence"] == "pending-real-reuse-evidence", "Knowledge Hub real reuse evidence must stay explicitly pending")
+    require(cap_knowledge["decision"] == "candidate-not-default", "Knowledge Hub route registration must not freeze provider selection")
+
+    cap_adk = capability["roles"]["agent_asset_control_plane"]
+    require(
+        cap_adk["evidence"]
+        == {
+            "identity_ref": "config/integrations/cross-repo-lock.json#/providers/agent_asset_control_plane",
+            "checkout_verification": "permanent-digital-worker-ci",
+        },
+        "ADK capability projection must reference the authoritative cross-repo lock identity",
+    )
+    require(cap_adk["capabilities"]["exact_source_set_handoff"] == "native", "ADK source-set capability missing")
+
+    cap_codex = capability["roles"]["runtime_binding"]["candidates"]["codex"]
+    require(
+        cap_codex["identity_ref"] == "config/integrations/cross-repo-lock.json#/runtime_bindings/codex",
+        "Codex capability projection must reference the authoritative cross-repo lock identity",
+    )
+    require(cap_codex["capabilities"]["thin_session_bootstrap_l0_l1_l2"] == "native", "Codex thin bootstrap capability missing")
+    require(cap_codex["capabilities"]["execution_receipt_contract"] == "source-set-v2-native", "Codex capability projection must require receipt v2")
+
+    cap_eval = capability["roles"]["runtime_practice_eval"]
+    require(
+        cap_eval["evidence"]
+        == {
+            "identity_ref": "config/integrations/cross-repo-lock.json#/providers/runtime_practice_eval",
+            "checkout_verification": "permanent-digital-worker-ci",
+        },
+        "llm_agent capability projection must reference the authoritative cross-repo lock identity",
+    )
+    require(cap_eval["capabilities"]["runtime_binding_comparison"] == "r2-policy-ready", "llm_agent R2 comparison policy projection missing")
+    require(cap_eval["capabilities"]["terminal_replaceability"] == "blocked-until-r2-real-provider-evidence", "llm_agent real-provider blocker projection must stay explicit")
+    require(cap_eval["capabilities"]["production_runtime"] == "unsupported-by-design", "llm_agent must not become production runtime")
+
+    for key in [
+        "terminal_replaceability_requires_r2_real_provider_substitution",
+        "r1_binding_conformance_is_not_terminal_replaceability",
+        "governed_knowledge_route_registration_does_not_imply_real_reuse",
+        "knowledge_closed_loop_requires_real_reuse_evidence",
+        "capability_projection_must_reference_cross_repo_lock_identity",
+    ]:
+        require(capability["rules"][key] is True, f"required capability projection rule disabled: {key}")
+
+    rendered_capability = json.dumps(capability, ensure_ascii=False, sort_keys=True)
+    for retired_projection_key in [
+        '"pinned_commit"',
+        '"contract_version"',
+        '"session_bootstrap_contract"',
+        '"execution_receipt_schema"',
+        "pending-governed-registration",
+        "eed4244e5ce15101210132a0680b620cc4dabfe7",
+        "270d38f8b65da32cd8c7c4d5c2cac427682a6d28",
+    ]:
+        require(retired_projection_key not in rendered_capability, f"stale duplicated capability identity resurfaced: {retired_projection_key}")
 
     skills_doc = yaml.safe_load(SKILLS.read_text(encoding="utf-8"))
     require(skills_doc["ownership_authority"] == "canonical", "target Skill ownership must remain canonical")
@@ -276,7 +342,8 @@ def main() -> None:
         require(retired not in quickstart, f"quickstart retained retired runtime marker: {retired}")
 
     print(
-        "cross-repo integration validation PASS: exact provider pins/digests, repository-responsibility projection, "
+        "cross-repo integration validation PASS: exact provider pins/digests, refs-only capability projection, "
+        "governed Knowledge Hub route with real reuse still pending, repository-responsibility projection, "
         "artifact-level authority/evidence semantics, Stage 1 governance/decision provenance, canonical domain Skills, "
         "ADK reusable-asset boundary, thin Session Bootstrap, source-set receipt v2, R2 portability policy, "
         "exact source-set and fail-closed Runtime boundaries"

@@ -7,12 +7,12 @@
     "knowledge_control_plane": {
       "repository": "jiying2007/knowledge-hub",
       "ref": "master",
-      "commit": "e28e719516ff88c485627099e8cc58b20ade9a57",
+      "commit": "51e4f8166657d9d082f523335d350d0e8c2890a9",
       "contract": "registry/integrations/digital-worker.json",
-      "contract_version": "1.0",
-      "contract_canonical_sha256": "21b79295b532ff78b39461f2ef35f222fb1d9ba18a51eafff37d13351ead14ff",
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_ROUTE_PENDING",
-      "notes": "Exact pin intentionally remains on the previously verified provider contract while governed project route/real reuse evidence is pending. Freshness alone is not compatibility evidence."
+      "contract_version": "1.2",
+      "contract_canonical_sha256": "7e67ff9f19ef8a1bc627e589d888fcf8370297c7ceafa26e8d65d9d0630c3d11",
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_ROUTE_REGISTERED_REUSE_PENDING",
+      "notes": "Governed digital-worker project/repository route is registered and machine-validated in Knowledge Hub; real reuse evidence remains pending. Route registration does not qualify the Knowledge Closed Loop, product readiness, or provider default selection."
     },
     "agent_asset_control_plane": {
       "repository": "jiying2007/agent-dev-kit",
@@ -85,6 +85,8 @@
     "runtime_execution_receipt_must_not_contain_verification_pass": true,
     "terminal_replaceability_requires_r2_real_provider_substitution": true,
     "r1_binding_conformance_is_not_terminal_replaceability": true,
+    "governed_knowledge_route_registration_does_not_imply_real_reuse": true,
+    "knowledge_closed_loop_requires_real_reuse_evidence": true,
     "pin_freshness_does_not_imply_compatibility": true,
     "pin_promotion_requires_checkout_verification": true
   }
