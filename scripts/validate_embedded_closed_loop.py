@@ -42,6 +42,30 @@ def main():
         assert_true(marker in strategy, f"closed-loop strategy missing {marker}")
     assert_true("Enterprise Digital Thread 不是前置条件" in strategy, "strategy must keep enterprise integration non-blocking")
     assert_true("当前目标只推进到 **E2，并为 E3 建基础**" in strategy, "strategy must constrain maturity claim")
+    for marker in [
+        "ADR-004",
+        "Edge Coordination",
+        "Embedded System Expert",
+        "Capability",
+        "Assurance",
+        "Domain → Expert → Capability → Skill",
+        "Compatibility execution surface",
+    ]:
+        assert_true(marker in strategy, f"closed-loop strategy missing target responsibility marker: {marker}")
+    for stale in [
+        "1+7",
+        "Team Lead + Architecture Expert",
+        "第 8 个 Expert",
+        "embedded-system-team-lead",
+        "embedded-architecture-expert",
+        "linux-bsp-expert",
+        "mcu-rtos-expert",
+        "driver-component-expert",
+        "debug-reliability-expert",
+        "verification-expert",
+        "embedded-review-governor",
+    ]:
+        assert_true(stale not in strategy, f"legacy organization semantic returned to active closed-loop strategy: {stale}")
 
     trust = TRUST.read_text(encoding="utf-8")
     for token in ["R0 Trust Closure", "full 40-hex Git SHA", "completed/cancelled", "contract path/version", "canonical JSON SHA-256", "server-side enforcement"]:
@@ -85,6 +109,16 @@ def main():
         assert_true(ROOT.resolve() in source.parents or source == ROOT.resolve(), f"knowledge source escapes repo: {item['knowledge_id']}")
         assert_true(source.is_file(), f"knowledge source missing: {item['knowledge_id']} -> {item['source_ref']}")
         assert_true(item["tags"], f"knowledge entry must have tags: {item['knowledge_id']}")
+        if "core-reference" in item["tags"]:
+            for stale_path in ["/01-数字组织与岗位/", "嵌入式架构领域指南.md", "Linux BSP领域指南.md", "MCU RTOS领域指南.md", "驱动与组件领域指南.md", "调试与可靠性领域指南.md", "验证领域指南.md", "独立审查领域指南.md"]:
+                assert_true(stale_path not in item["source_ref"], f"core-reference registry entry points at retired source: {item['knowledge_id']} -> {item['source_ref']}")
+
+    by_id = {item["knowledge_id"]: item for item in entries}
+    assert_true(by_id["EKR-003"]["source_ref"] == "docs/adr/ADR-004-edge-foundation-digital-responsibility-architecture.md", "registry must index ADR-004 as embedded target architecture")
+    assert_true(by_id["EKR-005"]["source_ref"] == "domains/edge-foundation/domain.yaml", "registry target machine entry must resolve to Edge Foundation domain contract")
+    assert_true(by_id["EKR-009"]["source_ref"] == "domains/edge-foundation/gate-policy.yaml", "registry Gate authority must use target ownership contract")
+    assert_true(by_id["EKR-012"]["source_ref"] == "domains/edge-foundation/skills.yaml", "registry Skill authority must use target ownership contract")
+    assert_true(by_id["EKR-018"]["source_ref"] == "domains/edge-foundation/evaluation/golden-cases.yaml", "registry Golden authority must use target dataset")
 
     requirements = load_yaml(REQUIREMENTS)
     required_closed_loop = set(requirements["common"]["closed_loop_v1_artifacts"])
@@ -127,7 +161,10 @@ def main():
     for token in ["embedded_pilot_scaffold.py", "embedded_knowledge.py verify", "full 40-hex immutable base commit SHA", "NO_KNOWLEDGE_DELTA", "Do not run `bundle` after completion", "Main branch protection is intentionally not a current-stage acceptance gate", "verify_repository_governance.py --strict"]:
         assert_true(token in quickstart, f"closed-loop quickstart missing R0 token: {token}")
 
-    print(f"embedded closed-loop V1 validation PASS: 7 must-haves, iterative-stage R0 trust baseline, {len(entries)} registry entries, 3 closed-loop artifacts")
+    print(
+        f"embedded closed-loop V1 validation PASS: target responsibility model ratcheted, 7 must-haves, "
+        f"iterative-stage R0 trust baseline, {len(entries)} registry entries, 3 closed-loop artifacts"
+    )
 
 
 if __name__ == "__main__":

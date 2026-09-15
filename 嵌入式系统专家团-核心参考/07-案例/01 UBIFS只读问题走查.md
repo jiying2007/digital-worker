@@ -1,7 +1,7 @@
 # 案例：UBIFS 异常只读问题走查
 
 > 流程示例，用于说明一次诊断任务如何组织事实、Hypothesis、Evidence 和工程闭环；**不代表真实项目已经得到相同 Root Cause，也不计入 real Pilot evidence**。  
-> 通用规则见 [任务类型运行矩阵](../03-流程与运行/05%20任务类型运行矩阵.md)、[任务生命周期与 Gate](../03-流程与运行/01%20任务生命周期与Gate.md)、[验证/评审/发布](../03-流程与运行/04%20验证评审发布与异常恢复.md)。专业方法见 [调试与可靠性](../04-专业能力/05%20调试与可靠性领域指南.md) 和 [Linux/BSP](../04-专业能力/02%20Linux%20BSP领域指南.md)。
+> 通用规则见 [任务类型运行矩阵](../03-流程与运行/05%20任务类型运行矩阵.md)、[任务生命周期与 Gate](../03-流程与运行/01%20任务生命周期与Gate.md)、[验证/评审/发布](../03-流程与运行/04%20验证评审发布与异常恢复.md)。专业方法见 [调试与可靠性](../04-专业能力/05%20调试与可靠性能力域指南.md) 和 [Linux/BSP](../04-专业能力/02%20Linux%20BSP能力域指南.md)。
 
 ## 1. Task
 
@@ -17,7 +17,7 @@ Acceptance 示例：原复现条件下不再触发只读；关键错误码消失
 
 ## 3. Routing
 
-任务类型：缺陷/现场诊断；采用 diagnostic 路径。P06 Debug/Reliability 维护唯一 Hypothesis Registry，P03 Linux/BSP 提供 NAND→MTD→UBI→UBIFS 平台事实；需要驱动资源事实时再拉 P05。
+任务类型是 `defect_debugging`，目标模式为 `diagnostic`。由 **Embedded System Expert** 承担专业责任：`embedded.debug-reliability` 维护唯一 Hypothesis Registry，`embedded.linux-bsp` 提供 NAND → MTD → UBI → UBIFS 平台事实；若证据指向 driver/cache ownership，再扩展 `embedded.driver-component`。Verification 属于 Assurance，独立判断 Evidence 覆盖。
 
 ## 4. Analysis / Hypothesis
 
@@ -65,4 +65,4 @@ Independent Review 重点检查：是否只是屏蔽错误、真正坏块/ECC fa
 
 ## 9. Knowledge Harvest
 
-若形成稳定结论，可沉淀 ECC status 解释规则、NAND→MTD→UBI→UBIFS 分层排查 Runbook、correctable/uncorrectable 回归用例、BDMA/cache 约束。若最终只是单块 Flash 物理损坏且无可复用规律，则 `NO_KNOWLEDGE_DELTA`。
+若形成稳定结论，可沉淀 ECC status 解释规则、NAND → MTD → UBI → UBIFS 分层排查 Runbook、correctable/uncorrectable 回归用例、BDMA/cache 约束。知识 owner 应落到 target Capability，并绑定适用平台和 Source identity。

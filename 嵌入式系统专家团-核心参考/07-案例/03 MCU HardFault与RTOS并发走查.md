@@ -1,7 +1,7 @@
 # 案例：MCU HardFault 与 RTOS 并发问题走查
 
 > 流程示例，**不计入 real Pilot evidence**。  
-> 通用规则见 [任务类型运行矩阵](../03-流程与运行/05%20任务类型运行矩阵.md)、[任务生命周期与 Gate](../03-流程与运行/01%20任务生命周期与Gate.md)、[验证/评审/发布](../03-流程与运行/04%20验证评审发布与异常恢复.md)。专业方法见 [MCU/RTOS](../04-专业能力/03%20MCU%20RTOS领域指南.md) 和 [调试与可靠性](../04-专业能力/05%20调试与可靠性领域指南.md)。
+> 通用规则见 [任务类型运行矩阵](../03-流程与运行/05%20任务类型运行矩阵.md)、[任务生命周期与 Gate](../03-流程与运行/01%20任务生命周期与Gate.md)、[验证/评审/发布](../03-流程与运行/04%20验证评审发布与异常恢复.md)。专业方法见 [MCU/RTOS](../04-专业能力/03%20MCU%20RTOS能力域指南.md) 和 [调试与可靠性](../04-专业能力/05%20调试与可靠性能力域指南.md)。
 
 ## 1. Task
 
@@ -15,7 +15,7 @@
 
 ## 3. Routing
 
-P06 Debug/Reliability 维护唯一 Hypothesis Registry；P04 MCU/RTOS 证明 Startup、Stack、ISR/DMA、RTOS 和 firmware 事实。若问题扩展到硬件电气或外设 driver，再按 Evidence 拉对应领域 Owner。
+任务由 **Embedded System Expert** 负责，`embedded.debug-reliability` 维护唯一 Hypothesis Registry，`embedded.mcu-rtos` 证明 Startup、Stack、ISR/DMA、RTOS 与 firmware 事实。若 Evidence 指向 driver contract，则扩展 `embedded.driver-component`；若出现板级电气/时钟/电源不确定性，按跨域证据升级 Hardware Expert。Verification 属于 Assurance。
 
 ## 4. Analysis / Hypothesis
 
@@ -53,4 +53,4 @@ Independent Review 检查是否只是扩大 stack/加 delay 掩盖问题，是�
 
 ## 9. Knowledge Harvest
 
-可沉淀 HardFault 现场采集清单、RTOS wait-for/ownership 分析方法、stack watermark 基线和 DMA lifetime 检查规则；若最终无稳定可复用规律，则 `NO_KNOWLEDGE_DELTA`。
+可沉淀 HardFault 现场采集清单、RTOS wait-for/ownership 分析方法、stack watermark 基线和 DMA lifetime 检查规则；知识 owner 落 target Capability，若最终无稳定可复用规律则 `NO_KNOWLEDGE_DELTA`。

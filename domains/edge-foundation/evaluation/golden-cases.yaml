@@ -1,7 +1,8 @@
 schema_version: 1
 version: 1.0.0
 status: phase4-prep-target
-source_legacy_cases: ../../../expert-groups/embedded-system/tests/golden-cases.yaml
+canonical_authority: true
+legacy_copy_retired_pointer: ../../../expert-groups/embedded-system/tests/golden-cases.yaml
 canonical_routing_switched: false
 
 rules:

@@ -1,7 +1,7 @@
 # 案例：新板 Bring-up 走查
 
 > 流程示例，**不计入 real Pilot evidence**。  
-> 通用规则见 [任务类型运行矩阵](../03-流程与运行/05%20任务类型运行矩阵.md)、[任务生命周期与 Gate](../03-流程与运行/01%20任务生命周期与Gate.md)、[验证/评审/发布](../03-流程与运行/04%20验证评审发布与异常恢复.md)。专业方法见 [Linux/BSP](../04-专业能力/02%20Linux%20BSP领域指南.md) 和 [驱动与组件](../04-专业能力/04%20驱动与组件领域指南.md)。
+> 通用规则见 [任务类型运行矩阵](../03-流程与运行/05%20任务类型运行矩阵.md)、[任务生命周期与 Gate](../03-流程与运行/01%20任务生命周期与Gate.md)、[验证/评审/发布](../03-流程与运行/04%20验证评审发布与异常恢复.md)。专业方法见 [Linux/BSP](../04-专业能力/02%20Linux%20BSP能力域指南.md) 和 [驱动与组件](../04-专业能力/04%20驱动与组件能力域指南.md)。
 
 ## 1. Task
 
@@ -15,7 +15,7 @@
 
 ## 3. Routing
 
-使用 Bring-up 路径，P03 Linux/BSP 主责；涉及新增设备接入时拉 P05，涉及系统资源/接口变化时拉 P02，硬件团队提供电气事实。P07 在 required layer 上独立验证。
+任务类型为 `platform_bringup`，目标默认仍是由 **Embedded System Expert** 承担：以 `embedded.linux-bsp` 为主，按修改面组合 `embedded.driver-component`、`embedded.mcu-rtos`。只有出现 `board-electrical-state-uncertain`、原理图/电源时序矛盾或外设电气接口不确定等直接 Evidence，才升级到 **Hardware Expert + Embedded System Expert** 的 `multi_domain` 协作。Verification 属于 Assurance。
 
 ## 4. Analysis
 
@@ -57,4 +57,4 @@ Independent Review 检查 board/source/image 是否一致、关键失败路径�
 
 ## 9. Knowledge Harvest
 
-可沉淀 board delta、DTS resource mapping、已确认电源/时序约束、Bring-up checklist 和恢复路径；具体料号、schematic 等敏感硬件资料仍按 ACL 保留在原 Source。
+可沉淀 board delta、DTS resource mapping、已确认电源/时序约束、Bring-up checklist 和恢复路径；具体料号、schematic 等敏感硬件资料仍按 ACL 保留在原 Source。知识条目只引用真实硬件 Evidence，不把一次跨域协作固化成默认多 Expert 路由。
