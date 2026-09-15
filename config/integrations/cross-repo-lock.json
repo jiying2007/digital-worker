@@ -50,7 +50,7 @@
     "codex": {
       "repository": "jiying2007/codex",
       "ref": "main",
-      "commit": "36ead238bf1e0e2b99ad65c035a1062f2051cf28",
+      "commit": "729c54192ae9dc69a8a4d7ecf913c1069c0a1ddf",
       "contract": "manifests/integrations/digital-worker-runtime-binding.json",
       "contract_version": "2.1",
       "contract_canonical_sha256": "b670af2d8771555f2179ed6bd3ee082e2b96b98440b9f4d93664c23339248750",
@@ -59,11 +59,11 @@
       "source_identity_mode": "exact-release-source-blobs",
       "runtime_readiness": "SOURCE_SET_BOUND",
       "session_bootstrap_contract": "manifests/session_bootstrap.json",
-      "session_bootstrap_contract_version": "1.1",
-      "session_bootstrap_contract_canonical_sha256": "246bbe1440a18fd4e1a32a72cf834f732ebf4fc33e50e9f02669d4eec70d35c9",
+      "session_bootstrap_contract_version": "1.2",
+      "session_bootstrap_contract_canonical_sha256": "d60b577b9cb3908cdbe29a6f1637858201f6ee392f55a20933cb85c411ef0de0",
       "execution_receipt_schema": "schemas/runtime-execution-receipt.v2.schema.json",
       "execution_receipt_schema_version": 2,
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_SOURCE_SET_BOUND_FORMAL_IDENTITY_RECEIPT_V2"
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_SOURCE_SET_BOUND_FORMAL_IDENTITY_WORK_RUN_RECEIPT_V2"
     }
   },
   "rules": {
@@ -79,6 +79,10 @@
     "monolithic_runtime_bundle_not_required_identity": true,
     "formal_mode_requires_exact_pinned_knowledge": true,
     "formal_mode_requires_exact_digital_worker_governance_identity": true,
+    "formal_mode_requires_authoritative_work_run_identity_from_engineering_task_package": true,
+    "formal_execution_source_set_binds_work_item_run_and_package_identity": true,
+    "runtime_receipt_v2_must_reuse_frozen_work_run_and_source_set_identity": true,
+    "formal_assurance_run_id_must_match_frozen_run_identity": true,
     "l1_to_l2_requires_new_bootstrap_and_execution_source_set": true,
     "runtime_local_gate_is_not_domain_gate": true,
     "runtime_output_is_not_verification_pass": true,
