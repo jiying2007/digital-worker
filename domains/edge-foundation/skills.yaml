@@ -1,0 +1,46 @@
+schema_version: 1
+id: edge-foundation-skill-registry
+status: phase4-prep-target
+ownership_authority: canonical
+execution_surface: legacy-compatible
+legacy_execution_registry: ../../expert-groups/embedded-system/config/p0-skills.yaml
+
+rules:
+  skill_count_is_not_architecture: true
+  legacy_expert_identity_as_owner_forbidden: true
+  capability_is_not_agent: true
+  assurance_is_independent_from_execution: true
+  skill_file_location_does_not_define_owner: true
+  physical_skill_move_deferred_until_canonical_switch: true
+
+skills:
+  - {id: embedded-task-classifier, owner_kind: role, owner_id: edge-coordination, path: ../../expert-groups/embedded-system/skills/embedded-task-classifier/SKILL.md}
+  - {id: embedded-material-readiness, owner_kind: role, owner_id: edge-coordination, path: ../../expert-groups/embedded-system/skills/embedded-material-readiness/SKILL.md}
+  - {id: embedded-evidence-normalizer, owner_kind: role, owner_id: edge-coordination, path: ../../expert-groups/embedded-system/skills/embedded-evidence-normalizer/SKILL.md}
+
+  - {id: architecture-impact-analysis, owner_kind: capability, owner_id: embedded.architecture, path: ../../expert-groups/embedded-system/skills/architecture-impact-analysis/SKILL.md}
+  - {id: interface-contract-review, owner_kind: capability, owner_id: embedded.architecture, path: ../../expert-groups/embedded-system/skills/interface-contract-review/SKILL.md}
+
+  - {id: boot-chain-analysis, owner_kind: capability, owner_id: embedded.linux-bsp, path: ../../expert-groups/embedded-system/skills/boot-chain-analysis/SKILL.md}
+  - {id: device-tree-review, owner_kind: capability, owner_id: embedded.linux-bsp, path: ../../expert-groups/embedded-system/skills/device-tree-review/SKILL.md}
+  - {id: irq-dma-analysis, owner_kind: capability, owner_id: embedded.linux-bsp, path: ../../expert-groups/embedded-system/skills/irq-dma-analysis/SKILL.md}
+  - {id: storage-filesystem-analysis, owner_kind: capability, owner_id: embedded.linux-bsp, path: ../../expert-groups/embedded-system/skills/storage-filesystem-analysis/SKILL.md}
+
+  - {id: mcu-startup-analysis, owner_kind: capability, owner_id: embedded.mcu-rtos, path: ../../expert-groups/embedded-system/skills/mcu-startup-analysis/SKILL.md}
+  - {id: linker-map-analysis, owner_kind: capability, owner_id: embedded.mcu-rtos, path: ../../expert-groups/embedded-system/skills/linker-map-analysis/SKILL.md}
+  - {id: rtos-concurrency-analysis, owner_kind: capability, owner_id: embedded.mcu-rtos, path: ../../expert-groups/embedded-system/skills/rtos-concurrency-analysis/SKILL.md}
+
+  - {id: driver-integration-review, owner_kind: capability, owner_id: embedded.driver-component, path: ../../expert-groups/embedded-system/skills/driver-integration-review/SKILL.md}
+
+  - {id: log-triage, owner_kind: capability, owner_id: embedded.debug-reliability, path: ../../expert-groups/embedded-system/skills/log-triage/SKILL.md}
+  - {id: crash-hardfault-analysis, owner_kind: capability, owner_id: embedded.debug-reliability, path: ../../expert-groups/embedded-system/skills/crash-hardfault-analysis/SKILL.md}
+  - {id: memory-corruption-analysis, owner_kind: capability, owner_id: embedded.debug-reliability, path: ../../expert-groups/embedded-system/skills/memory-corruption-analysis/SKILL.md}
+  - {id: performance-analysis, owner_kind: capability, owner_id: embedded.debug-reliability, path: ../../expert-groups/embedded-system/skills/performance-analysis/SKILL.md}
+
+  - {id: verification-plan-builder, owner_kind: assurance, owner_id: verification, path: ../../expert-groups/embedded-system/skills/verification-plan-builder/SKILL.md}
+  - {id: regression-scope-analysis, owner_kind: assurance, owner_id: verification, path: ../../expert-groups/embedded-system/skills/regression-scope-analysis/SKILL.md}
+  - {id: build-evidence-check, owner_kind: assurance, owner_id: verification, path: ../../expert-groups/embedded-system/skills/build-evidence-check/SKILL.md}
+  - {id: device-evidence-check, owner_kind: assurance, owner_id: verification, path: ../../expert-groups/embedded-system/skills/device-evidence-check/SKILL.md}
+  - {id: hil-evidence-check, owner_kind: assurance, owner_id: verification, path: ../../expert-groups/embedded-system/skills/hil-evidence-check/SKILL.md}
+
+  - {id: release-readiness-check, owner_kind: assurance, owner_id: review, path: ../../expert-groups/embedded-system/skills/release-readiness-check/SKILL.md}

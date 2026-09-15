@@ -1,0 +1,178 @@
+schema_version: 1
+version: 1.0.0
+status: phase4-prep-target
+source_legacy_cases: ../../../expert-groups/embedded-system/tests/golden-cases.yaml
+canonical_routing_switched: false
+
+rules:
+  legacy_expert_identity_forbidden: true
+  domain_expert_capability_assurance_model_required: true
+  legacy_execution_mode_is_comparison_only: true
+  golden_case_is_evaluation_asset_not_organization_identity: true
+
+cases:
+  - id: GC-BOOT-001
+    title: Linux boot stops before rootfs mount
+    task_type: defect_debugging
+    target_mode: diagnostic
+    expected_experts: [embedded-system-expert]
+    expected_capabilities: [embedded.debug-reliability, embedded.linux-bsp]
+    required_assurance: [verification]
+    legacy_execution_mode: diagnostic_chain
+    required_evidence: [exact firmware identity, boot log, boot args, partition layout]
+    expected_gate_behavior: [gate.m blocks if firmware identity is unknown, hypothesis registry required]
+    forbidden_claims: [do not declare rootfs corruption from a single boot line]
+    success_signals: [last confirmed boot stage identified, next discriminating test specified]
+
+  - id: GC-KPANIC-001
+    title: Kernel panic with intermittent backtrace
+    task_type: defect_debugging
+    target_mode: diagnostic
+    expected_experts: [embedded-system-expert]
+    expected_capabilities: [embedded.debug-reliability, embedded.linux-bsp]
+    required_assurance: [verification]
+    legacy_execution_mode: diagnostic_chain
+    required_evidence: [panic log, matching symbols, exact kernel build identity]
+    expected_gate_behavior: [gate.m blocks symbol mismatch, gate.v requires regression evidence after fix]
+    forbidden_claims: [do not equate crash site with corruption origin]
+    success_signals: [ranked hypotheses, exact-symbol backtrace, discriminating experiment]
+
+  - id: GC-HARDFAULT-001
+    title: MCU HardFault after long run
+    task_type: field_incident
+    target_mode: diagnostic
+    expected_experts: [embedded-system-expert]
+    expected_capabilities: [embedded.debug-reliability, embedded.mcu-rtos]
+    required_assurance: [verification]
+    legacy_execution_mode: diagnostic_chain
+    required_evidence: [fault registers, firmware hash, map file, reset reason]
+    expected_gate_behavior: [hypothesis registry required, device evidence must match firmware]
+    forbidden_claims: [do not confirm stack overflow without stack evidence]
+    success_signals: [fault decoded against exact image, hypotheses linked to tests]
+
+  - id: GC-NAND-001
+    title: SPI-NAND uncorrectable ECC path
+    task_type: defect_debugging
+    target_mode: diagnostic
+    expected_experts: [embedded-system-expert]
+    expected_capabilities: [embedded.debug-reliability, embedded.linux-bsp]
+    required_assurance: [verification]
+    legacy_execution_mode: diagnostic_chain
+    required_evidence: [NAND model, ECC status, controller path, MTD log, source path]
+    expected_gate_behavior: [destructive recovery action remains blocked without approval]
+    forbidden_claims: [do not treat controller ECC status as filesystem proof]
+    success_signals: [ECC/controller/MTD/filesystem layers separated]
+
+  - id: GC-UBIFS-001
+    title: UBIFS becomes read-only after concurrent writes
+    task_type: defect_debugging
+    target_mode: diagnostic
+    expected_experts: [embedded-system-expert]
+    expected_capabilities: [embedded.debug-reliability, embedded.linux-bsp]
+    required_assurance: [verification]
+    legacy_execution_mode: diagnostic_chain
+    required_evidence: [UBI/UBIFS log, mount state, partition identity, power/reset history]
+    expected_gate_behavior: [recovery that risks data loss requires explicit approval]
+    forbidden_claims: [do not recommend formatting as first diagnostic step]
+    success_signals: [root-cause layer isolated, non-destructive evidence collection first]
+
+  - id: GC-DMA-001
+    title: DMA buffer intermittently stale on target SoC
+    task_type: defect_debugging
+    target_mode: diagnostic
+    expected_experts: [embedded-system-expert]
+    expected_capabilities: [embedded.debug-reliability, embedded.linux-bsp, embedded.driver-component]
+    required_assurance: [verification]
+    legacy_execution_mode: diagnostic_chain
+    required_evidence: [SoC cache contract, DMA direction, buffer lifetime, source path]
+    expected_gate_behavior: [platform-specific coherency evidence required]
+    forbidden_claims: [do not assume cache coherence from generic Linux behavior]
+    success_signals: [DMA/cache ownership path traced, barriers or maintenance justified]
+
+  - id: GC-RTOS-001
+    title: RTOS deadlock under direction switching
+    task_type: defect_debugging
+    target_mode: diagnostic
+    expected_experts: [embedded-system-expert]
+    expected_capabilities: [embedded.debug-reliability, embedded.mcu-rtos]
+    required_assurance: [verification]
+    legacy_execution_mode: diagnostic_chain
+    required_evidence: [task states, lock ordering, ISR interaction, timing trace]
+    expected_gate_behavior: [race/deadlock remains hypothesis until trace distinguishes it]
+    forbidden_claims: [do not claim race-free because issue did not reproduce once]
+    success_signals: [lock graph produced, precise blocking chain identified]
+
+  - id: GC-LINKER-001
+    title: MCU ROM/RAM headroom assessment
+    task_type: mcu_firmware_development
+    target_mode: single_domain
+    expected_experts: [embedded-system-expert]
+    expected_capabilities: [embedded.mcu-rtos]
+    required_assurance: [verification]
+    legacy_execution_mode: short_chain
+    required_evidence: [linker script, map file, target memory map]
+    expected_gate_behavior: [gate.m requires exact map from target build]
+    forbidden_claims: [do not estimate RAM solely from source file sizes]
+    success_signals: [section-level ROM/RAM headroom quantified]
+
+  - id: GC-DRIVER-001
+    title: New I2C sensor driver integration
+    task_type: driver_development
+    target_mode: single_domain
+    expected_experts: [embedded-system-expert]
+    expected_capabilities: [embedded.driver-component, embedded.linux-bsp]
+    required_assurance: [verification]
+    legacy_execution_mode: short_chain
+    cross_domain_escalation:
+      possible_mode: multi_domain
+      possible_experts: [hardware-expert, embedded-system-expert]
+      requires_evidence: true
+    required_evidence: [datasheet, schematic, bus address, driver framework context]
+    expected_gate_behavior: [gate.e emits bounded engineering task package]
+    forbidden_claims: [do not claim board success from compile success]
+    success_signals: [integration risks and HIL verification hooks defined]
+
+  - id: GC-BRINGUP-001
+    title: New board platform bring-up
+    task_type: platform_bringup
+    target_mode: single_domain
+    expected_experts: [embedded-system-expert]
+    expected_capabilities: [embedded.linux-bsp, embedded.mcu-rtos, embedded.driver-component]
+    required_assurance: [verification]
+    legacy_execution_mode: bringup_chain
+    cross_domain_escalation:
+      possible_mode: multi_domain
+      possible_experts: [hardware-expert, embedded-system-expert]
+      requires_evidence: true
+    required_evidence: [schematic revision, board revision, SoC/MCU docs, boot log, SDK/toolchain]
+    expected_gate_behavior: [gate.m blocks unknown board revision, full device evidence required before completion]
+    forbidden_claims: [do not collapse host build into board validation]
+    success_signals: [boot and peripheral milestones have evidence identities]
+
+  - id: GC-REVIEW-001
+    title: Embedded concurrency code review
+    task_type: code_review
+    target_mode: review
+    expected_experts: [embedded-system-expert]
+    expected_capabilities: [embedded.mcu-rtos]
+    required_assurance: [review]
+    legacy_execution_mode: review_only
+    execution_forbidden: true
+    required_evidence: [diff, concurrency model, affected interfaces]
+    expected_gate_behavior: [phase.execution must not run in review_only]
+    forbidden_claims: [do not modify code implicitly during review]
+    success_signals: [findings linked to concrete lines/contracts and severity]
+
+  - id: GC-OTA-001
+    title: OTA release readiness review
+    task_type: release_ota
+    target_mode: review
+    expected_experts: [embedded-system-expert]
+    expected_capabilities: []
+    required_assurance: [verification, review]
+    legacy_execution_mode: release_chain
+    release_action_requires_human_approval: true
+    required_evidence: [source commit, artifact hash, upgrade test, rollback test, approvals]
+    expected_gate_behavior: [release action requires human approval, missing rollback evidence blocks READY]
+    forbidden_claims: [do not infer release readiness from build success]
+    success_signals: [provenance and rollback evidence complete, residual risks explicit]
