@@ -8,6 +8,8 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 LOCK = ROOT / "config" / "integrations" / "cross-repo-lock.json"
+CATALOG = ROOT / "contracts" / "catalog.json"
+REUSE_SCHEMA = ROOT / "schemas" / "knowledge-reuse-evidence.v1.schema.json"
 VERIFICATION = ROOT / "domains" / "edge-foundation" / "assurance" / "verification.yaml"
 REVIEW = ROOT / "domains" / "edge-foundation" / "assurance" / "review.yaml"
 
@@ -43,6 +45,15 @@ class WorkRunConsumerContractTests(unittest.TestCase):
         self.assertIn("REUSE_PENDING", knowledge["validation"])
         self.assertTrue(lock["rules"]["governed_knowledge_route_registration_does_not_imply_real_reuse"])
         self.assertTrue(lock["rules"]["knowledge_closed_loop_requires_real_reuse_evidence"])
+
+    def test_e3_reuse_gate_from_current_main_coexists_with_work_run_promotion(self) -> None:
+        self.assertTrue(REUSE_SCHEMA.is_file())
+        catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
+        by_id = {item["id"]: item for item in catalog["contracts"]}
+        reuse = by_id["knowledge-reuse-evidence"]
+        self.assertEqual(reuse["version"], "1")
+        self.assertEqual(reuse["path"], "schemas/knowledge-reuse-evidence.v1.schema.json")
+        self.assertEqual(reuse["compatibility"], "optional-fail-closed-v1")
 
     def test_assurance_policies_bind_report_run_to_frozen_work_run(self) -> None:
         for path in (VERIFICATION, REVIEW):
