@@ -3,20 +3,26 @@ name: Real Feature Pilot Evidence
 on:
   pull_request:
     paths:
-      - 'expert-groups/embedded-system/pilot/evidence/FEATURE-PCR02-OTA-001/**'
-      - 'expert-groups/embedded-system/pilot/artifact-requirements.yaml'
-      - 'expert-groups/embedded-system/pilot/pilot-plan.yaml'
-      - 'scripts/embedded_pilot.py'
+      - 'domains/edge-foundation/pilot/evidence/FEATURE-PCR02-OTA-001/**'
+      - 'domains/edge-foundation/pilot/artifact-requirements.yaml'
+      - 'domains/edge-foundation/pilot/pilot-plan.yaml'
+      - 'domains/edge-foundation/runtime/**'
+      - 'domains/edge-foundation/schemas/**'
+      - 'scripts/edge_pilot.py'
+      - 'scripts/validate_edge_material_manifest.py'
       - 'scripts/evaluate_edge_foundation_pilot_shadow.py'
       - 'scripts/evaluate_edge_foundation_phase3_readiness.py'
       - '.github/workflows/real-feature-pilot-evidence.yml'
   push:
     branches: [main]
     paths:
-      - 'expert-groups/embedded-system/pilot/evidence/FEATURE-PCR02-OTA-001/**'
-      - 'expert-groups/embedded-system/pilot/artifact-requirements.yaml'
-      - 'expert-groups/embedded-system/pilot/pilot-plan.yaml'
-      - 'scripts/embedded_pilot.py'
+      - 'domains/edge-foundation/pilot/evidence/FEATURE-PCR02-OTA-001/**'
+      - 'domains/edge-foundation/pilot/artifact-requirements.yaml'
+      - 'domains/edge-foundation/pilot/pilot-plan.yaml'
+      - 'domains/edge-foundation/runtime/**'
+      - 'domains/edge-foundation/schemas/**'
+      - 'scripts/edge_pilot.py'
+      - 'scripts/validate_edge_material_manifest.py'
       - 'scripts/evaluate_edge_foundation_pilot_shadow.py'
       - 'scripts/evaluate_edge_foundation_phase3_readiness.py'
       - '.github/workflows/real-feature-pilot-evidence.yml'
@@ -35,15 +41,15 @@ jobs:
           python-version: '3.11'
       - name: Install exact validator dependencies
         run: python -m pip install --disable-pip-version-check 'PyYAML==6.0.3' 'jsonschema==4.26.0'
-      - name: Materialize and freeze real Feature Pilot
+      - name: Materialize and freeze real Feature Pilot on target runtime
         shell: bash
         run: |
           set -euo pipefail
-          source_dir="expert-groups/embedded-system/pilot/evidence/FEATURE-PCR02-OTA-001"
+          source_dir="domains/edge-foundation/pilot/evidence/FEATURE-PCR02-OTA-001"
           runs_root="$RUNNER_TEMP/real-pilot-runs"
           run_dir="$runs_root/FEATURE-PCR02-OTA-001"
 
-          python scripts/embedded_pilot.py init \
+          python scripts/edge_pilot.py init \
             --run-id FEATURE-PCR02-OTA-001 \
             --track feature \
             --source-type real \
@@ -55,7 +61,7 @@ jobs:
             --base-commit eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d \
             --output-root "$runs_root"
 
-          python scripts/embedded_pilot.py complete "$run_dir" \
+          python scripts/edge_pilot.py complete "$run_dir" \
             --engineering-task-package "$source_dir/engineering-task-package.json" \
             --delivery-receipt "$source_dir/delivery-receipt.json" \
             --verification-report "$source_dir/verification-report.json" \
@@ -64,8 +70,8 @@ jobs:
             --extra acceptance_evidence_matrix="$source_dir/extras/acceptance_evidence_matrix.md" \
             --extra knowledge_harvest="$source_dir/extras/knowledge_harvest.md"
 
-          python scripts/embedded_pilot.py validate "$run_dir"
-          python scripts/embedded_pilot.py edge-shadow "$run_dir"
+          python scripts/edge_pilot.py validate "$run_dir"
+          python scripts/edge_pilot.py edge-shadow "$run_dir"
 
           python - "$run_dir" <<'PY'
           import json, pathlib, sys
@@ -83,7 +89,7 @@ jobs:
           PY
 
           set +e
-          python scripts/embedded_pilot.py phase3-readiness "$runs_root" \
+          python scripts/edge_pilot.py phase3-readiness "$runs_root" \
             --output "$RUNNER_TEMP/phase3-readiness.json" \
             --require-ready
           status=$?
