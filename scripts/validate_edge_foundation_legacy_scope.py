@@ -44,6 +44,7 @@ def main() -> None:
     expected_targets = {
         "domain": EDGE / "domain.yaml",
         "coordination": EDGE / "coordination.yaml",
+        "embedded_expert": EDGE / "experts" / "embedded-system" / "expert.yaml",
         "skill_ownership": EDGE / "skills.yaml",
         "gate_ownership": EDGE / "gate-policy.yaml",
         "verification": EDGE / "assurance" / "verification.yaml",

@@ -1,0 +1,25 @@
+schema_version: 1
+id: embedded-system-expert
+name: 嵌入式系统专家
+name_en: Embedded System Expert
+kind: expert
+status: phase4-prep-target
+ownership_authority: canonical
+runtime_topology: not_frozen
+
+responsibility: embedded-system
+capability_contracts:
+  embedded.architecture: capabilities/architecture.yaml
+  embedded.linux-bsp: capabilities/linux-bsp.yaml
+  embedded.mcu-rtos: capabilities/mcu-rtos.yaml
+  embedded.driver-component: capabilities/driver-component.yaml
+  embedded.debug-reliability: capabilities/debug-reliability.yaml
+
+rules:
+  expert_is_not_agent: true
+  expert_count_is_not_worker_count: true
+  capability_is_not_agent: true
+  internal_worker_topology_not_frozen: true
+  professional_judgment_not_equal_engineering_execution: true
+  engineering_execution_not_equal_verification: true
+  source_of_truth_stays_at_source: true

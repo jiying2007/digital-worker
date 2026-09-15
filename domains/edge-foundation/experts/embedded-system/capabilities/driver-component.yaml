@@ -1,0 +1,35 @@
+schema_version: 1
+id: embedded.driver-component
+name: 驱动与组件能力域
+name_en: Driver and Component Capability
+kind: capability
+owner_expert: embedded-system-expert
+status: phase4-prep-target
+ownership_authority: canonical
+execution_surface: legacy-compatible
+legacy_execution_adapter: ../../../../../expert-groups/embedded-system/contracts/experts/driver-component.io.yaml
+
+consumes:
+  - task-charter
+  - material-manifest
+  - evidence-ref
+  - architecture-analysis
+  - platform-analysis
+produces:
+  - driver-component-analysis
+  - api-contract-impact
+  - implementation-guidance
+  - test-matrix
+hands_off_to:
+  - edge-coordination
+  - embedded.debug-reliability
+  - assurance.verification
+constraints:
+  - platform-specific-behavior-must-be-isolated
+  - reusable-component-claims-require-multi-context-evidence
+
+rules:
+  capability_is_not_agent: true
+  capability_is_not_domain_expert: true
+  legacy_expert_identity_forbidden: true
+  execution_adapter_does_not_define_responsibility: true
