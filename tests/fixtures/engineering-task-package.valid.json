@@ -1,5 +1,6 @@
 {
   "package_id": "PKG-CI-PILOT-001",
+  "work_item_id": "EMB-001",
   "run_id": "CI-PILOT-001",
   "repo_root": "firmware/main",
   "base_commit": "0123456789abcdef0123456789abcdef01234567",
