@@ -39,21 +39,21 @@
     "runtime_practice_eval": {
       "repository": "jiying2007/llm_agent",
       "ref": "main",
-      "commit": "270d38f8b65da32cd8c7c4d5c2cac427682a6d28",
+      "commit": "512c3c50aea092055d216697de9306c2c8b76192",
       "contract": "manifests/digital_worker_runtime_pilot.json",
-      "contract_version": "1.2",
-      "contract_canonical_sha256": "8d7fa0f3fbc2de3de1048ee0bd425fb79a130e876f3cd196e8914a6ff0a157c4",
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED"
+      "contract_version": "1.3",
+      "contract_canonical_sha256": "315123bc8064fdcb156edd4a5fbc5ea083d04c93fb3c5df2c14385ae41785674",
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_R2_POLICY_BLOCKER_PRESERVED"
     }
   },
   "runtime_bindings": {
     "codex": {
       "repository": "jiying2007/codex",
       "ref": "main",
-      "commit": "d0725d01f6ed1561374fcb884eb0e66bd3a76e0e",
+      "commit": "36ead238bf1e0e2b99ad65c035a1062f2051cf28",
       "contract": "manifests/integrations/digital-worker-runtime-binding.json",
-      "contract_version": "2.0",
-      "contract_canonical_sha256": "fe031b99f9ee55be048f884f1a79618df38c929fbbf3ad27f3ef6a183ec24ea4",
+      "contract_version": "2.1",
+      "contract_canonical_sha256": "b670af2d8771555f2179ed6bd3ee082e2b96b98440b9f4d93664c23339248750",
       "runtime_target": "codex-cli",
       "required_asset_profile": "embedded-fullstack",
       "source_identity_mode": "exact-release-source-blobs",
@@ -61,8 +61,9 @@
       "session_bootstrap_contract": "manifests/session_bootstrap.json",
       "session_bootstrap_contract_version": "1.1",
       "session_bootstrap_contract_canonical_sha256": "246bbe1440a18fd4e1a32a72cf834f732ebf4fc33e50e9f02669d4eec70d35c9",
-      "execution_receipt_schema": "schemas/runtime-execution-receipt.schema.json",
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_SOURCE_SET_BOUND_FORMAL_IDENTITY"
+      "execution_receipt_schema": "schemas/runtime-execution-receipt.v2.schema.json",
+      "execution_receipt_schema_version": 2,
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_SOURCE_SET_BOUND_FORMAL_IDENTITY_RECEIPT_V2"
     }
   },
   "rules": {
@@ -82,6 +83,8 @@
     "runtime_local_gate_is_not_domain_gate": true,
     "runtime_output_is_not_verification_pass": true,
     "runtime_execution_receipt_must_not_contain_verification_pass": true,
+    "terminal_replaceability_requires_r2_real_provider_substitution": true,
+    "r1_binding_conformance_is_not_terminal_replaceability": true,
     "pin_freshness_does_not_imply_compatibility": true,
     "pin_promotion_requires_checkout_verification": true
   }

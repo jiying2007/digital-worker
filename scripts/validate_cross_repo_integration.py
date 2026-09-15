@@ -46,7 +46,7 @@ def main() -> None:
     expected = {
         "knowledge_control_plane": ("jiying2007/knowledge-hub", "1.0"),
         "agent_asset_control_plane": ("jiying2007/agent-dev-kit", "2.0"),
-        "runtime_practice_eval": ("jiying2007/llm_agent", "1.2"),
+        "runtime_practice_eval": ("jiying2007/llm_agent", "1.3"),
     }
     for key, (repo, contract_version) in expected.items():
         provider = lock["providers"].get(key, {})
@@ -55,6 +55,10 @@ def main() -> None:
         require(provider.get("contract_version") == contract_version, f"wrong contract version for {key}")
         require(digest(provider.get("contract_canonical_sha256")), f"{key} must pin canonical contract SHA256")
         require(provider.get("validation"), f"{key} validation state must be explicit")
+
+    runtime_eval = lock["providers"]["runtime_practice_eval"]
+    require("R2_POLICY" in runtime_eval.get("validation", ""), "llm_agent R2 portability policy must be explicitly promoted")
+    require("BLOCKER_PRESERVED" in runtime_eval.get("validation", ""), "llm_agent real-provider blocker must remain explicit")
 
     adk = lock["providers"]["agent_asset_control_plane"]
     require(adk.get("runtime_binding_contract_version") == "2.0", "ADK runtime-binding contract version drift")
@@ -73,7 +77,7 @@ def main() -> None:
     codex = lock["runtime_bindings"].get("codex", {})
     require(codex.get("repository") == "jiying2007/codex", "Codex Runtime Binding repository drift")
     require(exact_sha(codex.get("commit")), "Codex Runtime Binding must pin exact commit")
-    require(codex.get("contract_version") == "2.0", "Codex Runtime Binding contract version drift")
+    require(codex.get("contract_version") == "2.1", "Codex Runtime Binding contract version drift")
     require(digest(codex.get("contract_canonical_sha256")), "Codex Runtime Binding contract digest missing")
     require(codex.get("runtime_target") == "codex-cli", "Codex target drift")
     require(codex.get("required_asset_profile") == "embedded-fullstack", "Codex must consume the ADK embedded-fullstack Asset Profile")
@@ -81,9 +85,11 @@ def main() -> None:
     require(codex.get("runtime_readiness") == "SOURCE_SET_BOUND", "Codex source-set readiness drift")
     require(codex.get("session_bootstrap_contract_version") == "1.1", "Codex Session Bootstrap version drift")
     require(digest(codex.get("session_bootstrap_contract_canonical_sha256")), "Codex Session Bootstrap digest missing")
-    require(codex.get("execution_receipt_schema") == "schemas/runtime-execution-receipt.schema.json", "Codex receipt schema missing")
+    require(codex.get("execution_receipt_schema") == "schemas/runtime-execution-receipt.v2.schema.json", "Codex receipt v2 schema missing")
+    require(codex.get("execution_receipt_schema_version") == 2, "Codex receipt schema version drift")
     require("SOURCE_SET_BOUND" in codex.get("validation", ""), "Codex source-set binding must be promoted")
     require("FORMAL_IDENTITY" in codex.get("validation", ""), "Codex formal identity capability must be explicitly promoted")
+    require("RECEIPT_V2" in codex.get("validation", ""), "Codex source-set receipt v2 capability must be explicitly promoted")
     require("runtime_profile_examples" not in codex, "digital-worker lock must not mirror mutable Codex runtime profile examples")
 
     rendered_lock = json.dumps(lock, ensure_ascii=False, sort_keys=True)
@@ -98,6 +104,7 @@ def main() -> None:
         "formal_mode_requires_exact_pinned_knowledge", "formal_mode_requires_exact_digital_worker_governance_identity",
         "l1_to_l2_requires_new_bootstrap_and_execution_source_set", "runtime_local_gate_is_not_domain_gate",
         "runtime_output_is_not_verification_pass", "runtime_execution_receipt_must_not_contain_verification_pass",
+        "terminal_replaceability_requires_r2_real_provider_substitution", "r1_binding_conformance_is_not_terminal_replaceability",
         "pin_freshness_does_not_imply_compatibility", "pin_promotion_requires_checkout_verification",
     ]:
         require(rules[key] is True, f"required source-set rule disabled: {key}")
@@ -160,8 +167,6 @@ def main() -> None:
     require(capability["roles"]["runtime_binding"]["candidates"]["codex"]["capabilities"]["thin_session_bootstrap_l0_l1_l2"] == "native", "Codex thin bootstrap capability missing")
     require(capability["roles"]["runtime_practice_eval"]["capabilities"]["production_runtime"] == "unsupported-by-design", "llm_agent must not become production runtime")
 
-    # Domain Skill contracts are canonical in digital-worker; reusable generic Skill assets may be sourced from ADK,
-    # but runtime/provider ownership must never rewrite domain Role/Capability/Assurance ownership.
     skills_doc = yaml.safe_load(SKILLS.read_text(encoding="utf-8"))
     require(skills_doc["ownership_authority"] == "canonical", "target Skill ownership must remain canonical")
     require(skills_doc["execution_surface"] == "target", "target Skill execution surface drift")
@@ -273,7 +278,8 @@ def main() -> None:
     print(
         "cross-repo integration validation PASS: exact provider pins/digests, repository-responsibility projection, "
         "artifact-level authority/evidence semantics, Stage 1 governance/decision provenance, canonical domain Skills, "
-        "ADK reusable-asset boundary, thin Session Bootstrap, exact source-set and fail-closed Runtime boundaries"
+        "ADK reusable-asset boundary, thin Session Bootstrap, source-set receipt v2, R2 portability policy, "
+        "exact source-set and fail-closed Runtime boundaries"
     )
 
 
