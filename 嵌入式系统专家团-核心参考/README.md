@@ -49,7 +49,7 @@ Assurance Plane
 
 [`../domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml`](../domains/edge-foundation/compatibility/embedded-1plus7-mapping.yaml)
 
-本核心参考**不复制映射内容、不列旧身份、不建立第二套“数字岗位”模型**。需要审计迁移关系时直接查看该机器映射；日常研发只按目标责任模型阅读本目录。
+本核心参考**不复制映射内容、不列旧身份、不建立第二套人类组织模型**。需要审计迁移关系时直接查看该机器映射；日常研发只按目标责任模型阅读本目录。
 
 ## 3. 信息架构
 
