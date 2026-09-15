@@ -23,7 +23,12 @@ def main() -> None:
         path = ROOT / item["path"]
         assert path.is_file(), f"catalog path missing: {item['path']}"
         assert item["owner"] == "digital-worker", f"external contract must not be mirrored into local catalog: {item['id']}"
-    assert "cross-repo-lock" in ids and "pilot-evidence-bundle" in ids and "engineering-task-package" in ids
+    assert {
+        "cross-repo-lock",
+        "pilot-evidence-bundle",
+        "engineering-task-package",
+        "knowledge-reuse-evidence",
+    } <= ids
     print(f"contract catalog validation PASS: {len(ids)} authoritative local contracts")
 
 

@@ -15,12 +15,30 @@ input:
     - source_refs
     - candidate_kind
     - suggested_owner
+    - knowledge_reuse_evidence_ref
 
 preconditions:
   - harvest status is KNOWLEDGE_CANDIDATE
   - evidence_refs are non-empty and resolvable
   - source authority/version/ACL/provenance have been checked where applicable
   - candidate does not copy strong source facts into a second SSOT
+
+reuse_evidence:
+  contract: schemas/knowledge-reuse-evidence.v1.schema.json
+  evaluator: scripts/evaluate_knowledge_reuse_evidence.py
+  optional_for_e2_or_product_pilot_completion: true
+  required_to_claim_e3_real_reuse: true
+  exact_provider_identity_source: config/integrations/cross-repo-lock.json#/providers/knowledge_control_plane
+  requires_real_work_item: true
+  requires_real_source: true
+  requires_acl_allowed: true
+  requires_fresh_source: true
+  requires_resolved_authority_conflict: true
+  requires_actual_use_refs: true
+  controlled_fixture_may_close_e3: false
+  knowledge_reuse_eligibility_does_not_imply_provider_qualification: true
+  knowledge_reuse_eligibility_does_not_imply_product_readiness: true
+  knowledge_reuse_eligibility_does_not_imply_terminal_maturity: true
 
 adapter:
   command: scripts/embedded_knowledge.py proposal-route --proposal <proposal.json>
@@ -45,3 +63,5 @@ hard_rules:
   owner_review_required: true
   runtime_or_agent_may_not_self_approve: true
   knowledge_harvest_completion_does_not_imply_knowledge_promotion: true
+  knowledge_harvest_completion_does_not_imply_real_reuse: true
+  synthetic_or_controlled_evidence_may_not_close_e3: true
