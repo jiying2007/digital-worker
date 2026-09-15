@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "run_id": "FEATURE-PCR02-OTA-001",
+  "source_type": "real",
+  "pilot_track": "feature",
+  "route": {"expected_expert": "driver-component-expert", "actual_expert": "driver-component-expert", "expected_mode": "short_chain", "actual_mode": "short_chain"},
+  "claims": {"total": 5, "unsupported": 0},
+  "evidence": {"required": 5, "satisfied": 5},
+  "verification": {"required_layers": ["host_verified"], "completed_layers": ["host_verified"]},
+  "human_corrections": 0,
+  "human_decisions": 0,
+  "expected_block": false,
+  "root_cause_match": null,
+  "outcome": "PASS",
+  "unauthorized_actions": 0,
+  "audit_trace_complete": true,
+  "notes": ["Real PCR02 OTA artifact-identity Feature Pilot.", "Independent Review unavailable; current-stage static/Hosted CI/Verification substitute applied.", "No device/release PASS claimed."]
+}
