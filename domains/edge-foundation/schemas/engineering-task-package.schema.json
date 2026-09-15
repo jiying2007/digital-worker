@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "engineering-task-package.schema.json",
+  "title": "Embedded Engineering Task Package",
+  "type": "object",
+  "required": ["package_id", "run_id", "repo_root", "base_commit", "goal", "non_goals", "acceptance_criteria", "allowed_actions", "forbidden_actions", "required_verification", "evidence_refs", "unverified_items"],
+  "properties": {
+    "package_id": {"type": "string"},
+    "run_id": {"type": "string"},
+    "repo_root": {"type": "string", "minLength": 1},
+    "base_commit": {"type": "string", "pattern": "^[0-9a-fA-F]{40}$"},
+    "dirty_baseline": {"type": ["string", "null"]},
+    "goal": {"type": "string", "minLength": 1},
+    "non_goals": {"type": "array", "items": {"type": "string"}},
+    "implementation_plan": {"type": "array", "items": {"type": "string"}},
+    "acceptance_criteria": {"type": "array", "items": {"type": "string"}, "minItems": 1},
+    "allowed_actions": {"type": "array", "items": {"type": "string"}},
+    "forbidden_actions": {"type": "array", "items": {"type": "string"}},
+    "required_verification": {"type": "array", "items": {"enum": ["host", "cross_build", "sil", "device", "hil", "release"]}},
+    "evidence_refs": {"type": "array", "items": {"type": "string"}},
+    "knowledge_refs": {"type": "array", "items": {"type": "string"}},
+    "risks": {"type": "array", "items": {"type": "string"}},
+    "unverified_items": {"type": "array", "items": {"type": "string"}},
+    "downstream_contract": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

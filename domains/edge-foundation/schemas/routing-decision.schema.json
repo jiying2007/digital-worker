@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "routing-decision.schema.json",
+  "title": "Embedded Routing Decision",
+  "type": "object",
+  "required": ["run_id", "task_type", "workflow_mode", "experts", "reason", "stop_condition"],
+  "properties": {
+    "run_id": {"type": "string"},
+    "task_type": {"type": "string"},
+    "workflow_mode": {"type": "string"},
+    "experts": {"type": "array", "items": {"type": "string"}, "minItems": 1, "uniqueItems": true},
+    "reason": {"type": "string"},
+    "required_gates": {"type": "array", "items": {"type": "string"}},
+    "action_ceiling": {"type": "string"},
+    "stop_condition": {"type": "string"}
+  },
+  "additionalProperties": false
+}

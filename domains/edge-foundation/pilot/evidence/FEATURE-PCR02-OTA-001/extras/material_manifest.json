@@ -1,0 +1,13 @@
+{
+  "run_id": "FEATURE-PCR02-OTA-001",
+  "items": [
+    {"kind": "repo", "required": true, "status": "available", "source": "https://github.com/jiying2007/ota_download_test", "version": "7aba8279f96ed47bde3f84a4b2be6b796466d181", "evidence_ref": "jiying2007/ota_download_test@7aba8279f96ed47bde3f84a4b2be6b796466d181"},
+    {"kind": "base_commit", "required": true, "status": "available", "source": "git", "version": "eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d", "evidence_ref": "eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d"},
+    {"kind": "firmware", "required": false, "status": "available", "source": "ota_pkg_v1.1.21.tar.gz", "version": "v1.1.21", "evidence_ref": "sha256:7687d8058f85271e75ff3726957385afa1618aa2078dc0a6b3215d470af4a4bb"},
+    {"kind": "test_environment", "required": false, "status": "available", "source": "GitHub Actions", "version": "ubuntu-latest", "evidence_ref": "runs:34861966225,34862064742,34862735035"},
+    {"kind": "device_identity", "required": false, "status": "not_applicable", "source": null, "version": null, "evidence_ref": null}
+  ],
+  "readiness": "READY",
+  "missing_critical": [],
+  "degradation_approved_by": null
+}

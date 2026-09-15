@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "knowledge-readiness.schema.json",
+  "title": "Embedded Knowledge Readiness",
+  "type": "object",
+  "required": ["run_id", "required_sources", "status"],
+  "properties": {
+    "run_id": {"type": "string"},
+    "required_sources": {"type": "array", "items": {"type": "string"}},
+    "resolved_sources": {"type": "array", "items": {"type": "string"}},
+    "missing_sources": {"type": "array", "items": {"type": "string"}},
+    "conflicts": {"type": "array", "items": {"type": "string"}},
+    "status": {"enum": ["READY", "DEGRADED", "BLOCKED"]},
+    "degradation_approved_by": {"type": ["string", "null"]}
+  },
+  "additionalProperties": false
+}

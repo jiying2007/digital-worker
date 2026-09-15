@@ -1,0 +1,121 @@
+schema_version: 2
+version: 1.0.0
+status: canonical-target-runtime
+
+workflow_modes:
+  full_chain:
+    description: 跨多能力域、从技术分析到验证和收口的完整链路
+  short_chain:
+    description: 已有产品/平台上的常规功能、驱动、组件或优化
+  diagnostic_chain:
+    description: 缺陷、长稳、现场问题的证据驱动诊断闭环
+  bringup_chain:
+    description: 新板、新SoC、新BSP或平台Bring-up
+  review_only:
+    description: 技术可行性、架构或代码审查，不自动扩展为实施
+  release_chain:
+    description: Release/OTA/rollback/provenance/readiness
+  single_expert:
+    description: 边界清晰的单 Domain Expert 任务；可包含其内部多个 Capability
+
+routing:
+  feature_development:
+    default_mode: short_chain
+    allowed_modes: [short_chain, full_chain]
+    primary_experts: [embedded-system-expert]
+    capabilities: [embedded.architecture, embedded.driver-component, embedded.mcu-rtos, embedded.linux-bsp]
+    assurance: [verification]
+  defect_debugging:
+    default_mode: diagnostic_chain
+    allowed_modes: [diagnostic_chain]
+    primary_experts: [embedded-system-expert]
+    capabilities: [embedded.debug-reliability]
+    capability_expansion: evidence-driven
+    assurance: [verification]
+  architecture_design:
+    default_mode: short_chain
+    allowed_modes: [short_chain, review_only]
+    primary_experts: [embedded-system-expert]
+    capabilities: [embedded.architecture]
+    assurance: [verification]
+  technical_feasibility_review:
+    default_mode: review_only
+    allowed_modes: [review_only]
+    primary_experts: [embedded-system-expert]
+    capabilities: [embedded.architecture]
+    assurance: [review]
+  platform_bringup:
+    default_mode: bringup_chain
+    allowed_modes: [bringup_chain]
+    primary_experts: [embedded-system-expert]
+    capabilities: [embedded.linux-bsp, embedded.mcu-rtos, embedded.driver-component]
+    assurance: [verification]
+    cross_domain_escalation:
+      possible_experts: [hardware-expert, embedded-system-expert]
+      evidence_required: true
+  bsp_porting:
+    default_mode: bringup_chain
+    allowed_modes: [bringup_chain, short_chain]
+    primary_experts: [embedded-system-expert]
+    capabilities: [embedded.linux-bsp]
+    assurance: [verification]
+  driver_development:
+    default_mode: short_chain
+    allowed_modes: [short_chain]
+    primary_experts: [embedded-system-expert]
+    capabilities: [embedded.driver-component, embedded.linux-bsp]
+    assurance: [verification]
+  component_development:
+    default_mode: short_chain
+    allowed_modes: [short_chain]
+    primary_experts: [embedded-system-expert]
+    capabilities: [embedded.driver-component, embedded.architecture]
+    assurance: [verification]
+  mcu_firmware_development:
+    default_mode: short_chain
+    allowed_modes: [short_chain, full_chain]
+    primary_experts: [embedded-system-expert]
+    capabilities: [embedded.mcu-rtos]
+    assurance: [verification]
+  performance_optimization:
+    default_mode: short_chain
+    allowed_modes: [short_chain, diagnostic_chain]
+    primary_experts: [embedded-system-expert]
+    capabilities: [embedded.debug-reliability, embedded.architecture]
+    assurance: [verification]
+  stability_reliability:
+    default_mode: diagnostic_chain
+    allowed_modes: [diagnostic_chain]
+    primary_experts: [embedded-system-expert]
+    capabilities: [embedded.debug-reliability]
+    assurance: [verification]
+  code_review:
+    default_mode: review_only
+    allowed_modes: [review_only]
+    primary_experts: [embedded-system-expert]
+    capabilities: []
+    assurance: [review]
+    execution_forbidden: true
+  release_ota:
+    default_mode: release_chain
+    allowed_modes: [release_chain]
+    primary_experts: [embedded-system-expert]
+    capabilities: []
+    assurance: [verification, review]
+    release_action_requires_human_approval: true
+  field_incident:
+    default_mode: diagnostic_chain
+    allowed_modes: [diagnostic_chain]
+    primary_experts: [embedded-system-expert]
+    capabilities: [embedded.debug-reliability]
+    capability_expansion: evidence-driven
+    assurance: [verification]
+
+rules:
+  require_task_type_before_execution: true
+  implicit_full_chain_forbidden: true
+  mode_expansion_requires_edge_coordination_decision: true
+  review_only_must_not_implicitly_modify_code: true
+  diagnostic_chain_requires_hypothesis_registry: true
+  release_chain_requires_human_release_gate: true
+  legacy_expert_identity_forbidden: true
