@@ -121,12 +121,17 @@ assurance:
 
 target_assets:
   ownership_authority: canonical
-  execution_surface: legacy-compatible
+  execution_surface: target-staged
   skill_registry: skills.yaml
   gate_policy: gate-policy.yaml
   evaluation_cases: evaluation/golden-cases.yaml
+  pilot_runtime: runtime/
+  pilot_assets: pilot/
+  schema_root: schemas/
   legacy_expert_identity_in_target_assets_forbidden: true
-  physical_asset_move_deferred_until_canonical_switch: true
+  physical_skill_location_is_canonical: true
+  physical_asset_move_deferred_until_canonical_switch: false
+  remaining_legacy_runtime_must_reach_zero_live_reference_before_removal: true
 
 workflow_semantics:
   frozen_high_level_modes:

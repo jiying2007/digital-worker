@@ -1,6 +1,6 @@
 # Skill能力地图
 
-Skill 的 target ownership 以 `domains/edge-foundation/skills.yaml` 为唯一权威。本页只按 **Role / Capability / Assurance** 分组解释，不再按旧执行身份分组。Skill 物理文件当前仍可能位于 `expert-groups/embedded-system/skills/`，但**文件位置不定义 owner**。
+Skill 的 target ownership 与物理位置都以 `domains/edge-foundation/skills.yaml` 为唯一权威。本页只按 **Role / Capability / Assurance** 分组解释，不创建第二份 Skill Registry。
 
 ## 1. Edge Coordination Role（`edge-coordination`）
 
@@ -76,8 +76,9 @@ Coordination Skill 负责组织任务，不产生 Embedded 专业事实。
 1. Task 路由到 Domain Expert / Capability 后再加载必要 Skill；
 2. Skill 数量不是架构，也不决定 Expert 数量；
 3. Skill 可以被不同 Runtime 实现，但 owner contract 不随 Runtime 改变；
-4. Legacy Skill frontmatter/路径只承担当前执行兼容，不能反向覆盖 target ownership；
+4. Skill 物理文件统一位于 `domains/edge-foundation/skills/<id>/SKILL.md`，frontmatter `owner_kind/owner` 必须与机器 registry 一致；
 5. 新 Skill 必须由重复 real evidence 证明，而不是为了目录对称新增；
-6. Verification / Review Skill 不得被工程实施结果自签。
+6. Verification / Review Skill 不得被工程实施结果自签；
+7. 旧 `expert-groups/embedded-system/skills/**` 不再是 target authority，只在物理删除前作为短期回归对照。
 
-当前 registry 共 23 个 Skill；核心参考只展示 target ownership，一旦机器 registry 增删，CI 会要求本页同步。
+当前 registry 共 23 个 Skill；核心参考只展示 target ownership，一旦机器 registry 增删或 owner/path 漂移，CI 必须失败。
