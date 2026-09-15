@@ -49,7 +49,7 @@
       "runtime_portability_cli_contract": "tools/control_plane/cli.py",
       "runtime_portability_evidence_level": "R2-real-provider-substitution",
       "runtime_portability_status": "certifier-ready-real-evidence-pending",
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_R2_CERTIFIER_READY_REAL_EVIDENCE_PENDING_BLOCKER_PRESERVED"
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_R2_POLICY_R2_CERTIFIER_READY_REAL_EVIDENCE_PENDING_BLOCKER_PRESERVED"
     }
   },
   "runtime_bindings": {
