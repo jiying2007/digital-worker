@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import copy
+import importlib.util
 import json
 import unittest
 from pathlib import Path
@@ -8,10 +8,18 @@ from pathlib import Path
 import jsonschema
 import yaml
 
-from scripts.validate_formal_assurance import FormalAssuranceError, validate_formal_assurance
-
 ROOT = Path(__file__).resolve().parents[2]
 EDGE = ROOT / "domains" / "edge-foundation"
+SPEC = importlib.util.spec_from_file_location(
+    "formal_assurance_provenance_gate",
+    ROOT / "scripts" / "validate_formal_assurance.py",
+)
+assert SPEC and SPEC.loader
+formal_assurance = importlib.util.module_from_spec(SPEC)
+SPEC.loader.exec_module(formal_assurance)
+FormalAssuranceError = formal_assurance.FormalAssuranceError
+validate_formal_assurance = formal_assurance.validate_formal_assurance
+
 LEGACY_FEATURE_VERIFICATION = (
     EDGE / "pilot" / "evidence" / "FEATURE-PCR02-OTA-001" / "verification-report.json"
 )
