@@ -64,7 +64,8 @@ def build_acceptance_matrix(run: dict, task: dict) -> str:
     lines = ["# Acceptance → Evidence Matrix", "", f"- run_id: `{run['run_id']}`", f"- work_item_id: `{run['work_item_id']}`", "- status: `WORKING / NOT_VERIFIED`", "", "| AC | Criterion | Verification layer | Artifact / Device / Test identity | Evidence ref | Result |", "|---|---|---|---|---|---|"]
     criteria = task.get("acceptance_criteria") or []
     for idx, criterion in enumerate(criteria, 1):
-        lines.append(f"| AC-{idx:03d} | {str(criterion).replace('|', '\\|')} | TODO | TODO | TODO | UNVERIFIED |")
+        escaped = str(criterion).replace("|", "\\|")
+        lines.append(f"| AC-{idx:03d} | {escaped} | TODO | TODO | TODO | UNVERIFIED |")
     if not criteria:
         lines.append("| AC-001 | TODO: add acceptance criterion | TODO | TODO | TODO | UNVERIFIED |")
     lines += ["", "> Completion rule: no criterion may be marked PASS without a concrete verification layer, exact relevant identity, and evidence reference.", ""]
