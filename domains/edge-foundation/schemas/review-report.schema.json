@@ -5,10 +5,27 @@
   "type": "object",
   "required": ["run_id", "reviewer", "independence_confirmed", "decision", "findings", "evidence_refs"],
   "properties": {
+    "report_id": {"type": "string", "minLength": 1},
     "run_id": {"type": "string"},
     "reviewer": {"type": "string"},
     "implementation_owner": {"type": ["string", "null"]},
     "independence_confirmed": {"type": "boolean"},
+    "independence_evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "reviewed_subject": {
+      "type": "object",
+      "required": ["execution_source_set_ref", "result_identity_ref"],
+      "properties": {
+        "execution_source_set_ref": {"type": "string", "minLength": 1},
+        "result_identity_ref": {"type": "string", "minLength": 1},
+        "source_identity_ref": {"type": ["string", "null"]},
+        "artifact_identity_refs": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      },
+      "additionalProperties": false
+    },
+    "decision_actor_identity_ref": {"type": "string", "minLength": 1},
+    "input_evidence_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "report_sequence": {"type": "integer", "minimum": 1},
+    "supersedes": {"type": ["string", "null"]},
     "decision": {"enum": ["APPROVE", "APPROVE_WITH_RISK", "REQUEST_CHANGES", "BLOCKED"]},
     "findings": {
       "type": "array",
