@@ -8,6 +8,7 @@ from pathlib import Path
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
+EDGE = ROOT / "domains" / "edge-foundation"
 LOCK = ROOT / "config" / "integrations" / "cross-repo-lock.json"
 CAPABILITY = ROOT / "config" / "integrations" / "provider-capability-matrix.yaml"
 OWNERSHIP = ROOT / "contracts" / "cross-repo" / "embedded-ai-operating-system.yaml"
@@ -15,8 +16,7 @@ IDENTITY = ROOT / "contracts" / "cross-repo" / "identity-envelope.yaml"
 HARVEST = ROOT / "contracts" / "cross-repo" / "knowledge-harvest-handoff.yaml"
 STRATEGY = ROOT / "docs" / "strategy" / "ai-rd-target-operating-model.md"
 QUICKSTART = ROOT / "docs" / "runbooks" / "embedded-closed-loop-quickstart.md"
-SKILLS = ROOT / "expert-groups" / "embedded-system" / "config" / "p0-skills.yaml"
-MATRIX = ROOT / "expert-groups" / "embedded-system" / "config" / "skill-ownership-matrix.yaml"
+SKILLS = EDGE / "skills.yaml"
 ADAPTER = ROOT / "scripts" / "embedded_knowledge.py"
 
 
@@ -34,7 +34,7 @@ def digest(value: str | None) -> bool:
 
 
 def main() -> None:
-    for path in [LOCK, CAPABILITY, OWNERSHIP, IDENTITY, HARVEST, STRATEGY, QUICKSTART, SKILLS, MATRIX, ADAPTER]:
+    for path in [LOCK, CAPABILITY, OWNERSHIP, IDENTITY, HARVEST, STRATEGY, QUICKSTART, SKILLS, ADAPTER]:
         require(path.is_file(), f"missing cross-repo asset: {path.relative_to(ROOT)}")
 
     lock = json.loads(LOCK.read_text(encoding="utf-8"))
@@ -91,20 +91,12 @@ def main() -> None:
 
     rules = lock["rules"]
     for key in [
-        "contract_digest_required",
-        "source_of_truth_stays_at_source",
-        "provider_failure_must_not_be_reported_as_pass",
-        "asset_profile_must_be_separate_from_runtime_profile",
-        "immutable_adk_release_required",
-        "exact_source_set_identity_required",
-        "runtime_distribution_identity_required_when_executed",
-        "monolithic_runtime_bundle_not_required_identity",
-        "formal_mode_requires_exact_pinned_knowledge",
-        "runtime_local_gate_is_not_domain_gate",
-        "runtime_output_is_not_verification_pass",
-        "runtime_execution_receipt_must_not_contain_verification_pass",
-        "pin_freshness_does_not_imply_compatibility",
-        "pin_promotion_requires_checkout_verification",
+        "contract_digest_required", "source_of_truth_stays_at_source", "provider_failure_must_not_be_reported_as_pass",
+        "asset_profile_must_be_separate_from_runtime_profile", "immutable_adk_release_required", "exact_source_set_identity_required",
+        "runtime_distribution_identity_required_when_executed", "monolithic_runtime_bundle_not_required_identity",
+        "formal_mode_requires_exact_pinned_knowledge", "runtime_local_gate_is_not_domain_gate",
+        "runtime_output_is_not_verification_pass", "runtime_execution_receipt_must_not_contain_verification_pass",
+        "pin_freshness_does_not_imply_compatibility", "pin_promotion_requires_checkout_verification",
     ]:
         require(rules[key] is True, f"required source-set rule disabled: {key}")
 
@@ -112,15 +104,19 @@ def main() -> None:
     require(ownership["schema_version"] == 3, "ownership contract must use source-set schema v3")
     require(ownership["architecture_model"] == "four-control-planes-plus-replaceable-runtime-bindings", "ownership architecture drift")
     require(ownership["planes"]["digital-worker"]["role"] == "rd-operating-model", "digital-worker role drift")
+    require("expert-identity-and-routing" in ownership["planes"]["digital-worker"]["owns"], "digital-worker domain responsibility ownership missing")
+    require("domain-workflow-and-gates" in ownership["planes"]["digital-worker"]["owns"], "digital-worker domain workflow ownership missing")
     require(ownership["planes"]["knowledge-hub"]["role"] == "knowledge-control-plane", "knowledge-hub role drift")
     require(ownership["planes"]["agent-dev-kit"]["role"] == "agent-asset-control-plane", "ADK role drift")
+    require("reusable-skills" in ownership["planes"]["agent-dev-kit"]["owns"], "ADK reusable Skill ownership missing")
     require("immutable-release-identity" in ownership["planes"]["agent-dev-kit"]["owns"], "ADK immutable release ownership missing")
     require("exact-source-set-handoff-contract" in ownership["planes"]["agent-dev-kit"]["owns"], "ADK source-set handoff ownership missing")
     require(ownership["planes"]["llm_agent"]["role"] == "practice-and-runtime-evaluation-lab", "llm_agent role drift")
     require(ownership["runtime_bindings"]["candidates"]["codex"]["runtime_target"] == "codex-cli", "Codex candidate missing")
     require(ownership["runtime_bindings"]["candidates"]["codex"]["status"] == "source-set-bound", "Codex candidate source-set status drift")
     require(ownership["runtime_bindings"]["candidates"]["codex"]["session_bootstrap"] == "active", "Codex Session Bootstrap not active")
-    require("domain-verification-pass" in ownership["runtime_bindings"]["contract"]["must_not_own"], "Runtime Binding must not own verification PASS")
+    require("domain-verification-pass" in ownership["runtime_bindings"]["contract"]["must_not_own"], "Runtime Binding must not own Verification PASS")
+    require("reusable-agent-skill-source-of-truth" in ownership["runtime_bindings"]["contract"]["must_not_own"], "Runtime Binding must not own reusable Skill SoT")
 
     capability = yaml.safe_load(CAPABILITY.read_text(encoding="utf-8"))
     require(capability["schema_version"] == 3, "capability matrix must use source-set schema v3")
@@ -132,16 +128,20 @@ def main() -> None:
     require(capability["roles"]["runtime_binding"]["candidates"]["codex"]["capabilities"]["thin_session_bootstrap_l0_l1_l2"] == "native", "Codex thin bootstrap capability missing")
     require(capability["roles"]["runtime_practice_eval"]["capabilities"]["production_runtime"] == "unsupported-by-design", "llm_agent must not become production runtime")
 
-    p0 = yaml.safe_load(SKILLS.read_text(encoding="utf-8"))["skills"]
-    matrix = yaml.safe_load(MATRIX.read_text(encoding="utf-8"))
-    p0_ids = {item["id"] for item in p0}
-    decisions = matrix["decisions"]
-    matrix_ids = {item["id"] for item in decisions}
-    require(matrix_ids == p0_ids, f"skill ownership matrix must cover all P0 skills: missing={sorted(p0_ids-matrix_ids)} extra={sorted(matrix_ids-p0_ids)}")
-    allowed = {"KEEP_DOMAIN_CONTRACT", "WRAP_ADK", "ADK_REUSE_CANDIDATE"}
-    require(all(item["decision"] in allowed for item in decisions), "invalid skill ownership decision")
-    require(matrix["promotion_rule"]["require_real_pilot_evidence"] is True, "skill replacement requires real pilot evidence")
-    require(matrix["promotion_rule"]["auto_remove_domain_skill"] is False, "domain skills must not auto-remove")
+    # Domain Skill contracts are canonical in digital-worker; reusable generic Skill assets may be sourced from ADK,
+    # but runtime/provider ownership must never rewrite domain Role/Capability/Assurance ownership.
+    skills_doc = yaml.safe_load(SKILLS.read_text(encoding="utf-8"))
+    require(skills_doc["ownership_authority"] == "canonical", "target Skill ownership must remain canonical")
+    require(skills_doc["execution_surface"] == "target", "target Skill execution surface drift")
+    require(skills_doc["rules"]["physical_skill_location_is_canonical"] is True, "target Skill physical location must remain canonical")
+    require(skills_doc["rules"]["skill_frontmatter_owner_must_match_registry"] is True, "Skill owner/frontmatter consistency ratchet disabled")
+    skills = skills_doc["skills"]
+    require(len(skills) == 23, f"current canonical Skill baseline must contain 23 entries, got {len(skills)}")
+    require(len({item["id"] for item in skills}) == len(skills), "duplicate canonical Skill IDs")
+    require({item["owner_kind"] for item in skills} <= {"role", "capability", "assurance"}, "canonical Skills may only be owned by Role/Capability/Assurance")
+    for item in skills:
+        path = (EDGE / item["path"]).resolve()
+        require(path.is_file() and EDGE.resolve() in path.parents, f"canonical Skill path invalid: {item['id']}")
 
     identity = yaml.safe_load(IDENTITY.read_text(encoding="utf-8"))
     require(identity["schema_version"] == 3, "identity envelope must use source-set schema v3")
@@ -176,45 +176,30 @@ def main() -> None:
 
     strategy = STRATEGY.read_text(encoding="utf-8")
     for token in [
-        "4 个稳定控制面",
-        "N 个可替换 Runtime Binding",
-        "jiying2007/codex",
-        "Thin Session Bootstrap",
-        "L0 — Quick Assist",
-        "L1 — Governed Engineering",
-        "L2 — Formal Evidence",
-        "Asset Profile",
-        "Runtime Profile",
-        "Execution Receipt",
-        "exact-source-set",
+        "4 个稳定控制面", "N 个可替换 Runtime Binding", "jiying2007/codex", "Thin Session Bootstrap",
+        "L0 — Quick Assist", "L1 — Governed Engineering", "L2 — Formal Evidence",
+        "Asset Profile", "Runtime Profile", "Execution Receipt", "exact-source-set",
     ]:
         require(token in strategy, f"target operating model missing marker: {token}")
     require("target-baseline / frozen-for-implementation" in strategy, "target operating model status drift")
 
     quickstart = QUICKSTART.read_text(encoding="utf-8")
     for token in [
-        "session-bootstrap.sh",
-        "L2 / formal-evidence",
-        "SOURCE_SET_BOUND",
-        "exact-source-set-reference",
-        "runtime distribution identity",
-        "KNOWLEDGE_HUB_ROOT",
-        "embedded_knowledge.py context",
-        "embedded_knowledge.py evidence-pack",
-        "identity-envelope.yaml",
-        "default (runtime-owned)",
+        "session-bootstrap.sh", "L2 / formal-evidence", "SOURCE_SET_BOUND", "exact-source-set-reference",
+        "runtime distribution identity", "KNOWLEDGE_HUB_ROOT", "edge_knowledge.py context",
+        "edge_knowledge.py evidence-pack", "identity-envelope.yaml", "default (runtime-owned)",
     ]:
         require(token in quickstart, f"quickstart missing integrated source-set workflow marker: {token}")
     for retired in [
-        "provider-produced bundle hash",
-        "BLOCKED_ASSET_BUNDLE_IDENTITY",
-        "ADK Asset Profile / bundle identity",
-        "token-lean",
-        "--runtime-profile",
+        "provider-produced bundle hash", "BLOCKED_ASSET_BUNDLE_IDENTITY", "ADK Asset Profile / bundle identity",
+        "token-lean", "--runtime-profile",
     ]:
         require(retired not in quickstart, f"quickstart retained retired runtime marker: {retired}")
 
-    print("cross-repo integration validation PASS: final source-set machine contracts, exact pins/digests, thin Session Bootstrap, retired profile ratchets and fail-closed domain boundaries")
+    print(
+        "cross-repo integration validation PASS: exact provider pins/digests, canonical domain Skills, "
+        "ADK reusable-asset boundary, thin Session Bootstrap, exact source-set and fail-closed Runtime boundaries"
+    )
 
 
 if __name__ == "__main__":

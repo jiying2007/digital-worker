@@ -1,8 +1,0 @@
-schema_version: 1
-status: retired-compatibility-pointer
-retired: true
-authority: ../../../domains/edge-foundation/evaluation/golden-cases.yaml
-note: >-
-  The duplicated legacy Golden Case dataset was retired. This path remains only as a
-  bounded compatibility pointer until canonical routing switch/legacy physical cleanup.
-  It must never contain a cases collection or legacy Expert ownership semantics.

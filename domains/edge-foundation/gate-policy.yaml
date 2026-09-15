@@ -1,9 +1,8 @@
 schema_version: 1
 id: edge-foundation-gate-policy
-status: phase4-prep-target
+status: canonical-v1
 ownership_authority: canonical
-execution_surface: legacy-compatible
-legacy_execution_policy: ../../expert-groups/embedded-system/config/gate-policy.yaml
+execution_surface: canonical
 
 rules:
   legacy_expert_identity_as_owner_forbidden: true
@@ -20,18 +19,14 @@ gates:
     owner_id: edge-coordination
     auto_check: true
     human_decision_on_degradation: true
-    pass_when:
-      - required_knowledge_sources_resolved_or_not_applicable
-      - no_unacknowledged_critical_knowledge_gap
+    pass_when: [required_knowledge_sources_resolved_or_not_applicable, no_unacknowledged_critical_knowledge_gap]
   gate.m:
     name: Engineering Material Readiness
     owner_kind: role
     owner_id: edge-coordination
     auto_check: true
     human_decision_on_degradation: true
-    pass_when:
-      - required_materials_ready
-      - repo_and_version_identity_sufficient_for_task
+    pass_when: [required_materials_ready, repo_and_version_identity_sufficient_for_task]
   gate.0:
     name: Intake Clarity
     owner_kind: role
@@ -41,42 +36,27 @@ gates:
     name: Technical Decision
     owner_kind: routed-expert
     owner_id: routed-domain-expert
-    pass_when:
-      - technical_solution_has_owner_and_evidence
-      - risks_and_unresolved_items_explicit
-      - verification_and_rollback_defined
+    pass_when: [technical_solution_has_owner_and_evidence, risks_and_unresolved_items_explicit, verification_and_rollback_defined]
   gate.e:
     name: Engineering Handoff
     owner_kind: role
     owner_id: edge-coordination
-    pass_when:
-      - engineering_task_package_valid
-      - action_ceiling_explicit
-      - repo_root_and_base_commit_explicit
+    pass_when: [engineering_task_package_valid, action_ceiling_explicit, repo_root_and_base_commit_explicit]
   gate.v:
     name: Verification
     owner_kind: assurance
     owner_id: verification
-    pass_when:
-      - required_verification_layers_resolved
-      - no_cross_layer_pass_inference
-      - unverified_items_preserved
+    pass_when: [required_verification_layers_resolved, no_cross_layer_pass_inference, unverified_items_preserved]
   gate.r:
     name: Independent Review
     owner_kind: assurance
     owner_id: review
-    pass_when:
-      - reviewer_independence_confirmed
-      - no_open_p0_p1_without_explicit_human_acceptance
+    pass_when: [review_requirement_resolved_for_current_stage, no_open_p0_p1_without_explicit_human_acceptance]
   gate.c:
     name: Closure
     owner_kind: role
     owner_id: edge-coordination
-    pass_when:
-      - deliverable_manifest_present
-      - blockers_resolved_or_explicitly_accepted
-      - verification_status_not_overstated
-      - open_risks_and_unverified_items_preserved
+    pass_when: [deliverable_manifest_present, blockers_resolved_or_explicitly_accepted, verification_status_not_overstated, open_risks_and_unverified_items_preserved]
 
 failure_policy:
   auto_gate_retry_limit: 2

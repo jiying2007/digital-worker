@@ -1,14 +1,12 @@
 schema_version: 1
-version: 1.0.0
-status: phase4-prep-target
+version: 1.1.0
+status: canonical
 canonical_authority: true
-legacy_copy_retired_pointer: ../../../expert-groups/embedded-system/tests/golden-cases.yaml
-canonical_routing_switched: false
+canonical_routing: true
 
 rules:
   legacy_expert_identity_forbidden: true
   domain_expert_capability_assurance_model_required: true
-  legacy_execution_mode_is_comparison_only: true
   golden_case_is_evaluation_asset_not_organization_identity: true
 
 cases:
@@ -19,7 +17,6 @@ cases:
     expected_experts: [embedded-system-expert]
     expected_capabilities: [embedded.debug-reliability, embedded.linux-bsp]
     required_assurance: [verification]
-    legacy_execution_mode: diagnostic_chain
     required_evidence: [exact firmware identity, boot log, boot args, partition layout]
     expected_gate_behavior: [gate.m blocks if firmware identity is unknown, hypothesis registry required]
     forbidden_claims: [do not declare rootfs corruption from a single boot line]
@@ -32,7 +29,6 @@ cases:
     expected_experts: [embedded-system-expert]
     expected_capabilities: [embedded.debug-reliability, embedded.linux-bsp]
     required_assurance: [verification]
-    legacy_execution_mode: diagnostic_chain
     required_evidence: [panic log, matching symbols, exact kernel build identity]
     expected_gate_behavior: [gate.m blocks symbol mismatch, gate.v requires regression evidence after fix]
     forbidden_claims: [do not equate crash site with corruption origin]
@@ -45,7 +41,6 @@ cases:
     expected_experts: [embedded-system-expert]
     expected_capabilities: [embedded.debug-reliability, embedded.mcu-rtos]
     required_assurance: [verification]
-    legacy_execution_mode: diagnostic_chain
     required_evidence: [fault registers, firmware hash, map file, reset reason]
     expected_gate_behavior: [hypothesis registry required, device evidence must match firmware]
     forbidden_claims: [do not confirm stack overflow without stack evidence]
@@ -58,7 +53,6 @@ cases:
     expected_experts: [embedded-system-expert]
     expected_capabilities: [embedded.debug-reliability, embedded.linux-bsp]
     required_assurance: [verification]
-    legacy_execution_mode: diagnostic_chain
     required_evidence: [NAND model, ECC status, controller path, MTD log, source path]
     expected_gate_behavior: [destructive recovery action remains blocked without approval]
     forbidden_claims: [do not treat controller ECC status as filesystem proof]
@@ -71,7 +65,6 @@ cases:
     expected_experts: [embedded-system-expert]
     expected_capabilities: [embedded.debug-reliability, embedded.linux-bsp]
     required_assurance: [verification]
-    legacy_execution_mode: diagnostic_chain
     required_evidence: [UBI/UBIFS log, mount state, partition identity, power/reset history]
     expected_gate_behavior: [recovery that risks data loss requires explicit approval]
     forbidden_claims: [do not recommend formatting as first diagnostic step]
@@ -84,7 +77,6 @@ cases:
     expected_experts: [embedded-system-expert]
     expected_capabilities: [embedded.debug-reliability, embedded.linux-bsp, embedded.driver-component]
     required_assurance: [verification]
-    legacy_execution_mode: diagnostic_chain
     required_evidence: [SoC cache contract, DMA direction, buffer lifetime, source path]
     expected_gate_behavior: [platform-specific coherency evidence required]
     forbidden_claims: [do not assume cache coherence from generic Linux behavior]
@@ -97,7 +89,6 @@ cases:
     expected_experts: [embedded-system-expert]
     expected_capabilities: [embedded.debug-reliability, embedded.mcu-rtos]
     required_assurance: [verification]
-    legacy_execution_mode: diagnostic_chain
     required_evidence: [task states, lock ordering, ISR interaction, timing trace]
     expected_gate_behavior: [race/deadlock remains hypothesis until trace distinguishes it]
     forbidden_claims: [do not claim race-free because issue did not reproduce once]
@@ -110,7 +101,6 @@ cases:
     expected_experts: [embedded-system-expert]
     expected_capabilities: [embedded.mcu-rtos]
     required_assurance: [verification]
-    legacy_execution_mode: short_chain
     required_evidence: [linker script, map file, target memory map]
     expected_gate_behavior: [gate.m requires exact map from target build]
     forbidden_claims: [do not estimate RAM solely from source file sizes]
@@ -123,7 +113,6 @@ cases:
     expected_experts: [embedded-system-expert]
     expected_capabilities: [embedded.driver-component, embedded.linux-bsp]
     required_assurance: [verification]
-    legacy_execution_mode: short_chain
     cross_domain_escalation:
       possible_mode: multi_domain
       possible_experts: [hardware-expert, embedded-system-expert]
@@ -140,7 +129,6 @@ cases:
     expected_experts: [embedded-system-expert]
     expected_capabilities: [embedded.linux-bsp, embedded.mcu-rtos, embedded.driver-component]
     required_assurance: [verification]
-    legacy_execution_mode: bringup_chain
     cross_domain_escalation:
       possible_mode: multi_domain
       possible_experts: [hardware-expert, embedded-system-expert]
@@ -157,7 +145,6 @@ cases:
     expected_experts: [embedded-system-expert]
     expected_capabilities: [embedded.mcu-rtos]
     required_assurance: [review]
-    legacy_execution_mode: review_only
     execution_forbidden: true
     required_evidence: [diff, concurrency model, affected interfaces]
     expected_gate_behavior: [phase.execution must not run in review_only]
@@ -171,7 +158,6 @@ cases:
     expected_experts: [embedded-system-expert]
     expected_capabilities: []
     required_assurance: [verification, review]
-    legacy_execution_mode: release_chain
     release_action_requires_human_approval: true
     required_evidence: [source commit, artifact hash, upgrade test, rollback test, approvals]
     expected_gate_behavior: [release action requires human approval, missing rollback evidence blocks READY]

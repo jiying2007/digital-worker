@@ -4,32 +4,15 @@ name: Linux BSP 能力域
 name_en: Linux BSP Capability
 kind: capability
 owner_expert: embedded-system-expert
-status: phase4-prep-target
+status: canonical-v1
 ownership_authority: canonical
-execution_surface: legacy-compatible
-legacy_execution_adapter: ../../../../../expert-groups/embedded-system/contracts/experts/linux-bsp.io.yaml
+execution_surface: canonical
 
-consumes:
-  - task-charter
-  - material-manifest
-  - evidence-ref
-  - architecture-analysis
-produces:
-  - linux-bsp-analysis
-  - platform-risk
-  - implementation-guidance
-  - verification-requirements
-hands_off_to:
-  - edge-coordination
-  - embedded.driver-component
-  - embedded.debug-reliability
-  - assurance.verification
-constraints:
-  - exact-platform-version-required-for-high-confidence
-  - cross-build-does-not-imply-device-pass
-
+consumes: [task-charter, material-manifest, evidence-ref, architecture-analysis]
+produces: [linux-bsp-analysis, platform-risk, implementation-guidance, verification-requirements]
+hands_off_to: [edge-coordination, embedded.driver-component, embedded.debug-reliability, assurance.verification]
+constraints: [exact-platform-version-required-for-high-confidence, cross-build-does-not-imply-device-pass]
 rules:
   capability_is_not_agent: true
   capability_is_not_domain_expert: true
   legacy_expert_identity_forbidden: true
-  execution_adapter_does_not_define_responsibility: true

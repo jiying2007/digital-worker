@@ -4,27 +4,27 @@ on:
   pull_request:
     paths:
       - 'domains/edge-foundation/pilot/evidence/FEATURE-PCR02-OTA-001/**'
-      - 'domains/edge-foundation/pilot/artifact-requirements.yaml'
-      - 'domains/edge-foundation/pilot/pilot-plan.yaml'
+      - 'domains/edge-foundation/pilot/**'
       - 'domains/edge-foundation/runtime/**'
       - 'domains/edge-foundation/schemas/**'
+      - 'domains/edge-foundation/routing.yaml'
+      - 'scripts/embedded_pilot.py'
       - 'scripts/edge_pilot.py'
-      - 'scripts/validate_edge_material_manifest.py'
-      - 'scripts/evaluate_edge_foundation_pilot_shadow.py'
-      - 'scripts/evaluate_edge_foundation_phase3_readiness.py'
+      - 'scripts/evaluate_edge_foundation_pilot.py'
+      - 'scripts/evaluate_edge_foundation_product_readiness.py'
       - '.github/workflows/real-feature-pilot-evidence.yml'
   push:
     branches: [main]
     paths:
       - 'domains/edge-foundation/pilot/evidence/FEATURE-PCR02-OTA-001/**'
-      - 'domains/edge-foundation/pilot/artifact-requirements.yaml'
-      - 'domains/edge-foundation/pilot/pilot-plan.yaml'
+      - 'domains/edge-foundation/pilot/**'
       - 'domains/edge-foundation/runtime/**'
       - 'domains/edge-foundation/schemas/**'
+      - 'domains/edge-foundation/routing.yaml'
+      - 'scripts/embedded_pilot.py'
       - 'scripts/edge_pilot.py'
-      - 'scripts/validate_edge_material_manifest.py'
-      - 'scripts/evaluate_edge_foundation_pilot_shadow.py'
-      - 'scripts/evaluate_edge_foundation_phase3_readiness.py'
+      - 'scripts/evaluate_edge_foundation_pilot.py'
+      - 'scripts/evaluate_edge_foundation_product_readiness.py'
       - '.github/workflows/real-feature-pilot-evidence.yml'
 
 permissions:
@@ -41,7 +41,7 @@ jobs:
           python-version: '3.11'
       - name: Install exact validator dependencies
         run: python -m pip install --disable-pip-version-check 'PyYAML==6.0.3' 'jsonschema==4.26.0'
-      - name: Materialize and freeze real Feature Pilot on target runtime
+      - name: Materialize and freeze real Feature Pilot on canonical target runtime
         shell: bash
         run: |
           set -euo pipefail
@@ -51,10 +51,8 @@ jobs:
 
           python scripts/edge_pilot.py init \
             --run-id FEATURE-PCR02-OTA-001 \
-            --track feature \
-            --source-type real \
-            --task-type component_development \
-            --workflow-mode short_chain \
+            --track feature --source-type real \
+            --task-type component_development --workflow-mode short_chain \
             --human-owner embedded-system \
             --task-brief "$source_dir/task-brief.json" \
             --repo-root jiying2007/ota_download_test \
@@ -71,34 +69,38 @@ jobs:
             --extra knowledge_harvest="$source_dir/extras/knowledge_harvest.md"
 
           python scripts/edge_pilot.py validate "$run_dir"
-          python scripts/edge_pilot.py edge-shadow "$run_dir"
+          python scripts/edge_pilot.py pilot-receipt "$run_dir"
 
           python - "$run_dir" <<'PY'
           import json, pathlib, sys
           root = pathlib.Path(sys.argv[1])
           run = json.loads((root / 'pilot-run.json').read_text(encoding='utf-8'))
-          receipt = json.loads((root / 'edge-foundation-shadow-receipt.json').read_text(encoding='utf-8'))
+          receipt = json.loads((root / 'edge-foundation-pilot-receipt.json').read_text(encoding='utf-8'))
           assert run['status'] == 'completed', run
           assert run['source_type'] == 'real', run
           assert run['review_report_ref'] is None, run
           assert run['verification_report_ref'], run
           assert run['evidence_bundle_ref'], run
-          assert receipt['phase3_evidence_eligible'] is True, receipt
+          assert receipt['routing_authority'] == 'edge-foundation', receipt
+          assert receipt['canonical_routing'] is True, receipt
+          assert receipt['product_readiness_eligible'] is True, receipt
           assert receipt['pilot_track'] == 'feature', receipt
           assert receipt['pilot_outcome'] == 'PASS', receipt
           PY
 
           set +e
-          python scripts/edge_pilot.py phase3-readiness "$runs_root" \
-            --output "$RUNNER_TEMP/phase3-readiness.json" \
+          python scripts/edge_pilot.py product-readiness "$runs_root" \
+            --output "$RUNNER_TEMP/product-readiness.json" \
             --require-ready
           status=$?
           set -e
           test "$status" -eq 2
-          python - "$RUNNER_TEMP/phase3-readiness.json" <<'PY'
+          python - "$RUNNER_TEMP/product-readiness.json" <<'PY'
           import json, sys
           result = json.load(open(sys.argv[1], encoding='utf-8'))
           assert result['status'] == 'BLOCKED', result
+          assert result['routing_authority'] == 'edge-foundation', result
+          assert result['canonical_routing'] is True, result
           assert result['eligible_real_receipts'] == 1, result
           assert result['track_coverage']['feature']['eligible_count'] == 1, result
           assert result['track_coverage']['feature']['run_ids'] == ['FEATURE-PCR02-OTA-001'], result
@@ -109,6 +111,6 @@ jobs:
           name: real-feature-pilot-feature-pcr02-ota-001
           path: |
             ${{ runner.temp }}/real-pilot-runs/FEATURE-PCR02-OTA-001
-            ${{ runner.temp }}/phase3-readiness.json
+            ${{ runner.temp }}/product-readiness.json
           if-no-files-found: error
           retention-days: 90

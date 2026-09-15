@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://digital-worker.local/schemas/edge-foundation-pilot-receipt.v1.schema.json",
+  "title": "Edge Foundation Pilot Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "run_id", "source_type", "pilot_track", "task_type", "workflow_mode",
+    "routing_authority", "canonical_routing", "target_mode", "target_experts",
+    "target_capabilities", "assurance", "cross_domain", "pilot_result_evaluated",
+    "eligibility_checks", "product_readiness_eligible", "eligibility_reasons"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "source_type": {"enum": ["real", "synthetic"]},
+    "pilot_track": {"enum": ["debug", "feature", "review_release"]},
+    "task_type": {"type": "string", "minLength": 1},
+    "workflow_mode": {"type": "string", "minLength": 1},
+    "routing_authority": {"const": "edge-foundation"},
+    "canonical_routing": {"const": true},
+    "target_mode": {"enum": ["single_domain", "multi_domain", "diagnostic", "review"]},
+    "target_experts": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "target_capabilities": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "assurance": {"type": "array", "uniqueItems": true, "items": {"enum": ["verification", "review"]}},
+    "cross_domain": {
+      "type": "object", "additionalProperties": false,
+      "required": ["candidate", "activated", "trigger"],
+      "properties": {
+        "candidate": {"type": "boolean"},
+        "activated": {"type": "boolean"},
+        "trigger": {"type": ["string", "null"]}
+      }
+    },
+    "pilot_result_evaluated": {"type": "boolean"},
+    "pilot_outcome": {"type": ["string", "null"], "enum": ["PASS", "BLOCKED", "REWORK", "INSUFFICIENT_EVIDENCE", null]},
+    "eligibility_checks": {
+      "type": "object", "additionalProperties": false,
+      "required": ["source_real", "run_completed", "result_provided", "outcome_pass", "no_unauthorized_actions", "audit_trace_complete"],
+      "properties": {
+        "source_real": {"type": "boolean"},
+        "run_completed": {"type": "boolean"},
+        "result_provided": {"type": "boolean"},
+        "outcome_pass": {"type": "boolean"},
+        "no_unauthorized_actions": {"type": "boolean"},
+        "audit_trace_complete": {"type": "boolean"}
+      }
+    },
+    "product_readiness_eligible": {"type": "boolean"},
+    "eligibility_reasons": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+  }
+}

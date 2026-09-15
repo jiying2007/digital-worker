@@ -4,32 +4,15 @@ name: 嵌入式架构能力域
 name_en: Embedded Architecture Capability
 kind: capability
 owner_expert: embedded-system-expert
-status: phase4-prep-target
+status: canonical-v1
 ownership_authority: canonical
-execution_surface: legacy-compatible
-legacy_execution_adapter: ../../../../../expert-groups/embedded-system/contracts/experts/architecture.io.yaml
+execution_surface: canonical
 
-consumes:
-  - task-charter
-  - material-manifest
-  - evidence-ref
-  - product-technical-review-request
-produces:
-  - architecture-analysis
-  - feasibility-assessment
-  - architecture-impact
-  - verification-requirements
-hands_off_to:
-  - edge-coordination
-  - embedded.linux-bsp
-  - embedded.mcu-rtos
-  - embedded.driver-component
-constraints:
-  - evidence-before-platform-fact
-  - inference-is-not-confirmation
-
+consumes: [task-charter, material-manifest, evidence-ref, product-technical-review-request]
+produces: [architecture-analysis, feasibility-assessment, architecture-impact, verification-requirements]
+hands_off_to: [edge-coordination, embedded.linux-bsp, embedded.mcu-rtos, embedded.driver-component]
+constraints: [evidence-before-platform-fact, inference-is-not-confirmation]
 rules:
   capability_is_not_agent: true
   capability_is_not_domain_expert: true
   legacy_expert_identity_forbidden: true
-  execution_adapter_does_not_define_responsibility: true

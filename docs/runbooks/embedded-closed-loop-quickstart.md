@@ -1,20 +1,20 @@
-# Embedded Domain Closed Loop V1 — Real Pilot Quickstart
+# Embedded Domain Closed Loop — Real Pilot Quickstart
 
 - Status: active runbook
-- Stage baseline: `docs/strategy/embedded-domain-closed-loop-v1.md`
-- Target operating model: `docs/strategy/ai-rd-target-operating-model.md`
-- Trust baseline: `docs/strategy/r0-trust-closure.md`
 - Repository stage: `iterative-development`
+- Canonical domain: `domains/edge-foundation/domain.yaml`
+- Canonical routing: `domains/edge-foundation/routing.yaml`
 - Scope: real Debug / Feature / Review-Release runs
+- Product readiness: independent from routing authority
 
 ## 1. Register the real task
 
-Use the `Embedded Expert Pilot` issue template. A real task must have a stable `work_item_id`, human owner, repo root and a **full 40-hex immutable base commit SHA**. Branch names, tags and short SHAs are not accepted as real-run source identity.
+Use the Embedded Expert Pilot issue template. A real task must have stable `work_item_id`, human owner, repo root and a **full 40-hex immutable base commit SHA**. Branch names, tags and short SHAs are not accepted as real-run source identity.
 
 ## 2. Initialize and scaffold
 
 ```bash
-python scripts/embedded_pilot.py init \
+python scripts/edge_pilot.py init \
   --run-id <RUN_ID> \
   --track <debug|feature|review_release> \
   --source-type real \
@@ -25,205 +25,144 @@ python scripts/embedded_pilot.py init \
   --repo-root <REPO_ROOT> \
   --base-commit <FULL_40_HEX_SHA>
 
-python scripts/embedded_pilot_scaffold.py \
-  expert-groups/embedded-system/pilot/runs/<RUN_ID>
+python scripts/edge_pilot_scaffold.py \
+  domains/edge-foundation/pilot/runs/<RUN_ID>
 ```
 
-The scaffold creates `material-manifest.json`, `acceptance-evidence-matrix.md`, `knowledge-harvest.md`, and for Debug one shared `hypothesis-registry.json`. Unknown device/test/reproduction/context identity stays `missing/BLOCKED`; never turn missing context into READY by assumption.
+Scaffold creates Material Manifest, Acceptance→Evidence Matrix, Knowledge Harvest, and for Debug one shared Hypothesis Registry. Unknown context stays `missing/BLOCKED`.
 
-## 3. Resolve the L2 Formal session before Runtime execution
+## 3. Resolve Formal Runtime identity
 
-The Codex Runtime Binding implements the frozen thin Session Bootstrap. L2 must use the exact identities locked by digital-worker; it is not a second workflow engine and cannot produce Domain Verification PASS.
+Before Engineering execution, bind exact source, Engineering Task Package, provider locks, ADK immutable release/source-set, Runtime distribution/profile/host, Session Bootstrap, sandbox/approval and Execution Receipt. A Runtime-local PASS never means Verification PASS or Release Ready.
+
+Formal evidence work uses **L2 / formal-evidence** semantics. The cross-repo lock must report the selected Runtime Binding as `SOURCE_SET_BOUND`; ADK delivery remains `exact-source-set-reference`. Asset Profile and Runtime Profile are separate identities: current ADK Asset Profile is `embedded-fullstack`, while Codex Runtime Profile remains **default (runtime-owned)** unless the Runtime itself selects another profile.
+
+The frozen identity spine is described by `contracts/cross-repo/identity-envelope.yaml`. At minimum retain:
+
+```text
+source repo + exact commit
+ADK release / tree / manifest blob / exact source-set reference
+Runtime Binding repository + exact commit
+runtime target / Runtime Profile / runtime host
+runtime distribution identity
+Session Bootstrap reference
+Execution Receipt reference
+```
+
+For Codex formal sessions, the Runtime Binding owns the thin bootstrap surface such as `session-bootstrap.sh`; digital-worker does not duplicate Runtime-private home/config. The Session Bootstrap is not a fifth control plane and must not contain a domain Verification PASS.
+
+## 4. Resolve Knowledge context
 
 ```bash
-rtk bash ~/codex/scripts/session-bootstrap.sh \
-  --cwd <REPO_ROOT> \
-  --task "<formal task>" \
-  --formal \
-  --base-commit <FULL_40_HEX_SHA> \
-  --engineering-task-package <ENGINEERING_TASK_PACKAGE_JSON> \
-  --digital-worker-root <DIGITAL_WORKER_ROOT> \
-  --knowledge-root <EXACT_PINNED_KNOWLEDGE_HUB_ROOT> \
-  --summary-json
+python scripts/edge_knowledge.py verify
+python scripts/edge_knowledge.py query --text "<task terms>" --limit 10
 ```
 
-The bootstrap must resolve `L2 / formal-evidence`, validate the Codex Runtime Binding as `SOURCE_SET_BOUND`, retain the ADK immutable release/source-set identity, and verify the Knowledge checkout identity described below. The current Codex distribution uses its neutral default runtime profile; Runtime-profile selection remains owned by the Runtime Binding and must not be hard-coded by digital-worker. A blocked bootstrap is a formal blocker, never a PASS.
-
-## 4. Assemble Knowledge context from the exact locked provider
-
-The local registry is bootstrap-only. Long-term context/evidence/lifecycle belongs to Knowledge Hub.
-
-`KNOWLEDGE_HUB_ROOT` must point to the **exact commit pinned in** `config/integrations/cross-repo-lock.json`, not simply the latest local Knowledge Hub checkout. The adapter and L2 Session Bootstrap check both Git HEAD and the canonical digest of `registry/integrations/digital-worker.json` and fail closed on drift.
+For Knowledge Hub:
 
 ```bash
 export KNOWLEDGE_HUB_ROOT=/path/to/exact-pinned/knowledge-hub
-python scripts/embedded_knowledge.py adapter-status
-
-python scripts/embedded_knowledge.py context \
-  --cwd "$PWD" \
-  --query "<platform symptom subsystem>" \
+python scripts/edge_knowledge.py adapter-status
+python scripts/edge_knowledge.py context \
+  --cwd "$PWD" --query "<platform symptom subsystem>" \
   --task-type general --context-budget small --limit 3
 
-python scripts/embedded_knowledge.py evidence-pack \
+python scripts/edge_knowledge.py evidence-pack \
   --query "<platform symptom subsystem>" \
   --scope-ref repository:<repo-id>
 ```
 
-If the route, ACL/authority, provider identity or public surface is unresolved, Gate K remains `BLOCKED/NEEDS_REVIEW`.
+Provider HEAD/contract digest drift must fail closed. Knowledge hit is a candidate, not automatic authority. The local Registry only indexes target contracts and human entrypoints; authoritative external content remains in Knowledge Hub or the original Source of Truth.
 
-Bootstrap fallback remains explicit:
+## 5. Execute against canonical responsibility
+
+```text
+Task Brief
+→ Material/System Context
+→ Edge Coordination
+→ canonical routing
+→ Embedded System Expert / required Capability(s)
+→ Technical Decision
+→ Engineering Package(s)
+→ Engineer + Runtime
+→ Delivery Receipt
+→ Verification
+→ Review according to current-stage policy
+→ Closure / Knowledge Harvest
+```
+
+Debug uses one shared Hypothesis Registry. Multi-repo Feature uses one Run with multiple exact Engineering Packages where appropriate.
+
+## 6. Complete once
 
 ```bash
-python scripts/embedded_knowledge.py verify
-python scripts/embedded_knowledge.py query --text "spi timeout debug evidence" --limit 10
-```
-
-A bootstrap hit is only a candidate; authority/version/ACL/provenance still require verification.
-
-## 5. Pin the cross-plane identity spine
-
-Use `contracts/cross-repo/identity-envelope.yaml`. At minimum bind:
-
-```text
-work_item_id / run_id
-Knowledge Hub exact commit + contract digest + source fingerprint / evidence pack ref
-ADK provider contract commit + immutable v5.1.0 release identity + Asset Profile
-Runtime exact source-set identity ref + runtime distribution identity ref
-Runtime Binding repository + exact commit + target + Runtime Profile + host
-Session Bootstrap ref + runtime/model/MCP/sandbox/approval identity + Execution Receipt ref
-repo exact base/result SHA + build/artifact/device identities
-verification run + review refs
-```
-
-`Asset Profile` and `Runtime Profile` remain distinct identities:
-
-```text
-ADK Asset Profile     = embedded-fullstack
-Codex Runtime Profile = default (runtime-owned)
-Runtime Target        = codex-cli
-```
-
-A monolithic Runtime bundle digest is **not** a required identity. ADK owns the immutable release and source-set handoff contract; the Runtime Binding owns exact source selection, Runtime-profile semantics and Runtime distribution assembly.
-
-The lock intentionally may lag provider main. Freshness is not compatibility. Pin promotion requires a real checkout at the exact SHA plus contract version/digest verification by `scripts/verify_cross_repo_checkouts.py`.
-
-## 6. ADK and Runtime Binding
-
-`digital-worker` owns Expert identity, Domain Gate, Verification and Review. Reusable Agent/Skill assets belong to `agent-dev-kit`; runtime distribution/host integration belongs to a replaceable Runtime Binding.
-
-For Codex, the locked target state is:
-
-```text
-ADK release baseline  = v5.1.0 @ 59cbd5cb40ca7077ee5407636bfc617e295ec7e5
-ADK Asset Profile     = embedded-fullstack
-ADK handoff           = exact-source-set-reference
-Codex source identity = exact-release-source-blobs
-Codex readiness       = SOURCE_SET_BOUND
-Session Bootstrap     = active L0/L1/L2 thin bootstrap
-Runtime profile       = neutral default, owned by Codex Runtime Binding
-```
-
-`SOURCE_SET_BOUND` means the Runtime source/distribution binding is identity-ready. It does **not** mean the engineering task passed Verification or the product is Release Ready.
-
-A Runtime Execution Receipt records execution facts only and must never contain or imply:
-
-```text
-verification_pass
-release_ready
-domain_gate_pass
-```
-
-Runtime-local success is not digital-worker Verification PASS.
-
-## 7. Execute the task
-
-Maintain one V1 spine:
-
-```text
-work_item_id / run_id
-  -> shared Material/System Context
-  -> Knowledge context/evidence refs
-  -> Expert analysis / decision
-  -> ADK immutable release / Asset Profile
-  -> Runtime exact source-set / distribution identity
-  -> Session Bootstrap / Runtime Binding exact identity
-  -> Runtime Execution Receipt
-  -> exact source/build/artifact/device/test identity
-  -> Acceptance -> Evidence
-  -> independent Verification / Review
-  -> Knowledge Harvest
-```
-
-Debug uses one shared Hypothesis Registry. Feature work records Integration Reconciliation where multiple domains/interfaces are involved. Device write/OTA/release remains behind the existing A0-A7 human gates.
-
-## 8. Complete exactly once
-
-Copy reviewed working artifacts into the run with `complete`:
-
-```bash
-python scripts/embedded_pilot.py complete <RUN_DIR> \
+python scripts/edge_pilot.py complete <RUN_DIR> \
   ...track-specific structured artifacts... \
+  --verification-report <VERIFICATION_JSON> \
+  --pilot-result <PILOT_RESULT_JSON> \
   --extra material_manifest=<RUN_DIR>/working/material-manifest.json \
   --extra acceptance_evidence_matrix=<RUN_DIR>/working/acceptance-evidence-matrix.md \
   --extra knowledge_harvest=<RUN_DIR>/working/knowledge-harvest.md
 ```
 
-Debug additionally supplies:
+Debug adds `hypothesis_registry`. Feature adds Engineering Task Package and Delivery Receipt. When Independent Review is available, attach `--review-report`; when unavailable in the current iterative Pilot stage, the explicit substitute remains Verification + static checks + Hosted CI and must not be labeled Review PASS.
+
+`complete` freezes `evidence-bundle.json`; completed/cancelled Run cannot be reopened or rebundled. Corrections require a superseding Run.
 
 ```bash
---extra hypothesis_registry=<RUN_DIR>/working/hypothesis-registry.json
+python scripts/edge_pilot.py validate <RUN_DIR>
 ```
 
-`complete` creates the final `evidence-bundle.json` and then makes the run terminal. **Do not run `bundle` after completion.** A completed/cancelled run cannot be reopened or rebundled through the CLI; corrections require a superseding run so history remains auditable.
-
-Validate the terminal evidence:
+## 7. Generate canonical receipt
 
 ```bash
-python scripts/embedded_pilot.py validate <RUN_DIR>
+python scripts/edge_pilot.py receipt <RUN_DIR>
 ```
 
-Validation recomputes every referenced artifact SHA-256 and requires the live artifact set to match the frozen evidence bundle. Any post-completion artifact modification therefore invalidates the run until a new superseding run is created.
+Receipt must state `routing_authority=edge-foundation` and `canonical_routing=true`. A real completed PASS with zero unauthorized action and complete audit trace may set `product_readiness_eligible=true`.
 
-## 9. Runtime comparison
-
-For runtime comparison, freeze Work Item, exact base, Material/System Context, Knowledge fingerprint, Engineering Task Package, Acceptance, ADK immutable release/Asset Profile/source-set standard and Verification standard. Each candidate gets an independent Runtime Binding/Profile/source-set/distribution identity/Execution Receipt. The next Runtime must not receive the previous Runtime's final answer or patch.
-
-`llm_agent` owns runtime health/comparison/Loop Readiness evidence; digital-worker retains the final engineering Verification/Review judgment.
-
-## 10. Knowledge Harvest
-
-`NO_KNOWLEDGE_DELTA` is valid. For evidence-backed `KNOWLEDGE_CANDIDATE`, use `contracts/cross-repo/knowledge-harvest-handoff.yaml`; digital-worker does not fork the Knowledge Hub proposal schema.
+## 8. Aggregate Product readiness
 
 ```bash
-python scripts/embedded_knowledge.py proposal-route --proposal <PROPOSAL_JSON>
+python scripts/edge_pilot.py product-readiness \
+  domains/edge-foundation/pilot/runs \
+  --output edge-foundation-product-readiness.json \
+  --require-ready
 ```
 
-This only routes a candidate for Hub lifecycle/owner review; it never directly creates active knowledge.
+Current state remains Feature=1, Debug=0, Review/Release=0 → **BLOCKED**. Product readiness does not control or revert canonical routing. 3/3 only permits Productionization Review; it does not auto-release or auto-promote.
 
-## 11. Current-stage closure gate
+## 9. Knowledge Harvest
 
-Before accepting a real completed run in the current `iterative-development` stage:
+`NO_KNOWLEDGE_DELTA` is valid. Evidence-backed candidates route to Knowledge Hub lifecycle:
 
-- `scripts/verify_cross_repo_checkouts.py` must verify every materially used locked provider/binding plus the Codex Session Bootstrap contract;
-- all Acceptance Criteria map to concrete Evidence;
-- source/artifact/device/test identity is exact or explicitly unresolved;
-- immutable ADK release, Runtime source-set and Runtime distribution identity are retained when a binding executed work;
-- Runtime Execution Receipt is retained when a binding executed work;
-- Verification and Review independence is preserved;
-- `incorrect_pass=0` and no unauthorized action；
-- Knowledge Harvest is finalized；
-- repeated observations must exist before new Schema/Agent/Platform is proposed。
+```bash
+python scripts/edge_knowledge.py proposal-route --proposal <PROPOSAL_JSON>
+```
 
-**Main branch protection is intentionally not a current-stage acceptance gate.** `python scripts/verify_repository_governance.py` remains advisory and may report `DEFERRED_CURRENT_STAGE` while main is unprotected.
+Do not copy authoritative source content into digital-worker just to satisfy the process.
 
-Before Productionization / protected multi-contributor operation, run:
+## 10. Safety invariants
+
+Always preserve:
+
+- full source/artifact/device/test identity;
+- Acceptance → Evidence mapping;
+- Engineering ≠ Verification ≠ Review;
+- no cross-layer PASS inference;
+- no unauthorized A5/A6/A7 action;
+- Source of Truth stays at source;
+- Asset Profile ≠ Runtime Profile;
+- Runtime execution receipt ≠ domain Verification PASS;
+- product maturity and routing authority are separate concerns;
+- repeated real evidence is required before adding new Schema/Skill/Capability/Expert/platform layer.
+
+## 11. Repository governance boundary
+
+Current `iterative-development` stage still requires repository-local CI, but server-side main protection is intentionally not a real-Pilot completion gate. Before Productionization or protected multi-contributor operation, strict governance must pass:
 
 ```bash
 python scripts/verify_repository_governance.py --strict
 ```
 
-Strict mode must PASS before the repository is treated as production-governed.
-
-## 12. Current implementation boundary
-
-Do not add a unified Knowledge Platform, Vector DB, Context Broker, Knowledge Graph, Integration Expert, central Runtime Gateway or Runtime-specific exporter to digital-worker without repeated real evidence. The stable model remains **4 control planes + N replaceable Runtime Bindings + thin Session Bootstrap inside each Runtime Binding**.
+A deferred server-side governance state must never be misreported as strict production governance PASS.

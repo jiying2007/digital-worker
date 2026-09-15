@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Operational CLI for fail-closed embedded expert-team pilot runs."""
+"""Canonical Edge Foundation Pilot lifecycle and CLI."""
 from __future__ import annotations
 
 import argparse
@@ -17,25 +17,25 @@ import yaml
 from jsonschema import Draft202012Validator
 
 ROOT = Path(__file__).resolve().parents[1]
-EMB = ROOT / "expert-groups" / "embedded-system"
-PILOT_DIR = EMB / "pilot"
+EDGE = ROOT / "domains" / "edge-foundation"
+PILOT_DIR = EDGE / "pilot"
 PLAN = PILOT_DIR / "pilot-plan.yaml"
 REQUIREMENTS = PILOT_DIR / "artifact-requirements.yaml"
-TASK_MODES = EMB / "config" / "task-modes.yaml"
+TASK_MODES = EDGE / "runtime" / "task-modes.yaml"
 RUN_SCHEMA = ROOT / "schemas" / "pilot-run.v1.schema.json"
 TASK_SCHEMA = ROOT / "schemas" / "task-brief.v1.schema.json"
 BUNDLE_SCHEMA = ROOT / "schemas" / "pilot-evidence-bundle.v1.schema.json"
 STATUS_SCHEMA = ROOT / "schemas" / "pilot-status.v1.schema.json"
-EDGE_SHADOW_EVALUATOR = ROOT / "scripts" / "evaluate_edge_foundation_pilot_shadow.py"
-EDGE_READINESS_EVALUATOR = ROOT / "scripts" / "evaluate_edge_foundation_phase3_readiness.py"
+PILOT_RECEIPT_EVALUATOR = ROOT / "scripts" / "evaluate_edge_foundation_pilot.py"
+PRODUCT_READINESS_EVALUATOR = ROOT / "scripts" / "evaluate_edge_foundation_product_readiness.py"
 MATERIAL_VALIDATOR = ROOT / "scripts" / "validate_material_manifest.py"
 TERMINAL_STATUSES = {"completed", "cancelled"}
 
 REF_SCHEMAS = {
-    "engineering_task_package_ref": EMB / "schemas" / "engineering-task-package.schema.json",
+    "engineering_task_package_ref": EDGE / "schemas" / "engineering-task-package.schema.json",
     "delivery_receipt_ref": ROOT / "schemas" / "delivery-receipt.v1.schema.json",
-    "verification_report_ref": EMB / "schemas" / "verification-report.schema.json",
-    "review_report_ref": EMB / "schemas" / "review-report.schema.json",
+    "verification_report_ref": EDGE / "schemas" / "verification-report.schema.json",
+    "review_report_ref": EDGE / "schemas" / "review-report.schema.json",
     "pilot_result_ref": ROOT / "schemas" / "pilot-result.v1.schema.json",
 }
 
@@ -68,7 +68,6 @@ def assert_true(condition: bool, message: str):
 
 
 def exact_git_sha(value: str | None) -> bool:
-    """Return true only for a canonical full 40-hex Git object id."""
     return re.fullmatch(r"[0-9a-fA-F]{40}", value or "") is not None
 
 
@@ -133,13 +132,7 @@ def validate_material_manifest_ref(run_dir: Path, run: dict, require_terminal_re
     path = safe_ref(run_dir, ref)
     manifest = load_json(path)
     assert_true(manifest.get("run_id") == run["run_id"], "material manifest run_id mismatch")
-    command = [
-        sys.executable,
-        str(MATERIAL_VALIDATOR),
-        str(path),
-        "--track",
-        run["pilot_track"],
-    ]
+    command = [sys.executable, str(MATERIAL_VALIDATOR), str(path), "--track", run["pilot_track"]]
     if require_terminal_ready:
         command.append("--require-terminal-ready")
     completed = subprocess.run(command, check=False, capture_output=True, text=True)
@@ -185,12 +178,8 @@ def current_artifacts(run_dir: Path, run: dict) -> tuple[list[dict], list[str]]:
     artifacts: list[dict] = []
     missing: list[str] = []
     fields = [
-        "task_brief_ref",
-        "engineering_task_package_ref",
-        "delivery_receipt_ref",
-        "verification_report_ref",
-        "review_report_ref",
-        "pilot_result_ref",
+        "task_brief_ref", "engineering_task_package_ref", "delivery_receipt_ref",
+        "verification_report_ref", "review_report_ref", "pilot_result_ref",
     ]
     for field in fields:
         ref = run.get(field)
@@ -228,7 +217,6 @@ def collect_bundle(run_dir: Path, run: dict) -> dict:
 
 
 def validate_bundle_integrity(run_dir: Path, run: dict, bundle: dict) -> None:
-    """Recompute every artifact digest; a completed run must match its frozen bundle exactly."""
     expected, missing = current_artifacts(run_dir, run)
     assert_true(not missing, f"completed run now misses required artifacts: {missing}")
     actual_by_path = {item["path"]: item for item in bundle.get("artifacts", [])}
@@ -246,7 +234,6 @@ def validate_run_dir(run_dir: Path) -> dict:
     run_dir = run_dir.resolve()
     run = load_run(run_dir)
     check_route(run)
-
     task = load_json(safe_ref(run_dir, run["task_brief_ref"]))
     validate_json(task, TASK_SCHEMA)
     assert_true(task["work_item_id"] == run["work_item_id"], "task brief work_item_id mismatch")
@@ -255,14 +242,12 @@ def validate_run_dir(run_dir: Path) -> dict:
     if run["source_type"] == "real":
         assert_true(bool(run.get("repo_root")), "real pilot requires repo_root")
         assert_true(exact_git_sha(run.get("base_commit")), "real pilot base_commit must be a full 40-hex Git SHA")
-
     for field, schema_path in REF_SCHEMAS.items():
         validate_linked_document(run_dir, run, field, schema_path)
     for kind, ref in run.get("extra_artifact_refs", {}).items():
         assert_true(re.fullmatch(r"[A-Za-z0-9_.-]+", kind) is not None, f"invalid extra artifact kind: {kind}")
         safe_ref(run_dir, ref)
     validate_material_manifest_ref(run_dir, run, require_terminal_ready=run["status"] == "completed")
-
     if run["status"] == "completed":
         required_refs, required_extra = required_artifacts(run)
         for field in required_refs:
@@ -302,34 +287,19 @@ def cmd_init(args):
         assert_true(exact_git_sha(args.base_commit), "real pilot --base-commit must be a full 40-hex Git SHA")
     if args.repo_root:
         assert_true(args.repo_root in task["repo_roots"], "--repo-root is not authorized by task brief")
-
     run_dir = args.output_root / args.run_id
     assert_true(not run_dir.exists(), f"pilot run already exists: {run_dir}")
     run_dir.mkdir(parents=True)
     shutil.copy2(args.task_brief, run_dir / "task-brief.json")
     run = {
-        "schema_version": 1,
-        "run_id": args.run_id,
-        "pilot_track": args.track,
-        "source_type": args.source_type,
-        "work_item_id": task["work_item_id"],
-        "task_type": args.task_type,
-        "workflow_mode": args.workflow_mode,
-        "human_owner": args.human_owner,
-        "repo_root": args.repo_root,
-        "base_commit": args.base_commit,
-        "task_brief_ref": "task-brief.json",
-        "engineering_task_package_ref": None,
-        "delivery_receipt_ref": None,
-        "verification_report_ref": None,
-        "review_report_ref": None,
-        "pilot_result_ref": None,
-        "evidence_bundle_ref": None,
-        "extra_artifact_refs": {},
-        "status": "planned",
-        "started_at": None,
-        "finished_at": None,
-        "notes": [],
+        "schema_version": 1, "run_id": args.run_id, "pilot_track": args.track,
+        "source_type": args.source_type, "work_item_id": task["work_item_id"],
+        "task_type": args.task_type, "workflow_mode": args.workflow_mode,
+        "human_owner": args.human_owner, "repo_root": args.repo_root, "base_commit": args.base_commit,
+        "task_brief_ref": "task-brief.json", "engineering_task_package_ref": None,
+        "delivery_receipt_ref": None, "verification_report_ref": None, "review_report_ref": None,
+        "pilot_result_ref": None, "evidence_bundle_ref": None, "extra_artifact_refs": {},
+        "status": "planned", "started_at": None, "finished_at": None, "notes": [],
     }
     write_json(run_path(run_dir), run)
     validate_run_dir(run_dir)
@@ -387,7 +357,6 @@ def cmd_complete(args):
     write_json(run_path(run_dir), run)
     validate_run_dir(run_dir)
     validate_material_manifest_ref(run_dir, run, require_terminal_ready=True)
-
     bundle = collect_bundle(run_dir, run)
     assert_true(bundle["complete"], f"cannot complete pilot run; missing required artifacts: {bundle['missing_required']}")
     write_json(run_dir / "evidence-bundle.json", bundle)
@@ -416,8 +385,7 @@ def cmd_validate(args):
 
 
 def cmd_summary(args):
-    statuses = Counter()
-    tracks = Counter()
+    statuses, tracks = Counter(), Counter()
     real = synthetic = 0
     invalid = []
     run_files = sorted(args.runs_root.rglob("pilot-run.json")) if args.runs_root.exists() else []
@@ -429,125 +397,59 @@ def cmd_summary(args):
             continue
         statuses[run["status"]] += 1
         tracks[run["pilot_track"]] += 1
-        if run["source_type"] == "real":
-            real += 1
-        else:
-            synthetic += 1
+        if run["source_type"] == "real": real += 1
+        else: synthetic += 1
     summary = {
-        "schema_version": 1,
-        "total_runs": len(run_files),
-        "real_runs": real,
-        "synthetic_runs": synthetic,
-        "by_status": dict(sorted(statuses.items())),
-        "by_track": dict(sorted(tracks.items())),
-        "invalid_runs": invalid,
+        "schema_version": 1, "total_runs": len(run_files), "real_runs": real,
+        "synthetic_runs": synthetic, "by_status": dict(sorted(statuses.items())),
+        "by_track": dict(sorted(tracks.items())), "invalid_runs": invalid,
     }
     validate_json(summary, STATUS_SCHEMA)
     text = json.dumps(summary, ensure_ascii=False, indent=2) + "\n"
-    if args.output:
-        args.output.write_text(text, encoding="utf-8")
-    else:
-        print(text, end="")
-    if invalid:
-        raise SystemExit(2)
+    if args.output: args.output.write_text(text, encoding="utf-8")
+    else: print(text, end="")
+    if invalid: raise SystemExit(2)
 
 
-def cmd_edge_shadow(args):
+def cmd_pilot_receipt(args):
     run_dir = args.run_dir.resolve()
     run = validate_run_dir(run_dir)
-    output = (args.output or (run_dir / "edge-foundation-shadow-receipt.json")).resolve()
-    command = [
-        sys.executable,
-        str(EDGE_SHADOW_EVALUATOR),
-        str(run_path(run_dir)),
-        "--output",
-        str(output),
-    ]
-    pilot_result_ref = run.get("pilot_result_ref")
-    if pilot_result_ref:
-        command.extend(["--pilot-result", str(safe_ref(run_dir, pilot_result_ref))])
+    output = (args.output or (run_dir / "edge-foundation-pilot-receipt.json")).resolve()
+    command = [sys.executable, str(PILOT_RECEIPT_EVALUATOR), str(run_path(run_dir)), "--output", str(output)]
+    if run.get("pilot_result_ref"):
+        command.extend(["--pilot-result", str(safe_ref(run_dir, run["pilot_result_ref"]))])
     if args.cross_domain_trigger:
         command.extend(["--cross-domain-trigger", args.cross_domain_trigger])
     completed = subprocess.run(command, check=False)
-    if completed.returncode != 0:
-        raise SystemExit(completed.returncode)
+    if completed.returncode != 0: raise SystemExit(completed.returncode)
     print(output)
 
 
-def cmd_phase3_readiness(args):
-    command = [
-        sys.executable,
-        str(EDGE_READINESS_EVALUATOR),
-        "--receipt-dir",
-        str(args.runs_root.resolve()),
-    ]
-    if args.output:
-        command.extend(["--output", str(args.output.resolve())])
-    if args.require_ready:
-        command.append("--require-ready")
+def cmd_product_readiness(args):
+    command = [sys.executable, str(PRODUCT_READINESS_EVALUATOR), "--receipt-dir", str(args.runs_root.resolve())]
+    if args.output: command.extend(["--output", str(args.output.resolve())])
+    if args.require_ready: command.append("--require-ready")
     completed = subprocess.run(command, check=False)
-    if completed.returncode != 0:
-        raise SystemExit(completed.returncode)
+    if completed.returncode != 0: raise SystemExit(completed.returncode)
 
 
 def build_parser():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
-
     init = sub.add_parser("init")
-    init.add_argument("--run-id", required=True)
-    init.add_argument("--track", choices=["debug", "feature", "review_release"], required=True)
-    init.add_argument("--source-type", choices=["real", "synthetic"], required=True)
-    init.add_argument("--task-type", required=True)
-    init.add_argument("--workflow-mode", required=True)
-    init.add_argument("--human-owner", required=True)
-    init.add_argument("--task-brief", type=Path, required=True)
-    init.add_argument("--repo-root")
-    init.add_argument("--base-commit")
-    init.add_argument("--output-root", type=Path, default=PILOT_DIR / "runs")
-    init.set_defaults(func=cmd_init)
-
-    status = sub.add_parser("status")
-    status.add_argument("run_dir", type=Path)
-    status.add_argument("status", choices=["planned", "running", "blocked", "cancelled"])
-    status.add_argument("--note")
-    status.set_defaults(func=cmd_status)
-
-    complete = sub.add_parser("complete")
-    complete.add_argument("run_dir", type=Path)
-    complete.add_argument("--engineering-task-package", type=Path)
-    complete.add_argument("--delivery-receipt", type=Path)
-    complete.add_argument("--verification-report", type=Path)
-    complete.add_argument("--review-report", type=Path)
-    complete.add_argument("--pilot-result", type=Path)
-    complete.add_argument("--extra", action="append", default=[])
-    complete.set_defaults(func=cmd_complete)
-
-    bundle = sub.add_parser("bundle")
-    bundle.add_argument("run_dir", type=Path)
-    bundle.add_argument("--fail-incomplete", action="store_true")
-    bundle.set_defaults(func=cmd_bundle)
-
-    validate = sub.add_parser("validate")
-    validate.add_argument("run_dir", type=Path)
-    validate.set_defaults(func=cmd_validate)
-
-    summary = sub.add_parser("summary")
-    summary.add_argument("runs_root", type=Path)
-    summary.add_argument("--output", type=Path)
-    summary.set_defaults(func=cmd_summary)
-
-    edge_shadow = sub.add_parser("edge-shadow", help="Generate a non-canonical Edge Foundation shadow receipt for one run.")
-    edge_shadow.add_argument("run_dir", type=Path)
-    edge_shadow.add_argument("--cross-domain-trigger")
-    edge_shadow.add_argument("--output", type=Path)
-    edge_shadow.set_defaults(func=cmd_edge_shadow)
-
-    readiness = sub.add_parser("phase3-readiness", help="Aggregate Edge Foundation shadow receipts into phase-3 review readiness.")
-    readiness.add_argument("runs_root", type=Path, nargs="?", default=PILOT_DIR / "runs")
-    readiness.add_argument("--output", type=Path)
-    readiness.add_argument("--require-ready", action="store_true")
-    readiness.set_defaults(func=cmd_phase3_readiness)
+    init.add_argument("--run-id", required=True); init.add_argument("--track", choices=["debug", "feature", "review_release"], required=True)
+    init.add_argument("--source-type", choices=["real", "synthetic"], required=True); init.add_argument("--task-type", required=True)
+    init.add_argument("--workflow-mode", required=True); init.add_argument("--human-owner", required=True); init.add_argument("--task-brief", type=Path, required=True)
+    init.add_argument("--repo-root"); init.add_argument("--base-commit"); init.add_argument("--output-root", type=Path, default=PILOT_DIR / "runs"); init.set_defaults(func=cmd_init)
+    status = sub.add_parser("status"); status.add_argument("run_dir", type=Path); status.add_argument("status", choices=["planned", "running", "blocked", "cancelled"]); status.add_argument("--note"); status.set_defaults(func=cmd_status)
+    complete = sub.add_parser("complete"); complete.add_argument("run_dir", type=Path); complete.add_argument("--engineering-task-package", type=Path); complete.add_argument("--delivery-receipt", type=Path); complete.add_argument("--verification-report", type=Path); complete.add_argument("--review-report", type=Path); complete.add_argument("--pilot-result", type=Path); complete.add_argument("--extra", action="append", default=[]); complete.set_defaults(func=cmd_complete)
+    bundle = sub.add_parser("bundle"); bundle.add_argument("run_dir", type=Path); bundle.add_argument("--fail-incomplete", action="store_true"); bundle.set_defaults(func=cmd_bundle)
+    validate = sub.add_parser("validate"); validate.add_argument("run_dir", type=Path); validate.set_defaults(func=cmd_validate)
+    summary = sub.add_parser("summary"); summary.add_argument("runs_root", type=Path); summary.add_argument("--output", type=Path); summary.set_defaults(func=cmd_summary)
+    receipt = sub.add_parser("pilot-receipt", help="Generate canonical Edge Foundation Pilot receipt for one run.")
+    receipt.add_argument("run_dir", type=Path); receipt.add_argument("--cross-domain-trigger"); receipt.add_argument("--output", type=Path); receipt.set_defaults(func=cmd_pilot_receipt)
+    readiness = sub.add_parser("product-readiness", help="Aggregate canonical Pilot receipts into product readiness.")
+    readiness.add_argument("runs_root", type=Path, nargs="?", default=PILOT_DIR / "runs"); readiness.add_argument("--output", type=Path); readiness.add_argument("--require-ready", action="store_true"); readiness.set_defaults(func=cmd_product_readiness)
     return parser
 
 
