@@ -115,6 +115,15 @@ assurance:
       name: 评测
       name_en: Evaluation
 
+target_assets:
+  ownership_authority: canonical
+  execution_surface: legacy-compatible
+  skill_registry: skills.yaml
+  gate_policy: gate-policy.yaml
+  evaluation_cases: evaluation/golden-cases.yaml
+  legacy_expert_identity_in_target_assets_forbidden: true
+  physical_asset_move_deferred_until_canonical_switch: true
+
 workflow_semantics:
   frozen_high_level_modes:
     - single_domain
