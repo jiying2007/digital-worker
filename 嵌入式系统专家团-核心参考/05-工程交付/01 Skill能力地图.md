@@ -1,91 +1,83 @@
-# Skill 能力地图
+# Skill能力地图
 
-> **本页是 P0 Skill ID、Owner、用途与输出的唯一完整人类来源。** 岗位说明书只引用 Skill Profile/数量，不复制第二份 Skill 清单；机器权威仍是 `expert-groups/embedded-system/config/p0-skills.yaml`。
+Skill 的 target ownership 以 `domains/edge-foundation/skills.yaml` 为唯一权威。本页只按 **Role / Capability / Assurance** 分组解释，不再按旧执行身份分组。Skill 物理文件当前仍可能位于 `expert-groups/embedded-system/skills/`，但**文件位置不定义 owner**。
 
-## 1. Skill 的定位
+## 1. Edge Coordination Role
 
-Skill 是可重复使用的工程方法，不是“再造一个专家角色”。当前 P0 共 **23 个 Skill**，机器登记以 `expert-groups/embedded-system/config/p0-skills.yaml` 为准。
+| Skill | 用途 |
+|---|---|
+| `embedded-task-classifier` | Task type / route / mode 前置分类 |
+| `embedded-material-readiness` | Material/System Context 准备度与 BLOCK 判断 |
+| `embedded-evidence-normalizer` | Evidence identity / source / claim 规范化 |
 
-P0 Skill 默认最大动作等级为 A2：可以读取、分析和生成方案/产物；涉及工作树修改、构建、设备和发布时进入工程执行边界。
+Coordination Skill 负责组织任务，不产生 Embedded 专业事实。
 
-## 2. 23 个 P0 Skill
+## 2. `embedded.architecture`
 
-|Owner|Skill|什么时候用|主要输出|
-|---|---|---|---|
-|主理人|`embedded-task-classifier`|任务刚进入，需要判 task type/mode|routing-decision|
-|主理人|`embedded-material-readiness`|检查 repo/board/SDK/log/device 等材料|engineering-material-manifest|
-|主理人|`embedded-evidence-normalizer`|把分散证据整理成可引用集合|evidence-ref-set|
-|架构|`architecture-impact-analysis`|新功能/变更影响系统边界|technical-analysis|
-|架构|`interface-contract-review`|API/ABI/IPC/消息协议评审|interface-review|
-|Linux/BSP|`boot-chain-analysis`|启动失败、Bring-up|technical-analysis|
-|Linux/BSP|`device-tree-review`|DT/resource/driver 一致性|technical-analysis|
-|Linux/BSP|`irq-dma-analysis`|IRQ/DMA/cache/buffer 问题|technical-analysis|
-|Linux/BSP|`storage-filesystem-analysis`|Flash/MTD/UBI/UBIFS/FS|technical-analysis|
-|MCU/RTOS|`mcu-startup-analysis`|Reset 到 scheduler 的启动链|technical-analysis|
-|MCU/RTOS|`linker-map-analysis`|ROM/RAM/section/stack/heap|technical-analysis|
-|MCU/RTOS|`rtos-concurrency-analysis`|task/mutex/ISR/deadlock/race|technical-analysis|
-|驱动组件|`driver-integration-review`|设备驱动/组件是否完整接入|technical-analysis|
-|调试可靠性|`log-triage`|复杂日志先建时间线|diagnostic-evidence|
-|调试可靠性|`crash-hardfault-analysis`|panic/oops/core/HardFault|hypothesis-registry|
-|调试可靠性|`memory-corruption-analysis`|OOB/UAF/stack/DMA/concurrency corruption|hypothesis-registry|
-|调试可靠性|`performance-analysis`|CPU/RAM/latency/boot 等性能问题|technical-analysis|
-|验证|`verification-plan-builder`|把 acceptance 转成验证计划|verification-plan|
-|验证|`regression-scope-analysis`|确定直接/间接回归范围|regression-scope|
-|验证|`build-evidence-check`|检查 build identity/evidence|verification-evidence|
-|验证|`device-evidence-check`|检查设备测试身份和证据|verification-evidence|
-|验证|`hil-evidence-check`|检查 HIL case/fixture/run|verification-evidence|
-|独立审查|`release-readiness-check`|交付/发布前检查 readiness|review-report|
+| Skill | 用途 |
+|---|---|
+| `architecture-impact-analysis` | 系统边界、变化面、资源/NFR/验证影响 |
+| `interface-contract-review` | 接口、异常、版本、生命周期契约审查 |
 
-## 3. 使用原则
+## 3. `embedded.linux-bsp`
 
-### 先有问题，再选 Skill
+| Skill | 用途 |
+|---|---|
+| `boot-chain-analysis` | Bootloader → Kernel → rootfs 阶段定位 |
+| `device-tree-review` | DT/resource/driver binding 审查 |
+| `irq-dma-analysis` | IRQ/DMA/cache ownership 与 platform contract |
+| `storage-filesystem-analysis` | MTD/UBI/UBIFS/storage 层级分析 |
 
-不要看到 Skill 列表就逐个调用。路由依据是任务风险和材料，不是“技能越多结果越好”。
+## 4. `embedded.mcu-rtos`
 
-### Skill 输出必须被消费
+| Skill | 用途 |
+|---|---|
+| `mcu-startup-analysis` | Reset/startup/init 链分析 |
+| `linker-map-analysis` | Linker/MAP/ELF/ROM/RAM 量化 |
+| `rtos-concurrency-analysis` | task/ISR/lock/queue/worst-case 并发分析 |
 
-例如 `log-triage` 输出的时间线如果没有进入 Hypothesis Registry 或 Technical Analysis，就只是中间笔记。正式流程要求输出被后续阶段消费，或明确声明 terminal。
+## 5. `embedded.driver-component`
 
-### Skill 不扩大权限
+| Skill | 用途 |
+|---|---|
+| `driver-integration-review` | 设备接入、错误恢复、Adapter/API/兼容性审查 |
 
-分析 Skill 不因为能生成补丁就自动获得 A3 修改权限。A3/A4 进入受控 Engineering Runtime；A5-A7 继续按 Action Policy。
+## 6. `embedded.debug-reliability`
 
-## 4. P1 Skill 什么时候才新增
+| Skill | 用途 |
+|---|---|
+| `log-triage` | Timeline 与原始日志分层 |
+| `crash-hardfault-analysis` | Crash/HardFault 上下文与 hypothesis |
+| `memory-corruption-analysis` | 内存越界/踩踏/生命周期分析 |
+| `performance-analysis` | baseline / measurement / bottleneck / regression |
 
-新增 Skill 前回答：
+## 7. Assurance / Verification
 
-1. 是否至少在多个真实任务中重复出现？
-2. 是否是跨项目方法，而不是某个项目知识？
-3. 为什么不能作为现有 Skill 的参数/模式？
-4. Owner 是谁？
-5. 输入输出能否稳定定义？
-6. 如何验证不会制造 unsupported claim？
-7. 有什么 Golden Case / Pilot evidence？
+| Skill | 用途 |
+|---|---|
+| `verification-plan-builder` | Acceptance → required layer → Evidence 计划 |
+| `regression-scope-analysis` | 受影响范围与回归边界 |
+| `build-evidence-check` | Build/Cross-build 直接证据检查 |
+| `device-evidence-check` | target device 证据与 identity 检查 |
+| `hil-evidence-check` | HIL 对象、场景和结果证据检查 |
 
-## 5. 当前 P1 候选
+这些 Skill 属于 Assurance，不是 Embedded Capability。
 
-以下是候选，不代表已经立项：
+## 8. Assurance / Review
 
-- SPI-NAND / ECC 深度分析；
-- UBI/UBIFS recovery；
-- Wi-Fi 连接/漫游/吞吐；
-- power/suspend/wakeup；
-- MCU stack usage / interrupt latency；
-- MCU OTA；
-- long-run / thermal / power profiling；
-- Audio/AEC/NS；
-- Motor/FOC；
-- camera pipeline；
-- secure boot / key handling；
-- boot-time optimization。
+| Skill | 用途 |
+|---|---|
+| `release-readiness-check` | Release candidate、provenance、rollback、risk readiness |
 
-这些专项优先形成领域知识和案例；只有重复方法稳定后才升级 Skill。
+当前 iterative Pilot 的 Independent Review unavailable waiver 不改变这个 ownership；它只改变试点 completion 的阶段性硬门条件。
 
-## 6. Skill 与知识的区别
+## 9. 使用规则
 
-- Skill：如何做，例如“如何分析 Linker Map”；
-- Knowledge：事实是什么，例如“某平台 SRAM 分区和限制”；
-- Case：某次任务发生了什么、如何验证；
-- Workflow：什么时候调用谁、经过哪些 Gate。
+1. Task 路由到 Domain Expert / Capability 后再加载必要 Skill；
+2. Skill 数量不是架构，也不决定 Expert 数量；
+3. Skill 可以被不同 Runtime 实现，但 owner contract 不随 Runtime 改变；
+4. Legacy Skill frontmatter/路径只承担当前执行兼容，不能反向覆盖 target ownership；
+5. 新 Skill 必须由重复 real evidence 证明，而不是为了目录对称新增；
+6. Verification / Review Skill 不得被工程实施结果自签。
 
-四者分开，才能避免 Skill 文档被项目细节污染。
+当前 registry 共 23 个 Skill；核心参考只展示 target ownership，一旦机器 registry 增删，CI 会要求本页同步。
