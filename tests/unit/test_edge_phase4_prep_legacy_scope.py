@@ -23,10 +23,11 @@ class EdgePhase4PrepLegacyScopeTest(unittest.TestCase):
     def test_legacy_surface_has_no_canonical_ownership(self) -> None:
         domain = yaml.safe_load(DOMAIN.read_text(encoding="utf-8"))
         scope = yaml.safe_load(SCOPE.read_text(encoding="utf-8"))
-        self.assertEqual(domain["migration"]["legacy_scope"], "../../expert-groups/embedded-system/compatibility-scope.yaml")
+        self.assertNotIn("legacy_scope", domain["migration"])
         self.assertEqual(scope["status"], "execution-adapter-only")
         self.assertFalse(scope["canonical_ownership"])
         self.assertFalse(scope["canonical_routing_switched"])
+        self.assertEqual(scope["canonical_routing_switched"], domain["migration"]["canonical_routing_switched"])
         self.assertTrue(scope["rules"]["physical_removal_before_canonical_switch_forbidden"])
 
 
