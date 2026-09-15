@@ -2,7 +2,7 @@
 
 Skill 的 target ownership 以 `domains/edge-foundation/skills.yaml` 为唯一权威。本页只按 **Role / Capability / Assurance** 分组解释，不再按旧执行身份分组。Skill 物理文件当前仍可能位于 `expert-groups/embedded-system/skills/`，但**文件位置不定义 owner**。
 
-## 1. Edge Coordination Role
+## 1. Edge Coordination Role（`edge-coordination`）
 
 | Skill | 用途 |
 |---|---|
@@ -51,7 +51,7 @@ Coordination Skill 负责组织任务，不产生 Embedded 专业事实。
 | `memory-corruption-analysis` | 内存越界/踩踏/生命周期分析 |
 | `performance-analysis` | baseline / measurement / bottleneck / regression |
 
-## 7. Assurance / Verification
+## 7. Assurance / Verification（`verification`）
 
 | Skill | 用途 |
 |---|---|
@@ -63,7 +63,7 @@ Coordination Skill 负责组织任务，不产生 Embedded 专业事实。
 
 这些 Skill 属于 Assurance，不是 Embedded Capability。
 
-## 8. Assurance / Review
+## 8. Assurance / Review（`review`）
 
 | Skill | 用途 |
 |---|---|
