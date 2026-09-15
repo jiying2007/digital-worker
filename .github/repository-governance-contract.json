@@ -12,7 +12,10 @@
   "required": {
     "server_side_enforcement": true,
     "pull_request_required": true,
-    "required_status_checks": ["Embedded Expert Contracts / validate"],
+    "required_status_checks": [
+      "Embedded Expert Contracts / validate",
+      "Terminal Consistency / validate"
+    ],
     "block_force_push": true,
     "block_branch_deletion": true
   },
@@ -21,5 +24,5 @@
     "required_approvals": 0,
     "bounded_bypass_only": true
   },
-  "notes": "During iterative development, main protection is intentionally not required and does not block real Pilot acceptance. Repository-local CI/trust gates remain active. Before productionization or equivalent multi-contributor protected operation, enable server-side enforcement and run the governance audit in strict mode."
+  "notes": "During iterative development, main protection is intentionally not required and does not block real Pilot acceptance. Repository-local CI/trust and terminal-consistency gates remain active. Before productionization or equivalent multi-contributor protected operation, enable server-side enforcement for both required checks and run the governance audit in strict mode."
 }
