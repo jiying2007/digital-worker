@@ -1,0 +1,12 @@
+{
+  "run_id": "FEATURE-PCR02-OTA-001",
+  "verifier": "github-actions/verify-ota",
+  "implementation_owner": "engineer-plus-codex",
+  "independence_confirmed": true,
+  "layers": {"implemented": "pass", "host": "pass", "cross_build": "not_applicable", "sil": "not_applicable", "device": "not_applicable", "hil": "not_applicable", "release": "not_applicable"},
+  "overall": "PASS",
+  "evidence_refs": ["PR CI 34861966225 = success", "fresh-main CI 34862064742 = success", "retained receipt CI 34862735035 = success", "artifact 10355541476", "artifact archive sha256:5da3d9945051bc2741effa0064ae3ee4ef25cc31cf1c0372f393916596c3ab7a", "package sha256:7687d8058f85271e75ff3726957385afa1618aa2078dc0a6b3215d470af4a4bb", "real package bytes:76778472"],
+  "failures": [],
+  "unverified_items": ["Device OTA install/boot/rollback and release readiness are not part of this Feature Pilot."],
+  "risks": ["Independent Review unavailable in current stage; static/Hosted CI/Verification substitute is used without claiming Independent Review PASS."]
+}
