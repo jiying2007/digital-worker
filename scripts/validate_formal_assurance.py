@@ -52,11 +52,15 @@ def _require(ok: bool, message: str) -> None:
         raise FormalAssuranceError(message)
 
 
+def _nonempty_string(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
 def _nonempty_strings(value: Any) -> bool:
-    return isinstance(value, list) and bool(value) and all(isinstance(item, str) and item.strip() for item in value)
+    return isinstance(value, list) and bool(value) and all(_nonempty_string(item) for item in value)
 
 
-def validate_l2_bootstrap(bootstrap: dict[str, Any]) -> str:
+def validate_l2_bootstrap(bootstrap: dict[str, Any]) -> tuple[str, dict[str, str]]:
     _require(bootstrap.get("kind") == "codex-session-bootstrap/v1", "Formal assurance requires codex-session-bootstrap/v1")
     _require(bootstrap.get("status") == "ready", "Formal assurance requires a ready session bootstrap")
     _require(bootstrap.get("mode") == "L2", "Formal assurance requires L2 session bootstrap")
@@ -80,7 +84,31 @@ def validate_l2_bootstrap(bootstrap: dict[str, Any]) -> str:
     _require(isinstance(governance.get("contract_catalog_digest"), str) and HEX64.fullmatch(governance["contract_catalog_digest"]) is not None, "Digital Worker contract catalog digest must be exact SHA256")
     _require(_nonempty_strings(governance.get("selected_domain_refs")), "L2 bootstrap requires selected Digital Worker domain refs")
     _require(_nonempty_strings(governance.get("selected_routing_refs")), "L2 bootstrap requires selected Digital Worker routing refs")
-    return source_set_identity
+
+    work_identity_raw = bootstrap.get("work_identity")
+    _require(isinstance(work_identity_raw, dict), "L2 bootstrap must contain authoritative work_identity")
+    work_item_id = work_identity_raw.get("work_item_id")
+    run_id = work_identity_raw.get("run_id")
+    package_id = work_identity_raw.get("engineering_package_id")
+    _require(_nonempty_string(work_item_id), "L2 work_identity requires work_item_id")
+    _require(_nonempty_string(run_id), "L2 work_identity requires run_id")
+    _require(_nonempty_string(package_id), "L2 work_identity requires engineering_package_id")
+
+    materials = source_set.get("materials")
+    _require(isinstance(materials, dict), "L2 execution source-set must contain materials")
+    engineering = materials.get("engineering")
+    _require(isinstance(engineering, dict), "L2 execution source-set must bind engineering identity")
+    _require(engineering.get("work_item_id") == work_item_id, "L2 source-set work_item_id does not match work_identity")
+    _require(engineering.get("run_id") == run_id, "L2 source-set run_id does not match work_identity")
+    _require(engineering.get("package_id") == package_id, "L2 source-set package_id does not match work_identity")
+    _require(isinstance(engineering.get("base_commit"), str) and HEX40.fullmatch(engineering["base_commit"]) is not None, "L2 source-set engineering base_commit must be exact 40-hex")
+    _require(isinstance(engineering.get("engineering_task_package_sha256"), str) and HEX64.fullmatch(engineering["engineering_task_package_sha256"]) is not None, "L2 source-set Engineering Task Package SHA256 must be exact")
+
+    return source_set_identity, {
+        "work_item_id": str(work_item_id),
+        "run_id": str(run_id),
+        "engineering_package_id": str(package_id),
+    }
 
 
 def _validate_sequence(current: dict[str, Any], prior: dict[str, Any] | None, label: str) -> None:
@@ -108,6 +136,7 @@ def _validate_formal_report(
     *,
     kind: str,
     source_set_identity: str,
+    frozen_run_id: str,
     prior: dict[str, Any] | None,
 ) -> None:
     schema = VERIFICATION_SCHEMA if kind == "verification" else REVIEW_SCHEMA
@@ -115,6 +144,7 @@ def _validate_formal_report(
     if prior is not None:
         _validate_schema(prior, schema, f"prior {kind}")
 
+    _require(report.get("run_id") == frozen_run_id, f"Formal {kind} run_id does not match frozen L2 Work/Run identity")
     _require(isinstance(report.get("report_id"), str) and report["report_id"].strip(), f"Formal {kind} requires report_id")
     _require(report.get("independence_confirmed") is True, f"Formal {kind} requires independence_confirmed=true")
     _require(_nonempty_strings(report.get("independence_evidence_refs")), f"Formal {kind} requires independence_evidence_refs")
@@ -150,11 +180,12 @@ def validate_formal_assurance(
     prior_review: dict[str, Any] | None = None,
     require_review: bool = False,
 ) -> dict[str, Any]:
-    source_set_identity = validate_l2_bootstrap(bootstrap)
+    source_set_identity, work_identity = validate_l2_bootstrap(bootstrap)
     _validate_formal_report(
         verification,
         kind="verification",
         source_set_identity=source_set_identity,
+        frozen_run_id=work_identity["run_id"],
         prior=prior_verification,
     )
 
@@ -165,6 +196,7 @@ def validate_formal_assurance(
             review,
             kind="review",
             source_set_identity=source_set_identity,
+            frozen_run_id=work_identity["run_id"],
             prior=prior_review,
         )
         _require(review.get("run_id") == verification.get("run_id"), "Verification and Review run_id mismatch")
@@ -182,7 +214,9 @@ def validate_formal_assurance(
         "kind": "formal-assurance-provenance-validation/v1",
         "validation_status": "PASS",
         "mode": "L2",
-        "run_id": verification.get("run_id"),
+        "work_item_id": work_identity["work_item_id"],
+        "run_id": work_identity["run_id"],
+        "engineering_package_id": work_identity["engineering_package_id"],
         "execution_source_set_ref": source_set_identity,
         "session_bootstrap_ref": bootstrap.get("session_bootstrap_identity"),
         "verification_report_id": verification.get("report_id"),
