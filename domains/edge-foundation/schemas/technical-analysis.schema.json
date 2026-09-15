@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "technical-analysis.schema.json",
+  "title": "Embedded Technical Analysis",
+  "type": "object",
+  "required": ["analysis_id", "run_id", "expert", "claims", "risks", "unverified_items"],
+  "properties": {
+    "analysis_id": {"type": "string"},
+    "run_id": {"type": "string"},
+    "expert": {"type": "string"},
+    "claims": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["statement", "fact_state", "confidence", "evidence_refs"],
+        "properties": {
+          "statement": {"type": "string"},
+          "fact_state": {"enum": ["observed", "inferred", "confirmed"]},
+          "confidence": {"enum": ["low", "medium", "high"]},
+          "evidence_refs": {"type": "array", "items": {"type": "string"}}
+        },
+        "additionalProperties": false
+      }
+    },
+    "recommendations": {"type": "array", "items": {"type": "string"}},
+    "risks": {"type": "array", "items": {"type": "string"}},
+    "verification_requirements": {"type": "array", "items": {"type": "string"}},
+    "unverified_items": {"type": "array", "items": {"type": "string"}},
+    "consumed_refs": {"type": "array", "items": {"type": "string"}},
+    "downstream_contract": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}

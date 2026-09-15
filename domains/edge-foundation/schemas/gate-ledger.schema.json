@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "gate-ledger.schema.json",
+  "title": "Embedded Gate Ledger",
+  "type": "object",
+  "required": ["run_id", "entries"],
+  "properties": {
+    "run_id": {"type": "string", "minLength": 1},
+    "entries": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["gate_id", "decision", "decided_at", "evidence_refs"],
+        "properties": {
+          "gate_id": {"enum": ["gate.k", "gate.m", "gate.0", "gate.t", "gate.e", "gate.v", "gate.r", "gate.c"]},
+          "decision": {"enum": ["PASS", "PASS_WITH_RISK", "BLOCKED", "DEGRADED", "NOT_APPLICABLE"]},
+          "decision_type": {"enum": ["auto", "human", "hybrid"]},
+          "owner": {"type": ["string", "null"]},
+          "evidence_refs": {"type": "array", "items": {"type": "string"}},
+          "risks": {"type": "array", "items": {"type": "string"}},
+          "conditions": {"type": "array", "items": {"type": "string"}},
+          "resume_stage": {"type": ["string", "null"]},
+          "decided_at": {"type": "string", "format": "date-time"}
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

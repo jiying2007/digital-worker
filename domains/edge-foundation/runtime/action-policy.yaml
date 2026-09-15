@@ -1,0 +1,58 @@
+schema_version: 1
+policy_version: 0.1.0
+levels:
+  A0_READ:
+    description: 读取已授权源码、文档、日志、配置和证据
+    default: allowed
+  A1_ANALYZE:
+    description: 静态分析、检索、推理、风险识别和方案比较
+    default: allowed
+  A2_GENERATE:
+    description: 生成设计、任务包、补丁建议、测试计划和知识候选
+    default: allowed
+  A3_MODIFY_WORKTREE:
+    description: 修改隔离分支或受控工作树
+    default: controlled
+    requires:
+      - repo_root_confirmed
+      - base_commit_confirmed
+      - dirty_baseline_recorded
+  A4_BUILD_TEST:
+    description: Host 测试、静态检查、交叉构建和受控 SIL
+    default: controlled
+    requires:
+      - command_scope_confirmed
+      - artifact_identity_recorded
+  A5_DEVICE_READ:
+    description: 串口/JTAG/SSH/ADB 等设备只读诊断
+    default: authorization-required
+    requires:
+      - device_identity_confirmed
+      - access_authorized
+  A6_DEVICE_WRITE:
+    description: 烧录、配置写入、设备重启、升级和会改变设备状态的操作
+    default: human-approval-required
+    requires:
+      - device_identity_confirmed
+      - rollback_plan
+      - explicit_human_approval
+  A7_RELEASE:
+    description: 发布、签名、promotion、生产 OTA 或面向生产环境的动作
+    default: human-approval-required
+    requires:
+      - release_owner
+      - release_evidence
+      - explicit_human_approval
+forbidden_by_default:
+  - otp_fuse
+  - production_signing_key_export
+  - production_signing_without_approved_service
+  - irreversible_boot_configuration
+  - destructive_production_data_action
+  - production_ota_without_release_gate
+rules:
+  - no_action_level_escalation_by_inference
+  - authorization_is_scoped_to_task_and_target
+  - implementation_success_does_not_imply_release_authority
+  - device_write_requires_recovery_path
+  - secrets_must_not_be_copied_into_deliverables
