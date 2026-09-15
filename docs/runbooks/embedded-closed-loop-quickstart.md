@@ -93,6 +93,31 @@ Task Brief
 
 Debug uses one shared Hypothesis Registry. Multi-repo Feature uses one Run with multiple exact Engineering Packages where appropriate.
 
+### 5.1 Bind Formal Verification / Review to the frozen subject
+
+When a Verification or Independent Review decision is used as **L2 Formal Evidence**, validate its provenance against the exact Session Bootstrap before treating that report as current:
+
+```bash
+python scripts/validate_formal_assurance.py \
+  --session-bootstrap <L2_SESSION_BOOTSTRAP_JSON> \
+  --verification-report <VERIFICATION_REPORT_JSON> \
+  --output <FORMAL_ASSURANCE_VALIDATION_JSON>
+```
+
+When Independent Review is required by the task/release policy:
+
+```bash
+python scripts/validate_formal_assurance.py \
+  --session-bootstrap <L2_SESSION_BOOTSTRAP_JSON> \
+  --verification-report <VERIFICATION_REPORT_JSON> \
+  --review-report <REVIEW_REPORT_JSON> \
+  --require-review
+```
+
+Formal reports must bind the exact `execution_source_set.identity` and exact result identity, name the decision actor, retain independence/input evidence, and carry `report_sequence + supersedes`. A report whose source-set/result is stale is `BLOCKED`; do not edit or silently relabel it as current. A rerun uses a new `report_id`; sequence >1 supplies the immediately prior report with `--prior-verification-report` / `--prior-review-report` so supersession can be audited.
+
+This stronger gate is conditional on L2 Formal use. Historical/current-stage non-Formal Pilot reports remain valid under the additive v1 report schemas and are not retroactively rewritten. `formal-assurance-provenance-validation/v1` proves provenance conformance only; it does **not** imply Product Qualification, Release Ready, or release authorization.
+
 ## 6. Complete once
 
 ```bash
@@ -154,6 +179,8 @@ Always preserve:
 - Source of Truth stays at source;
 - Asset Profile ≠ Runtime Profile;
 - Runtime execution receipt ≠ domain Verification PASS;
+- L2 Formal report ≠ current unless exact Execution Source Set / result / actor / supersession provenance validates;
+- formal provenance validation ≠ Product Qualification / Release Ready / release authorization;
 - product maturity and routing authority are separate concerns;
 - repeated real evidence is required before adding new Schema/Skill/Capability/Expert/platform layer.
 
