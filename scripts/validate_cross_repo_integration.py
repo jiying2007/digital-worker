@@ -87,12 +87,13 @@ def main() -> None:
     require(codex.get("required_asset_profile") == "embedded-fullstack", "Codex must consume the ADK embedded-fullstack Asset Profile")
     require(codex.get("source_identity_mode") == "exact-release-source-blobs", "Codex source identity mode drift")
     require(codex.get("runtime_readiness") == "SOURCE_SET_BOUND", "Codex source-set readiness drift")
-    require(codex.get("session_bootstrap_contract_version") == "1.1", "Codex Session Bootstrap version drift")
+    require(codex.get("session_bootstrap_contract_version") == "1.2", "Codex Session Bootstrap version drift")
     require(digest(codex.get("session_bootstrap_contract_canonical_sha256")), "Codex Session Bootstrap digest missing")
     require(codex.get("execution_receipt_schema") == "schemas/runtime-execution-receipt.v2.schema.json", "Codex receipt v2 schema missing")
     require(codex.get("execution_receipt_schema_version") == 2, "Codex receipt schema version drift")
     require("SOURCE_SET_BOUND" in codex.get("validation", ""), "Codex source-set binding must be promoted")
     require("FORMAL_IDENTITY" in codex.get("validation", ""), "Codex formal identity capability must be explicitly promoted")
+    require("WORK_RUN" in codex.get("validation", ""), "Codex authoritative Work/Run source-set capability must be explicitly promoted")
     require("RECEIPT_V2" in codex.get("validation", ""), "Codex source-set receipt v2 capability must be explicitly promoted")
     require("runtime_profile_examples" not in codex, "digital-worker lock must not mirror mutable Codex runtime profile examples")
 
@@ -106,6 +107,10 @@ def main() -> None:
         "asset_profile_must_be_separate_from_runtime_profile", "immutable_adk_release_required", "exact_source_set_identity_required",
         "runtime_distribution_identity_required_when_executed", "monolithic_runtime_bundle_not_required_identity",
         "formal_mode_requires_exact_pinned_knowledge", "formal_mode_requires_exact_digital_worker_governance_identity",
+        "formal_mode_requires_authoritative_work_run_identity_from_engineering_task_package",
+        "formal_execution_source_set_binds_work_item_run_and_package_identity",
+        "runtime_receipt_v2_must_reuse_frozen_work_run_and_source_set_identity",
+        "formal_assurance_run_id_must_match_frozen_run_identity",
         "l1_to_l2_requires_new_bootstrap_and_execution_source_set", "runtime_local_gate_is_not_domain_gate",
         "runtime_output_is_not_verification_pass", "runtime_execution_receipt_must_not_contain_verification_pass",
         "terminal_replaceability_requires_r2_real_provider_substitution", "r1_binding_conformance_is_not_terminal_replaceability",
@@ -345,8 +350,8 @@ def main() -> None:
         "cross-repo integration validation PASS: exact provider pins/digests, refs-only capability projection, "
         "governed Knowledge Hub route with real reuse still pending, repository-responsibility projection, "
         "artifact-level authority/evidence semantics, Stage 1 governance/decision provenance, canonical domain Skills, "
-        "ADK reusable-asset boundary, thin Session Bootstrap, source-set receipt v2, R2 portability policy, "
-        "exact source-set and fail-closed Runtime boundaries"
+        "ADK reusable-asset boundary, thin Session Bootstrap 1.2 with frozen Work/Run identity, source-set receipt v2, "
+        "R2 portability policy, exact source-set and fail-closed Runtime boundaries"
     )
 
 
