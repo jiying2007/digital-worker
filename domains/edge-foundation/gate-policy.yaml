@@ -18,6 +18,8 @@ gates:
     name: Knowledge Readiness
     owner_kind: role
     owner_id: edge-coordination
+    auto_check: true
+    human_decision_on_degradation: true
     pass_when:
       - required_knowledge_sources_resolved_or_not_applicable
       - no_unacknowledged_critical_knowledge_gap
@@ -25,6 +27,8 @@ gates:
     name: Engineering Material Readiness
     owner_kind: role
     owner_id: edge-coordination
+    auto_check: true
+    human_decision_on_degradation: true
     pass_when:
       - required_materials_ready
       - repo_and_version_identity_sufficient_for_task
