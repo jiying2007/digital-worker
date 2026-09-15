@@ -8,6 +8,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 from pathlib import Path
 
 import yaml
@@ -15,6 +16,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "domains" / "edge-foundation" / "knowledge" / "registry.yaml"
 LOCK = ROOT / "config" / "integrations" / "cross-repo-lock.json"
+E3_REUSE_EVALUATOR = ROOT / "scripts" / "evaluate_knowledge_reuse_evidence.py"
 
 
 def load_registry():
@@ -128,6 +130,19 @@ def cmd_proposal_route(args):
     proposal = Path(args.proposal).expanduser().resolve()
     if not proposal.is_file(): raise SystemExit(f"proposal file missing: {proposal}")
     run_hub(args, "knowledge-proposal-route.sh", ["--proposal", str(proposal), "--json"])
+def cmd_reuse_evidence(args):
+    evidence = Path(args.evidence).expanduser().resolve()
+    if not evidence.is_file():
+        print(json.dumps({"status": "BLOCKED", "reason": f"knowledge reuse evidence file missing: {evidence}"}, ensure_ascii=False))
+        raise SystemExit(2)
+    if not E3_REUSE_EVALUATOR.is_file():
+        print(json.dumps({"status": "BLOCKED", "reason": "canonical E3 reuse evaluator missing"}, ensure_ascii=False))
+        raise SystemExit(2)
+    command = [sys.executable, str(E3_REUSE_EVALUATOR), str(evidence)]
+    if args.output: command += ["--output", str(Path(args.output).expanduser().resolve())]
+    if args.require_eligible: command.append("--require-eligible")
+    completed = subprocess.run(command, cwd=ROOT, text=True, check=False)
+    if completed.returncode != 0: raise SystemExit(completed.returncode)
 def add_hub_root(parser): parser.add_argument("--hub-root", help="Exact locked Knowledge Hub checkout; alternatively set KNOWLEDGE_HUB_ROOT")
 
 def build_parser():
@@ -139,6 +154,7 @@ def build_parser():
     evidence = sub.add_parser("evidence-pack"); add_hub_root(evidence); evidence.add_argument("--query", required=True); evidence.add_argument("--scope-ref", required=True); evidence.set_defaults(func=cmd_evidence_pack)
     action = sub.add_parser("action-check"); add_hub_root(action); action.add_argument("--task", required=True); action.add_argument("--candidate", required=True); action.add_argument("--scope-ref", required=True); action.set_defaults(func=cmd_action_check)
     proposal = sub.add_parser("proposal-route"); add_hub_root(proposal); proposal.add_argument("--proposal", required=True); proposal.set_defaults(func=cmd_proposal_route)
+    reuse = sub.add_parser("reuse-evidence"); reuse.add_argument("--evidence", required=True); reuse.add_argument("--output"); reuse.add_argument("--require-eligible", action="store_true"); reuse.set_defaults(func=cmd_reuse_evidence)
     return parser
 
 def main():

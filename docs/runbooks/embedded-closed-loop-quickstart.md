@@ -51,6 +51,8 @@ Execution Receipt reference
 
 For Codex formal sessions, the Runtime Binding owns the thin bootstrap surface such as `session-bootstrap.sh`; digital-worker does not duplicate Runtime-private home/config. The Session Bootstrap is not a fifth control plane and must not contain a domain Verification PASS.
 
+For current Formal runs, the Digital Worker Engineering Task Package is the authority for `package_id + work_item_id + run_id + base_commit`. Codex Session Bootstrap 1.2 freezes these fields into the exact Execution Source Set and projects the same Work/Run identity to Runtime Receipt v2; Runtime must not invent an independent Work/Run identifier.
+
 ## 4. Resolve Knowledge context
 
 ```bash
@@ -114,7 +116,7 @@ python scripts/validate_formal_assurance.py \
   --require-review
 ```
 
-Formal reports must bind the exact `execution_source_set.identity` and exact result identity, name the decision actor, retain independence/input evidence, and carry `report_sequence + supersedes`. A report whose source-set/result is stale is `BLOCKED`; do not edit or silently relabel it as current. A rerun uses a new `report_id`; sequence >1 supplies the immediately prior report with `--prior-verification-report` / `--prior-review-report` so supersession can be audited.
+Formal reports must bind the exact frozen `work_identity.run_id`, exact `execution_source_set.identity` and exact result identity, name the decision actor, retain independence/input evidence, and carry `report_sequence + supersedes`. A report whose Work/Run, source-set or result is stale is `BLOCKED`; do not edit or silently relabel it as current. A rerun uses a new `report_id`; sequence >1 supplies the immediately prior report with `--prior-verification-report` / `--prior-review-report` so supersession can be audited.
 
 This stronger gate is conditional on L2 Formal use. Historical/current-stage non-Formal Pilot reports remain valid under the additive v1 report schemas and are not retroactively rewritten. `formal-assurance-provenance-validation/v1` proves provenance conformance only; it does **not** imply Product Qualification, Release Ready, or release authorization.
 
@@ -167,6 +169,21 @@ python scripts/edge_knowledge.py proposal-route --proposal <PROPOSAL_JSON>
 
 Do not copy authoritative source content into digital-worker just to satisfy the process.
 
+### 9.1 Validate real Knowledge reuse for E3
+
+Only after a **real Work Item** actually consumes a real governed Knowledge item/source should the operator assemble `knowledge-reuse-evidence.v1`. The evidence file must carry the exact provider identity, authority/source/version, ACL and freshness evidence, provenance, actual-use refs and Knowledge Harvest ref. Digital Worker deliberately does not generate or auto-fill a “real evidence” template.
+
+Use the canonical Knowledge entrypoint to evaluate the completed evidence:
+
+```bash
+python scripts/edge_knowledge.py reuse-evidence \
+  --evidence <KNOWLEDGE_REUSE_EVIDENCE_JSON> \
+  --output <KNOWLEDGE_REUSE_RECEIPT_JSON> \
+  --require-eligible
+```
+
+The command delegates to the domain-owned `evaluate_knowledge_reuse_evidence.py` gate. Missing files, synthetic/controlled evidence, provider identity drift, non-real source, unresolved/denied ACL, stale source or authority conflict remain fail-closed. `ELIGIBLE` means only that this specific real Knowledge reuse evidence is admissible for the E3 reuse claim; it does not imply Knowledge Provider Qualification, Product Readiness, Terminal Maturity, Production Ready or Release Ready.
+
 ## 10. Safety invariants
 
 Always preserve:
@@ -179,8 +196,9 @@ Always preserve:
 - Source of Truth stays at source;
 - Asset Profile ≠ Runtime Profile;
 - Runtime execution receipt ≠ domain Verification PASS;
-- L2 Formal report ≠ current unless exact Execution Source Set / result / actor / supersession provenance validates;
+- L2 Formal report ≠ current unless exact Work/Run / Execution Source Set / result / actor / supersession provenance validates;
 - formal provenance validation ≠ Product Qualification / Release Ready / release authorization;
+- Knowledge reuse eligibility ≠ provider/product/terminal/release qualification;
 - product maturity and routing authority are separate concerns;
 - repeated real evidence is required before adding new Schema/Skill/Capability/Expert/platform layer.
 
