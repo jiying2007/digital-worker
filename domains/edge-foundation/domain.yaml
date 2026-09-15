@@ -57,6 +57,7 @@ experts:
     name: 嵌入式系统专家
     name_en: Embedded System Expert
     responsibility: embedded-system
+    contract: experts/embedded-system/expert.yaml
     capabilities:
       - embedded.architecture
       - embedded.linux-bsp
