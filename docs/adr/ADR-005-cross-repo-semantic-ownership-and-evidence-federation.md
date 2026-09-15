@@ -23,7 +23,10 @@
 5. Domain Skill / Reusable Skill / Runtime Skill，Domain Workflow / Reusable Workflow / Runtime Workflow，Domain Gate / Asset Gate / Runtime Gate 必须保持不同语义；
 6. Runtime、Provider、Receipt、评测或本地 Gate 不得越权提升为 Domain Verification、Independent Review 或 Product Qualification；
 7. Authority / Evidence 分类以**具体 artifact** 为粒度，不根据 producer/system 名称自动推断；同一个系统可以产生不同 kind 的 artifact；
-8. Formal Run 的 exact identity 必须包含本次 materially-used 的 `digital-worker` Domain/Governance 语义身份，不能只固定 Knowledge、ADK、Runtime 与 Project Source。
+8. Formal Run 的 exact identity 必须包含本次 materially-used 的 `digital-worker` Domain/Governance 语义身份，不能只固定 Knowledge、ADK、Runtime 与 Project Source；
+9. Governance level 升级不得自动提升既有 evidence 等级；特别是 L1 → L2 必须重新解析并冻结 exact identities / Execution Source Set；
+10. Verification / Review 等 run-specific decision 必须绑定 exact reviewed subject / Execution Source Set / decision actor provenance，不能只依赖 `run_id + string name`；
+11. Product Readiness、Cross-repo Terminal Maturity、Runtime Qualification、ADK Release Qualification 与 Knowledge Provider Qualification 是正交状态，不得自动继承。
 
 ## 2. 不改变的上位架构
 
@@ -37,14 +40,14 @@
 
 | Repository / System | Canonical responsibility | 明确不拥有 |
 | --- | --- | --- |
-| `digital-worker` | Domain / Expert / Capability / Domain Skill、Work / Run、Domain Workflow、Gate、Action Policy、Engineering Handoff、Verification / Review Contract、Product Readiness 语义 | Knowledge lifecycle、Runtime host config、Reusable Agent Asset SSOT、provider-specific receipt truth |
+| `digital-worker` | Domain / Expert / Capability / Domain Skill、Work / Run、Domain Workflow、Gate、Action Policy、Engineering Handoff、Verification / Review Contract、Product Readiness 语义 | Knowledge lifecycle、Runtime host config、Reusable Agent Asset SSOT、provider-specific receipt truth、run-specific verifier/reviewer judgment |
 | `knowledge-hub` | Knowledge Registry、Context / Evidence Pack、Authority、ACL、Freshness、Knowledge Lifecycle、Owner Review / Promotion | 源码/CI/HIL/设备事实、产品 Verification verdict、Runtime live state |
 | `agent-dev-kit` | Reusable Agent / Skill / Workflow Asset、Asset Profile、Evaluation、Immutable Release、Distribution Contract | Product qualification、Domain Verification PASS、Runtime live home |
 | `llm_agent` | External Practice Intake、Runtime Evaluation、Cross-runtime Comparison、Adoption Evidence / Recommendation | Production Runtime、Domain Gate、Adoption Authority、Verification PASS |
 | Runtime Binding（当前 `codex`） | Exact source selection、Runtime Profile、Distribution、Host Integration、Thin Session Bootstrap、Runtime Execution Receipt | Domain semantics、Knowledge lifecycle、Reusable Asset SSOT、Product qualification |
 | Assurance Provider（例如 Codex Safe） | Provider-specific Review / Diagnose / Commit / Change capability 与 receipt | Domain Verification Authority、Product Release Authority |
 | Git / CI / HIL / Device / Artifact Store | Source / build / artifact / device / test / release facts | Domain policy、Knowledge promotion、Product qualification |
-| Verifier / Reviewer / Approver | Run-specific judgment / approval | 重写原始事实或修改上游 Contract authority |
+| Verifier / Reviewer / Approver | Run-specific judgment / approval | 重写原始事实、修改上游 Contract authority、静默更换被审查对象 |
 
 Repository/System 行描述长期职责；**单个 artifact 的 authority/evidence kind 必须另行显式判断**。例如 CI 可以同时产生原始 test fact 与 execution receipt，但二者不是同一种 artifact；HIL 同样可以产生 device/test fact，也可以留下 runner receipt。
 
@@ -124,7 +127,7 @@ Runtime Workflow 可以实现 Domain Workflow 的一个或多个步骤，但不�
 - **Asset Profile**：ADK 对 reusable assets 的组合；
 - **Runtime Profile**：Runtime Binding 对 live 运行能力、预加载、并发、catalog 与 host integration 的组合。
 
-Digital Worker 不新增第三种同名 Profile；领域选择使用 Domain / Capability / Workflow Mode / Risk Policy 表达。
+Digital Worker 不新增第三种同名 Profile；领域选择使用 Domain / Capability / Workflow Mode / Risk Policy 表达。文档中的 profile 名只作示例，合法 Runtime Profile 由 Runtime Binding 的 canonical manifest 决定。
 
 ### 5.4 Gate
 
@@ -200,7 +203,27 @@ Runtime Binding 将该 Source Set 物化为 Runtime Distribution / Session Boots
 
 `identity-envelope.yaml` 是跨 plane identity spine；它通过 ref 指向 authority，不复制 source fact 形成第二套 SSOT。当前 envelope 已固定 Knowledge、ADK、Runtime、Engineering 与 Verification 等身份；在 Identity maturity 闭环前，必须以向后兼容方式补齐上述 `digital-worker` Domain/Governance exact identity，使 Formal Run 能回答“本次按哪一版领域 Contract/Policy/Skill 语义执行”。
 
-## 8. Assurance Provider 边界
+## 8. Governance Escalation 边界
+
+治理等级只决定需要哪些 Contract、Identity、Evidence 和 Decision，不允许把已经产生的低等级上下文/输出直接升级为高等级证据。
+
+特别是 L1 → L2 时必须重新：
+
+```text
+resolve exact Digital Worker governance identity
++ resolve exact-pinned Knowledge identity
++ freeze ADK release/assets
++ freeze Runtime Binding/profile/host
++ freeze project source/dirty baseline
++ rebuild context
++ create a new exact Execution Source Set
+```
+
+升级前的 observation、hypothesis、session summary 或 current-provider context 可以作为 provisional/prior context 引用；若 materially used 于 L2 decision，必须从对应 authority 重新解析并纳入新的 frozen Source Set。
+
+**不变量：`Governance escalation ≠ evidence promotion`。**
+
+## 9. Assurance Provider 与 Decision Provenance
 
 Codex Safe、CI/HIL、Security Scanner、Human Reviewer 等都是可替换 Assurance Provider / Assurance Execution 实现。
 
@@ -225,7 +248,24 @@ Change Ready -> Product Release Ready
 
 “CI/HIL 是 Fact Authority”与“CI/HIL 可以参与 Assurance Execution”并不冲突：前者描述具体 raw fact artifact，后者描述执行角色。artifact 的 authority/evidence kind 必须显式区分。
 
-## 9. llm_agent 永久退出生产热路径
+L2 / Release 级 Verification 与 Review 还必须具备 Decision Provenance，至少能回答：
+
+```text
+report_id / sequence
+run_id
+execution_source_set_ref
+exact reviewed subject/result identity
+decision_actor_identity_ref
+independence evidence
+input evidence refs
+supersedes / previous-report-ref when rerun
+```
+
+同一 Run 内 result commit/patch、source set 或 materially-used evidence 变化后，旧 report 不得静默“跟随最新结果”。新判断必须产生新的 report/provenance，并显式 supersede 或引用旧报告。
+
+Delivery Receipt 的 self-validation / implementation decisions 不能被 consumer 解释为 Independent Verification、Review、Qualification 或 Release approval。
+
+## 10. llm_agent 永久退出生产热路径
 
 正式 Engineering Delivery Loop 不依赖 `llm_agent`：
 
@@ -247,7 +287,7 @@ External Practice / Runtime Evidence / Failure / Adoption Evidence
 
 Recommendation 不等于 Adoption Decision。Proposal 必须由拥有目标语义的仓库接受、拒绝或继续观察。
 
-## 10. Risk-based Progressive Orchestration
+## 11. Risk-based Progressive Orchestration
 
 治理按风险升级，而不是所有请求都进入 Formal Run。
 
@@ -256,9 +296,25 @@ Recommendation 不等于 Adoption Decision。Proposal 必须由拥有目标语�
 - 正式工程交付：Work/Run + source-set identity + evidence + Verification；
 - Device write / Release / 关键量产风险：再增加 Independent Review、Device/HIL/Release evidence 与 Human Gate。
 
-Risk policy 只决定复用哪些现有 Contract，不创建第二套 L0/L1/L2/L3 workflow authority。
+Risk policy 只决定复用哪些现有 Contract，不创建第二套 L0/L1/L2/L3 workflow authority。任何治理升级都必须遵守第 8 节 re-bootstrap/re-freeze 边界。
 
-## 11. 长期不变量
+## 12. 状态正交与非继承
+
+以下状态属于不同 authority / evaluator，彼此不得自动继承：
+
+```text
+Product Readiness
+≠ Cross-repo Terminal Maturity
+≠ Runtime Binding / Runtime Qualification
+≠ ADK Asset / Release Qualification
+≠ Knowledge Provider Qualification
+```
+
+产品三轨 evidence 全部 eligible 不能自动关闭 Replaceability/Operations 等跨仓 maturity gap；跨仓 Terminal Maturity 也不能替代新产品自己的 HIL/Device/Release evidence。Runtime/ADK/Knowledge Provider 的资格状态同理不能向 Product 或 Terminal 状态传播。
+
+**每个 evaluator 只能写自己拥有的状态维度。** 若需要从一个维度消费另一个维度的结果，只能作为输入 evidence/constraint，并由本维度自己的 Contract 与 Decision Authority 重新判定。
+
+## 13. 长期不变量
 
 1. `Responsibility ≠ Runtime`
 2. `Expert ≠ Agent`
@@ -277,20 +333,26 @@ Risk policy 只决定复用哪些现有 Contract，不创建第二套 L0/L1/L2/L
 15. `Product Readiness ≠ Routing Authority`
 16. `Runtime Binding ≠ Product Qualification`
 17. `System/Producer identity ≠ Artifact authority/evidence kind`
+18. `Governance escalation ≠ Evidence promotion`
+19. `Product Readiness ≠ Cross-repo Terminal Maturity ≠ Runtime Qualification ≠ ADK Release Qualification ≠ Knowledge Provider Qualification`
+20. `Decision report must bind exact reviewed subject / Source Set / actor provenance`
 
 新实现、Adapter、Provider、Schema 或 Runtime 必须保持这些不变量。若需要打破其中任意一条，必须通过新的 ADR 明确改变体系语义，而不能通过局部实现绕过。
 
-## 12. 成熟度与终态边界
+## 14. 成熟度与终态边界
 
-“架构终态”只表示上述职责与语义可以冻结，不表示产品已经 Production Ready。
+“架构终态”只表示上述职责与语义可以冻结，不表示产品已经 Production Ready，也不表示跨仓体系已经 Terminal Mature。
 
 成熟落地仍必须由真实证据证明：
 
 - Debug / Feature / Release 等代表性 Formal Run 能完整追溯；
 - Formal Run 能 exact trace 到 materially-used 的 `digital-worker` Domain/Governance identity；
+- L1→L2 等治理升级会重新冻结 Source Set，旧 session/context 不会自动升级为 Formal Evidence；
+- Verification/Review report 精确绑定 reviewed subject / Source Set / actor identity，并保留 rerun/supersession provenance；
 - Knowledge reuse / freshness / authority 在真实 Run 中可验证；
 - ADK release 与 Runtime source-set identity 可重放；
 - Assurance Provider 可替换且不会改变 Domain semantics；
+- Product Readiness / Terminal Maturity / Runtime / ADK / Knowledge Provider qualification 不发生隐式继承；
 - Provider-neutral 的**设计兼容性**与**真实替换证据**分开声明：controlled/fake adapter 只能证明 binding conformance，不能证明真实 Provider substitution；
 - Runtime replaceability 若要声明为 terminal/demonstrated，至少需要一次第二个真实 Runtime/Provider 的受控同任务证据；
 - 若声明 Interaction Provider 已被“实证可替换”，也必须有第二真实入口/Provider 的 task-contract handoff evidence；否则只能声明 contract-ready；
@@ -299,7 +361,7 @@ Risk policy 只决定复用哪些现有 Contract，不创建第二套 L0/L1/L2/L
 
 具体落地路径见 `../strategy/cross-repo-terminal-maturity-landing.md`。
 
-## 13. 被拒绝的替代方案
+## 15. 被拒绝的替代方案
 
 ### 把六个仓排成固定调用链
 
@@ -321,10 +383,18 @@ Risk policy 只决定复用哪些现有 Contract，不创建第二套 L0/L1/L2/L
 
 拒绝。controlled Binding 可以证明 contract/binding conformance 与 failure semantics，但不能替代真实第二 Provider/Runtime 的 field substitution evidence。
 
-## 14. 决策结果
+### 把低等级 session/context 在升级时直接当作 Formal Evidence
+
+拒绝。治理等级改变必须重新解析 exact authority refs 并冻结新的 Execution Source Set；旧输出最多作为 provisional/prior context。
+
+### 让 Product Readiness 或其它局部 Qualification 自动关闭 Terminal Maturity
+
+拒绝。各状态拥有不同 Contract、evidence 轴和 Decision Authority，必须分别评估。
+
+## 16. 决策结果
 
 从本 ADR 起，跨 `digital-worker`、`knowledge-hub`、ADK、`llm_agent`、Runtime Binding 与 Assurance Provider 的终态协同采用：
 
-> **Provider-neutral logical architecture + federated semantic ownership + refs-first immutable identity + exact Execution Source Set + artifact-level authority/evidence classification + evidence federation + independent run-specific decision authority。**
+> **Provider-neutral logical architecture + federated semantic ownership + refs-first immutable identity + exact Execution Source Set + controlled governance escalation + artifact-level authority/evidence classification + decision provenance + orthogonal qualification states + evidence federation + independent run-specific decision authority。**
 
-不再通过新增顶层 Plane 或复制资产来表达协同关系。
+不再通过新增顶层 Plane、复制资产、复用旧 session evidence 或状态继承来表达协同关系。
