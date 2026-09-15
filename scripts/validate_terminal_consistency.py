@@ -9,10 +9,12 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 EDGE = ROOT / "domains" / "edge-foundation"
 DOMAIN_PATH = EDGE / "domain.yaml"
+CANONICAL_ADR_PATH = ROOT / "docs" / "adr" / "ADR-004-edge-foundation-digital-responsibility-architecture.md"
 
 ACTIVE_TEXT_ROOTS = [
     ROOT / "README.md",
     ROOT / "docs" / "README.md",
+    CANONICAL_ADR_PATH,
     ROOT / "docs" / "runbooks",
     ROOT / "docs" / "strategy",
     ROOT / "嵌入式系统专家团-核心参考",
@@ -42,6 +44,13 @@ FORBIDDEN_ACTIVE_SEMANTICS = [
 ]
 
 EXPECTED_PRODUCT_READINESS_EVALUATOR = "../../scripts/evaluate_edge_foundation_product_readiness.py"
+ADR_REQUIRED_MARKERS = [
+    "- Status: accepted",
+    "- Runtime state（运行时状态）: canonical-target-only",
+    "- Legacy compatibility（旧兼容层）: physically-retired",
+    "- Product readiness controls routing（产品成熟度控制路由）: false",
+    "Canonical routing 已由 Edge Foundation target runtime 承担",
+]
 
 
 def require(condition: bool, message: str) -> None:
@@ -60,6 +69,17 @@ def resolve_edge_ref(value: str) -> Path:
 def require_ref(label: str, value: str) -> None:
     target = resolve_edge_ref(value)
     require(target.exists(), f"canonical reference is missing: {label} -> {value} ({target})")
+
+
+def validate_canonical_adr_state(domain: dict) -> None:
+    require(CANONICAL_ADR_PATH.is_file(), "canonical ADR-004 is missing")
+    require(
+        resolve_edge_ref(domain["canonical_adr"]) == CANONICAL_ADR_PATH.resolve(),
+        "domain canonical_adr no longer points to accepted ADR-004",
+    )
+    text = CANONICAL_ADR_PATH.read_text(encoding="utf-8")
+    for marker in ADR_REQUIRED_MARKERS:
+        require(marker in text, f"canonical ADR-004 terminal marker missing: {marker}")
 
 
 def validate_contract_references(domain: dict) -> None:
@@ -138,6 +158,7 @@ def validate_active_semantics() -> None:
 def main() -> None:
     domain = load_domain()
     validate_contract_references(domain)
+    validate_canonical_adr_state(domain)
     validate_retirement_is_physical()
     validate_active_semantics()
     print("terminal Edge Foundation consistency PASS")
