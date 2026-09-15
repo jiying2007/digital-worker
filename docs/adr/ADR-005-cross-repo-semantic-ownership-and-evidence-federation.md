@@ -2,6 +2,7 @@
 
 - Status: accepted
 - Date: 2026-09-15
+- Last reviewed: 2026-09-15
 - Scope: `digital-worker` / `knowledge-hub` / `agent-dev-kit` / `llm_agent` / Runtime Binding / Assurance Provider / Source Fact Systems
 - Parent architecture: `ADR-003-provider-neutral-ai-rd-target-architecture.md`
 - Domain architecture: `ADR-004-edge-foundation-digital-responsibility-architecture.md`
@@ -20,13 +21,17 @@
 3. 跨仓协同以 refs-first、immutable identity、exact source set、receipt 与 evidence 为主，不复制彼此 SSOT；
 4. Contract Authority、Fact Authority 与 Decision Authority 必须分离；
 5. Domain Skill / Reusable Skill / Runtime Skill，Domain Workflow / Reusable Workflow / Runtime Workflow，Domain Gate / Asset Gate / Runtime Gate 必须保持不同语义；
-6. Runtime、Provider、Receipt、评测或本地 Gate 不得越权提升为 Domain Verification、Independent Review 或 Product Qualification。
+6. Runtime、Provider、Receipt、评测或本地 Gate 不得越权提升为 Domain Verification、Independent Review 或 Product Qualification；
+7. Authority / Evidence 分类以**具体 artifact** 为粒度，不根据 producer/system 名称自动推断；同一个系统可以产生不同 kind 的 artifact；
+8. Formal Run 的 exact identity 必须包含本次 materially-used 的 `digital-worker` Domain/Governance 语义身份，不能只固定 Knowledge、ADK、Runtime 与 Project Source。
 
 ## 2. 不改变的上位架构
 
 本 ADR 不替代 ADR-003 的 Provider-neutral 七逻辑 Plane，也不替代 ADR-004 的责任、编排、执行、可信保障边界。
 
-当前 `four-control-planes-plus-replaceable-runtime-bindings` 机器基线继续保留，作为当前 cross-repo repository responsibility model；本 ADR 对其中容易歧义的 `owns` 语义做进一步限定，而不触发新的架构命名迁移。
+当前 `four-control-planes-plus-replaceable-runtime-bindings` 机器基线继续保留，作为当前 cross-repo **repository responsibility projection**；本 ADR 对其中容易歧义的 `architecture_model`、`planes` 与 `owns` 语义做进一步限定，而不触发破坏性命名迁移。
+
+机器 consumer 不得仅凭字段名 `planes` 推导这些 repository role 都拥有同等级 production authority。后续 machine contract 自然演进时，应优先增加向后兼容的语义标记（例如 responsibility projection / semantic ownership metadata），而不是为了术语统一做无业务收益的破坏性重命名。
 
 ## 3. Repository Responsibility Map
 
@@ -40,6 +45,8 @@
 | Assurance Provider（例如 Codex Safe） | Provider-specific Review / Diagnose / Commit / Change capability 与 receipt | Domain Verification Authority、Product Release Authority |
 | Git / CI / HIL / Device / Artifact Store | Source / build / artifact / device / test / release facts | Domain policy、Knowledge promotion、Product qualification |
 | Verifier / Reviewer / Approver | Run-specific judgment / approval | 重写原始事实或修改上游 Contract authority |
+
+Repository/System 行描述长期职责；**单个 artifact 的 authority/evidence kind 必须另行显式判断**。例如 CI 可以同时产生原始 test fact 与 execution receipt，但二者不是同一种 artifact；HIL 同样可以产生 device/test fact，也可以留下 runner receipt。
 
 ## 4. 三类 Authority
 
@@ -80,6 +87,20 @@
 
 **不变量：`Contract Authority ≠ Fact Authority ≠ Decision Authority`。**
 
+### 4.4 Artifact-level classification
+
+Authority 不能只按系统分类，必须能落到 artifact：
+
+```text
+artifact
+  ├─ producer / source
+  ├─ semantic owner
+  ├─ authority_kind: contract | fact | decision
+  └─ evidence_layer: fact | receipt | report | qualification（若适用）
+```
+
+同一个 producer 可以生成不同 `authority_kind` / `evidence_layer` 的 artifact；consumer 不得通过 producer 名称猜测 artifact 的权威等级。
+
 ## 5. 同名概念的规范语义
 
 ### 5.1 Skill
@@ -113,9 +134,9 @@ Digital Worker 不新增第三种同名 Profile；领域选择使用 Domain / Ca
 
 Runtime-local PASS 或 Asset PASS 不得推导 Domain Gate PASS。
 
-## 6. Evidence 四层模型
+## 6. Evidence 四层模型与 Decision 正交边界
 
-跨仓统一采用：
+跨仓 Evidence 统一采用：
 
 ```text
 FACT
@@ -124,7 +145,7 @@ RECEIPT
   ↓
 REPORT
   ↓
-QUALIFICATION / DECISION
+QUALIFICATION
 ```
 
 ### FACT
@@ -137,13 +158,23 @@ QUALIFICATION / DECISION
 
 ### REPORT
 
-基于 facts/receipts 形成的专业判断，例如 `verification-report`、`review-report`。
+基于 facts/receipts 形成的专业判断载体，例如 `verification-report`、`review-report`。
 
-### QUALIFICATION / DECISION
+### QUALIFICATION
 
-例如 Product Ready、Release Ready、高风险动作批准。
+由明确 Contract 与 Decision Authority 驱动的派生资格状态，例如 Product Ready、Release Ready。
 
-**不变量：`Fact ≠ Receipt ≠ Report ≠ Qualification`。**
+**Decision 不是 Evidence 第五层，也不与 Qualification 同义。** Verifier/Reviewer/Approver 依据 Contract + Facts/Receipts/Reports 做 run-specific decision；这些 decision 可以驱动某个 qualification 状态变化，但 qualification 仍必须有明确 owner、规则和 provenance。
+
+例如：
+
+```text
+Review decision = APPROVE
+      ≠
+Product qualification = READY
+```
+
+**不变量：`Fact ≠ Receipt ≠ Report ≠ Qualification`；`Decision Authority` 与 Evidence 分层正交。**
 
 ## 7. Execution Source Set 是运行态唯一组合边界
 
@@ -151,7 +182,11 @@ QUALIFICATION / DECISION
 
 ```text
 Work / Run identity
-+ selected Digital Worker domain semantics
++ exact Digital Worker governance identity
+  - provider commit
+  - contract/catalog identity
+  - selected Domain / routing refs
+  - selected Domain Skill refs/digests when materially used
 + Knowledge Hub context/evidence refs
 + immutable ADK release identity
 + selected ADK assets / Asset Profile
@@ -163,7 +198,7 @@ Work / Run identity
 
 Runtime Binding 将该 Source Set 物化为 Runtime Distribution / Session Bootstrap，并产生 Execution Receipt。
 
-`identity-envelope.yaml` 是跨 plane identity spine；它通过 ref 指向 authority，不复制 source fact 形成第二套 SSOT。
+`identity-envelope.yaml` 是跨 plane identity spine；它通过 ref 指向 authority，不复制 source fact 形成第二套 SSOT。当前 envelope 已固定 Knowledge、ADK、Runtime、Engineering 与 Verification 等身份；在 Identity maturity 闭环前，必须以向后兼容方式补齐上述 `digital-worker` Domain/Governance exact identity，使 Formal Run 能回答“本次按哪一版领域 Contract/Policy/Skill 语义执行”。
 
 ## 8. Assurance Provider 边界
 
@@ -187,6 +222,8 @@ Change Ready -> Product Release Ready
 ```
 
 若某 Provider 被选作本次 Reviewer implementation，仍必须满足同一 `review-report` contract、independence 和 evidence 要求。
+
+“CI/HIL 是 Fact Authority”与“CI/HIL 可以参与 Assurance Execution”并不冲突：前者描述具体 raw fact artifact，后者描述执行角色。artifact 的 authority/evidence kind 必须显式区分。
 
 ## 9. llm_agent 永久退出生产热路径
 
@@ -239,6 +276,7 @@ Risk policy 只决定复用哪些现有 Contract，不创建第二套 L0/L1/L2/L
 14. `Session Bootstrap ≠ Control Plane`
 15. `Product Readiness ≠ Routing Authority`
 16. `Runtime Binding ≠ Product Qualification`
+17. `System/Producer identity ≠ Artifact authority/evidence kind`
 
 新实现、Adapter、Provider、Schema 或 Runtime 必须保持这些不变量。若需要打破其中任意一条，必须通过新的 ADR 明确改变体系语义，而不能通过局部实现绕过。
 
@@ -249,11 +287,15 @@ Risk policy 只决定复用哪些现有 Contract，不创建第二套 L0/L1/L2/L
 成熟落地仍必须由真实证据证明：
 
 - Debug / Feature / Release 等代表性 Formal Run 能完整追溯；
+- Formal Run 能 exact trace 到 materially-used 的 `digital-worker` Domain/Governance identity；
 - Knowledge reuse / freshness / authority 在真实 Run 中可验证；
 - ADK release 与 Runtime source-set identity 可重放；
 - Assurance Provider 可替换且不会改变 Domain semantics；
-- 至少一次 Runtime Binding 替换/对比证明 Provider-neutral；
-- Productionization 前 server-side repository governance、权限、发布、回滚和长期运营机制有真实 evidence。
+- Provider-neutral 的**设计兼容性**与**真实替换证据**分开声明：controlled/fake adapter 只能证明 binding conformance，不能证明真实 Provider substitution；
+- Runtime replaceability 若要声明为 terminal/demonstrated，至少需要一次第二个真实 Runtime/Provider 的受控同任务证据；
+- 若声明 Interaction Provider 已被“实证可替换”，也必须有第二真实入口/Provider 的 task-contract handoff evidence；否则只能声明 contract-ready；
+- Productionization 前 server-side repository governance、权限、发布、回滚和长期运营机制有真实 evidence；
+- 至少一次 fresh-operator drill：未参与体系设计的人仅依赖 canonical docs + machine contracts + runbook 完成一个代表性 governed/formal Run，并保留可审计 receipt。
 
 具体落地路径见 `../strategy/cross-repo-terminal-maturity-landing.md`。
 
@@ -273,12 +315,16 @@ Risk policy 只决定复用哪些现有 Contract，不创建第二套 L0/L1/L2/L
 
 ### 让 Runtime / Safe / CI 的 PASS 直接提升产品状态
 
-拒绝。违反 Contract / Fact / Decision 与 Evidence 四层边界。
+拒绝。违反 Contract / Fact / Decision 与 Evidence 分层边界。
+
+### 用 fake/controlled Binding 证明真实 Provider-neutral
+
+拒绝。controlled Binding 可以证明 contract/binding conformance 与 failure semantics，但不能替代真实第二 Provider/Runtime 的 field substitution evidence。
 
 ## 14. 决策结果
 
 从本 ADR 起，跨 `digital-worker`、`knowledge-hub`、ADK、`llm_agent`、Runtime Binding 与 Assurance Provider 的终态协同采用：
 
-> **Provider-neutral logical architecture + federated semantic ownership + refs-first immutable identity + exact Execution Source Set + evidence federation + independent run-specific decision authority。**
+> **Provider-neutral logical architecture + federated semantic ownership + refs-first immutable identity + exact Execution Source Set + artifact-level authority/evidence classification + evidence federation + independent run-specific decision authority。**
 
 不再通过新增顶层 Plane 或复制资产来表达协同关系。
