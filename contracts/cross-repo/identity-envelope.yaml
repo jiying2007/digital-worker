@@ -1,10 +1,22 @@
 schema_version: 3
 status: current-stage-baseline
-purpose: refs-first identity spine across workflow, knowledge, immutable agent release, runtime source-set/distribution, runtime execution and engineering evidence
+purpose: refs-first identity spine across Digital Worker governance, workflow, knowledge, immutable agent release, runtime source-set/distribution, runtime execution, engineering evidence and exact assurance decisions
 
 required:
   work_item_id: string
   run_id: string
+
+digital_worker_governance:
+  provider: digital-worker
+  repository: jiying2007/digital-worker
+  provider_commit: null
+  contract_catalog_ref: contracts/catalog.json
+  contract_catalog_digest: null
+  selected_domain_refs: []
+  selected_routing_refs: []
+  materially_used_domain_skills: []
+  # selected refs remain refs-first. Typical items carry an authoritative ref plus an exact digest;
+  # the envelope never copies Domain Contract / Skill bodies into a second SSOT.
 
 knowledge_context:
   provider: knowledge-hub
@@ -59,18 +71,49 @@ engineering:
   artifact_hashes: []
   device_ids: []
 
+governance_escalation:
+  from_level: null
+  to_level: null
+  escalation_reason: null
+  prior_context_disposition: null
+  new_execution_source_set_ref: null
+  new_session_bootstrap_ref: null
+  formal_evidence_start_ref: null
+
 verification:
   verification_run_id: null
   evidence_refs: []
   review_ref: null
+  reports: []
+  # each report ref/provenance item should identify:
+  # {report_id, execution_source_set_ref, reviewed_result_identity_ref,
+  #  decision_actor_identity_ref, independence_evidence_refs, input_evidence_refs,
+  #  report_sequence, supersedes}
+
+review:
+  reports: []
+  # same provenance shape as verification; review decision remains independent of Product Qualification.
+
+qualification_refs:
+  product_readiness_ref: null
+  terminal_maturity_ref: null
+  runtime_qualification_ref: null
+  adk_release_qualification_ref: null
+  knowledge_provider_qualification_ref: null
 
 rules:
-  - refs point to authoritative source; envelope does not copy source facts into a second SSOT
+  - refs point to authoritative source; envelope does not copy source facts or Domain Contract bodies into a second SSOT
+  - exact Digital Worker provider commit plus materially-used Domain/routing/Skill refs and digests are required before claiming L2 Formal reproducibility
   - exact provider, runtime-binding and source commits are required before claiming reproducibility
   - formal execution requires immutable ADK release identity plus exact Runtime source-set identity; a monolithic Runtime bundle is not required
   - when a Runtime Binding executes work, runtime distribution identity and execution receipt are required
   - asset_profile belongs to Agent Asset Control Plane and runtime_profile belongs to Runtime Binding; do not merge their semantics
   - L2 Formal Evidence requires exact-pinned Knowledge provider identity and contract digest
-  - missing knowledge/asset/runtime-binding/source-set/distribution/runtime identity blocks cross-repo reproducibility claim
+  - L1 to L2 governance escalation requires a new exact Execution Source Set and new session bootstrap; prior session/context remains provisional and is never promoted automatically
+  - formal Verification and Review reports bind exact Execution Source Set, exact reviewed result/source identity, decision actor identity, report sequence and supersession provenance
+  - when reviewed result or source-set identity changes, an earlier Verification or Review report remains historical and must not be silently reused for the new subject
+  - Delivery Receipt validation is engineering self-validation and Delivery Receipt decisions are implementation decisions; neither implies Independent Verification, Independent Review, Qualification or A7 approval
+  - Product Readiness, Terminal Maturity, Runtime Qualification, ADK Release Qualification and Knowledge Provider Qualification are orthogonal states and never inherit PASS from one another
+  - missing governance/knowledge/asset/runtime-binding/source-set/distribution/runtime/decision identity blocks cross-repo reproducibility claim
   - runtime execution receipt records execution facts only and must not contain verification_pass, release_ready or domain_gate_pass
   - runtime local conformance success never implies verification PASS

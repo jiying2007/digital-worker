@@ -103,6 +103,36 @@ def main() -> None:
     ownership = yaml.safe_load(OWNERSHIP.read_text(encoding="utf-8"))
     require(ownership["schema_version"] == 3, "ownership contract must use source-set schema v3")
     require(ownership["architecture_model"] == "four-control-planes-plus-replaceable-runtime-bindings", "ownership architecture drift")
+
+    projection = ownership.get("projection_semantics", {})
+    require(projection.get("repository_responsibility_projection") is True, "ownership model must be marked as a repository responsibility projection")
+    require(projection.get("not_equal_authority_architecture_planes") is True, "repository responsibility projection must not imply equal-authority architecture planes")
+    require(
+        projection.get("canonical_semantic_ownership_authority")
+        == "docs/adr/ADR-005-cross-repo-semantic-ownership-and-evidence-federation.md",
+        "semantic ownership authority must remain ADR-005",
+    )
+
+    artifact_semantics = ownership.get("artifact_semantics", {})
+    require(artifact_semantics.get("authority_kinds") == ["contract", "fact", "decision"], "artifact authority kinds drift")
+    require(artifact_semantics.get("evidence_layers") == ["fact", "receipt", "report", "qualification"], "artifact evidence layers drift")
+    require(artifact_semantics.get("decision_authority_is_orthogonal_to_evidence_layer") is True, "Decision Authority must remain orthogonal to evidence layer")
+    require(artifact_semantics.get("classification_is_artifact_level_not_producer_inferred") is True, "authority/evidence classification must stay artifact-level")
+
+    qualification_isolation = ownership.get("qualification_isolation", {})
+    require(
+        set(qualification_isolation.get("states", []))
+        == {
+            "product-readiness",
+            "terminal-maturity",
+            "runtime-qualification",
+            "adk-release-qualification",
+            "knowledge-provider-qualification",
+        },
+        "qualification isolation state set drift",
+    )
+    require(qualification_isolation.get("cross_state_pass_inheritance") == "forbidden", "qualification PASS inheritance must remain forbidden")
+
     require(ownership["planes"]["digital-worker"]["role"] == "rd-operating-model", "digital-worker role drift")
     require("expert-identity-and-routing" in ownership["planes"]["digital-worker"]["owns"], "digital-worker domain responsibility ownership missing")
     require("domain-workflow-and-gates" in ownership["planes"]["digital-worker"]["owns"], "digital-worker domain workflow ownership missing")
@@ -145,6 +175,16 @@ def main() -> None:
 
     identity = yaml.safe_load(IDENTITY.read_text(encoding="utf-8"))
     require(identity["schema_version"] == 3, "identity envelope must use source-set schema v3")
+
+    governance = identity.get("digital_worker_governance", {})
+    require(governance.get("provider") == "digital-worker", "identity envelope Digital Worker provider drift")
+    require(governance.get("repository") == "jiying2007/digital-worker", "identity envelope Digital Worker repository drift")
+    for key in [
+        "provider_commit", "contract_catalog_ref", "contract_catalog_digest", "selected_domain_refs",
+        "selected_routing_refs", "materially_used_domain_skills",
+    ]:
+        require(key in governance, f"Digital Worker governance identity missing {key}")
+
     require(identity["knowledge_context"]["provider"] == "knowledge-hub", "identity envelope knowledge provider drift")
     require(identity["agent_assets"]["provider"] == "agent-dev-kit", "identity envelope ADK provider drift")
     require("release_identity" in identity["agent_assets"], "identity envelope immutable release identity missing")
@@ -155,9 +195,40 @@ def main() -> None:
         "source_set_identity_ref", "runtime_distribution_identity_ref", "session_bootstrap_ref", "execution_receipt_ref",
     ]:
         require(key in identity["runtime_binding"], f"runtime binding identity missing {key}")
+
+    escalation = identity.get("governance_escalation", {})
+    for key in [
+        "from_level", "to_level", "escalation_reason", "prior_context_disposition",
+        "new_execution_source_set_ref", "new_session_bootstrap_ref", "formal_evidence_start_ref",
+    ]:
+        require(key in escalation, f"governance escalation provenance missing {key}")
+
+    require("reports" in identity.get("verification", {}), "identity envelope Verification provenance refs missing")
+    require("reports" in identity.get("review", {}), "identity envelope Review provenance refs missing")
+    require(
+        set(identity.get("qualification_refs", {}))
+        == {
+            "product_readiness_ref",
+            "terminal_maturity_ref",
+            "runtime_qualification_ref",
+            "adk_release_qualification_ref",
+            "knowledge_provider_qualification_ref",
+        },
+        "identity envelope orthogonal qualification refs drift",
+    )
+
     identity_text = IDENTITY.read_text(encoding="utf-8")
     require("asset_bundle_hash" not in identity_text, "identity envelope must not retain bundle-era identity")
-    require(any("must not contain verification_pass" in rule for rule in identity["rules"]), "receipt must explicitly reject verification_pass")
+    identity_rules = "\n".join(identity["rules"])
+    for marker in [
+        "exact Digital Worker provider commit",
+        "L1 to L2 governance escalation requires a new exact Execution Source Set",
+        "formal Verification and Review reports bind exact Execution Source Set",
+        "must not be silently reused",
+        "orthogonal states and never inherit PASS",
+        "must not contain verification_pass",
+    ]:
+        require(marker in identity_rules, f"identity envelope missing Stage 1 rule marker: {marker}")
 
     harvest = yaml.safe_load(HARVEST.read_text(encoding="utf-8"))
     require(harvest["to"] == "knowledge-hub", "Knowledge Harvest must route to Knowledge Hub")
@@ -176,7 +247,8 @@ def main() -> None:
 
     strategy = STRATEGY.read_text(encoding="utf-8")
     for token in [
-        "4 个稳定控制面", "N 个可替换 Runtime Binding", "jiying2007/codex", "Thin Session Bootstrap",
+        "4 个稳定 repository responsibility/control roles", "repository responsibility model", "不等于 ADR-003 的 architecture plane",
+        "N 个可替换 Runtime Binding", "jiying2007/codex", "Thin Session Bootstrap",
         "L0 — Quick Assist", "L1 — Governed Engineering", "L2 — Formal Evidence",
         "Asset Profile", "Runtime Profile", "Execution Receipt", "exact-source-set",
     ]:
@@ -197,7 +269,8 @@ def main() -> None:
         require(retired not in quickstart, f"quickstart retained retired runtime marker: {retired}")
 
     print(
-        "cross-repo integration validation PASS: exact provider pins/digests, canonical domain Skills, "
+        "cross-repo integration validation PASS: exact provider pins/digests, repository-responsibility projection, "
+        "artifact-level authority/evidence semantics, Stage 1 governance/decision provenance, canonical domain Skills, "
         "ADK reusable-asset boundary, thin Session Bootstrap, exact source-set and fail-closed Runtime boundaries"
     )
 
