@@ -34,6 +34,10 @@
 
 ## 当前端侧 / 嵌入式基线
 
+- 总体 Provider-neutral 架构：`adr/ADR-003-provider-neutral-ai-rd-target-architecture.md`；
+- 跨仓语义所有权、Authority 与证据联邦：`adr/ADR-005-cross-repo-semantic-ownership-and-evidence-federation.md`；
+- 长期 Operating Model：`strategy/ai-rd-target-operating-model.md`；
+- 跨仓终态成熟落地：`strategy/cross-repo-terminal-maturity-landing.md`；
 - 责任模型：`adr/ADR-004-edge-foundation-digital-responsibility-architecture.md` + `../domains/edge-foundation/domain.yaml`；
 - Canonical routing：`../domains/edge-foundation/routing.yaml`；
 - Canonical runtime：`../domains/edge-foundation/runtime/`；
@@ -53,8 +57,10 @@
 3. 二进制原始输入统一放 `source-materials/`；
 4. 原始材料规范化并核验来源后，才进入正式 Contract / ownership / decision；
 5. Provider-specific 事实不得覆盖 Provider-neutral 上位原则；
-6. Runtime-local PASS 不得推导 Domain Verification PASS；
+6. Runtime-local PASS 不得推导 digital-worker Domain Verification PASS；
 7. 任务分支生命周期遵循 `governance/branch-lifecycle.md`；
 8. Product readiness 由真实 canonical Pilot receipt / evaluator 计算，synthetic evidence 不计入产品成熟度；
 9. 活动文档与机器 Contract 不得引用已物理退役的 1+7、compatibility、shadow routing 或迁移 switch machinery；
-10. Productionization 前必须启用并验证 server-side repository governance，不能用 repository-local CI 替代。
+10. Productionization 前必须启用并验证 server-side repository governance，不能用 repository-local CI 替代；
+11. 跨仓协同优先使用 refs-first identity、exact Source Set、Receipt/Evidence，不复制其它仓的 canonical SSOT；
+12. Contract Authority、Fact Authority 与 Decision Authority 不得通过本地实现或 Provider PASS 混为一体。
