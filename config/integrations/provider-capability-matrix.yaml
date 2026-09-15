@@ -69,9 +69,11 @@ roles:
       external_practice_intake: native
       runtime_target_health: native
       loop_readiness: native
-      runtime_binding_comparison: r2-policy-ready
-      exact_release_source_set_comparison: r2-policy-ready
+      runtime_binding_comparison: r2-certifier-ready-real-evidence-pending
+      exact_release_source_set_comparison: r2-certifier-ready-real-evidence-pending
       execution_receipt_consumption: source-set-v2-ready
+      runtime_portability_certifier: native-fail-closed
+      r2_real_provider_evidence: pending-external-evidence
       terminal_replaceability: blocked-until-r2-real-provider-evidence
       production_runtime: unsupported-by-design
     decision: candidate-evaluation-lab
@@ -95,6 +97,7 @@ rules:
   formal_mode_requires_exact_pinned_knowledge: true
   terminal_replaceability_requires_r2_real_provider_substitution: true
   r1_binding_conformance_is_not_terminal_replaceability: true
+  r2_certifier_readiness_does_not_imply_terminal_replaceability: true
   governed_knowledge_route_registration_does_not_imply_real_reuse: true
   knowledge_closed_loop_requires_real_reuse_evidence: true
   capability_projection_must_reference_cross_repo_lock_identity: true
