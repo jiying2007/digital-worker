@@ -2,22 +2,8 @@ name: Terminal Consistency
 
 on:
   pull_request:
-    paths:
-      - 'README.md'
-      - 'docs/**'
-      - 'domains/edge-foundation/**'
-      - '嵌入式系统专家团-核心参考/**'
-      - 'scripts/**'
-      - '.github/workflows/terminal-consistency.yml'
   push:
     branches: [main]
-    paths:
-      - 'README.md'
-      - 'docs/**'
-      - 'domains/edge-foundation/**'
-      - '嵌入式系统专家团-核心参考/**'
-      - 'scripts/**'
-      - '.github/workflows/terminal-consistency.yml'
 
 permissions:
   contents: read
