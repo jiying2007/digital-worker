@@ -122,7 +122,7 @@ def main() -> None:
         require(target["legacy_execution_mode"] == legacy["workflow_mode"], f"Golden Case legacy execution mode drift: {case_id}")
         require(target["target_mode"] == route["target_mode"], f"Golden Case target mode disagrees with routing shadow: {case_id}")
         require(target["expected_experts"] == route["primary_experts"], f"Golden Case Expert expectation disagrees with routing shadow: {case_id}")
-        require(set(route.get("capabilities", []))).issubset(set(target["expected_capabilities"])), f"Golden Case drops routed Capability: {case_id}")
+        require(set(route.get("capabilities", [])).issubset(set(target["expected_capabilities"])), f"Golden Case drops routed Capability: {case_id}")
         require(set(target["expected_capabilities"]).issubset(capability_ids), f"Golden Case contains unknown Capability: {case_id}")
         require(target["required_assurance"] == route["assurance"], f"Golden Case Assurance expectation disagrees with routing shadow: {case_id}")
         require(set(target["expected_experts"]).issubset(expert_ids), f"Golden Case contains unknown target Expert: {case_id}")
