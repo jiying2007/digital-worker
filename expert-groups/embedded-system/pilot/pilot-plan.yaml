@@ -1,11 +1,25 @@
 schema_version: 1
-version: 0.6.0
+version: 0.7.0
 status: ready-for-real-binding
 artifact_requirements: artifact-requirements.yaml
 
 purpose: >-
   Validate the embedded expert-team operating model on real engineering work before any
   Production Ready claim or autonomy expansion.
+
+current_stage_review_policy:
+  stage: iterative-pilot
+  independent_review: preferred-but-not-required-when-unavailable
+  unavailable_review_substitute:
+    required_evidence: [verification_report, static_checks, hosted_ci]
+    evidence_must_be_traceable: true
+    unavailability_must_be_recorded: true
+    does_not_imply_independent_review_pass: true
+    does_not_imply_release_approval: true
+  review_release_guards:
+    device_or_release_evidence_still_required: true
+    human_a7_release_gate_still_required_for_release_action: true
+    hosted_ci_must_not_imply_device_or_release_pass: true
 
 tracks:
   debug:
@@ -22,7 +36,7 @@ tracks:
     minimum_real_completed_runs: 1
     candidate_task_types: [code_review, release_ota, technical_feasibility_review]
     preferred_golden_cases: [GC-REVIEW-001, GC-OTA-001]
-    required_evidence: [review_report_or_release_readiness, independent_review, open_risk_list]
+    required_evidence: [review_report_or_release_readiness, static_ci_or_review_evidence, open_risk_list, human_release_decision_when_release_action]
 
 promotion_gate:
   minimum_total_real_completed_runs: 3

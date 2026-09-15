@@ -45,6 +45,33 @@ def main():
         "reproduction_or_log" in plan["tracks"]["debug"]["required_evidence"],
         "debug Pilot must preserve reproduction-or-log evidence semantics",
     )
+
+    review_policy = plan["current_stage_review_policy"]
+    assert_true(review_policy["stage"] == "iterative-pilot", "review relaxation is only valid for iterative-pilot stage")
+    assert_true(
+        review_policy["independent_review"] == "preferred-but-not-required-when-unavailable",
+        "current-stage review policy drift",
+    )
+    substitute = review_policy["unavailable_review_substitute"]
+    assert_true(
+        set(substitute["required_evidence"]) == {"verification_report", "static_checks", "hosted_ci"},
+        "review substitute must stay verification + static + hosted CI",
+    )
+    for key in [
+        "evidence_must_be_traceable",
+        "unavailability_must_be_recorded",
+        "does_not_imply_independent_review_pass",
+        "does_not_imply_release_approval",
+    ]:
+        assert_true(substitute.get(key) is True, f"review-substitute safety requirement disabled: {key}")
+    release_guards = review_policy["review_release_guards"]
+    for key in [
+        "device_or_release_evidence_still_required",
+        "human_a7_release_gate_still_required_for_release_action",
+        "hosted_ci_must_not_imply_device_or_release_pass",
+    ]:
+        assert_true(release_guards.get(key) is True, f"review/release guard disabled: {key}")
+
     for key in [
         "real_run_requires_exact_base_commit",
         "real_run_requires_full_40_hex_base_commit",
@@ -55,15 +82,36 @@ def main():
         "superseding_run_required_for_completed_correction",
     ]:
         assert_true(common.get(key) is True, f"pilot trust requirement disabled: {key}")
+    assert_true(common["current_stage_review_policy"] == "independent-review-optional-when-unavailable", "artifact review policy drift")
+    for key in [
+        "review_report_optional_for_completion",
+        "review_substitute_requires_verification_report",
+        "review_substitute_requires_traceable_static_or_hosted_ci_evidence",
+        "review_substitute_does_not_imply_independent_review_pass",
+        "review_substitute_does_not_imply_release_approval",
+    ]:
+        assert_true(common.get(key) is True, f"artifact review safety requirement disabled: {key}")
+
     base_pattern = run_schema["properties"]["base_commit"].get("pattern")
     assert_true(base_pattern == "^[0-9a-fA-F]{40}$", "pilot-run schema must require full 40-hex base commit when present")
 
     for track, cfg in requirements["tracks"].items():
         assert_true(cfg["required_refs"], f"pilot track must require at least one structured ref: {track}")
+        assert_true("verification_report_ref" in cfg["required_refs"], f"Verification must remain required for current-stage completion: {track}")
+        assert_true("review_report_ref" not in cfg["required_refs"], f"Independent Review must not hard-block iterative Pilot completion: {track}")
         for field in cfg["required_refs"]:
             assert_true(field in run_properties, f"artifact requirements references unknown pilot-run field: {track} -> {field}")
         for kind in cfg["required_extra_artifacts"]:
             assert_true(kind and isinstance(kind, str), f"invalid required extra artifact kind: {track}")
+
+    assert_true(
+        "human_release_decision_when_release_action" in plan["tracks"]["review_release"]["required_evidence"],
+        "review/release track must preserve human release decision evidence",
+    )
+    assert_true(
+        "static_ci_or_review_evidence" in plan["tracks"]["review_release"]["required_evidence"],
+        "review/release track must preserve static/CI-or-review evidence",
+    )
 
     validate(ROOT / "tests" / "fixtures" / "engineering-task-package.valid.json", EMB / "schemas" / "engineering-task-package.schema.json")
     validate(ROOT / "tests" / "fixtures" / "delivery-receipt.valid.json", ROOT / "schemas" / "delivery-receipt.v1.schema.json")
@@ -87,7 +135,7 @@ def main():
 
     assert_true((ROOT / "schemas" / "pilot-evidence-bundle.v1.schema.json").is_file(), "pilot evidence bundle schema missing")
     assert_true((ROOT / "schemas" / "pilot-status.v1.schema.json").is_file(), "pilot status schema missing")
-    print("embedded pilot operations validation PASS: plan/requirements/fixtures/CLI/material readiness semantics are consistent")
+    print("embedded pilot operations validation PASS: current-stage review is optional when unavailable; Verification/static/CI and release guards remain fail-closed")
 
 
 if __name__ == "__main__":
