@@ -94,7 +94,8 @@ jobs:
           result = json.load(open(sys.argv[1], encoding='utf-8'))
           assert result['status'] == 'BLOCKED', result
           assert result['eligible_real_receipts'] == 1, result
-          assert result['track_counts']['feature'] >= 1, result
+          assert result['track_coverage']['feature']['eligible_count'] == 1, result
+          assert result['track_coverage']['feature']['run_ids'] == ['FEATURE-PCR02-OTA-001'], result
           PY
       - name: Upload real Feature Pilot frozen evidence
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
