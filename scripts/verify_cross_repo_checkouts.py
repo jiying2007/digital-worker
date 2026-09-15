@@ -89,6 +89,92 @@ def verify_contract(
     }
 
 
+def verify_runtime_practice_eval(entry: dict, destination: Path) -> dict:
+    certifier_rel = entry["runtime_portability_certifier"]
+    test_rel = entry["runtime_portability_certifier_test"]
+    qualification_rel = entry["runtime_portability_qualification_manifest"]
+    cli_rel = entry["runtime_portability_cli_contract"]
+    paths = {
+        "certifier": destination / certifier_rel,
+        "test": destination / test_rel,
+        "qualification": destination / qualification_rel,
+        "cli": destination / cli_rel,
+    }
+    for label, path in paths.items():
+        if not path.is_file() or path.is_symlink():
+            fail(f"runtime_practice_eval: {label} missing or not a regular file at locked commit: {path.relative_to(destination)}")
+
+    contract = json.loads((destination / entry["contract"]).read_text(encoding="utf-8"))
+    evidence_level = entry["runtime_portability_evidence_level"]
+    if contract.get("terminal_replaceability_evidence_level") != evidence_level:
+        fail("runtime_practice_eval: terminal R2 evidence level does not match pinned runtime pilot contract")
+    candidates = {item.get("runtime"): item for item in contract.get("candidate_runtime_bindings", []) if isinstance(item, dict)}
+    if candidates.get("codex", {}).get("status") != "source-set-bound":
+        fail("runtime_practice_eval: pinned Codex comparison binding is not source-set-bound")
+    if candidates.get("claude-code", {}).get("status") != "future-binding":
+        fail("runtime_practice_eval: second runtime blocker must remain future-binding until real provider evidence exists")
+
+    certifier_text = paths["certifier"].read_text(encoding="utf-8")
+    for marker in [
+        'TERMINAL_EVIDENCE_LEVEL = "R2-real-provider-substitution"',
+        'DEFAULT_EVIDENCE = "reports/long-term-assets/runtime-portability-current.json"',
+        "class PortabilityBlocked",
+        "LTA-02 requires at least two real runtime execution receipts",
+        "execution receipt contains a forbidden verification PASS claim",
+    ]:
+        if marker not in certifier_text:
+            fail(f"runtime_practice_eval: portability certifier marker missing: {marker}")
+
+    test_text = paths["test"].read_text(encoding="utf-8")
+    for marker in [
+        "Missing real comparison evidence is a BLOCKED external-evidence state, never PASS.",
+        "self-test-only two-runtime fixture",
+        "R1 binding conformance must never qualify terminal portability.",
+        "runtime binding is not source-set-bound/ready: claude-code",
+    ]:
+        if marker not in test_text:
+            fail(f"runtime_practice_eval: portability certifier regression marker missing: {marker}")
+
+    qualification = json.loads(paths["qualification"].read_text(encoding="utf-8"))
+    requirements = {
+        item.get("id"): item
+        for item in qualification.get("blocking_requirements", [])
+        if isinstance(item, dict) and isinstance(item.get("id"), str)
+    }
+    lta02 = requirements.get("LTA-02")
+    if not isinstance(lta02, dict):
+        fail("runtime_practice_eval: LTA-02 qualification requirement missing")
+    expected_lta02 = {
+        "status": "blocked_external_evidence",
+        "implementation_status": "certifier-ready",
+        "required_evidence_level": evidence_level,
+        "certifier": "tools.control_plane.runtime_portability",
+        "default_evidence_path": "reports/long-term-assets/runtime-portability-current.json",
+        "remaining_external_blocker": "second-real-runtime-provider-binding-and-R2-comparison-evidence",
+    }
+    for key, expected in expected_lta02.items():
+        if lta02.get(key) != expected:
+            fail(f"runtime_practice_eval: LTA-02 {key} drift: {lta02.get(key)!r} != {expected!r}")
+    if lta02.get("required_healthy_runtime_bindings", 0) < 2:
+        fail("runtime_practice_eval: LTA-02 must require at least two healthy runtime bindings")
+    if lta02.get("r1_binding_conformance_is_terminal_evidence") is not False:
+        fail("runtime_practice_eval: R1 binding conformance must remain non-terminal")
+
+    cli_text = paths["cli"].read_text(encoding="utf-8")
+    if '"runtime-portability": "tools.control_plane.runtime_portability"' not in cli_text:
+        fail("runtime_practice_eval: runtime-portability CLI surface missing")
+
+    return {
+        "status": entry["runtime_portability_status"],
+        "certifier": certifier_rel,
+        "certifier_test": test_rel,
+        "qualification_manifest": qualification_rel,
+        "cli_contract": cli_rel,
+        "evidence_level": evidence_level,
+        "remaining_external_blocker": lta02["remaining_external_blocker"],
+    }
+
+
 def verify_one(name: str, entry: dict, destination: Path, fetch: bool) -> dict:
     repo = entry["repository"]
     expected_repo = EXPECTED_REPOS[name]
@@ -141,6 +227,9 @@ def verify_one(name: str, entry: dict, destination: Path, fetch: bool) -> dict:
         if actual_tag_commit != baseline["commit"]:
             fail(f"{name}: immutable release tag does not peel to release commit")
         report["release_baseline"] = baseline
+
+    if name == "runtime_practice_eval":
+        report["runtime_portability"] = verify_runtime_practice_eval(entry, destination)
 
     if name == "codex":
         bootstrap = verify_contract(
