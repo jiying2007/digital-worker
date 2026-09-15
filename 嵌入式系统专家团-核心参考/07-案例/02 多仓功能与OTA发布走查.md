@@ -1,7 +1,7 @@
 # 案例：Linux + MCU 多仓功能与 OTA 发布走查
 
 > 示例说明“一次跨仓功能如何进入 Release/OTA readiness”，**不计入 real Pilot evidence**。  
-> 通用规则见 [任务类型运行矩阵](../03-流程与运行/05%20任务类型运行矩阵.md)、[任务生命周期与 Gate](../03-流程与运行/01%20任务生命周期与Gate.md)、[验证/评审/发布](../03-流程与运行/04%20验证评审发布与异常恢复.md)。专业方法见 [嵌入式架构](../04-专业能力/01%20嵌入式架构领域指南.md)、[MCU/RTOS](../04-专业能力/03%20MCU%20RTOS领域指南.md) 和 [独立审查](../04-专业能力/07%20独立审查领域指南.md)。
+> 通用规则见 [任务类型运行矩阵](../03-流程与运行/05%20任务类型运行矩阵.md)、[任务生命周期与 Gate](../03-流程与运行/01%20任务生命周期与Gate.md)、[验证/评审/发布](../03-流程与运行/04%20验证评审发布与异常恢复.md)。专业方法见 [嵌入式架构](../04-专业能力/01%20嵌入式架构能力域指南.md)、[MCU/RTOS](../04-专业能力/03%20MCU%20RTOS能力域指南.md)；Release 风险边界见 [Independent Review 与发布边界](../06-治理与评审/06%20Independent%20Review与发布边界.md)。
 
 ## 1. Task
 
@@ -17,7 +17,7 @@
 
 ## 3. Routing
 
-功能阶段由 P02 架构收敛跨仓接口，P03/P04/P05 按实现面提供平台事实；一个 Run 可以生成多个 repo-specific Engineering Package，但共享同一 Acceptance 和系统 identity。
+任务由 **Embedded System Expert** 负责，`embedded.architecture` 收敛跨仓接口与系统约束；按实际修改面组合 `embedded.linux-bsp`、`embedded.mcu-rtos`、`embedded.driver-component`。一个 Run 可以生成多个 repo-specific Engineering Package，但共享同一 Acceptance、Work Item 与系统 identity。Verification 属于 Assurance；进入 release readiness 时再按政策触发 Independent Review / human A7 decision。
 
 示例：
 
