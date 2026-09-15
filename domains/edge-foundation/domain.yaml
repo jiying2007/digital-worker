@@ -102,10 +102,12 @@ assurance:
     verification:
       name: 验证
       name_en: Verification
+      contract: assurance/verification.yaml
       self_approval_by_implementation: false
     review:
       name: 独立审查
       name_en: Independent Review
+      contract: assurance/review.yaml
       independent_from_domain_decision_and_execution: true
     evidence:
       name: 证据

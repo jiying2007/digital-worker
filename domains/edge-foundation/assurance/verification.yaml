@@ -1,0 +1,35 @@
+schema_version: 1
+id: edge-assurance-verification
+name: 验证
+name_en: Verification
+kind: assurance
+status: phase4-prep-target
+ownership_authority: canonical
+execution_surface: legacy-compatible
+legacy_execution_adapter: ../../../expert-groups/embedded-system/contracts/experts/verification.io.yaml
+
+consumes:
+  - task-charter
+  - engineering-task-package
+  - delivery-receipt
+  - evidence-ref
+produces:
+  - verification-report
+hands_off_to:
+  - edge-coordination
+  - assurance.review
+
+constraints:
+  - no-cross-layer-pass-inference
+  - implementation-owner-cannot-self-final-verify
+  - unverified-items-must-be-preserved
+
+independence:
+  implementation_may_self_approve: false
+  runtime_local_pass_is_verification_pass: false
+  verification_pass_is_release_approval: false
+
+rules:
+  legacy_expert_identity_forbidden: true
+  execution_adapter_does_not_define_responsibility: true
+  evidence_source_of_truth_stays_at_source: true
