@@ -33,6 +33,7 @@ coordination_role:
   name: 端侧协调角色
   name_en: Edge Coordination Role
   type: role
+  contract: coordination.yaml
   is_domain_expert: false
   responsibilities:
     - intake
