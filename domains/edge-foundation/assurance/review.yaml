@@ -25,6 +25,7 @@ formal_provenance:
   require_review_switch: --require-review
   required_fields:
     - report_id
+    - run_id
     - independence_confirmed
     - independence_evidence_refs
     - reviewed_subject.execution_source_set_ref
@@ -34,6 +35,7 @@ formal_provenance:
     - report_sequence
     - supersedes
   exact_bindings:
+    run_id: session-bootstrap.work_identity.run_id
     execution_source_set_ref: session-bootstrap.execution_source_set.identity
     verification_report_ref: verification-report:<report_id>
     reviewed_result_identity: same-as-verification
@@ -47,6 +49,7 @@ formal_provenance:
 rules:
   legacy_expert_identity_forbidden: true
   evidence_source_of_truth_stays_at_source: true
+  formal_report_run_id_must_match_frozen_work_run_identity: true
   formal_report_must_bind_exact_execution_source_set: true
   formal_review_must_consume_exact_verification_report: true
   formal_report_must_not_silently_reuse_stale_subject: true
