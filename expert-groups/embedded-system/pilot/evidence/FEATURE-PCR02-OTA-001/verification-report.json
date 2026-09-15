@@ -1,7 +1,7 @@
 {
   "run_id": "FEATURE-PCR02-OTA-001",
   "verifier": "github-actions/verify-ota",
-  "implementation_owner": "engineer-plus-codex",
+  "implementation_owner": "engineer-plus-engineering-agent-runtime",
   "independence_confirmed": true,
   "layers": {"implemented": "pass", "host": "pass", "cross_build": "not_applicable", "sil": "not_applicable", "device": "not_applicable", "hil": "not_applicable", "release": "not_applicable"},
   "overall": "PASS",
