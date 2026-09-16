@@ -39,17 +39,17 @@
     "runtime_practice_eval": {
       "repository": "jiying2007/llm_agent",
       "ref": "main",
-      "commit": "73d4493a85839ff4e0c9351050148495f932d9ce",
+      "commit": "35e08f304be0acfa349c58f4a7708b9d3040704a",
       "contract": "manifests/digital_worker_runtime_pilot.json",
       "contract_version": "1.3",
-      "contract_canonical_sha256": "5c6ca1e673c405df06817d9557e3490af6019c113f69b45b4955eaca988f7377",
+      "contract_canonical_sha256": "f97967828889c8ff9c7a6c2398ffa8b4a89ce235d69305b0cf2b3e6c30219a2a",
       "runtime_portability_certifier": "tools/control_plane/runtime_portability.py",
       "runtime_portability_certifier_test": "tests/test_runtime_portability_certifier.sh",
       "runtime_portability_qualification_manifest": "manifests/long_term_asset_qualification.json",
       "runtime_portability_cli_contract": "tools/control_plane/cli.py",
       "runtime_portability_evidence_level": "R2-real-provider-substitution",
       "runtime_portability_status": "certifier-ready-real-evidence-pending",
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_R2_POLICY_R2_CERTIFIER_READY_REAL_EVIDENCE_PENDING_BLOCKER_PRESERVED"
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_R1_CODEX_CLAUDE_R2_POLICY_R2_CERTIFIER_READY_REAL_EVIDENCE_PENDING_BLOCKER_PRESERVED"
     }
   },
   "runtime_bindings": {
@@ -70,6 +70,28 @@
       "execution_receipt_schema": "schemas/runtime-execution-receipt.v2.schema.json",
       "execution_receipt_schema_version": 2,
       "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_SOURCE_SET_BOUND_FORMAL_IDENTITY_WORK_RUN_RECEIPT_V2"
+    },
+    "claude-code": {
+      "repository": "jiying2007/claude",
+      "ref": "main",
+      "commit": "9768012c46f348421050192919a91b8070b5d672",
+      "contract": "manifests/integrations/digital-worker-runtime-binding.json",
+      "contract_version": "1.0",
+      "contract_canonical_sha256": "8d4f59d4a38ef0bdefc69c69d7695f4c3792c36b2e986aecdc228e7afd3378ec",
+      "runtime_target": "claude-code",
+      "required_asset_profile": "embedded-fullstack",
+      "source_identity_mode": "exact-release-source-blobs",
+      "runtime_readiness": "SOURCE_SET_READY_R1",
+      "session_bootstrap_contract": "manifests/session_bootstrap.json",
+      "session_bootstrap_contract_version": "1.0",
+      "session_bootstrap_contract_canonical_sha256": "b950fdc743b2c1e55e1c3bb329df5bf5c3d11de170a657be679c7479a1769691",
+      "execution_receipt_schema": "schemas/runtime-execution-receipt.v2.schema.json",
+      "execution_receipt_schema_version": 2,
+      "r1_exact_head_workflow_run": "jiying2007/claude/actions/runs/35111664791",
+      "r1_fresh_main_workflow_run": "jiying2007/claude/actions/runs/35111772454",
+      "verified_runtime_execution_receipt": "PENDING",
+      "r2_real_provider_substitution": "PENDING",
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_SOURCE_SET_READY_R1_REAL_RUNTIME_RECEIPT_PENDING_R2_PENDING"
     }
   },
   "assurance_bindings": {
