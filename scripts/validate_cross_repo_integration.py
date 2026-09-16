@@ -58,7 +58,10 @@ def main() -> None:
 
     knowledge = lock["providers"]["knowledge_control_plane"]
     require("ROUTE_REGISTERED" in knowledge.get("validation", ""), "Knowledge Hub governed route must be explicitly promoted")
-    require("FIRST_REAL_REUSE_ELIGIBLE" in knowledge.get("validation", ""), "Knowledge Hub integration must project the first real governed reuse evidence")
+    require(
+        "FIRST_REAL_REUSE_ELIGIBLE" in knowledge.get("validation", ""),
+        "Knowledge Hub integration must project the first real governed reuse evidence",
+    )
 
     runtime_eval = lock["providers"]["runtime_practice_eval"]
     require("R1_CODEX_CLAUDE" in runtime_eval.get("validation", ""), "llm_agent must project both R1 runtime bindings")
@@ -141,18 +144,36 @@ def main() -> None:
     ownership = yaml.safe_load(OWNERSHIP.read_text(encoding="utf-8"))
     require(ownership["schema_version"] == 3, "ownership contract must use source-set schema v3")
     require(ownership["architecture_model"] == "four-control-planes-plus-replaceable-runtime-bindings", "ownership architecture drift")
+
     projection = ownership.get("projection_semantics", {})
     require(projection.get("repository_responsibility_projection") is True, "ownership model must be marked as a repository responsibility projection")
     require(projection.get("not_equal_authority_architecture_planes") is True, "repository responsibility projection must not imply equal-authority architecture planes")
-    require(projection.get("canonical_semantic_ownership_authority") == "docs/adr/ADR-005-cross-repo-semantic-ownership-and-evidence-federation.md", "semantic ownership authority must remain ADR-005")
+    require(
+        projection.get("canonical_semantic_ownership_authority")
+        == "docs/adr/ADR-005-cross-repo-semantic-ownership-and-evidence-federation.md",
+        "semantic ownership authority must remain ADR-005",
+    )
+
     artifact_semantics = ownership.get("artifact_semantics", {})
     require(artifact_semantics.get("authority_kinds") == ["contract", "fact", "decision"], "artifact authority kinds drift")
     require(artifact_semantics.get("evidence_layers") == ["fact", "receipt", "report", "qualification"], "artifact evidence layers drift")
     require(artifact_semantics.get("decision_authority_is_orthogonal_to_evidence_layer") is True, "Decision Authority must remain orthogonal to evidence layer")
     require(artifact_semantics.get("classification_is_artifact_level_not_producer_inferred") is True, "authority/evidence classification must stay artifact-level")
+
     qualification_isolation = ownership.get("qualification_isolation", {})
-    require(set(qualification_isolation.get("states", [])) == {"product-readiness", "terminal-maturity", "runtime-qualification", "adk-release-qualification", "knowledge-provider-qualification"}, "qualification isolation state set drift")
+    require(
+        set(qualification_isolation.get("states", []))
+        == {
+            "product-readiness",
+            "terminal-maturity",
+            "runtime-qualification",
+            "adk-release-qualification",
+            "knowledge-provider-qualification",
+        },
+        "qualification isolation state set drift",
+    )
     require(qualification_isolation.get("cross_state_pass_inheritance") == "forbidden", "qualification PASS inheritance must remain forbidden")
+
     require(ownership["planes"]["digital-worker"]["role"] == "rd-operating-model", "digital-worker role drift")
     require("expert-identity-and-routing" in ownership["planes"]["digital-worker"]["owns"], "digital-worker domain responsibility ownership missing")
     require("domain-workflow-and-gates" in ownership["planes"]["digital-worker"]["owns"], "digital-worker domain workflow ownership missing")
@@ -176,34 +197,90 @@ def main() -> None:
     require(capability["schema_version"] == 3, "capability matrix must use source-set schema v3")
     require(capability["provider_selection"] == "not_frozen", "capability matrix must not freeze provider choice")
     require(capability["rules"]["no_poc_evidence_no_pass"] is True, "provider matrix must be evidence-first")
+
     cap_knowledge = capability["roles"]["knowledge_control_plane"]
-    require(cap_knowledge["evidence"] == {"identity_ref": "config/integrations/cross-repo-lock.json#/providers/knowledge_control_plane", "checkout_verification": "permanent-digital-worker-ci", "first_real_reuse_work_item": "KNOWLEDGE-E3-GOVERNANCE-001", "first_real_reuse_receipt": "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-GOVERNANCE-001/knowledge-reuse-receipt.json"}, "Knowledge Hub capability projection must bind authoritative identity and first real reuse receipt")
+    require(
+        cap_knowledge["evidence"]
+        == {
+            "identity_ref": "config/integrations/cross-repo-lock.json#/providers/knowledge_control_plane",
+            "checkout_verification": "permanent-digital-worker-ci",
+            "first_real_reuse_work_item": "KNOWLEDGE-E3-GOVERNANCE-001",
+            "first_real_reuse_receipt": "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-GOVERNANCE-001/knowledge-reuse-receipt.json",
+        },
+        "Knowledge Hub capability projection must bind authoritative identity and first real reuse receipt",
+    )
     require(cap_knowledge["capabilities"]["digital_worker_project_route"] == "registered-governed-route", "Knowledge Hub governed project route must stay registered")
-    require(cap_knowledge["capabilities"]["digital_worker_real_reuse_evidence"] == "first-real-reuse-eligible", "Knowledge Hub first real reuse evidence projection drift")
+    require(
+        cap_knowledge["capabilities"]["digital_worker_real_reuse_evidence"] == "first-real-reuse-eligible",
+        "Knowledge Hub first real reuse evidence projection drift",
+    )
     require(cap_knowledge["decision"] == "candidate-not-default", "Knowledge Hub real reuse must not freeze provider selection")
+
     cap_adk = capability["roles"]["agent_asset_control_plane"]
-    require(cap_adk["evidence"] == {"identity_ref": "config/integrations/cross-repo-lock.json#/providers/agent_asset_control_plane", "checkout_verification": "permanent-digital-worker-ci"}, "ADK capability projection must reference the authoritative cross-repo lock identity")
+    require(
+        cap_adk["evidence"]
+        == {
+            "identity_ref": "config/integrations/cross-repo-lock.json#/providers/agent_asset_control_plane",
+            "checkout_verification": "permanent-digital-worker-ci",
+        },
+        "ADK capability projection must reference the authoritative cross-repo lock identity",
+    )
     require(cap_adk["capabilities"]["exact_source_set_handoff"] == "native", "ADK source-set capability missing")
+
     cap_codex = capability["roles"]["runtime_binding"]["candidates"]["codex"]
-    require(cap_codex["identity_ref"] == "config/integrations/cross-repo-lock.json#/runtime_bindings/codex", "Codex capability projection must reference the authoritative cross-repo lock identity")
+    require(
+        cap_codex["identity_ref"] == "config/integrations/cross-repo-lock.json#/runtime_bindings/codex",
+        "Codex capability projection must reference the authoritative cross-repo lock identity",
+    )
     require(cap_codex["capabilities"]["thin_session_bootstrap_l0_l1_l2"] == "native", "Codex thin bootstrap capability missing")
     require(cap_codex["capabilities"]["execution_receipt_contract"] == "source-set-v2-native", "Codex capability projection must require receipt v2")
+
     cap_claude = capability["roles"]["runtime_binding"]["candidates"]["claude_code"]
-    require(cap_claude["identity_ref"] == "config/integrations/cross-repo-lock.json#/runtime_bindings/claude-code", "Claude capability projection must reference the authoritative cross-repo lock identity")
-    require(cap_claude["repository"] == "jiying2007/claude" and cap_claude["runtime_target"] == "claude-code", "Claude capability projection identity drift")
-    require(cap_claude["status"] == "source-set-bound" and cap_claude["r1_binding_ready"] is True, "Claude capability projection must remain R1-ready")
-    require(exact_sha(cap_claude["binding_commit"]), "Claude capability projection binding commit must be exact")
-    require(cap_claude["verified_runtime_execution_receipt"] == "pending", "Claude real execution receipt projection must remain pending")
-    require(cap_claude["r2_real_provider_substitution"] == "pending", "Claude R2 projection must remain pending")
+    require(
+        cap_claude["identity_ref"] == "config/integrations/cross-repo-lock.json#/runtime_bindings/claude-code",
+        "Claude capability projection must reference the authoritative cross-repo lock identity",
+    )
+    require(cap_claude["repository"] == "jiying2007/claude", "Claude capability repository drift")
+    require(cap_claude["runtime_target"] == "claude-code", "Claude capability target drift")
+    require(cap_claude["status"] == "source-set-bound", "Claude capability status drift")
+    require(exact_sha(cap_claude["binding_commit"]), "Claude capability binding commit must be exact")
+    require(cap_claude["r1_binding_ready"] is True, "Claude capability R1 readiness must remain true")
+    require(cap_claude["verified_runtime_execution_receipt"] == "pending", "Claude real execution receipt must remain pending")
+    require(cap_claude["r2_real_provider_substitution"] == "pending", "Claude R2 evidence must remain pending")
+
     cap_eval = capability["roles"]["runtime_practice_eval"]
-    require(cap_eval["evidence"] == {"identity_ref": "config/integrations/cross-repo-lock.json#/providers/runtime_practice_eval", "checkout_verification": "permanent-digital-worker-ci"}, "llm_agent capability projection must reference the authoritative cross-repo lock identity")
+    require(
+        cap_eval["evidence"]
+        == {
+            "identity_ref": "config/integrations/cross-repo-lock.json#/providers/runtime_practice_eval",
+            "checkout_verification": "permanent-digital-worker-ci",
+        },
+        "llm_agent capability projection must reference the authoritative cross-repo lock identity",
+    )
     require(cap_eval["capabilities"]["runtime_binding_comparison"] == "r2-policy-ready", "llm_agent R2 comparison policy projection missing")
     require(cap_eval["capabilities"]["terminal_replaceability"] == "blocked-until-r2-real-provider-evidence", "llm_agent real-provider blocker projection must stay explicit")
     require(cap_eval["capabilities"]["production_runtime"] == "unsupported-by-design", "llm_agent must not become production runtime")
-    for key in ["terminal_replaceability_requires_r2_real_provider_substitution", "r1_binding_conformance_is_not_terminal_replaceability", "governed_knowledge_route_registration_does_not_imply_real_reuse", "knowledge_closed_loop_requires_real_reuse_evidence", "single_real_reuse_does_not_imply_provider_qualification", "capability_projection_must_reference_cross_repo_lock_identity"]:
+
+    for key in [
+        "terminal_replaceability_requires_r2_real_provider_substitution",
+        "r1_binding_conformance_is_not_terminal_replaceability",
+        "governed_knowledge_route_registration_does_not_imply_real_reuse",
+        "knowledge_closed_loop_requires_real_reuse_evidence",
+        "single_real_reuse_does_not_imply_provider_qualification",
+        "capability_projection_must_reference_cross_repo_lock_identity",
+    ]:
         require(capability["rules"][key] is True, f"required capability projection rule disabled: {key}")
+
     rendered_capability = json.dumps(capability, ensure_ascii=False, sort_keys=True)
-    for retired_projection_key in ['"pinned_commit"', '"contract_version"', '"session_bootstrap_contract"', '"execution_receipt_schema"', "pending-governed-registration", "eed4244e5ce15101210132a0680b620cc4dabfe7", "270d38f8b65da32cd8c7c4d5c2cac427682a6d28"]:
+    for retired_projection_key in [
+        '"pinned_commit"',
+        '"contract_version"',
+        '"session_bootstrap_contract"',
+        '"execution_receipt_schema"',
+        "pending-governed-registration",
+        "eed4244e5ce15101210132a0680b620cc4dabfe7",
+        "270d38f8b65da32cd8c7c4d5c2cac427682a6d28",
+    ]:
         require(retired_projection_key not in rendered_capability, f"stale duplicated capability identity resurfaced: {retired_projection_key}")
 
     skills_doc = yaml.safe_load(SKILLS.read_text(encoding="utf-8"))
@@ -221,28 +298,59 @@ def main() -> None:
 
     identity = yaml.safe_load(IDENTITY.read_text(encoding="utf-8"))
     require(identity["schema_version"] == 3, "identity envelope must use source-set schema v3")
+
     governance = identity.get("digital_worker_governance", {})
     require(governance.get("provider") == "digital-worker", "identity envelope Digital Worker provider drift")
     require(governance.get("repository") == "jiying2007/digital-worker", "identity envelope Digital Worker repository drift")
-    for key in ["provider_commit", "contract_catalog_ref", "contract_catalog_digest", "selected_domain_refs", "selected_routing_refs", "materially_used_domain_skills"]:
+    for key in [
+        "provider_commit", "contract_catalog_ref", "contract_catalog_digest", "selected_domain_refs",
+        "selected_routing_refs", "materially_used_domain_skills",
+    ]:
         require(key in governance, f"Digital Worker governance identity missing {key}")
+
     require(identity["knowledge_context"]["provider"] == "knowledge-hub", "identity envelope knowledge provider drift")
     require(identity["agent_assets"]["provider"] == "agent-dev-kit", "identity envelope ADK provider drift")
     require("release_identity" in identity["agent_assets"], "identity envelope immutable release identity missing")
     require("source_set_ref" in identity["agent_assets"], "identity envelope source-set ref missing")
     require(identity["runtime_evaluation"]["evaluator"] == "llm_agent", "identity envelope runtime evaluator drift")
-    for key in ["repository", "commit", "runtime_target", "runtime_profile", "runtime_host", "source_set_identity_ref", "runtime_distribution_identity_ref", "session_bootstrap_ref", "execution_receipt_ref"]:
+    for key in [
+        "repository", "commit", "runtime_target", "runtime_profile", "runtime_host",
+        "source_set_identity_ref", "runtime_distribution_identity_ref", "session_bootstrap_ref", "execution_receipt_ref",
+    ]:
         require(key in identity["runtime_binding"], f"runtime binding identity missing {key}")
+
     escalation = identity.get("governance_escalation", {})
-    for key in ["from_level", "to_level", "escalation_reason", "prior_context_disposition", "new_execution_source_set_ref", "new_session_bootstrap_ref", "formal_evidence_start_ref"]:
+    for key in [
+        "from_level", "to_level", "escalation_reason", "prior_context_disposition",
+        "new_execution_source_set_ref", "new_session_bootstrap_ref", "formal_evidence_start_ref",
+    ]:
         require(key in escalation, f"governance escalation provenance missing {key}")
+
     require("reports" in identity.get("verification", {}), "identity envelope Verification provenance refs missing")
     require("reports" in identity.get("review", {}), "identity envelope Review provenance refs missing")
-    require(set(identity.get("qualification_refs", {})) == {"product_readiness_ref", "terminal_maturity_ref", "runtime_qualification_ref", "adk_release_qualification_ref", "knowledge_provider_qualification_ref"}, "identity envelope orthogonal qualification refs drift")
+    require(
+        set(identity.get("qualification_refs", {}))
+        == {
+            "product_readiness_ref",
+            "terminal_maturity_ref",
+            "runtime_qualification_ref",
+            "adk_release_qualification_ref",
+            "knowledge_provider_qualification_ref",
+        },
+        "identity envelope orthogonal qualification refs drift",
+    )
+
     identity_text = IDENTITY.read_text(encoding="utf-8")
     require("asset_bundle_hash" not in identity_text, "identity envelope must not retain bundle-era identity")
     identity_rules = "\n".join(identity["rules"])
-    for marker in ["exact Digital Worker provider commit", "L1 to L2 governance escalation requires a new exact Execution Source Set", "formal Verification and Review reports bind exact Execution Source Set", "must not be silently reused", "orthogonal states and never inherit PASS", "must not contain verification_pass"]:
+    for marker in [
+        "exact Digital Worker provider commit",
+        "L1 to L2 governance escalation requires a new exact Execution Source Set",
+        "formal Verification and Review reports bind exact Execution Source Set",
+        "must not be silently reused",
+        "orthogonal states and never inherit PASS",
+        "must not contain verification_pass",
+    ]:
         require(marker in identity_rules, f"identity envelope missing Stage 1 rule marker: {marker}")
 
     harvest = yaml.safe_load(HARVEST.read_text(encoding="utf-8"))
@@ -250,22 +358,47 @@ def main() -> None:
     require(harvest["adapter"]["digital_worker_must_not_reimplement_provider_schema"] is True, "digital-worker must not fork Knowledge Hub proposal schema")
     require(harvest["hard_rules"]["direct_active_write"] is False, "Knowledge Harvest must not directly write active knowledge")
     require(harvest["hard_rules"]["owner_review_required"] is True, "Knowledge promotion requires owner review")
+
     adapter = ADAPTER.read_text(encoding="utf-8")
-    for token in ["knowledge-context.sh", "knowledge-evidence-pack.sh", "knowledge-action-check.sh", "knowledge-proposal-route.sh", "bootstrap-local-catalog", "KNOWLEDGE_HUB_ROOT", "BLOCKED_PROVIDER_IDENTITY_MISMATCH"]:
+    for token in [
+        "knowledge-context.sh", "knowledge-evidence-pack.sh", "knowledge-action-check.sh", "knowledge-proposal-route.sh",
+        "bootstrap-local-catalog", "KNOWLEDGE_HUB_ROOT", "BLOCKED_PROVIDER_IDENTITY_MISMATCH",
+    ]:
         require(token in adapter, f"knowledge adapter missing required surface: {token}")
     for forbidden in ["~/.codex", "~/.claude", "~/.config/opencode"]:
         require(forbidden not in adapter, f"digital-worker must not own runtime-specific path: {forbidden}")
+
     strategy = STRATEGY.read_text(encoding="utf-8")
-    for token in ["4 个稳定 repository responsibility/control roles", "repository responsibility model", "不等于 ADR-003 的 architecture plane", "N 个可替换 Runtime Binding", "jiying2007/codex", "Thin Session Bootstrap", "L0 — Quick Assist", "L1 — Governed Engineering", "L2 — Formal Evidence", "Asset Profile", "Runtime Profile", "Execution Receipt", "exact-source-set"]:
+    for token in [
+        "4 个稳定 repository responsibility/control roles", "repository responsibility model", "不等于 ADR-003 的 architecture plane",
+        "N 个可替换 Runtime Binding", "jiying2007/codex", "Thin Session Bootstrap",
+        "L0 — Quick Assist", "L1 — Governed Engineering", "L2 — Formal Evidence",
+        "Asset Profile", "Runtime Profile", "Execution Receipt", "exact-source-set",
+    ]:
         require(token in strategy, f"target operating model missing marker: {token}")
     require("target-baseline / frozen-for-implementation" in strategy, "target operating model status drift")
+
     quickstart = QUICKSTART.read_text(encoding="utf-8")
-    for token in ["session-bootstrap.sh", "L2 / formal-evidence", "SOURCE_SET_BOUND", "exact-source-set-reference", "runtime distribution identity", "KNOWLEDGE_HUB_ROOT", "edge_knowledge.py context", "edge_knowledge.py evidence-pack", "identity-envelope.yaml", "default (runtime-owned)"]:
+    for token in [
+        "session-bootstrap.sh", "L2 / formal-evidence", "SOURCE_SET_BOUND", "exact-source-set-reference",
+        "runtime distribution identity", "KNOWLEDGE_HUB_ROOT", "edge_knowledge.py context",
+        "edge_knowledge.py evidence-pack", "identity-envelope.yaml", "default (runtime-owned)",
+    ]:
         require(token in quickstart, f"quickstart missing integrated source-set workflow marker: {token}")
-    for retired in ["provider-produced bundle hash", "BLOCKED_ASSET_BUNDLE_IDENTITY", "ADK Asset Profile / bundle identity", "token-lean", "--runtime-profile"]:
+    for retired in [
+        "provider-produced bundle hash", "BLOCKED_ASSET_BUNDLE_IDENTITY", "ADK Asset Profile / bundle identity",
+        "token-lean", "--runtime-profile",
+    ]:
         require(retired not in quickstart, f"quickstart retained retired runtime marker: {retired}")
 
-    print("cross-repo integration validation PASS: exact current provider pins/digests, Codex+Claude R1 source-set bindings, R2 pending boundaries, refs-only capability projection, repository-responsibility projection, canonical domain Skills, thin Session Bootstrap, receipt v2, and fail-closed Runtime semantics")
+    print(
+        "cross-repo integration validation PASS: exact provider pins/digests, refs-only capability projection, "
+        "governed Knowledge Hub route with first real reuse eligible and provider qualification not implied, "
+        "repository-responsibility projection, artifact-level authority/evidence semantics, Stage 1 governance/decision provenance, "
+        "canonical domain Skills, ADK reusable-asset boundary, Codex+Claude R1 source-set bindings, "
+        "thin Session Bootstrap with frozen Work/Run identity, source-set receipt v2, R2 portability policy, "
+        "exact source-set and fail-closed Runtime boundaries"
+    )
 
 
 if __name__ == "__main__":
