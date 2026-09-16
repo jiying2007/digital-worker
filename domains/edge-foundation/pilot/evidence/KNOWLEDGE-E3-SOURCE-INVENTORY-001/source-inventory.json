@@ -152,6 +152,12 @@
     "explicit_not_applicable_classes": 1,
     "evidence_ref": "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-SOURCE-DIVERSITY-001/source-diversity-receipt.json"
   },
+  "provider_authority_snapshot": {
+    "status": "synchronized-open",
+    "provider_gap_closure_claimed": false,
+    "remaining_local_requirement": "acl-negative-real-evidence",
+    "evidence_ref": "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-PROVIDER-GAP-SNAPSHOT-001/provider-gap-snapshot.json"
+  },
   "progress": {
     "read_verified_source_classes": 2,
     "real_reuse_source_classes": 1,
@@ -160,6 +166,7 @@
     "real_authority_conflict_cases": 1,
     "knowledge_access_mode_decision": "not_frozen",
     "source_class_coverage_requirement": "satisfied",
+    "provider_gap_claim_scope": "synchronized-open",
     "source_inventory_subgap_advanced": true,
     "issue_16_complete": false,
     "knowledge_provider_qualification": false,
@@ -168,7 +175,6 @@
     "product_readiness_promoted": false
   },
   "open_requirements": [
-    "acl-negative-real-evidence",
-    "provider-side-real-adoption-and-terminal-gaps"
+    "acl-negative-real-evidence"
   ]
 }
