@@ -11,8 +11,9 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "runtime_r2_evidence.py"
 BASE = "eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d"
 DW = "a" * 40
-CODEX_COMMIT = "729c54192ae9dc69a8a4d7ecf913c1069c0a1ddf"
-CLAUDE_COMMIT = "9768012c46f348421050192919a91b8070b5d672"
+CODEX_COMMIT = "d12e782b46430d6bfc828f24a41f94f871a7a19a"
+CLAUDE_COMMIT = "8cd87956507f9dbde0438c9135493c96f3b2d318"
+ADK_COMMIT = "e36dfec69f21806431b07daddc4bd78412179e62"
 
 spec = importlib.util.spec_from_file_location("runtime_r2_evidence", SCRIPT)
 assert spec is not None and spec.loader is not None
@@ -52,9 +53,9 @@ def codex_native(plan: dict) -> dict:
         },
         "agent_assets": {
             "provider_repository": "jiying2007/agent-dev-kit",
-            "release_version": "5.1.0",
-            "release_tag": "v5.1.0",
-            "release_commit": "59cbd5cb40ca7077ee5407636bfc617e295ec7e5",
+            "release_version": "5.1.1",
+            "release_tag": "v5.1.1",
+            "release_commit": ADK_COMMIT,
             "asset_profile": "embedded-fullstack",
             "source_set_identity": "exact-release-source-blobs",
         },
@@ -121,7 +122,8 @@ class RuntimeR2EvidenceTests(unittest.TestCase):
         self.assertTrue(controlled["knowledge_context_fingerprint"].startswith("sha256:"))
         self.assertTrue(controlled["runtime_source_set_identity_ref"].startswith("sha256:"))
         self.assertEqual(plan["frozen_inputs_sha256"], canonical_digest(controlled))
-        self.assertEqual(plan["adk_release_identity"]["commit"], "59cbd5cb40ca7077ee5407636bfc617e295ec7e5")
+        self.assertEqual(plan["adk_release_identity"]["commit"], ADK_COMMIT)
+        self.assertEqual(plan["adk_release_identity"]["version"], "5.1.1")
 
     def test_build_plan_rejects_wrong_or_dirty_target_baseline(self) -> None:
         with self.assertRaisesRegex(module.R2EvidenceError, "target checkout HEAD mismatch"):
