@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "work_item_id": "KNOWLEDGE-E3-GOVERNANCE-001",
+  "run_id": "KNOWLEDGE-E3-GOVERNANCE-001-RUN-001",
+  "harvested_at": "2026-09-16T11:13:00+08:00",
+  "source_type": "real-run",
+  "reused_knowledge_ids": [
+    "knowledge-hub-registry-schema-readability-extension"
+  ],
+  "outcome": "existing-authority-reused-no-duplicate-candidate",
+  "decision": "The canonical Knowledge Hub registry lifecycle semantics already cover the governance question used by this run, so no duplicate governance knowledge candidate is created.",
+  "new_observation_boundary": {
+    "observation": "The Claude private-repository GitHub-hosted runner admission incident remains source evidence tracked by jiying2007/claude#2.",
+    "promotion": "not-performed",
+    "reason": "A runtime/platform incident observation must not be promoted directly to active Knowledge from this reuse run; any durable RCA candidate must follow the Knowledge Hub reviewing/owner-review lifecycle."
+  },
+  "canonical_knowledge_mutation_performed": false,
+  "owner_gate_bypassed": false,
+  "evidence_refs": [
+    "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-GOVERNANCE-001/actual-use-record.json",
+    "https://github.com/jiying2007/claude/issues/2"
+  ],
+  "does_not_imply": [
+    "knowledge-provider-qualification",
+    "issue-16-complete",
+    "terminal-maturity"
+  ]
+}
