@@ -20,6 +20,7 @@ roles:
       public_runtime_consumer_contract: pinned-contract-verified
       digital_worker_project_route: registered-governed-route
       digital_worker_real_reuse_evidence: pending-real-reuse-evidence
+      digital_worker_first_real_reuse_run: eligible
     decision: candidate-not-default
 
   agent_asset_control_plane:
@@ -128,6 +129,7 @@ rules:
   r2_certifier_readiness_does_not_imply_terminal_replaceability: true
   governed_knowledge_route_registration_does_not_imply_real_reuse: true
   knowledge_closed_loop_requires_real_reuse_evidence: true
+  first_real_reuse_does_not_imply_provider_qualification: true
   capability_projection_must_reference_cross_repo_lock_identity: true
   pin_freshness_does_not_imply_compatibility: true
   pin_promotion_requires_checkout_verification: true
