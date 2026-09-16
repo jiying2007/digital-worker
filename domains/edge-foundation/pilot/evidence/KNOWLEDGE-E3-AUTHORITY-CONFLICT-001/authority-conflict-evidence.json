@@ -1,0 +1,86 @@
+{
+  "schema_version": 1,
+  "evidence_id": "KNOWLEDGE-E3-AUTHORITY-CONFLICT-001",
+  "checked_on": "2026-09-16",
+  "issue_ref": "jiying2007/digital-worker#16",
+  "claim_scope": "real-authority-conflict-detection-only",
+  "knowledge_provider": {
+    "repository": "jiying2007/knowledge-hub",
+    "commit": "51e4f8166657d9d082f523335d350d0e8c2890a9",
+    "contract": "registry/integrations/digital-worker.json",
+    "contract_version": "1.2",
+    "contract_canonical_sha256": "7e67ff9f19ef8a1bc627e589d888fcf8370297c7ceafa26e8d65d9d0630c3d11"
+  },
+  "topic": {
+    "domain": "projects/pcr02-ssc305",
+    "subject": "PCR02 customer static UBI boot-scan optimization and near-term skip_check policy",
+    "overlapping_scope": true
+  },
+  "observed_sources": [
+    {
+      "knowledge_id": "pcr02-customer-ubi-startup-optimization-20260803",
+      "source_ref": "projects/pcr02-ssc305/decisions/pcr02-customer-ubi-startup-optimization-20260803.md",
+      "source_blob_sha": "d192a237f144d2774f13897a08a24cc96b91b96c",
+      "version_or_revision": "51e4f8166657d9d082f523335d350d0e8c2890a9:d192a237f144d2774f13897a08a24cc96b91b96c",
+      "owner": "leiwenjun",
+      "lifecycle_status": "reviewing",
+      "review_status": "manual-entry-pending-review",
+      "content_review_status": "pending",
+      "manual_validation_pending": true,
+      "review_after": "2026-11-03",
+      "promotion": "none",
+      "position_summary": "Treat trustworthy post-write readback plus skip_check as a conditional short-term candidate, while explicitly withholding unconditional production approval."
+    },
+    {
+      "knowledge_id": "pcr02-customer-ubi-startup-optimization-review-20260804",
+      "source_ref": "projects/pcr02-ssc305/decisions/pcr02-customer-ubi-startup-optimization-review-20260804.md",
+      "source_blob_sha": "67fe37b0237445a5b1e3f23fc654ff6ecef868ab",
+      "version_or_revision": "51e4f8166657d9d082f523335d350d0e8c2890a9:67fe37b0237445a5b1e3f23fc654ff6ecef868ab",
+      "owner": "leiwenjun",
+      "lifecycle_status": "reviewing",
+      "review_status": "manual-entry-pending-review",
+      "content_review_status": "pending",
+      "manual_validation_pending": true,
+      "review_after": "2026-11-04",
+      "promotion": "none",
+      "supersedes_candidate_tag": true,
+      "position_summary": "Reject pure skip_check as the near-term production path; retain full-volume CRC and prioritize parallel early initialization, with any supersession still pending owner review."
+    }
+  ],
+  "conflict_evaluation": {
+    "state": "detected-unresolved",
+    "material_difference": "near-term implementation priority and whether skip_check may be the preferred production optimization path",
+    "same_owner": true,
+    "both_reviewing": true,
+    "both_promotion_none": true,
+    "later_record_declares_supersedes_candidate": true,
+    "authoritative_supersession_proven": false,
+    "resolution_authority": "not-proven",
+    "reason": "The later candidate explicitly proposes supersession but also states final replacement still requires owner review; both records remain reviewing with promotion=none, so Digital Worker must not select either as authoritative."
+  },
+  "reuse_disposition": {
+    "eligible_for_reuse": false,
+    "decision": "BLOCKED_AUTHORITY_CONFLICT",
+    "selected_authority": null,
+    "actual_use_performed": false,
+    "promotion_performed": false,
+    "required_next_action": "authoritative owner/lifecycle resolution must establish which record, if either, governs before reuse"
+  },
+  "evidence_refs": [
+    "github://jiying2007/knowledge-hub@51e4f8166657d9d082f523335d350d0e8c2890a9/projects/pcr02-ssc305/decisions/pcr02-customer-ubi-startup-optimization-20260803.md#blob=d192a237f144d2774f13897a08a24cc96b91b96c",
+    "github://jiying2007/knowledge-hub@51e4f8166657d9d082f523335d350d0e8c2890a9/projects/pcr02-ssc305/decisions/pcr02-customer-ubi-startup-optimization-review-20260804.md#blob=67fe37b0237445a5b1e3f23fc654ff6ecef868ab"
+  ],
+  "does_not_imply": [
+    "owner-decision",
+    "authoritative-supersession",
+    "active-knowledge-promotion",
+    "acl-negative-evidence-complete",
+    "issue-16-complete",
+    "knowledge-provider-qualification",
+    "provider-default-selection",
+    "product-readiness",
+    "terminal-maturity",
+    "production-ready",
+    "release-ready"
+  ]
+}
