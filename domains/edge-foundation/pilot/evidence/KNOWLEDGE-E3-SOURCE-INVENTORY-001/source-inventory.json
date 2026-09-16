@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "inventory_id": "KNOWLEDGE-E3-SOURCE-INVENTORY-001",
+  "recorded_on": "2026-09-16",
+  "issue_ref": "jiying2007/digital-worker#16",
+  "scope": "first-auditable-source-class-inventory",
+  "source_classes": [
+    {
+      "source_class": "governed-repository-markdown",
+      "status": "applicable-read-verified-and-reused",
+      "source_provider": "knowledge-hub",
+      "repository": "jiying2007/knowledge-hub",
+      "provider_commit": "51e4f8166657d9d082f523335d350d0e8c2890a9",
+      "source_ref": "registry/schema.md",
+      "source_blob_sha": "220ac16d9dfef5de9e9f4a2dbe81ab3dabe9b0bf",
+      "knowledge_id": "knowledge-hub-registry-schema-readability-extension",
+      "authority": {
+        "kind": "governed-knowledge-item",
+        "owner": "leiwenjun",
+        "lifecycle_status": "active",
+        "review_status": "human-reviewed-accepted"
+      },
+      "acl": {
+        "state": "allowed",
+        "basis": "exact public repository file was fetched and consumed by the real Work/Run"
+      },
+      "freshness": {
+        "state": "fresh-at-use",
+        "review_after": "2026-09-18",
+        "use_date": "2026-09-16"
+      },
+      "actual_use": {
+        "materially_used": true,
+        "work_item_id": "KNOWLEDGE-E3-GOVERNANCE-001",
+        "run_id": "KNOWLEDGE-E3-GOVERNANCE-001-RUN-001",
+        "reuse_receipt": "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-GOVERNANCE-001/knowledge-reuse-receipt.json"
+      },
+      "evidence_refs": [
+        "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-GOVERNANCE-001/actual-use-record.json",
+        "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-GOVERNANCE-001/knowledge-reuse-evidence.json",
+        "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-GOVERNANCE-001/knowledge-reuse-receipt.json"
+      ],
+      "promotion_performed": false
+    },
+    {
+      "source_class": "github-issue-pr-ci-fact-source",
+      "status": "read-verified-observation-only",
+      "source_provider": "github",
+      "repository": "jiying2007/claude",
+      "source_ref": "issues/2",
+      "source_url": "https://github.com/jiying2007/claude/issues/2",
+      "source_identity": {
+        "issue_number": 2,
+        "issue_id": 5468835804,
+        "created_at": "2026-09-16T00:37:37Z",
+        "updated_at": "2026-09-16T01:58:25Z"
+      },
+      "authority": {
+        "kind": "source-system-fact-record",
+        "owner_repository": "jiying2007/claude",
+        "claim_scope": "GitHub-hosted Actions runner admission blocker evidence"
+      },
+      "acl": {
+        "state": "allowed",
+        "basis": "issue was read successfully through the authenticated GitHub integration"
+      },
+      "freshness": {
+        "state": "observed-current-on-recorded-date",
+        "checked_on": "2026-09-16"
+      },
+      "knowledge_disposition": {
+        "eligible_for_direct_active_write": false,
+        "promotion_performed": false,
+        "reason": "runtime/platform incident observation remains source evidence; any durable RCA candidate must follow Knowledge Hub reviewing and owner-review lifecycle"
+      },
+      "evidence_refs": [
+        "https://github.com/jiying2007/claude/issues/2",
+        "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-GOVERNANCE-001/knowledge-harvest.json"
+      ]
+    },
+    {
+      "source_class": "enterprise-collaboration-drive",
+      "status": "discovery-tested-no-applicable-source",
+      "source_provider": "google-drive",
+      "access_scope": "authenticated-viewed-files",
+      "discovery": {
+        "checked_on": "2026-09-16",
+        "queries": [
+          {
+            "query": "PCR02",
+            "applicable_results": 0
+          },
+          {
+            "query": "SSC305",
+            "applicable_results": 0
+          },
+          {
+            "query": "UBIFS",
+            "applicable_results": 0
+          },
+          {
+            "query": "OTA",
+            "visible_results": 1,
+            "applicable_results": 0,
+            "observed_candidate": "DSGW-210 Smart Programmable Gateway SDK Quick Start Guide v1.6.pdf",
+            "non_applicable_reason": "Zigbee/gateway SDK OTA material is unrelated to PCR02/SSC305/current Work Items"
+          }
+        ]
+      },
+      "acl": {
+        "state": "authenticated-scope-readable",
+        "negative_acl_test": "not-yet-proven"
+      },
+      "integration_state": "not-integrated",
+      "adoption_state": "not-adopted",
+      "evidence_refs": [
+        "https://github.com/jiying2007/digital-worker/issues/16#issuecomment-5690660466"
+      ]
+    }
+  ],
+  "progress": {
+    "read_verified_source_classes": 2,
+    "real_reuse_source_classes": 1,
+    "discovery_tested_not_applicable_source_classes": 1,
+    "source_inventory_subgap_advanced": true,
+    "issue_16_complete": false,
+    "knowledge_provider_qualification": false,
+    "provider_default_selected": false,
+    "terminal_maturity": false,
+    "product_readiness_promoted": false
+  },
+  "open_requirements": [
+    "acl-negative-real-evidence",
+    "stale-source-or-authority-conflict-real-evidence",
+    "broader-real-source-diversity-or-explicit-not-applicable-evidence",
+    "knowledge-access-default-backup-not-frozen-decision",
+    "provider-side-real-adoption-and-terminal-gaps"
+  ]
+}
