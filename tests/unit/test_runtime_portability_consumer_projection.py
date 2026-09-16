@@ -11,15 +11,16 @@ LOCK = ROOT / "config" / "integrations" / "cross-repo-lock.json"
 CAPABILITY = ROOT / "config" / "integrations" / "provider-capability-matrix.yaml"
 
 
-def test_pinned_runtime_eval_exposes_r2_certifier_without_qualifying_r2() -> None:
+def test_pinned_runtime_eval_exposes_dual_r1_and_r2_certifier_without_qualifying_r2() -> None:
     lock = json.loads(LOCK.read_text(encoding="utf-8"))
     runtime_eval = lock["providers"]["runtime_practice_eval"]
 
     # This is a consumer projection of the already pinned provider commit; do not
-    # turn certifier readiness into a freshness promotion or fabricated R2 evidence.
+    # turn R1 source-set readiness or certifier readiness into fabricated R2 evidence.
     assert runtime_eval["repository"] == "jiying2007/llm_agent"
-    assert runtime_eval["commit"] == "512c3c50aea092055d216697de9306c2c8b76192"
+    assert runtime_eval["commit"] == "35e08f304be0acfa349c58f4a7708b9d3040704a"
     assert runtime_eval["contract_version"] == "1.3"
+    assert runtime_eval["contract_canonical_sha256"] == "f97967828889c8ff9c7a6c2398ffa8b4a89ce235d69305b0cf2b3e6c30219a2a"
     assert runtime_eval["runtime_portability_certifier"] == "tools/control_plane/runtime_portability.py"
     assert runtime_eval["runtime_portability_certifier_test"] == "tests/test_runtime_portability_certifier.sh"
     assert runtime_eval["runtime_portability_qualification_manifest"] == "manifests/long_term_asset_qualification.json"
@@ -28,8 +29,20 @@ def test_pinned_runtime_eval_exposes_r2_certifier_without_qualifying_r2() -> Non
     assert runtime_eval["runtime_portability_status"] == "certifier-ready-real-evidence-pending"
 
     validation = runtime_eval["validation"]
-    for marker in ("R2_POLICY", "R2_CERTIFIER_READY", "REAL_EVIDENCE_PENDING", "BLOCKER_PRESERVED"):
+    for marker in (
+        "R1_CODEX_CLAUDE",
+        "R2_POLICY",
+        "R2_CERTIFIER_READY",
+        "REAL_EVIDENCE_PENDING",
+        "BLOCKER_PRESERVED",
+    ):
         assert marker in validation
+
+    claude = lock["runtime_bindings"]["claude-code"]
+    assert claude["commit"] == "9768012c46f348421050192919a91b8070b5d672"
+    assert claude["runtime_readiness"] == "SOURCE_SET_READY_R1"
+    assert claude["verified_runtime_execution_receipt"] == "PENDING"
+    assert claude["r2_real_provider_substitution"] == "PENDING"
 
     assert lock["rules"]["terminal_replaceability_requires_r2_real_provider_substitution"] is True
     assert lock["rules"]["r1_binding_conformance_is_not_terminal_replaceability"] is True
