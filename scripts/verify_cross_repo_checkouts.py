@@ -24,6 +24,7 @@ EXPECTED_REPOS = {
     "codex": "jiying2007/codex",
     "codex_review_safe": "jiying2007/codex-review",
 }
+READY_RUNTIME_BINDING_STATUSES = {"source-set-bound", "ready", "active"}
 
 
 def fail(message: str) -> None:
@@ -90,6 +91,37 @@ def verify_contract(
     }
 
 
+def verify_second_runtime_candidate(candidates: dict) -> str:
+    candidate = candidates.get("claude-code")
+    if not isinstance(candidate, dict):
+        fail("runtime_practice_eval: claude-code comparison candidate is missing")
+    if candidate.get("target") != "claude-code":
+        fail("runtime_practice_eval: claude-code comparison target drift")
+
+    status = candidate.get("status")
+    if status == "future-binding":
+        if candidate.get("repository") is not None or candidate.get("source_identity_mode") is not None:
+            fail("runtime_practice_eval: future-binding must not claim repository/source-set identity")
+        return status
+
+    if status == "binding-candidate-blocked":
+        expected = {
+            "repository": "jiying2007/claude",
+            "source_identity_mode": "exact-release-source-blobs",
+            "candidate_pr": "jiying2007/claude#1",
+            "blocker_ref": "jiying2007/claude#2",
+            "blocker": "github-hosted-runner-admission-before-step-execution",
+        }
+        for key, value in expected.items():
+            if candidate.get(key) != value:
+                fail(f"runtime_practice_eval: blocked claude-code candidate {key} drift")
+        return status
+
+    if status in READY_RUNTIME_BINDING_STATUSES:
+        fail("runtime_practice_eval: claude-code is R1-ready upstream but is not yet an approved Digital Worker runtime binding")
+    fail(f"runtime_practice_eval: unsupported claude-code candidate status: {status!r}")
+
+
 def verify_runtime_practice_eval(entry: dict, destination: Path) -> dict:
     certifier_rel = entry["runtime_portability_certifier"]
     test_rel = entry["runtime_portability_certifier_test"]
@@ -112,8 +144,7 @@ def verify_runtime_practice_eval(entry: dict, destination: Path) -> dict:
     candidates = {item.get("runtime"): item for item in contract.get("candidate_runtime_bindings", []) if isinstance(item, dict)}
     if candidates.get("codex", {}).get("status") != "source-set-bound":
         fail("runtime_practice_eval: pinned Codex comparison binding is not source-set-bound")
-    if candidates.get("claude-code", {}).get("status") != "future-binding":
-        fail("runtime_practice_eval: second runtime blocker must remain future-binding until real provider evidence exists")
+    second_runtime_status = verify_second_runtime_candidate(candidates)
 
     certifier_text = paths["certifier"].read_text(encoding="utf-8")
     for marker in [
@@ -172,6 +203,7 @@ def verify_runtime_practice_eval(entry: dict, destination: Path) -> dict:
         "qualification_manifest": qualification_rel,
         "cli_contract": cli_rel,
         "evidence_level": evidence_level,
+        "second_runtime_candidate_status": second_runtime_status,
         "remaining_external_blocker": lta02["remaining_external_blocker"],
     }
 
