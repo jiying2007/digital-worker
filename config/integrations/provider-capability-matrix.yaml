@@ -19,7 +19,8 @@ roles:
       source_acl_provenance: native
       public_runtime_consumer_contract: pinned-contract-verified
       digital_worker_project_route: registered-governed-route
-      digital_worker_real_reuse_evidence: first-real-run-eligible-broader-source-coverage-pending
+      digital_worker_real_reuse_evidence: pending-real-reuse-evidence
+      digital_worker_first_real_reuse_run: eligible
     decision: candidate-not-default
 
   agent_asset_control_plane:
