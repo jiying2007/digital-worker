@@ -64,6 +64,7 @@ def main() -> None:
     )
 
     runtime_eval = lock["providers"]["runtime_practice_eval"]
+    require("R1_CODEX_CLAUDE" in runtime_eval.get("validation", ""), "llm_agent must project both R1 runtime bindings")
     require("R2_POLICY" in runtime_eval.get("validation", ""), "llm_agent R2 portability policy must be explicitly promoted")
     require("BLOCKER_PRESERVED" in runtime_eval.get("validation", ""), "llm_agent real-provider blocker must remain explicit")
 
@@ -74,8 +75,8 @@ def main() -> None:
     require(adk.get("delivery_mode") == "exact-source-set-reference", "ADK delivery mode drift")
     require("SOURCE_SET_READY" in adk.get("validation", ""), "ADK source-set handoff must be promoted")
     baseline = adk.get("release_baseline", {})
-    require(baseline.get("version") == "5.1.0", "ADK release version drift")
-    require(baseline.get("tag") == "v5.1.0", "ADK release tag drift")
+    require(baseline.get("version") == "5.1.1", "ADK release version drift")
+    require(baseline.get("tag") == "v5.1.1", "ADK release tag drift")
     require(exact_sha(baseline.get("commit")), "ADK release commit must be exact")
     require(exact_sha(baseline.get("tree")), "ADK release tree must be exact")
     require(exact_sha(baseline.get("manifest_blob")), "ADK manifest blob must be exact")
@@ -99,6 +100,23 @@ def main() -> None:
     require("WORK_RUN" in codex.get("validation", ""), "Codex authoritative Work/Run source-set capability must be explicitly promoted")
     require("RECEIPT_V2" in codex.get("validation", ""), "Codex source-set receipt v2 capability must be explicitly promoted")
     require("runtime_profile_examples" not in codex, "digital-worker lock must not mirror mutable Codex runtime profile examples")
+
+    claude = lock["runtime_bindings"].get("claude-code", {})
+    require(claude.get("repository") == "jiying2007/claude", "Claude Runtime Binding repository drift")
+    require(exact_sha(claude.get("commit")), "Claude Runtime Binding must pin exact commit")
+    require(claude.get("contract_version") == "1.0", "Claude Runtime Binding contract version drift")
+    require(digest(claude.get("contract_canonical_sha256")), "Claude Runtime Binding contract digest missing")
+    require(claude.get("runtime_target") == "claude-code", "Claude target drift")
+    require(claude.get("required_asset_profile") == "embedded-fullstack", "Claude must consume the ADK embedded-fullstack Asset Profile")
+    require(claude.get("source_identity_mode") == "exact-release-source-blobs", "Claude source identity mode drift")
+    require(claude.get("runtime_readiness") == "SOURCE_SET_READY_R1", "Claude R1 source-set readiness drift")
+    require(claude.get("session_bootstrap_contract_version") == "1.0", "Claude Session Bootstrap version drift")
+    require(digest(claude.get("session_bootstrap_contract_canonical_sha256")), "Claude Session Bootstrap digest missing")
+    require(claude.get("execution_receipt_schema") == "schemas/runtime-execution-receipt.v2.schema.json", "Claude receipt v2 schema missing")
+    require(claude.get("execution_receipt_schema_version") == 2, "Claude receipt schema version drift")
+    require(claude.get("verified_runtime_execution_receipt") == "PENDING", "Claude real execution receipt must remain pending")
+    require(claude.get("r2_real_provider_substitution") == "PENDING", "Claude R2 evidence must remain pending")
+    require("SOURCE_SET_READY_R1" in claude.get("validation", ""), "Claude R1 source-set binding must be promoted")
 
     rendered_lock = json.dumps(lock, ensure_ascii=False, sort_keys=True)
     for retired in ('"asset_bundle_hash"', "BLOCKED_ASSET_BUNDLE_IDENTITY", "5.0.0-rc.2", "provider-produced bundle", "token-lean"):
@@ -168,6 +186,10 @@ def main() -> None:
     require(ownership["runtime_bindings"]["candidates"]["codex"]["runtime_target"] == "codex-cli", "Codex candidate missing")
     require(ownership["runtime_bindings"]["candidates"]["codex"]["status"] == "source-set-bound", "Codex candidate source-set status drift")
     require(ownership["runtime_bindings"]["candidates"]["codex"]["session_bootstrap"] == "active", "Codex Session Bootstrap not active")
+    require(ownership["runtime_bindings"]["candidates"]["claude-code"]["repository"] == "jiying2007/claude", "Claude candidate repository missing")
+    require(ownership["runtime_bindings"]["candidates"]["claude-code"]["runtime_target"] == "claude-code", "Claude candidate target drift")
+    require(ownership["runtime_bindings"]["candidates"]["claude-code"]["status"] == "source-set-bound", "Claude candidate source-set status drift")
+    require(ownership["runtime_bindings"]["candidates"]["claude-code"]["session_bootstrap"] == "active", "Claude Session Bootstrap not active")
     require("domain-verification-pass" in ownership["runtime_bindings"]["contract"]["must_not_own"], "Runtime Binding must not own Verification PASS")
     require("reusable-agent-skill-source-of-truth" in ownership["runtime_bindings"]["contract"]["must_not_own"], "Runtime Binding must not own reusable Skill SoT")
 
@@ -212,6 +234,19 @@ def main() -> None:
     )
     require(cap_codex["capabilities"]["thin_session_bootstrap_l0_l1_l2"] == "native", "Codex thin bootstrap capability missing")
     require(cap_codex["capabilities"]["execution_receipt_contract"] == "source-set-v2-native", "Codex capability projection must require receipt v2")
+
+    cap_claude = capability["roles"]["runtime_binding"]["candidates"]["claude_code"]
+    require(
+        cap_claude["identity_ref"] == "config/integrations/cross-repo-lock.json#/runtime_bindings/claude-code",
+        "Claude capability projection must reference the authoritative cross-repo lock identity",
+    )
+    require(cap_claude["repository"] == "jiying2007/claude", "Claude capability repository drift")
+    require(cap_claude["runtime_target"] == "claude-code", "Claude capability target drift")
+    require(cap_claude["status"] == "source-set-bound", "Claude capability status drift")
+    require(exact_sha(cap_claude["binding_commit"]), "Claude capability binding commit must be exact")
+    require(cap_claude["r1_binding_ready"] is True, "Claude capability R1 readiness must remain true")
+    require(cap_claude["verified_runtime_execution_receipt"] == "pending", "Claude real execution receipt must remain pending")
+    require(cap_claude["r2_real_provider_substitution"] == "pending", "Claude R2 evidence must remain pending")
 
     cap_eval = capability["roles"]["runtime_practice_eval"]
     require(
@@ -360,8 +395,9 @@ def main() -> None:
         "cross-repo integration validation PASS: exact provider pins/digests, refs-only capability projection, "
         "governed Knowledge Hub route with first real reuse eligible and provider qualification not implied, "
         "repository-responsibility projection, artifact-level authority/evidence semantics, Stage 1 governance/decision provenance, "
-        "canonical domain Skills, ADK reusable-asset boundary, thin Session Bootstrap 1.2 with frozen Work/Run identity, "
-        "source-set receipt v2, R2 portability policy, exact source-set and fail-closed Runtime boundaries"
+        "canonical domain Skills, ADK reusable-asset boundary, Codex+Claude R1 source-set bindings, "
+        "thin Session Bootstrap with frozen Work/Run identity, source-set receipt v2, R2 portability policy, "
+        "exact source-set and fail-closed Runtime boundaries"
     )
 
 

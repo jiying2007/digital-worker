@@ -123,10 +123,11 @@ runtime_bindings:
       status: source-set-bound
       session_bootstrap: active
     claude-code:
-      repository: null
-      role: future-runtime-binding
+      repository: jiying2007/claude
+      role: claude-code-runtime-distribution-and-host-integration
       runtime_target: claude-code
-      status: future
+      status: source-set-bound
+      session_bootstrap: active
 
 assurance_bindings:
   contract:
