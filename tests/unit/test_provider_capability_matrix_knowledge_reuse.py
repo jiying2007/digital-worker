@@ -14,11 +14,13 @@ class ProviderCapabilityMatrixKnowledgeReuseTests(unittest.TestCase):
         self.doc = yaml.safe_load(MATRIX.read_text(encoding="utf-8"))
         self.knowledge = self.doc["roles"]["knowledge_control_plane"]
 
-    def test_first_real_reuse_is_projected_without_provider_promotion(self) -> None:
+    def test_first_real_reuse_is_projected_without_closing_aggregate_maturity(self) -> None:
+        capabilities = self.knowledge["capabilities"]
         self.assertEqual(
-            self.knowledge["capabilities"]["digital_worker_real_reuse_evidence"],
-            "first-real-run-eligible-broader-source-coverage-pending",
+            capabilities["digital_worker_real_reuse_evidence"],
+            "pending-real-reuse-evidence",
         )
+        self.assertEqual(capabilities["digital_worker_first_real_reuse_run"], "eligible")
         self.assertEqual(self.knowledge["decision"], "candidate-not-default")
         self.assertEqual(self.doc["status"], "evidence-in-progress")
         self.assertEqual(self.doc["provider_selection"], "not_frozen")
