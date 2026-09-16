@@ -22,6 +22,7 @@ EXPECTED_REPOS = {
     "agent_asset_control_plane": "jiying2007/agent-dev-kit",
     "runtime_practice_eval": "jiying2007/llm_agent",
     "codex": "jiying2007/codex",
+    "claude-code": "jiying2007/claude",
     "codex_review_safe": "jiying2007/codex-review",
 }
 READY_RUNTIME_BINDING_STATUSES = {"source-set-bound", "ready", "active"}
@@ -91,7 +92,7 @@ def verify_contract(
     }
 
 
-def verify_second_runtime_candidate(candidates: dict) -> str:
+def verify_second_runtime_candidate(candidates: dict, approved_binding: dict | None = None) -> str:
     candidate = candidates.get("claude-code")
     if not isinstance(candidate, dict):
         fail("runtime_practice_eval: claude-code comparison candidate is missing")
@@ -118,11 +119,38 @@ def verify_second_runtime_candidate(candidates: dict) -> str:
         return status
 
     if status in READY_RUNTIME_BINDING_STATUSES:
-        fail("runtime_practice_eval: claude-code is R1-ready upstream but is not yet an approved Digital Worker runtime binding")
+        if not isinstance(approved_binding, dict):
+            fail("runtime_practice_eval: claude-code is R1-ready upstream but is not yet an approved Digital Worker runtime binding")
+        approved_expected = {
+            "repository": "jiying2007/claude",
+            "runtime_target": "claude-code",
+            "source_identity_mode": "exact-release-source-blobs",
+            "runtime_readiness": "SOURCE_SET_READY_R1",
+            "verified_runtime_execution_receipt": "PENDING",
+            "r2_real_provider_substitution": "PENDING",
+        }
+        for key, expected in approved_expected.items():
+            if approved_binding.get(key) != expected:
+                fail(f"runtime_practice_eval: approved claude-code binding {key} drift")
+        upstream_expected = {
+            "repository": "https://github.com/jiying2007/claude.git",
+            "source_identity_mode": "exact-release-source-blobs",
+            "binding_commit": approved_binding.get("commit"),
+            "exact_head_workflow_run": approved_binding.get("r1_exact_head_workflow_run"),
+            "fresh_main_workflow_run": approved_binding.get("r1_fresh_main_workflow_run"),
+            "r1_binding_conformance": "passed",
+            "verified_runtime_execution_receipt": "pending",
+            "r2_real_provider_substitution": "pending",
+        }
+        for key, expected in upstream_expected.items():
+            if candidate.get(key) != expected:
+                fail(f"runtime_practice_eval: ready claude-code candidate {key} drift")
+        return status
+
     fail(f"runtime_practice_eval: unsupported claude-code candidate status: {status!r}")
 
 
-def verify_runtime_practice_eval(entry: dict, destination: Path) -> dict:
+def verify_runtime_practice_eval(entry: dict, destination: Path, approved_binding: dict | None = None) -> dict:
     certifier_rel = entry["runtime_portability_certifier"]
     test_rel = entry["runtime_portability_certifier_test"]
     qualification_rel = entry["runtime_portability_qualification_manifest"]
@@ -144,7 +172,7 @@ def verify_runtime_practice_eval(entry: dict, destination: Path) -> dict:
     candidates = {item.get("runtime"): item for item in contract.get("candidate_runtime_bindings", []) if isinstance(item, dict)}
     if candidates.get("codex", {}).get("status") != "source-set-bound":
         fail("runtime_practice_eval: pinned Codex comparison binding is not source-set-bound")
-    second_runtime_status = verify_second_runtime_candidate(candidates)
+    second_runtime_status = verify_second_runtime_candidate(candidates, approved_binding)
 
     certifier_text = paths["certifier"].read_text(encoding="utf-8")
     for marker in [
@@ -269,7 +297,13 @@ def verify_assurance_binding(name: str, entry: dict, destination: Path, fetch: b
     }
 
 
-def verify_one(name: str, entry: dict, destination: Path, fetch: bool) -> dict:
+def verify_one(
+    name: str,
+    entry: dict,
+    destination: Path,
+    fetch: bool,
+    approved_runtime_bindings: dict | None = None,
+) -> dict:
     repo = entry["repository"]
     expected_repo = EXPECTED_REPOS[name]
     if repo != expected_repo:
@@ -323,7 +357,8 @@ def verify_one(name: str, entry: dict, destination: Path, fetch: bool) -> dict:
         report["release_baseline"] = baseline
 
     if name == "runtime_practice_eval":
-        report["runtime_portability"] = verify_runtime_practice_eval(entry, destination)
+        approved = (approved_runtime_bindings or {}).get("claude-code")
+        report["runtime_portability"] = verify_runtime_practice_eval(entry, destination, approved)
 
     if name == "codex":
         bootstrap = verify_contract(
@@ -346,6 +381,60 @@ def verify_one(name: str, entry: dict, destination: Path, fetch: bool) -> dict:
             if mode not in bootstrap_doc.get("modes", {}):
                 fail(f"{name}: Session Bootstrap missing mode {mode}")
 
+    if name == "claude-code":
+        binding_doc = json.loads((destination / entry["contract"]).read_text(encoding="utf-8"))
+        expected_binding = {
+            "status": entry["runtime_readiness"],
+            "repository": entry["repository"],
+            "runtime_target": entry["runtime_target"],
+            "source_identity_mode": entry["source_identity_mode"],
+            "maturity_level": "R1-binding-conformance",
+            "terminal_replaceability_qualified": False,
+        }
+        for key, expected in expected_binding.items():
+            if binding_doc.get(key) != expected:
+                fail(f"{name}: binding contract {key} drift")
+        if binding_doc.get("agent_dev_kit", {}).get("asset_profile") != entry["required_asset_profile"]:
+            fail(f"{name}: required ADK asset profile drift")
+        hard_rules = binding_doc.get("hard_rules", {})
+        for rule in ("runtime_output_is_not_verification_pass", "r1_is_not_r2", "r2_requires_real_same_task_execution_receipt"):
+            if hard_rules.get(rule) is not True:
+                fail(f"{name}: R1/R2 hard rule weakened: {rule}")
+
+        bootstrap = verify_contract(
+            name=f"{name}:session-bootstrap",
+            destination=destination,
+            contract_rel=entry["session_bootstrap_contract"],
+            expected_version=str(entry["session_bootstrap_contract_version"]),
+            expected_digest=entry["session_bootstrap_contract_canonical_sha256"],
+        )
+        report["session_bootstrap_contract"] = bootstrap
+        bootstrap_doc = json.loads((destination / entry["session_bootstrap_contract"]).read_text(encoding="utf-8"))
+        if bootstrap_doc.get("role") != "thin-session-bootstrap" or bootstrap_doc.get("runtime_target") != "claude-code":
+            fail(f"{name}: Session Bootstrap identity drift")
+        for mode in ("L0", "L1", "L2"):
+            if mode not in bootstrap_doc.get("modes", {}):
+                fail(f"{name}: Session Bootstrap missing mode {mode}")
+
+        receipt_schema_path = destination / entry["execution_receipt_schema"]
+        if not receipt_schema_path.is_file() or receipt_schema_path.is_symlink():
+            fail(f"{name}: execution receipt schema missing")
+        receipt_schema = json.loads(receipt_schema_path.read_text(encoding="utf-8"))
+        props = receipt_schema.get("properties", {})
+        if props.get("schema_version", {}).get("const") != entry["execution_receipt_schema_version"]:
+            fail(f"{name}: execution receipt schema version drift")
+        if props.get("runtime", {}).get("const") != "claude-code":
+            fail(f"{name}: execution receipt runtime identity drift")
+        if props.get("verification_pass_claimed", {}).get("const") is not False:
+            fail(f"{name}: execution receipt must forbid verification PASS claims")
+        if entry.get("verified_runtime_execution_receipt") != "PENDING":
+            fail(f"{name}: verified runtime execution receipt boundary drift")
+        if entry.get("r2_real_provider_substitution") != "PENDING":
+            fail(f"{name}: R2 boundary drift")
+        report["maturity_level"] = "R1-binding-conformance"
+        report["verified_runtime_execution_receipt"] = "PENDING"
+        report["r2_real_provider_substitution"] = "PENDING"
+
     return report
 
 
@@ -359,17 +448,21 @@ def main() -> None:
     lock = json.loads(LOCK.read_text(encoding="utf-8"))
     if lock.get("schema_version") != 4:
         fail("cross-repo checkout verifier requires source-set lock schema v4")
+    runtime_bindings = lock.get("runtime_bindings", {})
+    if not isinstance(runtime_bindings, dict):
+        fail("cross-repo runtime_bindings must be an object")
     entries = {
         "knowledge_control_plane": lock["providers"]["knowledge_control_plane"],
         "agent_asset_control_plane": lock["providers"]["agent_asset_control_plane"],
         "runtime_practice_eval": lock["providers"]["runtime_practice_eval"],
-        "codex": lock["runtime_bindings"]["codex"],
+        "codex": runtime_bindings["codex"],
+        "claude-code": runtime_bindings["claude-code"],
     }
     args.root.mkdir(parents=True, exist_ok=True)
     results = []
     for name, entry in entries.items():
         destination = args.root / name
-        results.append(verify_one(name, entry, destination, args.fetch))
+        results.append(verify_one(name, entry, destination, args.fetch, runtime_bindings))
     assurance = lock.get("assurance_bindings", {}).get("codex_review_safe")
     if not isinstance(assurance, dict):
         fail("codex_review_safe assurance binding missing")
