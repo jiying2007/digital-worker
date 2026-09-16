@@ -1,0 +1,60 @@
+{
+  "schema_version": 1,
+  "receipt_id": "KNOWLEDGE-E3-SOURCE-DIVERSITY-001",
+  "evaluated_on": "2026-09-16",
+  "issue_ref": "jiying2007/digital-worker#16",
+  "claim_scope": "source-class-coverage-only",
+  "criterion": {
+    "minimum_source_classes": 3,
+    "accepted_class_evidence": [
+      "auditable-real-read",
+      "explicit-not-applicable-after-real-discovery"
+    ],
+    "basis": "Issue #16 allows each source class to be supported either by auditable real-read evidence or by explicit evidence that the class is not applicable to the current Work Items."
+  },
+  "evaluated_classes": [
+    {
+      "source_class": "governed-repository-markdown",
+      "evidence_state": "auditable-real-read-and-reuse",
+      "qualifies_for_coverage": true,
+      "evidence_ref": "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-GOVERNANCE-001/knowledge-reuse-receipt.json"
+    },
+    {
+      "source_class": "github-issue-pr-ci-fact-source",
+      "evidence_state": "auditable-real-read-observation",
+      "qualifies_for_coverage": true,
+      "evidence_ref": "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-SOURCE-INVENTORY-001/source-inventory.json#source_class=github-issue-pr-ci-fact-source"
+    },
+    {
+      "source_class": "enterprise-collaboration-drive",
+      "evidence_state": "explicit-not-applicable-after-authenticated-discovery",
+      "qualifies_for_coverage": true,
+      "evidence_ref": "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-SOURCE-INVENTORY-001/source-inventory.json#source_class=enterprise-collaboration-drive"
+    }
+  ],
+  "result": {
+    "status": "SATISFIED",
+    "qualifying_source_classes": 3,
+    "auditable_real_read_classes": 2,
+    "explicit_not_applicable_classes": 1,
+    "source_class_coverage_requirement_met": true
+  },
+  "remaining_boundaries": [
+    "source-class coverage does not prove ACL-negative behavior",
+    "explicit not-applicable evidence does not make Google Drive integrated or adopted",
+    "two auditable read classes do not establish long-term provider adoption",
+    "source-class coverage does not qualify Knowledge Hub or freeze a provider/default mode"
+  ],
+  "does_not_imply": [
+    "acl-negative-evidence-complete",
+    "google-drive-integration",
+    "google-drive-adoption",
+    "knowledge-provider-qualification",
+    "provider-default-selection",
+    "issue-16-complete",
+    "product-readiness",
+    "terminal-maturity",
+    "production-ready",
+    "release-ready"
+  ]
+}
