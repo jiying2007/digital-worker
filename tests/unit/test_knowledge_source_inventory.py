@@ -94,7 +94,18 @@ class KnowledgeSourceInventoryTests(unittest.TestCase):
         self.assertEqual(source["adoption_state"], "not-adopted")
         self.assertEqual(source["acl"]["negative_acl_test"], "not-yet-proven")
 
-    def test_inventory_advances_only_the_source_inventory_subgap(self) -> None:
+    def test_real_stale_case_closes_only_stale_detection_subgap(self) -> None:
+        stale = self.inventory["negative_evidence"]["stale_source"]
+        conflict = self.inventory["negative_evidence"]["authority_conflict"]
+
+        self.assertEqual(stale["status"], "real-detected-blocked")
+        self.assertFalse(stale["reuse_eligible"])
+        self.assertEqual(stale["review_after"], "2026-09-15")
+        self.assertEqual(stale["checked_on"], "2026-09-16")
+        self.assertEqual(conflict["status"], "not-yet-proven")
+        self.assertEqual(self.inventory["progress"]["real_stale_source_cases"], 1)
+
+    def test_inventory_advances_without_promoting_issue_or_provider(self) -> None:
         progress = self.inventory["progress"]
         self.assertTrue(progress["source_inventory_subgap_advanced"])
         self.assertFalse(progress["issue_16_complete"])
@@ -106,6 +117,9 @@ class KnowledgeSourceInventoryTests(unittest.TestCase):
             "acl-negative-real-evidence", self.inventory["open_requirements"]
         )
         self.assertIn(
+            "authority-conflict-real-evidence", self.inventory["open_requirements"]
+        )
+        self.assertNotIn(
             "stale-source-or-authority-conflict-real-evidence",
             self.inventory["open_requirements"],
         )
