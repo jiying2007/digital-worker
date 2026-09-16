@@ -58,7 +58,10 @@ def main() -> None:
 
     knowledge = lock["providers"]["knowledge_control_plane"]
     require("ROUTE_REGISTERED" in knowledge.get("validation", ""), "Knowledge Hub governed route must be explicitly promoted")
-    require("REUSE_PENDING" in knowledge.get("validation", ""), "Knowledge Hub real reuse evidence must remain explicitly pending")
+    require(
+        "FIRST_REAL_REUSE_ELIGIBLE" in knowledge.get("validation", ""),
+        "Knowledge Hub integration must project the first real governed reuse evidence",
+    )
 
     runtime_eval = lock["providers"]["runtime_practice_eval"]
     require("R2_POLICY" in runtime_eval.get("validation", ""), "llm_agent R2 portability policy must be explicitly promoted")
@@ -115,6 +118,7 @@ def main() -> None:
         "runtime_output_is_not_verification_pass", "runtime_execution_receipt_must_not_contain_verification_pass",
         "terminal_replaceability_requires_r2_real_provider_substitution", "r1_binding_conformance_is_not_terminal_replaceability",
         "governed_knowledge_route_registration_does_not_imply_real_reuse", "knowledge_closed_loop_requires_real_reuse_evidence",
+        "single_real_reuse_does_not_imply_provider_qualification",
         "pin_freshness_does_not_imply_compatibility", "pin_promotion_requires_checkout_verification",
     ]:
         require(rules[key] is True, f"required source-set rule disabled: {key}")
@@ -178,12 +182,17 @@ def main() -> None:
         == {
             "identity_ref": "config/integrations/cross-repo-lock.json#/providers/knowledge_control_plane",
             "checkout_verification": "permanent-digital-worker-ci",
+            "first_real_reuse_work_item": "KNOWLEDGE-E3-GOVERNANCE-001",
+            "first_real_reuse_receipt": "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-GOVERNANCE-001/knowledge-reuse-receipt.json",
         },
-        "Knowledge Hub capability projection must reference the authoritative cross-repo lock identity",
+        "Knowledge Hub capability projection must bind authoritative identity and first real reuse receipt",
     )
     require(cap_knowledge["capabilities"]["digital_worker_project_route"] == "registered-governed-route", "Knowledge Hub governed project route must stay registered")
-    require(cap_knowledge["capabilities"]["digital_worker_real_reuse_evidence"] == "pending-real-reuse-evidence", "Knowledge Hub real reuse evidence must stay explicitly pending")
-    require(cap_knowledge["decision"] == "candidate-not-default", "Knowledge Hub route registration must not freeze provider selection")
+    require(
+        cap_knowledge["capabilities"]["digital_worker_real_reuse_evidence"] == "first-real-reuse-eligible",
+        "Knowledge Hub first real reuse evidence projection drift",
+    )
+    require(cap_knowledge["decision"] == "candidate-not-default", "Knowledge Hub real reuse must not freeze provider selection")
 
     cap_adk = capability["roles"]["agent_asset_control_plane"]
     require(
@@ -222,6 +231,7 @@ def main() -> None:
         "r1_binding_conformance_is_not_terminal_replaceability",
         "governed_knowledge_route_registration_does_not_imply_real_reuse",
         "knowledge_closed_loop_requires_real_reuse_evidence",
+        "single_real_reuse_does_not_imply_provider_qualification",
         "capability_projection_must_reference_cross_repo_lock_identity",
     ]:
         require(capability["rules"][key] is True, f"required capability projection rule disabled: {key}")
@@ -348,10 +358,10 @@ def main() -> None:
 
     print(
         "cross-repo integration validation PASS: exact provider pins/digests, refs-only capability projection, "
-        "governed Knowledge Hub route with real reuse still pending, repository-responsibility projection, "
-        "artifact-level authority/evidence semantics, Stage 1 governance/decision provenance, canonical domain Skills, "
-        "ADK reusable-asset boundary, thin Session Bootstrap 1.2 with frozen Work/Run identity, source-set receipt v2, "
-        "R2 portability policy, exact source-set and fail-closed Runtime boundaries"
+        "governed Knowledge Hub route with first real reuse eligible and provider qualification not implied, "
+        "repository-responsibility projection, artifact-level authority/evidence semantics, Stage 1 governance/decision provenance, "
+        "canonical domain Skills, ADK reusable-asset boundary, thin Session Bootstrap 1.2 with frozen Work/Run identity, "
+        "source-set receipt v2, R2 portability policy, exact source-set and fail-closed Runtime boundaries"
     )
 
 
