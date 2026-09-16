@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "work_item_id": "KNOWLEDGE-E3-GOVERNANCE-001",
+  "run_id": "KNOWLEDGE-E3-GOVERNANCE-001-RUN-001",
+  "recorded_at": "2026-09-16T11:13:00+08:00",
+  "purpose": "Exercise the existing E3 real Knowledge reuse path with a pre-existing governed Knowledge Hub item during terminal-closure work.",
+  "decision_context": "Determine whether a newly observed RCA may be written directly as active knowledge or must preserve the existing reviewing/owner-gate lifecycle.",
+  "knowledge_item": {
+    "knowledge_id": "knowledge-hub-registry-schema-readability-extension",
+    "provider_repository": "jiying2007/knowledge-hub",
+    "provider_commit": "51e4f8166657d9d082f523335d350d0e8c2890a9",
+    "source_path": "registry/schema.md",
+    "source_blob_sha": "220ac16d9dfef5de9e9f4a2dbe81ab3dabe9b0bf",
+    "status": "active",
+    "review_status": "human-reviewed-accepted",
+    "owner": "leiwenjun",
+    "review_after": "2026-09-18"
+  },
+  "actual_use": {
+    "materially_used": true,
+    "used_for": "governance-decision",
+    "decision": "Do not bypass the canonical lifecycle by writing a newly observed RCA directly as active knowledge. Preserve reviewing/provisional semantics and owner review for new candidates; existing active knowledge may be consumed as authority.",
+    "effect_on_run": "The run stopped treating direct active write as an acceptable E3 shortcut and instead reused the existing governed schema semantics.",
+    "provider_output_promoted_to_domain_decision": false
+  },
+  "source_access": {
+    "source_real": true,
+    "repository_visibility": "public",
+    "exact_commit_fetched": true,
+    "exact_file_fetched": true,
+    "acl_state": "allowed",
+    "freshness_state": "fresh",
+    "freshness_basis": "The pinned item declares review_after=2026-09-18; this run occurred on 2026-09-16.",
+    "conflict_state": "none"
+  },
+  "does_not_imply": [
+    "knowledge-provider-qualification",
+    "product-readiness",
+    "terminal-maturity",
+    "production-ready",
+    "release-ready",
+    "issue-16-complete"
+  ]
+}
