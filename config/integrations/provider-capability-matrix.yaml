@@ -55,9 +55,15 @@ roles:
           execution_receipt_contract: source-set-v2-native
           domain_verification_pass: unsupported-by-design
       claude_code:
-        repository: null
+        repository: jiying2007/claude
         runtime_target: claude-code
-        status: future-binding
+        source_identity_mode: exact-release-source-blobs
+        status: binding-candidate-blocked
+        candidate_pr: jiying2007/claude#1
+        blocker_ref: jiying2007/claude#2
+        blocker: github-hosted-runner-admission-before-step-execution
+        r1_binding_ready: false
+        r2_real_provider_substitution: pending
     decision: codex-source-set-bound-default-not-frozen
 
   assurance_binding:
