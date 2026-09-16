@@ -26,15 +26,15 @@ class ProviderCapabilityMatrixRuntimeCandidateTests(unittest.TestCase):
         self.assertEqual(self.claude["status"], "source-set-bound")
         self.assertEqual(
             self.claude["binding_commit"],
-            "9768012c46f348421050192919a91b8070b5d672",
+            "8cd87956507f9dbde0438c9135493c96f3b2d318",
         )
         self.assertEqual(
             self.claude["r1_exact_head_workflow_run"],
-            "jiying2007/claude/actions/runs/35111664791",
+            "jiying2007/claude/actions/runs/35115950799",
         )
         self.assertEqual(
             self.claude["r1_fresh_main_workflow_run"],
-            "jiying2007/claude/actions/runs/35111772454",
+            "jiying2007/claude/actions/runs/35116031702",
         )
 
     def test_r1_ready_candidate_remains_non_terminal(self) -> None:
