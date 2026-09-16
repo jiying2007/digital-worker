@@ -84,8 +84,17 @@ def _contains_forbidden_decision_claim(value: Any) -> bool:
     if isinstance(value, Mapping):
         for key, item in value.items():
             normalized = str(key).lower().replace("-", "_")
-            if normalized in {"verification_pass", "verification_status", "domain_verification_status", "release_ready", "domain_gate_pass"}:
-                if item is True or (isinstance(item, str) and item.lower() in {"pass", "passed", "success", "ready"}):
+            if normalized in {
+                "verification_pass",
+                "verification_status",
+                "domain_verification_status",
+                "release_ready",
+                "domain_gate_pass",
+            }:
+                if item is True or (
+                    isinstance(item, str)
+                    and item.lower() in {"pass", "passed", "success", "ready"}
+                ):
                     return True
             if _contains_forbidden_decision_claim(item):
                 return True
@@ -100,7 +109,50 @@ def _repo_url(owner_repo: str) -> str:
     return f"https://github.com/{owner_repo}.git"
 
 
-def build_plan(root: Path, *, digital_worker_commit: str, target_head: str, target_clean: bool) -> dict[str, Any]:
+def _runtime_binding_snapshot(lock: Mapping[str, Any]) -> dict[str, dict[str, Any]]:
+    bindings = lock.get("runtime_bindings")
+    if not isinstance(bindings, Mapping):
+        raise R2EvidenceError("cross-repo runtime bindings are missing")
+    result: dict[str, dict[str, Any]] = {}
+    for runtime, target in (("codex", "codex-cli"), ("claude-code", "claude-code")):
+        raw = bindings.get(runtime)
+        if not isinstance(raw, Mapping):
+            raise R2EvidenceError(f"direct runtime binding is missing: {runtime}")
+        repository = raw.get("repository")
+        if not isinstance(repository, str) or repository != f"jiying2007/{'codex' if runtime == 'codex' else 'claude'}":
+            raise R2EvidenceError(f"direct runtime binding repository drift: {runtime}")
+        if raw.get("runtime_target") != target:
+            raise R2EvidenceError(f"direct runtime binding target drift: {runtime}")
+        if raw.get("source_identity_mode") != "exact-release-source-blobs":
+            raise R2EvidenceError(f"direct runtime source identity drift: {runtime}")
+        readiness = raw.get("runtime_readiness")
+        if readiness not in {"SOURCE_SET_BOUND", "SOURCE_SET_READY_R1"}:
+            raise R2EvidenceError(f"direct runtime binding is not R1-ready: {runtime}")
+        result[runtime] = {
+            "repository": repository,
+            "ref": raw.get("ref"),
+            "commit": _require_full_sha(raw.get("commit"), f"{runtime} binding commit"),
+            "runtime_target": target,
+            "source_identity_mode": "exact-release-source-blobs",
+            "runtime_readiness": readiness,
+            "contract": raw.get("contract"),
+            "contract_version": raw.get("contract_version"),
+            "contract_canonical_sha256": _require_sha256(
+                raw.get("contract_canonical_sha256"), f"{runtime} binding contract digest"
+            ),
+            "execution_receipt_schema": raw.get("execution_receipt_schema"),
+            "execution_receipt_schema_version": raw.get("execution_receipt_schema_version"),
+        }
+    return result
+
+
+def build_plan(
+    root: Path,
+    *,
+    digital_worker_commit: str,
+    target_head: str,
+    target_clean: bool,
+) -> dict[str, Any]:
     root = root.resolve()
     task = _load(root / TASK_BRIEF.relative_to(ROOT), "task brief")
     package = _load(root / ENGINEERING_PACKAGE.relative_to(ROOT), "engineering task package")
@@ -136,8 +188,11 @@ def build_plan(root: Path, *, digital_worker_commit: str, target_head: str, targ
     assets = lock.get("providers", {}).get("agent_asset_control_plane")
     if not isinstance(knowledge, dict) or not isinstance(assets, dict):
         raise R2EvidenceError("cross-repo knowledge/asset providers are missing")
+    runtime_bindings = _runtime_binding_snapshot(lock)
     knowledge_commit = _require_full_sha(knowledge.get("commit"), "knowledge provider commit")
-    knowledge_digest = _require_sha256(knowledge.get("contract_canonical_sha256"), "knowledge contract digest")
+    knowledge_digest = _require_sha256(
+        knowledge.get("contract_canonical_sha256"), "knowledge contract digest"
+    )
     release = assets.get("release_baseline")
     if not isinstance(release, dict):
         raise R2EvidenceError("ADK release baseline is missing")
@@ -148,7 +203,9 @@ def build_plan(root: Path, *, digital_worker_commit: str, target_head: str, targ
         "commit": _require_full_sha(release.get("commit"), "ADK release commit"),
         "tree": _require_full_sha(release.get("tree"), "ADK release tree"),
         "manifest_blob": _require_full_sha(release.get("manifest_blob"), "ADK manifest blob"),
-        "artifact_sha256": _require_sha256(release.get("release_artifact_sha256"), "ADK release artifact digest"),
+        "artifact_sha256": _require_sha256(
+            release.get("release_artifact_sha256"), "ADK release artifact digest"
+        ),
     }
 
     governance = {
@@ -200,6 +257,7 @@ def build_plan(root: Path, *, digital_worker_commit: str, target_head: str, targ
         "digital_worker_governance_identity_ref": governance_ref,
         "knowledge_context_fingerprint": knowledge_fingerprint,
         "adk_release": adk_release,
+        "runtime_bindings": runtime_bindings,
         "engineering_task_package_sha256": r2_package_sha,
         "material_manifest_sha256": material_sha,
         "target_repository": package.get("repo_root"),
@@ -246,6 +304,7 @@ def build_plan(root: Path, *, digital_worker_commit: str, target_head: str, targ
         "digital_worker_governance": governance,
         "knowledge_context": knowledge_material,
         "adk_release_identity": adk_release,
+        "runtime_bindings": runtime_bindings,
         "comparison_source_set": comparison_source_set,
         "engineering_task_package": r2_package,
         "prompt": prompt,
@@ -269,7 +328,9 @@ def _portable_identity_from_codex(native: Mapping[str, Any]) -> dict[str, Any]:
         raise R2EvidenceError("Codex native receipt runtime binding/runtime identity is missing")
     return {
         "runtime_binding_repository": _repo_url(str(binding.get("repository"))),
-        "runtime_binding_commit": _require_full_sha(binding.get("commit"), "Codex runtime binding commit"),
+        "runtime_binding_commit": _require_full_sha(
+            binding.get("commit"), "Codex runtime binding commit"
+        ),
         "runtime_target": binding.get("target"),
         "runtime_profile": binding.get("runtime_profile"),
         "runtime_host": binding.get("runtime_host"),
@@ -291,7 +352,53 @@ def _portable_identity_from_claude(native: Mapping[str, Any]) -> dict[str, Any]:
     return result
 
 
-def project_receipt(root: Path, *, runtime: str, native_receipt: Path, frozen_plan: Path) -> dict[str, Any]:
+def _validate_identity_against_frozen_binding(
+    runtime: str,
+    identity: Mapping[str, Any],
+    plan: Mapping[str, Any],
+) -> None:
+    bindings = plan.get("runtime_bindings")
+    if not isinstance(bindings, Mapping):
+        raise R2EvidenceError("R2 frozen plan runtime bindings are missing")
+    expected = bindings.get(runtime)
+    if not isinstance(expected, Mapping):
+        raise R2EvidenceError(f"R2 frozen plan direct binding is missing: {runtime}")
+    comparisons = {
+        "runtime_binding_repository": _repo_url(str(expected.get("repository"))),
+        "runtime_binding_commit": expected.get("commit"),
+        "runtime_target": expected.get("runtime_target"),
+    }
+    for field, value in comparisons.items():
+        if identity.get(field) != value:
+            raise R2EvidenceError(f"{runtime} native receipt does not match frozen direct binding: {field}")
+
+
+def _validate_codex_agent_assets(native: Mapping[str, Any], plan: Mapping[str, Any]) -> None:
+    assets = native.get("agent_assets")
+    release = plan.get("adk_release_identity")
+    if not isinstance(assets, Mapping) or not isinstance(release, Mapping):
+        raise R2EvidenceError("Codex native receipt ADK identity is missing")
+    expected = {
+        "provider_repository": release.get("repository"),
+        "release_version": release.get("version"),
+        "release_tag": release.get("tag"),
+        "release_commit": release.get("commit"),
+        "asset_profile": plan.get("controlled_task", {}).get("adk_asset_profile")
+        if isinstance(plan.get("controlled_task"), Mapping)
+        else None,
+    }
+    for field, value in expected.items():
+        if assets.get(field) != value:
+            raise R2EvidenceError(f"Codex native receipt ADK identity drift: {field}")
+
+
+def project_receipt(
+    root: Path,
+    *,
+    runtime: str,
+    native_receipt: Path,
+    frozen_plan: Path,
+) -> dict[str, Any]:
     native = _load(native_receipt, f"{runtime} native receipt")
     plan = _load(frozen_plan, "R2 frozen plan")
     if plan.get("schema") != "digital-worker-runtime-r2-plan/v1":
@@ -301,7 +408,9 @@ def project_receipt(root: Path, *, runtime: str, native_receipt: Path, frozen_pl
     if not isinstance(controlled, Mapping) or _digest(controlled) != frozen_digest:
         raise R2EvidenceError("frozen plan controlled_task digest mismatch")
     if _contains_forbidden_decision_claim(native):
-        raise R2EvidenceError("native runtime receipt contains a forbidden Verification/Release decision claim")
+        raise R2EvidenceError(
+            "native runtime receipt contains a forbidden Verification/Release decision claim"
+        )
 
     if runtime == "codex":
         if native.get("schema_version") != 2:
@@ -310,13 +419,28 @@ def project_receipt(root: Path, *, runtime: str, native_receipt: Path, frozen_pl
         repository = native.get("repository")
         if not isinstance(execution, Mapping) or execution.get("status") != "completed":
             raise R2EvidenceError("Codex native execution must be completed")
-        if native.get("work_item_id") != controlled.get("work_item_id") or native.get("run_id") != controlled.get("run_id"):
-            raise R2EvidenceError("Codex native receipt work/run identity does not match frozen task")
-        if not isinstance(repository, Mapping) or repository.get("base_commit") != controlled.get("exact_base_commit"):
-            raise R2EvidenceError("Codex native receipt base commit does not match frozen task")
+        if (
+            native.get("work_item_id") != controlled.get("work_item_id")
+            or native.get("run_id") != controlled.get("run_id")
+        ):
+            raise R2EvidenceError(
+                "Codex native receipt work/run identity does not match frozen task"
+            )
+        if (
+            not isinstance(repository, Mapping)
+            or repository.get("base_commit") != controlled.get("exact_base_commit")
+        ):
+            raise R2EvidenceError(
+                "Codex native receipt base commit does not match frozen task"
+            )
+        _validate_codex_agent_assets(native, plan)
         identity = _portable_identity_from_codex(native)
     elif runtime == "claude-code":
-        if native.get("schema_version") != 2 or native.get("status") != "completed" or native.get("runtime") != "claude-code":
+        if (
+            native.get("schema_version") != 2
+            or native.get("status") != "completed"
+            or native.get("runtime") != "claude-code"
+        ):
             raise R2EvidenceError("Claude native receipt is not a completed v2 receipt")
         if native.get("frozen_inputs_sha256") != frozen_digest:
             raise R2EvidenceError("Claude native receipt frozen task digest mismatch")
@@ -327,13 +451,22 @@ def project_receipt(root: Path, *, runtime: str, native_receipt: Path, frozen_pl
         raise R2EvidenceError(f"unsupported runtime: {runtime}")
 
     required = (
-        "runtime_binding_repository", "runtime_binding_commit", "runtime_target", "runtime_profile",
-        "runtime_host", "runtime_provider", "runtime_version", "runtime_source_set_identity_ref",
+        "runtime_binding_repository",
+        "runtime_binding_commit",
+        "runtime_target",
+        "runtime_profile",
+        "runtime_host",
+        "runtime_provider",
+        "runtime_version",
+        "runtime_source_set_identity_ref",
         "runtime_distribution_identity_ref",
     )
     missing = [key for key in required if not identity.get(key)]
     if missing:
-        raise R2EvidenceError("portable runtime identity is incomplete: " + ", ".join(missing))
+        raise R2EvidenceError(
+            "portable runtime identity is incomplete: " + ", ".join(missing)
+        )
+    _validate_identity_against_frozen_binding(runtime, identity, plan)
     native_sha = _file_digest(native_receipt)
     return {
         "schema": PORTABLE_SCHEMA,
@@ -352,11 +485,16 @@ def project_receipt(root: Path, *, runtime: str, native_receipt: Path, frozen_pl
 
 def _write_json(path: Path, value: Mapping[str, Any]) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="Prepare and project fail-closed real R2 runtime portability evidence.")
+    parser = argparse.ArgumentParser(
+        description="Prepare and project fail-closed real R2 runtime portability evidence."
+    )
     sub = parser.add_subparsers(dest="command", required=True)
 
     p = sub.add_parser("prepare")
@@ -383,10 +521,20 @@ def main(argv: list[str] | None = None) -> int:
                 frozen_plan=Path(args.frozen_plan),
             )
         _write_json(Path(args.output), value)
-        print(json.dumps({"status": "pass", "command": args.command, "output": args.output}, sort_keys=True))
+        print(
+            json.dumps(
+                {"status": "pass", "command": args.command, "output": args.output},
+                sort_keys=True,
+            )
+        )
         return 0
     except R2EvidenceError as exc:
-        print(json.dumps({"status": "blocked", "command": args.command, "reason": str(exc)}, sort_keys=True))
+        print(
+            json.dumps(
+                {"status": "blocked", "command": args.command, "reason": str(exc)},
+                sort_keys=True,
+            )
+        )
         return 2
 
 
