@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "work_item_id": "KNOWLEDGE-E3-GOVERNANCE-001",
+  "run_id": "KNOWLEDGE-E3-GOVERNANCE-001-RUN-001",
+  "status": "ELIGIBLE",
+  "e3_knowledge_reuse_eligible": true,
+  "qualification_scope": "knowledge-reuse-only",
+  "knowledge_provider_identity_ref": "config/integrations/cross-repo-lock.json#/providers/knowledge_control_plane",
+  "context_fingerprint": "286c9065977aefe326ccf80e09f14d319b6389773229c6c36a07690ec0f0942b",
+  "reused_knowledge_ids": [
+    "knowledge-hub-registry-schema-readability-extension"
+  ],
+  "reuse_item_count": 1,
+  "blockers": [],
+  "does_not_imply": [
+    "knowledge-provider-qualification",
+    "product-readiness",
+    "terminal-maturity",
+    "production-ready",
+    "release-ready"
+  ]
+}
