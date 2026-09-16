@@ -11,8 +11,8 @@
       "contract": "registry/integrations/digital-worker.json",
       "contract_version": "1.2",
       "contract_canonical_sha256": "7e67ff9f19ef8a1bc627e589d888fcf8370297c7ceafa26e8d65d9d0630c3d11",
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_ROUTE_REGISTERED_REUSE_PENDING",
-      "notes": "Governed digital-worker project/repository route is registered and machine-validated in Knowledge Hub; real reuse evidence remains pending. Route registration does not qualify the Knowledge Closed Loop, product readiness, or provider default selection."
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_ROUTE_REGISTERED_FIRST_REAL_REUSE_ELIGIBLE",
+      "notes": "Governed digital-worker project/repository route is registered and machine-validated in Knowledge Hub; digital-worker has one checked-in real governed reuse receipt at KNOWLEDGE-E3-GOVERNANCE-001. This does not qualify the Knowledge provider, complete the Knowledge Closed Loop, product readiness, or provider default selection."
     },
     "agent_asset_control_plane": {
       "repository": "jiying2007/agent-dev-kit",
@@ -127,6 +127,7 @@
     "r2_certifier_readiness_does_not_imply_terminal_replaceability": true,
     "governed_knowledge_route_registration_does_not_imply_real_reuse": true,
     "knowledge_closed_loop_requires_real_reuse_evidence": true,
+    "single_real_reuse_does_not_imply_provider_qualification": true,
     "pin_freshness_does_not_imply_compatibility": true,
     "pin_promotion_requires_checkout_verification": true
   }
