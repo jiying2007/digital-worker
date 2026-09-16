@@ -22,6 +22,7 @@ EXPECTED_REPOS = {
     "agent_asset_control_plane": "jiying2007/agent-dev-kit",
     "runtime_practice_eval": "jiying2007/llm_agent",
     "codex": "jiying2007/codex",
+    "claude": "jiying2007/claude",
     "codex_review_safe": "jiying2007/codex-review",
 }
 READY_RUNTIME_BINDING_STATUSES = {"source-set-bound", "ready", "active"}
@@ -60,7 +61,6 @@ def fetch_exact_tag(destination: Path, tag: str) -> None:
 
 
 def re_full_tag(tag: str) -> bool:
-    # Release tags are intentionally simple and must never be interpreted as refspec fragments.
     import re
 
     return re.fullmatch(r"v[0-9]+(?:\.[0-9]+){2}(?:[-+][0-9A-Za-z.-]+)?", tag) is not None
@@ -118,7 +118,21 @@ def verify_second_runtime_candidate(candidates: dict) -> str:
         return status
 
     if status in READY_RUNTIME_BINDING_STATUSES:
-        fail("runtime_practice_eval: claude-code is R1-ready upstream but is not yet an approved Digital Worker runtime binding")
+        expected = {
+            "repository": "https://github.com/jiying2007/claude.git",
+            "source_identity_mode": "exact-release-source-blobs",
+            "merged_pr": "jiying2007/claude#3",
+            "r1_binding_conformance": "passed",
+            "verified_runtime_execution_receipt": "pending",
+            "r2_real_provider_substitution": "pending",
+        }
+        for key, value in expected.items():
+            if candidate.get(key) != value:
+                fail(f"runtime_practice_eval: R1-ready claude-code candidate {key} drift")
+        import re
+        if re.fullmatch(r"[0-9a-f]{40}", str(candidate.get("binding_commit", ""))) is None:
+            fail("runtime_practice_eval: R1-ready claude-code binding commit must be exact")
+        return status
     fail(f"runtime_practice_eval: unsupported claude-code candidate status: {status!r}")
 
 
@@ -145,6 +159,8 @@ def verify_runtime_practice_eval(entry: dict, destination: Path) -> dict:
     if candidates.get("codex", {}).get("status") != "source-set-bound":
         fail("runtime_practice_eval: pinned Codex comparison binding is not source-set-bound")
     second_runtime_status = verify_second_runtime_candidate(candidates)
+    if second_runtime_status not in READY_RUNTIME_BINDING_STATUSES:
+        fail("runtime_practice_eval: pinned Claude comparison binding is not source-set-bound/ready")
 
     certifier_text = paths["certifier"].read_text(encoding="utf-8")
     for marker in [
@@ -325,7 +341,7 @@ def verify_one(name: str, entry: dict, destination: Path, fetch: bool) -> dict:
     if name == "runtime_practice_eval":
         report["runtime_portability"] = verify_runtime_practice_eval(entry, destination)
 
-    if name == "codex":
+    if name in {"codex", "claude"}:
         bootstrap = verify_contract(
             name=f"{name}:session-bootstrap",
             destination=destination,
@@ -335,11 +351,29 @@ def verify_one(name: str, entry: dict, destination: Path, fetch: bool) -> dict:
         )
         report["session_bootstrap_contract"] = bootstrap
         binding_doc = json.loads((destination / entry["contract"]).read_text(encoding="utf-8"))
-        if binding_doc.get("readiness") != entry["runtime_readiness"]:
-            fail(f"{name}: runtime readiness mismatch")
-        if binding_doc.get("source_binding", {}).get("identity_mode") != entry["source_identity_mode"]:
-            fail(f"{name}: source identity mode mismatch")
         bootstrap_doc = json.loads((destination / entry["session_bootstrap_contract"]).read_text(encoding="utf-8"))
+        if name == "codex":
+            if binding_doc.get("readiness") != entry["runtime_readiness"]:
+                fail("codex: runtime readiness mismatch")
+            if binding_doc.get("source_binding", {}).get("identity_mode") != entry["source_identity_mode"]:
+                fail("codex: source identity mode mismatch")
+        else:
+            if binding_doc.get("status") != entry["runtime_readiness"]:
+                fail("claude: runtime readiness mismatch")
+            if binding_doc.get("source_identity_mode") != entry["source_identity_mode"]:
+                fail("claude: source identity mode mismatch")
+            if binding_doc.get("runtime_target") != entry["runtime_target"]:
+                fail("claude: runtime target mismatch")
+            if binding_doc.get("maturity_level") != "R1-binding-conformance":
+                fail("claude: R1 maturity boundary drift")
+            if binding_doc.get("terminal_replaceability_qualified") is not False:
+                fail("claude: R1 must not qualify terminal replaceability")
+            if binding_doc.get("agent_dev_kit", {}).get("asset_profile") != entry["required_asset_profile"]:
+                fail("claude: ADK asset profile mismatch")
+            if binding_doc.get("execution_receipt", {}).get("schema") != entry["execution_receipt_schema"]:
+                fail("claude: execution receipt schema mismatch")
+            if binding_doc.get("hard_rules", {}).get("r1_is_not_r2") is not True:
+                fail("claude: R1/R2 boundary missing")
         if bootstrap_doc.get("role") != "thin-session-bootstrap":
             fail(f"{name}: Session Bootstrap role drift")
         for mode in ("L0", "L1", "L2"):
@@ -364,6 +398,7 @@ def main() -> None:
         "agent_asset_control_plane": lock["providers"]["agent_asset_control_plane"],
         "runtime_practice_eval": lock["providers"]["runtime_practice_eval"],
         "codex": lock["runtime_bindings"]["codex"],
+        "claude": lock["runtime_bindings"]["claude"],
     }
     args.root.mkdir(parents=True, exist_ok=True)
     results = []
