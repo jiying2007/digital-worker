@@ -42,9 +42,10 @@ class WorkRunConsumerContractTests(unittest.TestCase):
         knowledge = lock["providers"]["knowledge_control_plane"]
         self.assertEqual(knowledge["contract_version"], "1.2")
         self.assertIn("ROUTE_REGISTERED", knowledge["validation"])
-        self.assertIn("REUSE_PENDING", knowledge["validation"])
+        self.assertIn("FIRST_REAL_REUSE_ELIGIBLE", knowledge["validation"])
         self.assertTrue(lock["rules"]["governed_knowledge_route_registration_does_not_imply_real_reuse"])
         self.assertTrue(lock["rules"]["knowledge_closed_loop_requires_real_reuse_evidence"])
+        self.assertTrue(lock["rules"]["single_real_reuse_does_not_imply_provider_qualification"])
 
     def test_e3_reuse_gate_from_current_main_coexists_with_work_run_promotion(self) -> None:
         self.assertTrue(REUSE_SCHEMA.is_file())
