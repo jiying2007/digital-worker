@@ -57,16 +57,20 @@ roles:
           execution_receipt_contract: source-set-v2-native
           domain_verification_pass: unsupported-by-design
       claude_code:
-        repository: jiying2007/claude
-        runtime_target: claude-code
-        source_identity_mode: exact-release-source-blobs
-        status: binding-candidate-blocked
-        candidate_pr: jiying2007/claude#1
-        blocker_ref: jiying2007/claude#2
-        blocker: github-hosted-runner-admission-before-step-execution
-        r1_binding_ready: false
-        r2_real_provider_substitution: pending
-    decision: codex-source-set-bound-default-not-frozen
+        identity_ref: config/integrations/cross-repo-lock.json#/runtime_bindings/claude
+        capabilities:
+          runtime_profiles: native
+          target_mapping: native
+          exact_release_source_blobs: native
+          runtime_distribution_assembly: native
+          thin_session_bootstrap_l0_l1_l2: native
+          source_set_materialization: native
+          fail_closed_identity_bootstrap: native
+          execution_receipt_contract: source-set-v2-native
+          real_provider_execution_receipt: pending-external-execution
+          r2_real_provider_substitution: pending-external-evidence
+          domain_verification_pass: unsupported-by-design
+    decision: two-r1-source-set-bound-candidates-provider-selection-not-frozen
 
   assurance_binding:
     candidates:
