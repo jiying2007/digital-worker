@@ -128,7 +128,14 @@
       "evidence_ref": "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-STALE-SOURCE-001/stale-source-evidence.json"
     },
     "authority_conflict": {
-      "status": "not-yet-proven"
+      "status": "real-detected-unresolved-blocked",
+      "knowledge_ids": [
+        "pcr02-customer-ubi-startup-optimization-20260803",
+        "pcr02-customer-ubi-startup-optimization-review-20260804"
+      ],
+      "reuse_eligible": false,
+      "selected_authority": null,
+      "evidence_ref": "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-AUTHORITY-CONFLICT-001/authority-conflict-evidence.json"
     }
   },
   "progress": {
@@ -136,6 +143,7 @@
     "real_reuse_source_classes": 1,
     "discovery_tested_not_applicable_source_classes": 1,
     "real_stale_source_cases": 1,
+    "real_authority_conflict_cases": 1,
     "source_inventory_subgap_advanced": true,
     "issue_16_complete": false,
     "knowledge_provider_qualification": false,
@@ -145,7 +153,6 @@
   },
   "open_requirements": [
     "acl-negative-real-evidence",
-    "authority-conflict-real-evidence",
     "broader-real-source-diversity-or-explicit-not-applicable-evidence",
     "knowledge-access-default-backup-not-frozen-decision",
     "provider-side-real-adoption-and-terminal-gaps"
