@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "work_item_id": "KNOWLEDGE-E3-GOVERNANCE-001",
+  "run_id": "KNOWLEDGE-E3-GOVERNANCE-001-RUN-001",
+  "source_type": "real",
+  "evidence_origin": "real-run",
+  "observed_at": "2026-09-16T11:13:00+08:00",
+  "knowledge_provider": {
+    "repository": "jiying2007/knowledge-hub",
+    "commit": "51e4f8166657d9d082f523335d350d0e8c2890a9",
+    "contract": "registry/integrations/digital-worker.json",
+    "contract_version": "1.2",
+    "contract_canonical_sha256": "7e67ff9f19ef8a1bc627e589d888fcf8370297c7ceafa26e8d65d9d0630c3d11",
+    "context_fingerprint": "286c9065977aefe326ccf80e09f14d319b6389773229c6c36a07690ec0f0942b"
+  },
+  "reuse_items": [
+    {
+      "knowledge_id": "knowledge-hub-registry-schema-readability-extension",
+      "source_real": true,
+      "authority_ref": "knowledge-hub://registry/items/knowledge-hub-registry-schema-readability-extension@51e4f8166657d9d082f523335d350d0e8c2890a9",
+      "source_ref": "github://jiying2007/knowledge-hub@51e4f8166657d9d082f523335d350d0e8c2890a9/registry/schema.md#blob=220ac16d9dfef5de9e9f4a2dbe81ab3dabe9b0bf",
+      "version_or_revision": "51e4f8166657d9d082f523335d350d0e8c2890a9:220ac16d9dfef5de9e9f4a2dbe81ab3dabe9b0bf",
+      "acl_state": "allowed",
+      "acl_evidence_refs": [
+        "github://jiying2007/knowledge-hub#visibility=public",
+        "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-GOVERNANCE-001/actual-use-record.json#source_access"
+      ],
+      "freshness_state": "fresh",
+      "freshness_evidence_refs": [
+        "github://jiying2007/knowledge-hub@51e4f8166657d9d082f523335d350d0e8c2890a9/registry/schema.md#review_after=2026-09-18",
+        "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-GOVERNANCE-001/actual-use-record.json#recorded_at=2026-09-16"
+      ],
+      "conflict_state": "none",
+      "provenance_ref": "github://jiying2007/knowledge-hub@51e4f8166657d9d082f523335d350d0e8c2890a9/registry/schema.md#blob=220ac16d9dfef5de9e9f4a2dbe81ab3dabe9b0bf",
+      "actual_use_refs": [
+        "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-GOVERNANCE-001/actual-use-record.json#actual_use"
+      ]
+    }
+  ],
+  "knowledge_harvest_ref": "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-GOVERNANCE-001/knowledge-harvest.json",
+  "notes": "First real-run E3 reuse evidence for a pre-existing governed Knowledge Hub item. This closes only the per-run knowledge-reuse eligibility claim if the canonical evaluator returns ELIGIBLE; it does not close Knowledge Hub provider qualification, Digital Worker issue #16 as a whole, Product Readiness, Release Ready, or Terminal Maturity."
+}
