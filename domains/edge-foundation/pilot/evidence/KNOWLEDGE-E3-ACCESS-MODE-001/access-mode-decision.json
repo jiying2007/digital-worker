@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "decision_id": "KNOWLEDGE-E3-ACCESS-MODE-001",
+  "decided_on": "2026-09-16",
+  "issue_ref": "jiying2007/digital-worker#16",
+  "decision_scope": "knowledge-access-mode-only",
+  "evidence_basis": {
+    "real_governed_reuse": "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-GOVERNANCE-001/knowledge-reuse-receipt.json",
+    "source_inventory": "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-SOURCE-INVENTORY-001/source-inventory.json",
+    "real_stale_detection": "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-STALE-SOURCE-001/stale-source-evidence.json",
+    "real_authority_conflict_detection": "domains/edge-foundation/pilot/evidence/KNOWLEDGE-E3-AUTHORITY-CONFLICT-001/authority-conflict-evidence.json"
+  },
+  "observed_modes": [
+    {
+      "mode": "knowledge-hub-governed-reuse",
+      "state": "validated-candidate-not-default",
+      "positive_evidence": [
+        "one real Work/Run materially reused a fresh governed Knowledge Hub item and received an ELIGIBLE knowledge-reuse-only receipt",
+        "exact provider identity and source provenance are pinned",
+        "real stale and unresolved-conflict cases are now explicitly detected and blocked"
+      ],
+      "limitations": [
+        "real ACL-negative evidence is not yet proven",
+        "one eligible reuse does not establish long-term adoption or provider qualification",
+        "provider-side external terminal gaps remain authoritative in Knowledge Hub"
+      ]
+    },
+    {
+      "mode": "source-system-direct-fact-observation",
+      "state": "bounded-fact-path-not-knowledge-default",
+      "positive_evidence": [
+        "GitHub Issue/CI fact evidence was read from its source system with exact issue identity"
+      ],
+      "limitations": [
+        "source-system fact access does not bypass Knowledge lifecycle for durable Knowledge promotion",
+        "observations are not automatically active Knowledge or domain decisions"
+      ]
+    },
+    {
+      "mode": "enterprise-collaboration-drive",
+      "state": "discovery-tested-not-ready",
+      "positive_evidence": [
+        "authenticated viewed-file discovery was exercised"
+      ],
+      "limitations": [
+        "PCR02, SSC305 and UBIFS searches returned no applicable source",
+        "the only visible OTA result was unrelated to current Work Items",
+        "no adoption, integration, or ACL-negative evidence is proven"
+      ]
+    }
+  ],
+  "selection": {
+    "decision": "not_frozen",
+    "default_mode": null,
+    "backup_mode": null,
+    "leading_candidate": "knowledge-hub-governed-reuse",
+    "leading_candidate_status": "candidate-not-default",
+    "reason": "Current evidence proves one governed reuse and real fail-closed stale/conflict handling, but is insufficient to freeze a default or backup before ACL-negative evidence, broader applicable source experience, and sustained provider adoption evidence exist."
+  },
+  "reconsider_when": [
+    "real ACL-negative evidence exists",
+    "additional applicable real source classes are exercised or explicitly evidenced not applicable",
+    "repeated real governed reuse/adoption evidence exists",
+    "provider-side qualification and terminal ledgers materially advance"
+  ],
+  "does_not_imply": [
+    "provider-default-selection",
+    "backup-provider-selection",
+    "knowledge-provider-qualification",
+    "issue-16-complete",
+    "product-readiness",
+    "terminal-maturity",
+    "production-ready",
+    "release-ready"
+  ]
+}
