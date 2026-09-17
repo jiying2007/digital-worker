@@ -1,0 +1,199 @@
+name: Runtime R2 Domain Verification
+
+on:
+  workflow_dispatch:
+    inputs:
+      provider_run_id:
+        description: "Workflow run id from Runtime R2 Real Provider Execution"
+        required: true
+        type: string
+      confirmation:
+        description: "Type VERIFY_REAL_R2 to verify the collected provider outputs"
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: runtime-r2-domain-verification-${{ github.run_id }}
+  cancel-in-progress: false
+
+env:
+  TARGET_BASE_COMMIT: eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout Digital Worker verification authority
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Enforce explicit main-only verification request
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          PROVIDER_RUN_ID: ${{ inputs.provider_run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = workflow_dispatch
+          test "$GITHUB_REF" = refs/heads/main
+          test "$CONFIRMATION" = VERIFY_REAL_R2
+          [[ "$PROVIDER_RUN_ID" =~ ^[0-9]+$ ]]
+      - name: Download shared frozen provider plan
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: r2-frozen-plan-${{ inputs.provider_run_id }}
+          path: ${{ runner.temp }}/r2-freeze
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.provider_run_id }}
+      - name: Download Codex real-provider evidence
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: r2-codex-real-${{ inputs.provider_run_id }}
+          path: ${{ runner.temp }}/r2-codex
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.provider_run_id }}
+      - name: Download Claude real-provider evidence
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: r2-claude-real-${{ inputs.provider_run_id }}
+          path: ${{ runner.temp }}/r2-claude
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
+          run-id: ${{ inputs.provider_run_id }}
+      - name: Validate frozen task and receipt chain before replay
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - "$RUNNER_TEMP/r2-freeze/frozen-plan.json" "$RUNNER_TEMP/r2-codex/codex-native.json" "$RUNNER_TEMP/r2-codex/codex-portable.json" "$RUNNER_TEMP/r2-claude/claude-native-validated.json" "$RUNNER_TEMP/r2-claude/claude-portable.json" <<'PY'
+          import hashlib, json, pathlib, sys
+          plan_path, cn_path, cp_path, an_path, ap_path = map(pathlib.Path, sys.argv[1:])
+          plan=json.loads(plan_path.read_text())
+          cn=json.loads(cn_path.read_text()); cp=json.loads(cp_path.read_text())
+          an=json.loads(an_path.read_text()); ap=json.loads(ap_path.read_text())
+          frozen=plan['frozen_inputs_sha256']
+          assert plan['controlled_task']['exact_base_commit'] == 'eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d'
+          assert cp['runtime'] == 'codex' and ap['runtime'] == 'claude-code'
+          assert cp['frozen_inputs_sha256'] == ap['frozen_inputs_sha256'] == frozen
+          assert cp['verification_pass_claimed'] is False and ap['verification_pass_claimed'] is False
+          assert cp['native_receipt']['sha256'] == hashlib.sha256(cn_path.read_bytes()).hexdigest()
+          assert ap['native_receipt']['sha256'] == hashlib.sha256(an_path.read_bytes()).hexdigest()
+          PY
+      - name: Fail closed if provider artifacts omit untracked result files
+        shell: bash
+        run: |
+          set -euo pipefail
+          for status in "$RUNNER_TEMP/r2-codex/codex-status.txt" "$RUNNER_TEMP/r2-claude/claude-status.txt"; do
+            test -f "$status"
+            if grep -q '^?? ' "$status"; then
+              echo "::error::BLOCKED_PROVIDER_RESULT_HAS_UNTRACKED_FILES_NOT_PRESENT_IN_BINARY_PATCH:$status"
+              cat "$status"
+              exit 2
+            fi
+          done
+          test -s "$RUNNER_TEMP/r2-codex/codex.patch"
+          test -s "$RUNNER_TEMP/r2-claude/claude.patch"
+      - name: Checkout exact base for Codex independent replay
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: jiying2007/ota_download_test
+          ref: eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d
+          path: verify-codex
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Checkout exact base for Claude independent replay
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: jiying2007/ota_download_test
+          ref: eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d
+          path: verify-claude
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Replay and independently host-verify Codex result
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$GITHUB_WORKSPACE/verify-codex"
+          test "$(git -C "$root" rev-parse HEAD)" = "$TARGET_BASE_COMMIT"
+          test -z "$(git -C "$root" status --porcelain=v1 --untracked-files=all)"
+          git -C "$root" apply --check "$RUNNER_TEMP/r2-codex/codex.patch"
+          git -C "$root" apply "$RUNNER_TEMP/r2-codex/codex.patch"
+          (cd "$root" && python -m unittest discover -s tests -v) 2>&1 | tee "$RUNNER_TEMP/codex-domain-host-tests.log"
+          (cd "$root" && python verify_ota_manifest.py --manifest ota-manifest.v1.json) 2>&1 | tee "$RUNNER_TEMP/codex-domain-ota-verify.log"
+      - name: Replay and independently host-verify Claude result
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="$GITHUB_WORKSPACE/verify-claude"
+          test "$(git -C "$root" rev-parse HEAD)" = "$TARGET_BASE_COMMIT"
+          test -z "$(git -C "$root" status --porcelain=v1 --untracked-files=all)"
+          git -C "$root" apply --check "$RUNNER_TEMP/r2-claude/claude.patch"
+          git -C "$root" apply "$RUNNER_TEMP/r2-claude/claude.patch"
+          (cd "$root" && python -m unittest discover -s tests -v) 2>&1 | tee "$RUNNER_TEMP/claude-domain-host-tests.log"
+          (cd "$root" && python verify_ota_manifest.py --manifest ota-manifest.v1.json) 2>&1 | tee "$RUNNER_TEMP/claude-domain-ota-verify.log"
+      - name: Bind replayed worktree identities to provider receipts and issue domain verification
+        shell: bash
+        env:
+          PROVIDER_RUN_ID: ${{ inputs.provider_run_id }}
+        run: |
+          set -euo pipefail
+          python - "$RUNNER_TEMP/r2-freeze/frozen-plan.json" "$RUNNER_TEMP/r2-codex/codex-native.json" "$RUNNER_TEMP/r2-codex/codex-portable.json" "$GITHUB_WORKSPACE/verify-codex" "$RUNNER_TEMP/r2-claude/claude-native-validated.json" "$RUNNER_TEMP/r2-claude/claude-portable.json" "$GITHUB_WORKSPACE/verify-claude" "$RUNNER_TEMP/runtime-r2-domain-verification.json" <<'PY'
+          import hashlib, json, os, pathlib, sys
+          plan_path, cn_path, cp_path, cr, an_path, ap_path, ar, out = map(pathlib.Path, sys.argv[1:])
+          plan=json.loads(plan_path.read_text()); cn=json.loads(cn_path.read_text()); an=json.loads(an_path.read_text())
+          def sha(path): return hashlib.sha256(path.read_bytes()).hexdigest()
+          def tree_digest(root):
+              rows=[]
+              for p in sorted(x for x in root.rglob('*') if x.is_file() and '.git' not in x.parts):
+                  rows.append((p.relative_to(root).as_posix(), sha(p)))
+              return hashlib.sha256(json.dumps(rows, separators=(',', ':')).encode()).hexdigest()
+          def expected_tree(receipt):
+              refs=receipt.get('evidence_refs', [])
+              matches=[x.split('worktree-result:sha256:',1)[1] for x in refs if x.startswith('worktree-result:sha256:')]
+              assert len(matches) == 1, refs
+              return matches[0]
+          assert tree_digest(cr) == expected_tree(cn)
+          assert tree_digest(ar) == expected_tree(an)
+          receipt_digests={'codex': sha(cp_path), 'claude-code': sha(ap_path)}
+          standard='digital-worker-runtime-r2-host-verification/v1'
+          report={
+              'schema': 'digital-worker-runtime-r2-domain-verification/v1',
+              'status': 'pass',
+              'comparison_id': 'R2-FEATURE-PCR02-OTA-001',
+              'frozen_inputs_sha256': plan['frozen_inputs_sha256'],
+              'standard_id': standard,
+              'source_repository': 'jiying2007/digital-worker',
+              'source_commit': os.environ['GITHUB_SHA'],
+              'provider_run_id': os.environ['PROVIDER_RUN_ID'],
+              'execution_receipts': receipt_digests,
+              'verification_scope': ['exact-base-replay', 'provider-result-identity', 'host-unit-tests', 'ota-manifest-verifier'],
+              'verification_pass_claimed_by_runtime': False,
+              'independent_review_status': 'pending',
+              'test_evidence': {
+                  'codex_host_tests_sha256': sha(pathlib.Path(os.environ['RUNNER_TEMP']) / 'codex-domain-host-tests.log'),
+                  'codex_ota_verify_sha256': sha(pathlib.Path(os.environ['RUNNER_TEMP']) / 'codex-domain-ota-verify.log'),
+                  'claude_host_tests_sha256': sha(pathlib.Path(os.environ['RUNNER_TEMP']) / 'claude-domain-host-tests.log'),
+                  'claude_ota_verify_sha256': sha(pathlib.Path(os.environ['RUNNER_TEMP']) / 'claude-domain-ota-verify.log'),
+              },
+          }
+          out.write_text(json.dumps(report, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          PY
+      - name: Upload Digital Worker domain verification evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: runtime-r2-domain-verification-${{ inputs.provider_run_id }}
+          path: |
+            ${{ runner.temp }}/runtime-r2-domain-verification.json
+            ${{ runner.temp }}/codex-domain-host-tests.log
+            ${{ runner.temp }}/codex-domain-ota-verify.log
+            ${{ runner.temp }}/claude-domain-host-tests.log
+            ${{ runner.temp }}/claude-domain-ota-verify.log
+          if-no-files-found: error
+          retention-days: 90
