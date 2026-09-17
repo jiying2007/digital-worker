@@ -18,10 +18,10 @@ def test_pinned_runtime_eval_exposes_dual_r1_and_r2_certifier_without_qualifying
     # This is a consumer projection of the already pinned provider commit; do not
     # turn R1 source-set readiness or certifier readiness into fabricated R2 evidence.
     assert runtime_eval["repository"] == "jiying2007/llm_agent"
-    assert runtime_eval["commit"] == "449978f355d657d29516a5a665f7e086873be556"
+    assert runtime_eval["commit"] == "04ec33d8bf1c42e8bd6b3530407372d5a1c2715b"
     assert runtime_eval["contract_version"] == "1.3"
     assert runtime_eval["contract_canonical_sha256"] == "8a22d73149d38177f7cdcb29a955d6245905d09edfdc34974f5af2c81a9b6873"
-    assert runtime_eval["runtime_portability_certifier"] == "tools.control_plane.runtime_portability.py"
+    assert runtime_eval["runtime_portability_certifier"] == "tools/control_plane/runtime_portability.py"
     assert runtime_eval["runtime_portability_certifier_test"] == "tests/test_runtime_portability_certifier.sh"
     assert runtime_eval["runtime_portability_qualification_manifest"] == "manifests/long_term_asset_qualification.json"
     assert runtime_eval["runtime_portability_cli_contract"] == "tools/control_plane/cli.py"
