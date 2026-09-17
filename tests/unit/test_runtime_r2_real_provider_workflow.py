@@ -81,8 +81,14 @@ class RuntimeR2RealProviderWorkflowTests(unittest.TestCase):
         self.assertIn("scripts/runtime_r2_evidence.py project-receipt", self.text)
 
     def test_frozen_plan_never_authorizes_itself(self) -> None:
-        self.assertIn('plan["provider_execution_authorized"] is False', self.text)
-        self.assertIn('plan["automatic_execution_enabled"] is False', self.text)
+        self.assertRegex(
+            self.text,
+            r"plan\[['\"]provider_execution_authorized['\"]\]\s+is\s+False",
+        )
+        self.assertRegex(
+            self.text,
+            r"plan\[['\"]automatic_execution_enabled['\"]\]\s+is\s+False",
+        )
         self.assertIn("digital-worker-runtime-r2-provider-authorization/v1", self.text)
         self.assertIn("explicit-workflow-dispatch", self.text)
         self.assertIn("verification_or_release_authority", self.text)
