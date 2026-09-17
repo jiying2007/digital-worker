@@ -1,0 +1,108 @@
+name: Runtime R2 Freeze Campaign
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Type FREEZE_REAL_R2 to freeze one exact comparison campaign"
+        required: true
+        type: string
+      target_repository:
+        description: "Exact target repository for the frozen task"
+        required: true
+        default: "jiying2007/ota_download_test"
+        type: string
+      target_base_commit:
+        description: "Exact target base commit"
+        required: true
+        default: "eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: runtime-r2-freeze-${{ github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  freeze:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout Digital Worker governance authority
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Enforce explicit main-only freeze
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          TARGET_BASE_COMMIT: ${{ inputs.target_base_commit }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = workflow_dispatch
+          test "$GITHUB_REF" = refs/heads/main
+          test "$CONFIRMATION" = FREEZE_REAL_R2
+          [[ "$TARGET_BASE_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+      - name: Checkout exact frozen target base
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: ${{ inputs.target_repository }}
+          ref: ${{ inputs.target_base_commit }}
+          path: r2-target-freeze
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Build deterministic frozen campaign
+        env:
+          TARGET_REPOSITORY: ${{ inputs.target_repository }}
+          TARGET_BASE_COMMIT: ${{ inputs.target_base_commit }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git -C r2-target-freeze rev-parse HEAD)" = "$TARGET_BASE_COMMIT"
+          test -z "$(git -C r2-target-freeze status --porcelain=v1 --untracked-files=all)"
+          mkdir -p "$RUNNER_TEMP/r2-freeze"
+          python scripts/runtime_r2_evidence.py prepare \
+            --root "$GITHUB_WORKSPACE" \
+            --target-root "$GITHUB_WORKSPACE/r2-target-freeze" \
+            --output "$RUNNER_TEMP/r2-freeze/frozen-plan.json"
+          python - "$RUNNER_TEMP/r2-freeze/frozen-plan.json" "$RUNNER_TEMP/r2-freeze/campaign.json" <<'PY'
+          import json, os, pathlib, sys
+          plan_path,out=map(pathlib.Path,sys.argv[1:]); plan=json.loads(plan_path.read_text())
+          assert plan['schema']=='digital-worker-runtime-r2-plan/v1'
+          assert plan['controlled_task']['exact_base_commit']==os.environ['TARGET_BASE_COMMIT']
+          campaign={
+              'schema':'digital-worker-runtime-r2-campaign/v1',
+              'campaign_id':plan['controlled_task']['run_id'],
+              'status':'frozen-awaiting-independent-runtime-executions',
+              'digital_worker_commit':os.environ['GITHUB_SHA'],
+              'freeze_workflow_run_id':os.environ['GITHUB_RUN_ID'],
+              'frozen_inputs_sha256':plan['frozen_inputs_sha256'],
+              'target_repository':os.environ['TARGET_REPOSITORY'],
+              'target_base_commit':os.environ['TARGET_BASE_COMMIT'],
+              'runtime_bindings':plan['runtime_bindings'],
+              'runtime_execution_workflows':{
+                  'codex':'jiying2007/codex/.github/workflows/runtime-r2-provider-execution.yml',
+                  'claude-code':'jiying2007/claude/.github/workflows/runtime-r2-provider-execution.yml',
+              },
+              'provider_credentials_held_by_digital_worker':False,
+              'provider_execution_authorized':False,
+              'verification_status':'pending',
+              'independent_review_status':'pending',
+          }
+          out.write_text(json.dumps(campaign,indent=2,sort_keys=True)+'\n')
+          with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as s:
+              s.write('## R2 frozen campaign\n')
+              s.write(f"- Digital Worker commit: `{campaign['digital_worker_commit']}`\n")
+              s.write(f"- Frozen inputs SHA-256: `{campaign['frozen_inputs_sha256']}`\n")
+              s.write('- Provider execution remains unauthorized here; dispatch Codex and Claude separately in their own repositories.\n')
+          PY
+      - name: Upload frozen campaign handoff
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: runtime-r2-freeze-${{ github.run_id }}
+          path: ${{ runner.temp }}/r2-freeze
+          if-no-files-found: error
+          retention-days: 90

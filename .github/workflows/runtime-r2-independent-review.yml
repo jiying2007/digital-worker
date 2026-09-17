@@ -35,6 +35,7 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 1
+
       - name: Enforce explicit main-only human review request
         env:
           DECISION: ${{ inputs.decision }}
@@ -51,6 +52,7 @@ jobs:
           case "$GITHUB_ACTOR" in
             *"[bot]"|github-actions) echo '::error::BLOCKED_INDEPENDENT_REVIEW_REQUIRES_HUMAN_ACTOR'; exit 2 ;;
           esac
+
       - name: Read verification workflow run metadata
         id: verification_run
         env:
@@ -66,17 +68,17 @@ jobs:
             -H 'X-GitHub-Api-Version: 2022-11-28' \
             "$url" > "$RUNNER_TEMP/verification-run.json"
           python - "$RUNNER_TEMP/verification-run.json" <<'PY'
-          import json, os, sys
-          value=json.load(open(sys.argv[1], encoding='utf-8'))
-          assert value['name'] == 'Runtime R2 Domain Verification', value
-          assert value['event'] == 'workflow_dispatch', value
-          assert value['conclusion'] == 'success', value
-          assert value['head_branch'] == 'main', value
-          actor=value['actor']['login']
-          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as out:
-              out.write(f"verification_actor={actor}\n")
+          import json,os,sys
+          value=json.load(open(sys.argv[1],encoding='utf-8'))
+          assert value['name']=='Runtime R2 Domain Verification',value
+          assert value['event']=='workflow_dispatch',value
+          assert value['conclusion']=='success',value
+          assert value['head_branch']=='main',value
+          with open(os.environ['GITHUB_OUTPUT'],'a',encoding='utf-8') as out:
+              out.write(f"verification_actor={value['actor']['login']}\n")
               out.write(f"verification_sha={value['head_sha']}\n")
           PY
+
       - name: Download exact Domain Verification artifact
         uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
         with:
@@ -86,9 +88,11 @@ jobs:
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
           run-id: ${{ inputs.verification_run_id }}
-      - name: Validate review subject and expose provider run identity
-        id: subject
+
+      - name: Validate review subject and prove reviewer independence
         env:
+          REVIEWER: ${{ github.actor }}
+          VERIFICATION_ACTOR: ${{ steps.verification_run.outputs.verification_actor }}
           VERIFICATION_SHA: ${{ steps.verification_run.outputs.verification_sha }}
         shell: bash
         run: |
@@ -96,106 +100,72 @@ jobs:
           report="$RUNNER_TEMP/domain-verification/runtime-r2-domain-verification.json"
           test -f "$report"
           python - "$report" <<'PY'
-          import json, os, re, sys
-          value=json.load(open(sys.argv[1], encoding='utf-8'))
-          assert value['schema'] == 'digital-worker-runtime-r2-domain-verification/v1', value
-          assert value['status'] == 'pass', value
-          assert value['comparison_id'] == 'R2-FEATURE-PCR02-OTA-001', value
-          assert value['source_repository'] == 'jiying2007/digital-worker', value
-          assert value['source_commit'] == os.environ['VERIFICATION_SHA'], (value, os.environ['VERIFICATION_SHA'])
-          assert value['independent_review_status'] == 'pending', value
-          assert value['verification_pass_claimed_by_runtime'] is False, value
-          receipts=value['execution_receipts']
-          assert set(receipts) == {'codex', 'claude-code'}, receipts
-          assert all(re.fullmatch(r'[0-9a-f]{64}', x) for x in receipts.values()), receipts
-          provider_run=str(value['provider_run_id'])
-          assert provider_run.isdigit(), provider_run
-          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as out:
-              out.write(f"provider_run_id={provider_run}\n")
+          import json,os,re,sys
+          value=json.load(open(sys.argv[1],encoding='utf-8'))
+          assert value['schema']=='digital-worker-runtime-r2-domain-verification/v1',value
+          assert value['status']=='pass',value
+          assert value['comparison_id']=='R2-FEATURE-PCR02-OTA-001',value
+          assert value['source_repository']=='jiying2007/digital-worker',value
+          assert value['source_commit']==os.environ['VERIFICATION_SHA'],value
+          assert value['independent_review_status']=='pending',value
+          assert value['verification_pass_claimed_by_runtime'] is False,value
+          receipts=value['execution_receipts']; assert set(receipts)=={'codex','claude-code'},receipts
+          assert all(re.fullmatch(r'[0-9a-f]{64}',x) for x in receipts.values()),receipts
+          actors=value['provider_execution_actors']; assert set(actors)=={'codex','claude-code'},actors
+          assert all(isinstance(x,str) and x for x in actors.values()),actors
+          reviewer=os.environ['REVIEWER']; verifier=os.environ['VERIFICATION_ACTOR']
+          assert reviewer!=verifier,(reviewer,verifier)
+          assert reviewer not in set(actors.values()),(reviewer,actors)
           PY
-      - name: Download exact provider authorization artifact
-        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
-        with:
-          name: r2-frozen-plan-${{ steps.subject.outputs.provider_run_id }}
-          path: ${{ runner.temp }}/provider-freeze
-          github-token: ${{ github.token }}
-          repository: ${{ github.repository }}
-          run-id: ${{ steps.subject.outputs.provider_run_id }}
-      - name: Prove reviewer independence from provider executor and verifier
-        env:
-          REVIEWER: ${{ github.actor }}
-          VERIFICATION_ACTOR: ${{ steps.verification_run.outputs.verification_actor }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          auth="$RUNNER_TEMP/provider-freeze/provider-execution-authorization.json"
-          test -f "$auth"
-          provider_actor="$(python -c 'import json,sys; print(json.load(open(sys.argv[1]))["actor"])' "$auth")"
-          test -n "$provider_actor"
-          if [ "$REVIEWER" = "$provider_actor" ]; then
-            echo "::error::BLOCKED_REVIEWER_EQUALS_PROVIDER_EXECUTOR:$REVIEWER"
-            exit 2
-          fi
-          if [ "$REVIEWER" = "$VERIFICATION_ACTOR" ]; then
-            echo "::error::BLOCKED_REVIEWER_EQUALS_VERIFICATION_ACTOR:$REVIEWER"
-            exit 2
-          fi
-          printf '%s\n' "$provider_actor" > "$RUNNER_TEMP/provider-actor.txt"
+
       - name: Build bounded independent review report
         env:
           REVIEW_NOTES: ${{ inputs.review_notes }}
           REVIEWER: ${{ github.actor }}
           VERIFICATION_ACTOR: ${{ steps.verification_run.outputs.verification_actor }}
           VERIFICATION_RUN_ID: ${{ inputs.verification_run_id }}
-          PROVIDER_RUN_ID: ${{ steps.subject.outputs.provider_run_id }}
         shell: bash
         run: |
           set -euo pipefail
-          python - "$RUNNER_TEMP/domain-verification/runtime-r2-domain-verification.json" "$RUNNER_TEMP/provider-freeze/provider-execution-authorization.json" "$RUNNER_TEMP/runtime-r2-independent-review.json" <<'PY'
-          import hashlib, json, os, pathlib, sys
-          verification_path, auth_path, out = map(pathlib.Path, sys.argv[1:])
-          verification=json.loads(verification_path.read_text(encoding='utf-8'))
-          auth=json.loads(auth_path.read_text(encoding='utf-8'))
+          python - "$RUNNER_TEMP/domain-verification/runtime-r2-domain-verification.json" "$RUNNER_TEMP/runtime-r2-independent-review.json" <<'PY'
+          import hashlib,json,os,pathlib,sys
+          verification_path,out=map(pathlib.Path,sys.argv[1:]); verification=json.loads(verification_path.read_text(encoding='utf-8'))
           def sha(path): return hashlib.sha256(path.read_bytes()).hexdigest()
-          assert auth['authorized'] is True
-          assert auth['verification_or_release_authority'] is False
-          assert auth['frozen_inputs_sha256'] == verification['frozen_inputs_sha256']
-          reviewer=os.environ['REVIEWER']
-          assert reviewer != auth['actor']
-          assert reviewer != os.environ['VERIFICATION_ACTOR']
+          reviewer=os.environ['REVIEWER']; verifier=os.environ['VERIFICATION_ACTOR']; actors=verification['provider_execution_actors']
+          assert reviewer!=verifier and reviewer not in set(actors.values())
           report={
-              'schema': 'digital-worker-runtime-r2-independent-review/v1',
-              'status': 'pass',
-              'comparison_id': verification['comparison_id'],
-              'frozen_inputs_sha256': verification['frozen_inputs_sha256'],
-              'standard_id': verification['standard_id'],
-              'source_repository': verification['source_repository'],
-              'source_commit': verification['source_commit'],
-              'execution_receipts': verification['execution_receipts'],
-              'independent': True,
-              'reviewer_identity': 'github-user:' + reviewer,
-              'reviewer_independence': {
-                  'provider_execution_actor': 'github-user:' + auth['actor'],
-                  'verification_actor': 'github-user:' + os.environ['VERIFICATION_ACTOR'],
-                  'review_actor_distinct_from_provider_executor': True,
-                  'review_actor_distinct_from_verifier': True,
+              'schema':'digital-worker-runtime-r2-independent-review/v1',
+              'status':'pass',
+              'comparison_id':verification['comparison_id'],
+              'frozen_inputs_sha256':verification['frozen_inputs_sha256'],
+              'standard_id':verification['standard_id'],
+              'source_repository':verification['source_repository'],
+              'source_commit':verification['source_commit'],
+              'execution_receipts':verification['execution_receipts'],
+              'independent':True,
+              'reviewer_identity':'github-user:'+reviewer,
+              'reviewer_independence':{
+                  'provider_execution_actors':{k:'github-user:'+v for k,v in actors.items()},
+                  'verification_actor':'github-user:'+verifier,
+                  'review_actor_distinct_from_all_provider_executors':True,
+                  'review_actor_distinct_from_verifier':True,
               },
-              'review_decision': 'approve-evidence-for-r2-certifier-input',
-              'review_notes': os.environ['REVIEW_NOTES'],
-              'provider_run_id': os.environ['PROVIDER_RUN_ID'],
-              'verification_run_id': os.environ['VERIFICATION_RUN_ID'],
-              'domain_verification_ref': 'runtime-r2-domain-verification.json',
-              'domain_verification_sha256': sha(verification_path),
-              'provider_authorization_sha256': sha(auth_path),
-              'verification_pass_claimed_by_runtime': False,
-              'release_ready_claimed': False,
-              'r2_qualified': False,
-              'next_gate': 'root-runtime-portability-certifier',
+              'review_decision':'approve-evidence-for-r2-certifier-input',
+              'review_notes':os.environ['REVIEW_NOTES'],
+              'provider_workflow_runs':verification['provider_workflow_runs'],
+              'verification_run_id':os.environ['VERIFICATION_RUN_ID'],
+              'domain_verification_ref':'runtime-r2-domain-verification.json',
+              'domain_verification_sha256':sha(verification_path),
+              'verification_pass_claimed_by_runtime':False,
+              'release_ready_claimed':False,
+              'r2_qualified':False,
+              'next_gate':'root-runtime-portability-certifier',
           }
-          out.write_text(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          out.write_text(json.dumps(report,ensure_ascii=False,indent=2,sort_keys=True)+'\n',encoding='utf-8')
           PY
+
       - name: Upload independent review evidence
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: runtime-r2-independent-review-${{ inputs.verification_run_id }}
           path: |
