@@ -210,7 +210,7 @@ def verify_runtime_practice_eval(entry: dict, destination: Path, approved_bindin
         "required_evidence_level": evidence_level,
         "certifier": "tools.control_plane.runtime_portability",
         "default_evidence_path": "reports/long-term-assets/runtime-portability-current.json",
-        "remaining_external_blocker": "second-real-runtime-provider-binding-and-R2-comparison-evidence",
+        "remaining_external_blocker": "real-claude-runtime-execution-receipt-and-same-frozen-task-R2-comparison-evidence",
     }
     for key, expected in expected_lta02.items():
         if lta02.get(key) != expected:
