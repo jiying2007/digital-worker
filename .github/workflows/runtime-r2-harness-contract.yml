@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - '.github/workflows/runtime-r2-real-provider.yml'
+      - '.github/workflows/runtime-r2-domain-verification.yml'
       - '.github/workflows/runtime-r2-harness-contract.yml'
       - 'config/integrations/provider-capability-matrix.yaml'
       - 'config/integrations/runtime-execution-profiles.json'
@@ -11,10 +12,12 @@ on:
       - 'tests/unit/test_runtime_execution_adapter.py'
       - 'tests/unit/test_runtime_execution_capability_projection.py'
       - 'tests/unit/test_runtime_r2_real_provider_workflow.py'
+      - 'tests/unit/test_runtime_r2_domain_verification_workflow.py'
   push:
     branches: [main]
     paths:
       - '.github/workflows/runtime-r2-real-provider.yml'
+      - '.github/workflows/runtime-r2-domain-verification.yml'
       - '.github/workflows/runtime-r2-harness-contract.yml'
       - 'config/integrations/provider-capability-matrix.yaml'
       - 'config/integrations/runtime-execution-profiles.json'
@@ -22,6 +25,7 @@ on:
       - 'tests/unit/test_runtime_execution_adapter.py'
       - 'tests/unit/test_runtime_execution_capability_projection.py'
       - 'tests/unit/test_runtime_r2_real_provider_workflow.py'
+      - 'tests/unit/test_runtime_r2_domain_verification_workflow.py'
 
 permissions:
   contents: read
@@ -51,3 +55,5 @@ jobs:
         run: python -m unittest tests.unit.test_runtime_execution_capability_projection -v
       - name: Validate fail-closed R2 real-provider dispatch contract
         run: python -m unittest tests.unit.test_runtime_r2_real_provider_workflow -v
+      - name: Validate independent R2 domain verification contract
+        run: python -m unittest tests.unit.test_runtime_r2_domain_verification_workflow -v
