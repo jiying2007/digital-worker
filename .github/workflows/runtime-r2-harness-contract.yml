@@ -57,6 +57,23 @@ jobs:
           python-version: '3.12'
       - name: Install exact validation dependency
         run: python -m pip install --disable-pip-version-check --no-input 'PyYAML==6.0.2'
+      - name: Compile R2 intake and parse workflow YAML
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile scripts/runtime_r2_evidence.py scripts/runtime_r2_intake.py
+          python - <<'PY'
+          import pathlib, yaml
+          for name in (
+              'runtime-r2-freeze.yml',
+              'runtime-r2-domain-verification.yml',
+              'runtime-r2-independent-review.yml',
+              'runtime-r2-harness-contract.yml',
+          ):
+              path=pathlib.Path('.github/workflows')/name
+              value=yaml.load(path.read_text(encoding='utf-8'), Loader=yaml.BaseLoader)
+              assert isinstance(value,dict),path
+          PY
       - name: Validate provider-neutral execution profile and native CLI adapter
         run: python -m unittest tests.unit.test_runtime_execution_adapter -v
       - name: Validate execution profile capability projection
