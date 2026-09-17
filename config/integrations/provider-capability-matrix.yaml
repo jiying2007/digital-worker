@@ -41,6 +41,15 @@ roles:
     decision: preferred-candidate-for-pilot
 
   runtime_binding:
+    execution_profiles:
+      identity_ref: config/integrations/runtime-execution-profiles.json
+      default_development_profile: codex-cli-native
+      default_development_runtime: codex
+      credential_ownership: runtime-or-executor
+      runtime_identity_independent_from_transport: true
+      controlled_r2_profiles:
+        codex: codex-github-adapter
+        claude_code: claude-github-adapter
     candidates:
       codex:
         identity_ref: config/integrations/cross-repo-lock.json#/runtime_bindings/codex
@@ -55,6 +64,9 @@ roles:
           mcp_sandbox_binding: native
           live_drift: native
           execution_receipt_contract: source-set-v2-native
+          native_cli_execution: native-default-development-path
+          runtime_managed_auth_session: native
+          transport_auth_decoupling: provider-neutral-profile
           domain_verification_pass: unsupported-by-design
       claude_code:
         identity_ref: config/integrations/cross-repo-lock.json#/runtime_bindings/claude-code
