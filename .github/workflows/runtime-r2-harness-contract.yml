@@ -1,0 +1,37 @@
+name: Runtime R2 Harness Contract
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/runtime-r2-real-provider.yml'
+      - '.github/workflows/runtime-r2-harness-contract.yml'
+      - 'tests/unit/test_runtime_r2_real_provider_workflow.py'
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/runtime-r2-real-provider.yml'
+      - '.github/workflows/runtime-r2-harness-contract.yml'
+      - 'tests/unit/test_runtime_r2_real_provider_workflow.py'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: runtime-r2-harness-contract-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  validate:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Validate fail-closed R2 real-provider dispatch contract
+        run: python -m unittest tests.unit.test_runtime_r2_real_provider_workflow -v
