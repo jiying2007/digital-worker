@@ -8,9 +8,19 @@ on:
         required: true
         type: string
       codex_model:
-        description: "Exact Codex model passed to codex-action"
+        description: "Exact model identifier passed to the Codex execution adapter"
         required: true
         default: "gpt-5.3-codex"
+        type: string
+      codex_provider_identity:
+        description: "Auditable provider identity behind the Codex runtime transport"
+        required: true
+        default: "openai"
+        type: string
+      claude_provider_identity:
+        description: "Auditable provider identity behind the Claude runtime transport"
+        required: true
+        default: "anthropic"
         type: string
 
 permissions:
@@ -27,6 +37,8 @@ env:
   CLAUDE_BINDING_COMMIT: 8cd87956507f9dbde0438c9135493c96f3b2d318
   ADK_CONTRACT_COMMIT: 9e732da34eac52d1418b52691ca63eec15674363
   ADK_RELEASE_COMMIT: e36dfec69f21806431b07daddc4bd78412179e62
+  CODEX_EXECUTION_PROFILE: codex-github-adapter
+  CLAUDE_EXECUTION_PROFILE: claude-github-adapter
 
 jobs:
   freeze:
@@ -44,22 +56,71 @@ jobs:
       - name: Enforce manual main-only real-execution guard
         env:
           CONFIRMATION: ${{ inputs.confirmation }}
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          CODEX_RUNTIME_CREDENTIAL: ${{ secrets.CODEX_RUNTIME_CREDENTIAL }}
+          CLAUDE_RUNTIME_CREDENTIAL: ${{ secrets.CLAUDE_RUNTIME_CREDENTIAL }}
         shell: bash
         run: |
           set -euo pipefail
           test "$GITHUB_EVENT_NAME" = workflow_dispatch
           test "$GITHUB_REF" = refs/heads/main
           test "$CONFIRMATION" = RUN_REAL_R2
-          if [ -z "$OPENAI_API_KEY" ]; then
-            echo '::error::BLOCKED_MISSING_OPENAI_API_KEY'
+          if [ -z "$CODEX_RUNTIME_CREDENTIAL" ]; then
+            echo '::error::BLOCKED_MISSING_CODEX_RUNTIME_CREDENTIAL'
             exit 2
           fi
-          if [ -z "$ANTHROPIC_API_KEY" ]; then
-            echo '::error::BLOCKED_MISSING_ANTHROPIC_API_KEY'
+          if [ -z "$CLAUDE_RUNTIME_CREDENTIAL" ]; then
+            echo '::error::BLOCKED_MISSING_CLAUDE_RUNTIME_CREDENTIAL'
             exit 2
           fi
+      - name: Validate provider-neutral execution profiles and transport metadata
+        env:
+          CODEX_RUNTIME_ENDPOINT: ${{ vars.CODEX_RUNTIME_ENDPOINT }}
+          CLAUDE_RUNTIME_ENDPOINT: ${{ vars.CLAUDE_RUNTIME_ENDPOINT }}
+          CODEX_GATEWAY_IDENTITY: ${{ vars.CODEX_GATEWAY_IDENTITY }}
+          CLAUDE_GATEWAY_IDENTITY: ${{ vars.CLAUDE_GATEWAY_IDENTITY }}
+          CODEX_PROVIDER_IDENTITY: ${{ inputs.codex_provider_identity }}
+          CLAUDE_PROVIDER_IDENTITY: ${{ inputs.claude_provider_identity }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/r2-freeze"
+          python - "$RUNNER_TEMP/r2-freeze/transport-plan.json" <<'PY'
+          import hashlib, json, os, pathlib, sys
+          out = pathlib.Path(sys.argv[1])
+          registry = json.loads(pathlib.Path('config/integrations/runtime-execution-profiles.json').read_text(encoding='utf-8'))
+          assert registry['schema_version'] == 1 and registry['status'] == 'active'
+          assert registry['default_development_profile'] == 'codex-cli-native'
+          profiles = registry['profiles']
+          for name, runtime in (('codex-github-adapter', 'codex'), ('claude-github-adapter', 'claude-code')):
+              profile = profiles[name]
+              assert profile['runtime'] == runtime
+              assert profile['executor'] == 'github-action'
+              assert profile['credential_mode'] == 'externally-injected'
+              assert profile['source_set_binding'] == 'required'
+              assert profile['verification_authority'] is False
+          def descriptor(profile_name, provider, endpoint, gateway):
+              endpoint = endpoint.strip()
+              gateway = gateway.strip()
+              return {
+                  'execution_profile': profile_name,
+                  'executor': profiles[profile_name]['executor'],
+                  'credential_mode': profiles[profile_name]['credential_mode'],
+                  'credential_material_recorded': False,
+                  'provider_identity': provider,
+                  'endpoint_mode': profiles[profile_name]['endpoint_mode'],
+                  'endpoint_class': 'configured-endpoint' if endpoint else 'runtime-default',
+                  'endpoint_sha256': hashlib.sha256(endpoint.encode()).hexdigest() if endpoint else None,
+                  'gateway_identity': gateway or 'runtime-default',
+              }
+          value = {
+              'schema': 'digital-worker-runtime-transport-plan/v1',
+              'default_development_profile': registry['default_development_profile'],
+              'codex': descriptor('codex-github-adapter', os.environ['CODEX_PROVIDER_IDENTITY'], os.environ.get('CODEX_RUNTIME_ENDPOINT', ''), os.environ.get('CODEX_GATEWAY_IDENTITY', '')),
+              'claude-code': descriptor('claude-github-adapter', os.environ['CLAUDE_PROVIDER_IDENTITY'], os.environ.get('CLAUDE_RUNTIME_ENDPOINT', ''), os.environ.get('CLAUDE_GATEWAY_IDENTITY', '')),
+              'verification_authority': False,
+          }
+          out.write_text(json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          PY
       - name: Checkout exact frozen target base
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -71,41 +132,41 @@ jobs:
       - name: Build deterministic frozen plan and explicit operator authorization receipt
         id: freeze
         shell: bash
-        env:
-          CONFIRMATION: ${{ inputs.confirmation }}
         run: |
           set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/r2-freeze"
           python scripts/runtime_r2_evidence.py prepare \
             --root . \
             --target-root "$GITHUB_WORKSPACE/r2-target-freeze" \
             --output "$RUNNER_TEMP/r2-freeze/frozen-plan.json"
-          python - "$RUNNER_TEMP/r2-freeze/frozen-plan.json" "$RUNNER_TEMP/r2-freeze/provider-execution-authorization.json" "$RUNNER_TEMP/r2-freeze/prompt.txt" <<'PY'
+          python - "$RUNNER_TEMP/r2-freeze/frozen-plan.json" "$RUNNER_TEMP/r2-freeze/transport-plan.json" "$RUNNER_TEMP/r2-freeze/provider-execution-authorization.json" "$RUNNER_TEMP/r2-freeze/prompt.txt" <<'PY'
           import hashlib, json, os, pathlib, sys
-          plan_path, auth_path, prompt_path = map(pathlib.Path, sys.argv[1:])
+          plan_path, transport_path, auth_path, prompt_path = map(pathlib.Path, sys.argv[1:])
           raw = plan_path.read_bytes()
           plan = json.loads(raw)
-          assert plan["schema"] == "digital-worker-runtime-r2-plan/v1", plan
-          assert plan["status"] == "ready-for-manual-provider-execution", plan
-          assert plan["provider_execution_authorized"] is False, plan
-          assert plan["automatic_execution_enabled"] is False, plan
-          assert plan["controlled_task"]["exact_base_commit"] == os.environ["TARGET_BASE_COMMIT"], plan
+          assert plan['schema'] == 'digital-worker-runtime-r2-plan/v1'
+          assert plan['status'] == 'ready-for-manual-provider-execution'
+          assert plan['provider_execution_authorized'] is False
+          assert plan['automatic_execution_enabled'] is False
+          assert plan['controlled_task']['exact_base_commit'] == os.environ['TARGET_BASE_COMMIT']
+          transport = json.loads(transport_path.read_text(encoding='utf-8'))
+          assert transport['verification_authority'] is False
           plan_sha = hashlib.sha256(raw).hexdigest()
           auth = {
-              "schema": "digital-worker-runtime-r2-provider-authorization/v1",
-              "authorized": True,
-              "authorization_mode": "explicit-workflow-dispatch",
-              "actor": os.environ["GITHUB_ACTOR"],
-              "workflow_run_id": os.environ["GITHUB_RUN_ID"],
-              "workflow_sha": os.environ["GITHUB_SHA"],
-              "frozen_plan_sha256": plan_sha,
-              "frozen_inputs_sha256": plan["frozen_inputs_sha256"],
-              "scope": "codex-and-claude-same-frozen-task-provider-execution-only",
-              "verification_or_release_authority": False,
+              'schema': 'digital-worker-runtime-r2-provider-authorization/v1',
+              'authorized': True,
+              'authorization_mode': 'explicit-workflow-dispatch',
+              'actor': os.environ['GITHUB_ACTOR'],
+              'workflow_run_id': os.environ['GITHUB_RUN_ID'],
+              'workflow_sha': os.environ['GITHUB_SHA'],
+              'frozen_plan_sha256': plan_sha,
+              'frozen_inputs_sha256': plan['frozen_inputs_sha256'],
+              'transport_plan_sha256': hashlib.sha256(transport_path.read_bytes()).hexdigest(),
+              'scope': 'codex-and-claude-same-frozen-task-provider-execution-only',
+              'verification_or_release_authority': False,
           }
-          auth_path.write_text(json.dumps(auth, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-          prompt_path.write_text(plan["prompt"] + "\n", encoding="utf-8")
-          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+          auth_path.write_text(json.dumps(auth, ensure_ascii=False, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          prompt_path.write_text(plan['prompt'] + '\n', encoding='utf-8')
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as out:
               out.write(f"frozen_inputs_sha256={plan['frozen_inputs_sha256']}\n")
           PY
       - name: Upload the single shared frozen plan
@@ -206,11 +267,12 @@ jobs:
             cat "$RUNNER_TEMP/r2-freeze/prompt.txt"
             echo 'R2_PROMPT_EOF'
           } >> "$GITHUB_OUTPUT"
-      - name: Run real Codex provider
+      - name: Run Codex through the selected execution adapter
         id: codex-provider
         uses: openai/codex-action@5c3f4ccdb2b8790f73d6b21751ac00e602aa0c02
         with:
-          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          openai-api-key: ${{ secrets.CODEX_RUNTIME_CREDENTIAL }}
+          responses-api-endpoint: ${{ vars.CODEX_RUNTIME_ENDPOINT }}
           prompt: ${{ steps.codex-prompt.outputs.text }}
           output-file: ${{ runner.temp }}/codex-final.txt
           working-directory: ${{ github.workspace }}/r2-target-codex
@@ -222,19 +284,23 @@ jobs:
         shell: bash
         env:
           CODEX_MODEL: ${{ inputs.codex_model }}
+          CODEX_PROVIDER_IDENTITY: ${{ inputs.codex_provider_identity }}
         run: |
           set -euo pipefail
           date -u +%Y-%m-%dT%H:%M:%SZ > "$RUNNER_TEMP/codex-finished-at"
           codex --version > "$RUNNER_TEMP/codex-version.txt"
           git -C "$GITHUB_WORKSPACE/r2-target-codex" status --porcelain=v1 --untracked-files=all > "$RUNNER_TEMP/codex-status.txt"
           git -C "$GITHUB_WORKSPACE/r2-target-codex" diff --binary > "$RUNNER_TEMP/codex.patch"
-          python - "$RUNNER_TEMP/r2-freeze/frozen-plan.json" "$RUNNER_TEMP/r2-freeze/provider-execution-authorization.json" "$RUNNER_TEMP/codex-install.json" "$GITHUB_WORKSPACE/r2-target-codex" "$RUNNER_TEMP/codex-native.json" <<'PY'
+          python - "$RUNNER_TEMP/r2-freeze/frozen-plan.json" "$RUNNER_TEMP/r2-freeze/provider-execution-authorization.json" "$RUNNER_TEMP/r2-freeze/transport-plan.json" "$RUNNER_TEMP/codex-install.json" "$GITHUB_WORKSPACE/r2-target-codex" "$RUNNER_TEMP/codex-native.json" <<'PY'
           import hashlib, json, os, pathlib, sys
-          plan_path, auth_path, install_path, target, out = map(pathlib.Path, sys.argv[1:])
+          plan_path, auth_path, transport_path, install_path, target, out = map(pathlib.Path, sys.argv[1:])
           plan = json.loads(plan_path.read_text())
           auth = json.loads(auth_path.read_text())
+          transport = json.loads(transport_path.read_text())['codex']
           install = json.loads(install_path.read_text())
           assert auth['authorized'] is True and auth['frozen_inputs_sha256'] == plan['frozen_inputs_sha256']
+          assert transport['execution_profile'] == 'codex-github-adapter'
+          assert transport['credential_material_recorded'] is False
           def digest_file(path): return hashlib.sha256(path.read_bytes()).hexdigest()
           def tree_digest(root):
               rows=[]
@@ -267,17 +333,27 @@ jobs:
                   'asset_profile': controlled['adk_asset_profile'],
                   'source_set_identity': install['source_set_identity_ref'],
               },
-              'runtime': {'provider': 'openai', 'cli_version': version, 'model': os.environ['CODEX_MODEL'], 'model_provider': 'openai'},
-              'permissions': {'sandbox': 'workspace-write', 'approval': 'explicit-workflow-dispatch', 'network': 'provider-api-through-codex-action'},
+              'runtime': {
+                  'provider': os.environ['CODEX_PROVIDER_IDENTITY'],
+                  'cli_version': version,
+                  'model': os.environ['CODEX_MODEL'],
+                  'model_provider': os.environ['CODEX_PROVIDER_IDENTITY'],
+              },
+              'permissions': {
+                  'sandbox': 'workspace-write',
+                  'approval': 'explicit-workflow-dispatch',
+                  'network': 'runtime-transport-profile:codex-github-adapter',
+              },
               'repository': {'repository': os.environ['TARGET_REPOSITORY'], 'base_commit': controlled['exact_base_commit'], 'result_commit': None},
               'execution': {
                   'status': 'completed',
-                  'runtime_local_gates': ['exact-base', 'source-set-applied', 'codex-action-success'],
+                  'runtime_local_gates': ['exact-base', 'source-set-applied', 'codex-adapter-success'],
                   'started_at': pathlib.Path(os.environ['RUNNER_TEMP'], 'codex-started-at').read_text().strip(),
                   'finished_at': pathlib.Path(os.environ['RUNNER_TEMP'], 'codex-finished-at').read_text().strip(),
               },
               'evidence_refs': [
                   'provider-authorization:sha256:' + digest_file(auth_path),
+                  'transport-descriptor:sha256:' + digest_file(transport_path),
                   'provider-output:sha256:' + digest_file(pathlib.Path(os.environ['RUNNER_TEMP'], 'codex-final.txt')),
                   'worktree-result:sha256:' + tree_digest(target),
               ],
@@ -285,10 +361,10 @@ jobs:
           out.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8')
           PY
           python - <<'PY'
-          import json
+          import json, os
           from jsonschema import Draft202012Validator
           schema=json.load(open('codex-binding/schemas/runtime-execution-receipt.v2.schema.json'))
-          receipt=json.load(open('/tmp/__missing__')) if False else json.load(open(__import__('os').environ['RUNNER_TEMP'] + '/codex-native.json'))
+          receipt=json.load(open(os.environ['RUNNER_TEMP'] + '/codex-native.json'))
           Draft202012Validator(schema).validate(receipt)
           PY
           python scripts/runtime_r2_evidence.py project-receipt \
@@ -403,14 +479,15 @@ jobs:
             cat "$RUNNER_TEMP/r2-freeze/prompt.txt"
             echo 'R2_PROMPT_EOF'
           } >> "$GITHUB_OUTPUT"
-      - name: Run real Claude provider with the installed source set
+      - name: Run Claude through the selected execution adapter
         id: claude-provider
         uses: anthropics/claude-code-action/base-action@3b8197d3d486006dd4af54613517f21ac6ac625e
         env:
           HOME: ${{ runner.temp }}/claude-home
           CLAUDE_WORKING_DIR: ${{ github.workspace }}/r2-target-claude
+          ANTHROPIC_BASE_URL: ${{ vars.CLAUDE_RUNTIME_ENDPOINT }}
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          anthropic_api_key: ${{ secrets.CLAUDE_RUNTIME_CREDENTIAL }}
           prompt: ${{ steps.claude-prompt.outputs.text }}
           show_full_output: 'false'
           claude_args: >-
@@ -420,6 +497,7 @@ jobs:
         shell: bash
         env:
           CLAUDE_EXECUTION_FILE: ${{ steps.claude-provider.outputs.execution_file }}
+          CLAUDE_PROVIDER_IDENTITY: ${{ inputs.claude_provider_identity }}
         run: |
           set -euo pipefail
           date -u +%Y-%m-%dT%H:%M:%SZ > "$RUNNER_TEMP/claude-finished-at"
@@ -429,14 +507,17 @@ jobs:
           test -f "$CLAUDE_EXECUTION_FILE"
           git -C "$GITHUB_WORKSPACE/r2-target-claude" status --porcelain=v1 --untracked-files=all > "$RUNNER_TEMP/claude-status.txt"
           git -C "$GITHUB_WORKSPACE/r2-target-claude" diff --binary > "$RUNNER_TEMP/claude.patch"
-          python - "$RUNNER_TEMP/r2-freeze/frozen-plan.json" "$RUNNER_TEMP/r2-freeze/provider-execution-authorization.json" "$RUNNER_TEMP/claude-materialized/source-set.json" "$RUNNER_TEMP/claude-materialized/runtime-distribution.json" "$GITHUB_WORKSPACE/r2-target-claude" "$CLAUDE_EXECUTION_FILE" "$RUNNER_TEMP/claude-native.json" <<'PY'
+          python - "$RUNNER_TEMP/r2-freeze/frozen-plan.json" "$RUNNER_TEMP/r2-freeze/provider-execution-authorization.json" "$RUNNER_TEMP/r2-freeze/transport-plan.json" "$RUNNER_TEMP/claude-materialized/source-set.json" "$RUNNER_TEMP/claude-materialized/runtime-distribution.json" "$GITHUB_WORKSPACE/r2-target-claude" "$CLAUDE_EXECUTION_FILE" "$RUNNER_TEMP/claude-native.json" <<'PY'
           import hashlib, json, os, pathlib, sys
-          plan_path, auth_path, source_path, distribution_path, target, execution_file, out = map(pathlib.Path, sys.argv[1:])
+          plan_path, auth_path, transport_path, source_path, distribution_path, target, execution_file, out = map(pathlib.Path, sys.argv[1:])
           plan = json.loads(plan_path.read_text())
           auth = json.loads(auth_path.read_text())
+          transport = json.loads(transport_path.read_text())['claude-code']
           source = json.loads(source_path.read_text())
           distribution = json.loads(distribution_path.read_text())
           assert auth['authorized'] is True and auth['frozen_inputs_sha256'] == plan['frozen_inputs_sha256']
+          assert transport['execution_profile'] == 'claude-github-adapter'
+          assert transport['credential_material_recorded'] is False
           def digest_file(path): return hashlib.sha256(path.read_bytes()).hexdigest()
           def tree_digest(root):
               rows=[]
@@ -458,7 +539,7 @@ jobs:
                   'runtime_target': 'claude-code',
                   'runtime_profile': 'solo-dev',
                   'runtime_host': 'github-actions:' + os.environ['GITHUB_RUN_ID'],
-                  'runtime_provider': 'anthropic',
+                  'runtime_provider': os.environ['CLAUDE_PROVIDER_IDENTITY'],
                   'runtime_version': version,
                   'runtime_source_set_identity_ref': source['identity'],
                   'runtime_distribution_identity_ref': distribution['identity'],
@@ -469,10 +550,11 @@ jobs:
                   'result_identity_ref': 'sha256:' + result_identity,
                   'source_identity_ref': controlled['runtime_source_set_identity_ref'],
                   'exit_code': 0,
-                  'summary': 'Real Claude Code provider execution under explicit workflow-dispatch authorization; no Verification PASS claim.',
+                  'summary': 'Real Claude Code runtime execution under explicit workflow-dispatch authorization; no Verification PASS claim.',
               },
               'evidence_refs': [
                   'provider-authorization:sha256:' + digest_file(auth_path),
+                  'transport-descriptor:sha256:' + digest_file(transport_path),
                   'claude-execution-file:sha256:' + digest_file(execution_file),
                   'worktree-result:sha256:' + tree_digest(target),
               ],
@@ -547,6 +629,10 @@ jobs:
               'runtime_receipts': {
                   'codex': {'ref': 'codex-portable.json', 'sha256': sha(codex_path)},
                   'claude-code': {'ref': 'claude-portable.json', 'sha256': sha(claude_path)},
+              },
+              'transport_plan': {
+                  'ref': 'transport-plan.json',
+                  'sha256': sha(pathlib.Path(str(plan_path.parent / 'transport-plan.json'))),
               },
               'next_gate': 'shared-digital-worker-verification-and-review-then-root-runtime-portability-certifier',
           }
