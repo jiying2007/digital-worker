@@ -1,0 +1,561 @@
+name: Runtime R2 Real Provider Execution
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Type RUN_REAL_R2 to authorize real provider execution for the frozen Feature Pilot"
+        required: true
+        type: string
+      codex_model:
+        description: "Exact Codex model passed to codex-action"
+        required: true
+        default: "gpt-5.3-codex"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: runtime-r2-real-provider-${{ github.run_id }}
+  cancel-in-progress: false
+
+env:
+  TARGET_REPOSITORY: jiying2007/ota_download_test
+  TARGET_BASE_COMMIT: eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d
+  CODEX_BINDING_COMMIT: d12e782b46430d6bfc828f24a41f94f871a7a19a
+  CLAUDE_BINDING_COMMIT: 8cd87956507f9dbde0438c9135493c96f3b2d318
+  ADK_CONTRACT_COMMIT: 9e732da34eac52d1418b52691ca63eec15674363
+  ADK_RELEASE_COMMIT: e36dfec69f21806431b07daddc4bd78412179e62
+
+jobs:
+  freeze:
+    name: Freeze exact R2 task and authorize dispatch
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    outputs:
+      frozen_inputs_sha256: ${{ steps.freeze.outputs.frozen_inputs_sha256 }}
+    steps:
+      - name: Checkout authoritative Digital Worker source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Enforce manual main-only real-execution guard
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$GITHUB_EVENT_NAME" = workflow_dispatch
+          test "$GITHUB_REF" = refs/heads/main
+          test "$CONFIRMATION" = RUN_REAL_R2
+          if [ -z "$OPENAI_API_KEY" ]; then
+            echo '::error::BLOCKED_MISSING_OPENAI_API_KEY'
+            exit 2
+          fi
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo '::error::BLOCKED_MISSING_ANTHROPIC_API_KEY'
+            exit 2
+          fi
+      - name: Checkout exact frozen target base
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: jiying2007/ota_download_test
+          ref: eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d
+          path: r2-target-freeze
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Build deterministic frozen plan and explicit operator authorization receipt
+        id: freeze
+        shell: bash
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/r2-freeze"
+          python scripts/runtime_r2_evidence.py prepare \
+            --root . \
+            --target-root "$GITHUB_WORKSPACE/r2-target-freeze" \
+            --output "$RUNNER_TEMP/r2-freeze/frozen-plan.json"
+          python - "$RUNNER_TEMP/r2-freeze/frozen-plan.json" "$RUNNER_TEMP/r2-freeze/provider-execution-authorization.json" "$RUNNER_TEMP/r2-freeze/prompt.txt" <<'PY'
+          import hashlib, json, os, pathlib, sys
+          plan_path, auth_path, prompt_path = map(pathlib.Path, sys.argv[1:])
+          raw = plan_path.read_bytes()
+          plan = json.loads(raw)
+          assert plan["schema"] == "digital-worker-runtime-r2-plan/v1", plan
+          assert plan["status"] == "ready-for-manual-provider-execution", plan
+          assert plan["provider_execution_authorized"] is False, plan
+          assert plan["automatic_execution_enabled"] is False, plan
+          assert plan["controlled_task"]["exact_base_commit"] == os.environ["TARGET_BASE_COMMIT"], plan
+          plan_sha = hashlib.sha256(raw).hexdigest()
+          auth = {
+              "schema": "digital-worker-runtime-r2-provider-authorization/v1",
+              "authorized": True,
+              "authorization_mode": "explicit-workflow-dispatch",
+              "actor": os.environ["GITHUB_ACTOR"],
+              "workflow_run_id": os.environ["GITHUB_RUN_ID"],
+              "workflow_sha": os.environ["GITHUB_SHA"],
+              "frozen_plan_sha256": plan_sha,
+              "frozen_inputs_sha256": plan["frozen_inputs_sha256"],
+              "scope": "codex-and-claude-same-frozen-task-provider-execution-only",
+              "verification_or_release_authority": False,
+          }
+          auth_path.write_text(json.dumps(auth, ensure_ascii=False, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          prompt_path.write_text(plan["prompt"] + "\n", encoding="utf-8")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as out:
+              out.write(f"frozen_inputs_sha256={plan['frozen_inputs_sha256']}\n")
+          PY
+      - name: Upload the single shared frozen plan
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: r2-frozen-plan-${{ github.run_id }}
+          path: ${{ runner.temp }}/r2-freeze
+          if-no-files-found: error
+          retention-days: 30
+
+  codex-real:
+    name: Execute Codex against the frozen task
+    needs: freeze
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout authoritative Digital Worker source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Download shared frozen plan
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: r2-frozen-plan-${{ github.run_id }}
+          path: ${{ runner.temp }}/r2-freeze
+      - name: Checkout exact frozen target base
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: jiying2007/ota_download_test
+          ref: eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d
+          path: r2-target-codex
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Checkout exact Codex runtime binding
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: jiying2007/codex
+          ref: d12e782b46430d6bfc828f24a41f94f871a7a19a
+          path: codex-binding
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install exact Codex distribution dependencies
+        run: python -m pip install --disable-pip-version-check --no-input 'PyYAML==6.0.2' 'jsonschema==4.26.0'
+      - name: Materialize current Codex source set into isolated Codex home
+        shell: bash
+        run: |
+          set -euo pipefail
+          binding="$GITHUB_WORKSPACE/codex-binding"
+          build="$RUNNER_TEMP/codex-build"
+          home="$RUNNER_TEMP/codex-home"
+          PYTHONPATH="$binding" python -m tools.codex_assets build --root "$binding" --profile default --build "$build"
+          PYTHONPATH="$binding" python -m tools.codex_assets apply --root "$binding" --build "$build" --target "$home"
+          PYTHONPATH="$binding" python -m tools.codex_assets diff --root "$binding" --build "$build" --target "$home"
+          python - "$home" "$RUNNER_TEMP/codex-install.json" <<'PY'
+          import hashlib, json, pathlib, sys
+          home, out = map(pathlib.Path, sys.argv[1:])
+          managed = json.loads((home / 'control/state/managed-files.json').read_text(encoding='utf-8'))
+          def canonical(v): return json.dumps(v, ensure_ascii=False, sort_keys=True, separators=(',', ':')).encode()
+          source = {
+              'runtime_binding_repository': 'jiying2007/codex',
+              'runtime_binding_commit': 'd12e782b46430d6bfc828f24a41f94f871a7a19a',
+              'profile': managed.get('profile'),
+              'source_fingerprint': managed.get('source_fingerprint'),
+              'managed_state_sha256': hashlib.sha256((home / 'control/state/managed-files.json').read_bytes()).hexdigest(),
+          }
+          files = []
+          for path in sorted(p for p in home.rglob('*') if p.is_file()):
+              rel = path.relative_to(home).as_posix()
+              files.append({'path': rel, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()})
+          receipt = {
+              'schema': 'codex-r2-runtime-install/v1',
+              'source_set_identity_ref': 'sha256:' + hashlib.sha256(canonical(source)).hexdigest(),
+              'runtime_distribution_identity_ref': 'sha256:' + hashlib.sha256(canonical(files)).hexdigest(),
+              'profile': managed.get('profile'),
+              'files': len(files),
+          }
+          out.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          PY
+      - name: Reassert exact clean target baseline before provider execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="$GITHUB_WORKSPACE/r2-target-codex"
+          test "$(git -C "$target" rev-parse HEAD)" = "$TARGET_BASE_COMMIT"
+          test -z "$(git -C "$target" status --porcelain=v1 --untracked-files=all)"
+          date -u +%Y-%m-%dT%H:%M:%SZ > "$RUNNER_TEMP/codex-started-at"
+      - name: Read frozen provider prompt
+        id: codex-prompt
+        shell: bash
+        run: |
+          {
+            echo 'text<<R2_PROMPT_EOF'
+            cat "$RUNNER_TEMP/r2-freeze/prompt.txt"
+            echo 'R2_PROMPT_EOF'
+          } >> "$GITHUB_OUTPUT"
+      - name: Run real Codex provider
+        id: codex-provider
+        uses: openai/codex-action@5c3f4ccdb2b8790f73d6b21751ac00e602aa0c02
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt: ${{ steps.codex-prompt.outputs.text }}
+          output-file: ${{ runner.temp }}/codex-final.txt
+          working-directory: ${{ github.workspace }}/r2-target-codex
+          codex-home: ${{ runner.temp }}/codex-home
+          model: ${{ inputs.codex_model }}
+          sandbox: workspace-write
+          safety-strategy: drop-sudo
+      - name: Build and validate real Codex native + portable receipts
+        shell: bash
+        env:
+          CODEX_MODEL: ${{ inputs.codex_model }}
+        run: |
+          set -euo pipefail
+          date -u +%Y-%m-%dT%H:%M:%SZ > "$RUNNER_TEMP/codex-finished-at"
+          codex --version > "$RUNNER_TEMP/codex-version.txt"
+          git -C "$GITHUB_WORKSPACE/r2-target-codex" status --porcelain=v1 --untracked-files=all > "$RUNNER_TEMP/codex-status.txt"
+          git -C "$GITHUB_WORKSPACE/r2-target-codex" diff --binary > "$RUNNER_TEMP/codex.patch"
+          python - "$RUNNER_TEMP/r2-freeze/frozen-plan.json" "$RUNNER_TEMP/r2-freeze/provider-execution-authorization.json" "$RUNNER_TEMP/codex-install.json" "$GITHUB_WORKSPACE/r2-target-codex" "$RUNNER_TEMP/codex-native.json" <<'PY'
+          import hashlib, json, os, pathlib, sys
+          plan_path, auth_path, install_path, target, out = map(pathlib.Path, sys.argv[1:])
+          plan = json.loads(plan_path.read_text())
+          auth = json.loads(auth_path.read_text())
+          install = json.loads(install_path.read_text())
+          assert auth['authorized'] is True and auth['frozen_inputs_sha256'] == plan['frozen_inputs_sha256']
+          def digest_file(path): return hashlib.sha256(path.read_bytes()).hexdigest()
+          def tree_digest(root):
+              rows=[]
+              for p in sorted(x for x in root.rglob('*') if x.is_file() and '.git' not in x.parts):
+                  rows.append((p.relative_to(root).as_posix(), digest_file(p)))
+              return hashlib.sha256(json.dumps(rows, separators=(',', ':')).encode()).hexdigest()
+          controlled = plan['controlled_task']
+          governance = controlled['digital_worker_governance_identity_ref'].removeprefix('sha256:')
+          version = pathlib.Path(os.environ['RUNNER_TEMP'], 'codex-version.txt').read_text().strip()
+          receipt = {
+              'schema_version': 2,
+              'work_item_id': controlled['work_item_id'],
+              'run_id': controlled['run_id'],
+              'execution_source_set_identity': controlled['runtime_source_set_identity_ref'],
+              'digital_worker_governance_identity': governance,
+              'runtime_binding': {
+                  'repository': 'jiying2007/codex',
+                  'commit': 'd12e782b46430d6bfc828f24a41f94f871a7a19a',
+                  'target': 'codex-cli',
+                  'runtime_profile': install['profile'],
+                  'runtime_host': 'github-actions:' + os.environ['GITHUB_RUN_ID'],
+                  'source_set_identity_ref': install['source_set_identity_ref'],
+                  'runtime_distribution_identity_ref': install['runtime_distribution_identity_ref'],
+              },
+              'agent_assets': {
+                  'provider_repository': plan['adk_release_identity']['repository'],
+                  'release_version': plan['adk_release_identity']['version'],
+                  'release_tag': plan['adk_release_identity']['tag'],
+                  'release_commit': plan['adk_release_identity']['commit'],
+                  'asset_profile': controlled['adk_asset_profile'],
+                  'source_set_identity': install['source_set_identity_ref'],
+              },
+              'runtime': {'provider': 'openai', 'cli_version': version, 'model': os.environ['CODEX_MODEL'], 'model_provider': 'openai'},
+              'permissions': {'sandbox': 'workspace-write', 'approval': 'explicit-workflow-dispatch', 'network': 'provider-api-through-codex-action'},
+              'repository': {'repository': os.environ['TARGET_REPOSITORY'], 'base_commit': controlled['exact_base_commit'], 'result_commit': None},
+              'execution': {
+                  'status': 'completed',
+                  'runtime_local_gates': ['exact-base', 'source-set-applied', 'codex-action-success'],
+                  'started_at': pathlib.Path(os.environ['RUNNER_TEMP'], 'codex-started-at').read_text().strip(),
+                  'finished_at': pathlib.Path(os.environ['RUNNER_TEMP'], 'codex-finished-at').read_text().strip(),
+              },
+              'evidence_refs': [
+                  'provider-authorization:sha256:' + digest_file(auth_path),
+                  'provider-output:sha256:' + digest_file(pathlib.Path(os.environ['RUNNER_TEMP'], 'codex-final.txt')),
+                  'worktree-result:sha256:' + tree_digest(target),
+              ],
+          }
+          out.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          PY
+          python - <<'PY'
+          import json
+          from jsonschema import Draft202012Validator
+          schema=json.load(open('codex-binding/schemas/runtime-execution-receipt.v2.schema.json'))
+          receipt=json.load(open('/tmp/__missing__')) if False else json.load(open(__import__('os').environ['RUNNER_TEMP'] + '/codex-native.json'))
+          Draft202012Validator(schema).validate(receipt)
+          PY
+          python scripts/runtime_r2_evidence.py project-receipt \
+            --root . --runtime codex \
+            --native-receipt "$RUNNER_TEMP/codex-native.json" \
+            --frozen-plan "$RUNNER_TEMP/r2-freeze/frozen-plan.json" \
+            --output "$RUNNER_TEMP/codex-portable.json"
+      - name: Upload Codex real-provider evidence candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: r2-codex-real-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/codex-native.json
+            ${{ runner.temp }}/codex-portable.json
+            ${{ runner.temp }}/codex-install.json
+            ${{ runner.temp }}/codex-status.txt
+            ${{ runner.temp }}/codex.patch
+            ${{ runner.temp }}/codex-version.txt
+          if-no-files-found: error
+          retention-days: 30
+
+  claude-real:
+    name: Execute Claude Code against the frozen task
+    needs: freeze
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout authoritative Digital Worker source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Download shared frozen plan
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: r2-frozen-plan-${{ github.run_id }}
+          path: ${{ runner.temp }}/r2-freeze
+      - name: Checkout exact frozen target base
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: jiying2007/ota_download_test
+          ref: eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d
+          path: r2-target-claude
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Checkout exact Claude runtime binding
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: jiying2007/claude
+          ref: 8cd87956507f9dbde0438c9135493c96f3b2d318
+          path: claude-binding
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Checkout exact ADK consumer contract
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: jiying2007/agent-dev-kit
+          ref: 9e732da34eac52d1418b52691ca63eec15674363
+          path: adk-contract
+          persist-credentials: false
+          fetch-depth: 1
+      - name: Checkout immutable ADK v5.1.1 release
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          repository: jiying2007/agent-dev-kit
+          ref: e36dfec69f21806431b07daddc4bd78412179e62
+          path: adk-release
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Install exact Claude binding validator dependency
+        run: python -m pip install --disable-pip-version-check --no-input 'jsonschema==4.26.0'
+      - name: Materialize and install exact Claude source set into isolated user scope
+        shell: bash
+        run: |
+          set -euo pipefail
+          git -C adk-release fetch --quiet origin refs/tags/v5.1.1:refs/tags/v5.1.1
+          python claude-binding/control/scripts/dw_runtime.py materialize \
+            --adk-contract-root "$GITHUB_WORKSPACE/adk-contract" \
+            --adk-release-root "$GITHUB_WORKSPACE/adk-release" \
+            --out "$RUNNER_TEMP/claude-materialized" \
+            --runtime-profile solo-dev
+          mkdir -p "$RUNNER_TEMP/claude-home/.claude"
+          cp -a "$RUNNER_TEMP/claude-materialized/distribution/." "$RUNNER_TEMP/claude-home/.claude/"
+          python - "$RUNNER_TEMP/claude-materialized/runtime-distribution.json" "$RUNNER_TEMP/claude-home/.claude" <<'PY'
+          import hashlib, json, pathlib, sys
+          manifest = json.loads(pathlib.Path(sys.argv[1]).read_text())
+          root = pathlib.Path(sys.argv[2])
+          for item in manifest['files']:
+              path = root / item['path']
+              if not path.is_file(): raise SystemExit(f"installed Claude asset missing: {item['path']}")
+              if hashlib.sha256(path.read_bytes()).hexdigest() != item['sha256']:
+                  raise SystemExit(f"installed Claude asset digest mismatch: {item['path']}")
+          PY
+      - name: Reassert exact clean target baseline before provider execution
+        shell: bash
+        run: |
+          set -euo pipefail
+          target="$GITHUB_WORKSPACE/r2-target-claude"
+          test "$(git -C "$target" rev-parse HEAD)" = "$TARGET_BASE_COMMIT"
+          test -z "$(git -C "$target" status --porcelain=v1 --untracked-files=all)"
+          date -u +%Y-%m-%dT%H:%M:%SZ > "$RUNNER_TEMP/claude-started-at"
+      - name: Read frozen provider prompt
+        id: claude-prompt
+        shell: bash
+        run: |
+          {
+            echo 'text<<R2_PROMPT_EOF'
+            cat "$RUNNER_TEMP/r2-freeze/prompt.txt"
+            echo 'R2_PROMPT_EOF'
+          } >> "$GITHUB_OUTPUT"
+      - name: Run real Claude provider with the installed source set
+        id: claude-provider
+        uses: anthropics/claude-code-action/base-action@3b8197d3d486006dd4af54613517f21ac6ac625e
+        env:
+          HOME: ${{ runner.temp }}/claude-home
+          CLAUDE_WORKING_DIR: ${{ github.workspace }}/r2-target-claude
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: ${{ steps.claude-prompt.outputs.text }}
+          show_full_output: 'false'
+          claude_args: >-
+            --max-turns 20
+            --allowedTools "Read,Grep,Glob,Edit,Write,Bash(python *),Bash(python3 *),Bash(pytest *),Bash(sha256sum *),Bash(git status*),Bash(git diff*),Bash(git rev-parse*),Bash(ls *),Bash(find *)"
+      - name: Build and validate real Claude native + portable receipts
+        shell: bash
+        env:
+          CLAUDE_EXECUTION_FILE: ${{ steps.claude-provider.outputs.execution_file }}
+        run: |
+          set -euo pipefail
+          date -u +%Y-%m-%dT%H:%M:%SZ > "$RUNNER_TEMP/claude-finished-at"
+          "$RUNNER_TEMP/claude-home/.local/bin/claude" --version > "$RUNNER_TEMP/claude-version.txt"
+          grep -q '2.1.274' "$RUNNER_TEMP/claude-version.txt"
+          test -n "$CLAUDE_EXECUTION_FILE"
+          test -f "$CLAUDE_EXECUTION_FILE"
+          git -C "$GITHUB_WORKSPACE/r2-target-claude" status --porcelain=v1 --untracked-files=all > "$RUNNER_TEMP/claude-status.txt"
+          git -C "$GITHUB_WORKSPACE/r2-target-claude" diff --binary > "$RUNNER_TEMP/claude.patch"
+          python - "$RUNNER_TEMP/r2-freeze/frozen-plan.json" "$RUNNER_TEMP/r2-freeze/provider-execution-authorization.json" "$RUNNER_TEMP/claude-materialized/source-set.json" "$RUNNER_TEMP/claude-materialized/runtime-distribution.json" "$GITHUB_WORKSPACE/r2-target-claude" "$CLAUDE_EXECUTION_FILE" "$RUNNER_TEMP/claude-native.json" <<'PY'
+          import hashlib, json, os, pathlib, sys
+          plan_path, auth_path, source_path, distribution_path, target, execution_file, out = map(pathlib.Path, sys.argv[1:])
+          plan = json.loads(plan_path.read_text())
+          auth = json.loads(auth_path.read_text())
+          source = json.loads(source_path.read_text())
+          distribution = json.loads(distribution_path.read_text())
+          assert auth['authorized'] is True and auth['frozen_inputs_sha256'] == plan['frozen_inputs_sha256']
+          def digest_file(path): return hashlib.sha256(path.read_bytes()).hexdigest()
+          def tree_digest(root):
+              rows=[]
+              for p in sorted(x for x in root.rglob('*') if x.is_file() and '.git' not in x.parts):
+                  rows.append((p.relative_to(root).as_posix(), digest_file(p)))
+              return hashlib.sha256(json.dumps(rows, separators=(',', ':')).encode()).hexdigest()
+          controlled = plan['controlled_task']
+          version = pathlib.Path(os.environ['RUNNER_TEMP'], 'claude-version.txt').read_text().strip()
+          result_identity = hashlib.sha256((digest_file(execution_file) + tree_digest(target)).encode()).hexdigest()
+          receipt = {
+              'schema_version': 2,
+              'status': 'completed',
+              'runtime': 'claude-code',
+              'frozen_inputs_sha256': plan['frozen_inputs_sha256'],
+              'verification_pass_claimed': False,
+              'runtime_identity': {
+                  'runtime_binding_repository': 'jiying2007/claude',
+                  'runtime_binding_commit': '8cd87956507f9dbde0438c9135493c96f3b2d318',
+                  'runtime_target': 'claude-code',
+                  'runtime_profile': 'solo-dev',
+                  'runtime_host': 'github-actions:' + os.environ['GITHUB_RUN_ID'],
+                  'runtime_provider': 'anthropic',
+                  'runtime_version': version,
+                  'runtime_source_set_identity_ref': source['identity'],
+                  'runtime_distribution_identity_ref': distribution['identity'],
+              },
+              'execution': {
+                  'started_at': pathlib.Path(os.environ['RUNNER_TEMP'], 'claude-started-at').read_text().strip(),
+                  'completed_at': pathlib.Path(os.environ['RUNNER_TEMP'], 'claude-finished-at').read_text().strip(),
+                  'result_identity_ref': 'sha256:' + result_identity,
+                  'source_identity_ref': controlled['runtime_source_set_identity_ref'],
+                  'exit_code': 0,
+                  'summary': 'Real Claude Code provider execution under explicit workflow-dispatch authorization; no Verification PASS claim.',
+              },
+              'evidence_refs': [
+                  'provider-authorization:sha256:' + digest_file(auth_path),
+                  'claude-execution-file:sha256:' + digest_file(execution_file),
+                  'worktree-result:sha256:' + tree_digest(target),
+              ],
+          }
+          out.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          PY
+          python claude-binding/control/scripts/dw_runtime.py receipt \
+            --input "$RUNNER_TEMP/claude-native.json" \
+            --output "$RUNNER_TEMP/claude-native-validated.json"
+          python scripts/runtime_r2_evidence.py project-receipt \
+            --root . --runtime claude-code \
+            --native-receipt "$RUNNER_TEMP/claude-native-validated.json" \
+            --frozen-plan "$RUNNER_TEMP/r2-freeze/frozen-plan.json" \
+            --output "$RUNNER_TEMP/claude-portable.json"
+      - name: Upload Claude real-provider evidence candidate
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: r2-claude-real-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/claude-native.json
+            ${{ runner.temp }}/claude-native-validated.json
+            ${{ runner.temp }}/claude-portable.json
+            ${{ runner.temp }}/claude-version.txt
+            ${{ runner.temp }}/claude-status.txt
+            ${{ runner.temp }}/claude.patch
+          if-no-files-found: error
+          retention-days: 30
+
+  collect:
+    name: Collect real receipts without making a Verification/R2 decision
+    needs: [freeze, codex-real, claude-real]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Download shared frozen plan
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: r2-frozen-plan-${{ github.run_id }}
+          path: ${{ runner.temp }}/r2-freeze
+      - name: Download Codex evidence candidate
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: r2-codex-real-${{ github.run_id }}
+          path: ${{ runner.temp }}/r2-codex
+      - name: Download Claude evidence candidate
+        uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0
+        with:
+          name: r2-claude-real-${{ github.run_id }}
+          path: ${{ runner.temp }}/r2-claude
+      - name: Prove both portable receipts share the exact frozen task
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - "$RUNNER_TEMP/r2-freeze/frozen-plan.json" "$RUNNER_TEMP/r2-codex/codex-portable.json" "$RUNNER_TEMP/r2-claude/claude-portable.json" "$RUNNER_TEMP/r2-receipt-collection.json" <<'PY'
+          import hashlib, json, pathlib, sys
+          plan_path, codex_path, claude_path, out = map(pathlib.Path, sys.argv[1:])
+          plan=json.loads(plan_path.read_text())
+          codex=json.loads(codex_path.read_text())
+          claude=json.loads(claude_path.read_text())
+          assert {codex['runtime'], claude['runtime']} == {'codex', 'claude-code'}
+          assert codex['status'] == claude['status'] == 'completed'
+          assert codex['frozen_inputs_sha256'] == claude['frozen_inputs_sha256'] == plan['frozen_inputs_sha256']
+          assert codex['verification_pass_claimed'] is False
+          assert claude['verification_pass_claimed'] is False
+          def sha(path): return hashlib.sha256(path.read_bytes()).hexdigest()
+          receipt={
+              'schema': 'digital-worker-runtime-r2-execution-collection/v1',
+              'status': 'provider-executions-collected-pending-digital-worker-verification-review',
+              'frozen_inputs_sha256': plan['frozen_inputs_sha256'],
+              'verification_pass_claimed': False,
+              'r2_qualified': False,
+              'runtime_receipts': {
+                  'codex': {'ref': 'codex-portable.json', 'sha256': sha(codex_path)},
+                  'claude-code': {'ref': 'claude-portable.json', 'sha256': sha(claude_path)},
+              },
+              'next_gate': 'shared-digital-worker-verification-and-review-then-root-runtime-portability-certifier',
+          }
+          out.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          PY
+      - name: Upload execution collection pending Verification/Review
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: r2-real-execution-collection-${{ github.run_id }}
+          path: ${{ runner.temp }}/r2-receipt-collection.json
+          if-no-files-found: error
+          retention-days: 30
