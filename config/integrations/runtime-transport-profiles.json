@@ -1,0 +1,101 @@
+{
+  "schema_version": 1,
+  "status": "active",
+  "architecture": {
+    "runtime_identity_is_independent_of_transport": true,
+    "credential_material_must_not_be_persisted": true,
+    "daily_development_default_runtime": "codex",
+    "daily_development_default_transport": "runtime-owned-session",
+    "r2_hosted_execution_requires_explicit_transport_profile": true
+  },
+  "runtimes": {
+    "codex": {
+      "runtime_target": "codex-cli",
+      "daily_default_profile": "runtime-owned-session",
+      "profiles": {
+        "runtime-owned-session": {
+          "transport_kind": "runtime-owned",
+          "protocol": "codex-cli-native",
+          "credential_mode": "runtime-session",
+          "endpoint_mode": "runtime-default",
+          "credential_requirement": "none-from-digital-worker",
+          "allowed_environments": ["developer-workstation", "self-hosted-runner"],
+          "r2_github_hosted_eligible": false
+        },
+        "direct": {
+          "transport_kind": "direct",
+          "protocol": "openai-responses-api",
+          "credential_mode": "external-token",
+          "endpoint_mode": "official-default",
+          "credential_requirement": "required",
+          "allowed_environments": ["github-hosted", "self-hosted-runner"],
+          "r2_github_hosted_eligible": true
+        },
+        "relay": {
+          "transport_kind": "relay",
+          "protocol": "openai-responses-api-compatible",
+          "credential_mode": "external-token",
+          "endpoint_mode": "configured-relay",
+          "credential_requirement": "required",
+          "allowed_environments": ["github-hosted", "self-hosted-runner"],
+          "r2_github_hosted_eligible": true
+        }
+      }
+    },
+    "claude-code": {
+      "runtime_target": "claude-code",
+      "daily_default_profile": "runtime-owned-session",
+      "profiles": {
+        "runtime-owned-session": {
+          "transport_kind": "runtime-owned",
+          "protocol": "claude-code-native",
+          "credential_mode": "runtime-session",
+          "endpoint_mode": "runtime-default",
+          "credential_requirement": "none-from-digital-worker",
+          "allowed_environments": ["developer-workstation", "self-hosted-runner"],
+          "r2_github_hosted_eligible": false
+        },
+        "direct": {
+          "transport_kind": "direct",
+          "protocol": "anthropic-claude-code-api",
+          "credential_mode": "external-token",
+          "endpoint_mode": "official-default",
+          "credential_requirement": "required",
+          "allowed_environments": ["github-hosted", "self-hosted-runner"],
+          "r2_github_hosted_eligible": true
+        },
+        "relay": {
+          "transport_kind": "relay",
+          "protocol": "anthropic-claude-code-compatible",
+          "credential_mode": "external-token",
+          "endpoint_mode": "configured-relay",
+          "credential_requirement": "required",
+          "allowed_environments": ["github-hosted", "self-hosted-runner"],
+          "r2_github_hosted_eligible": true
+        }
+      }
+    }
+  },
+  "r2_adapter_environment": {
+    "codex": {
+      "credential_secret": "R2_CODEX_CREDENTIAL",
+      "endpoint_variable": "R2_CODEX_ENDPOINT"
+    },
+    "claude-code": {
+      "credential_secret": "R2_CLAUDE_CREDENTIAL",
+      "endpoint_variable": "R2_CLAUDE_ENDPOINT"
+    }
+  },
+  "receipt_policy": {
+    "record": [
+      "transport_profile",
+      "transport_kind",
+      "protocol",
+      "credential_mode",
+      "endpoint_class",
+      "endpoint_sha256",
+      "gateway_identity_sha256"
+    ],
+    "forbid": ["credential", "token", "api_key", "secret"]
+  }
+}
