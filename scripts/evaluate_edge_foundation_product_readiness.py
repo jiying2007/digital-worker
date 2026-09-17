@@ -54,6 +54,10 @@ def evaluate(receipt_paths: list[Path]) -> dict:
     require(domain["product_readiness"]["requires_real_pilot_evidence"] is True, "real Pilot evidence requirement disabled")
     require(domain["product_readiness"]["synthetic_pilot_counts"] is False, "synthetic Pilot evidence must remain excluded")
     require(domain["product_readiness"]["controls_routing_authority"] is False, "product readiness must not control routing authority")
+    require(domain["product_readiness"]["blocking_scope"] == "product-readiness-only", "product readiness blocker scope drift")
+    require(domain["product_readiness"]["development_blocking"] is False, "product readiness must not block development")
+    require(domain["product_readiness"]["integration_blocking"] is False, "product readiness must not block integration")
+    require(domain["product_readiness"]["control_plane_blocking"] is False, "product readiness must not block the control plane")
 
     known_experts = {item["id"] for item in domain["experts"]}
     embedded = next(item for item in domain["experts"] if item["id"] == "embedded-system-expert")
@@ -112,6 +116,12 @@ def evaluate(receipt_paths: list[Path]) -> dict:
     result = {
         "schema_version": 1,
         "status": "ELIGIBLE_FOR_PRODUCTIONIZATION_REVIEW" if ready else "BLOCKED",
+        "operational_status": "eligible_for_productionization_review" if ready else "product_readiness_in_progress",
+        "blocking_scope": "none" if ready else "product-readiness-only",
+        "development_blocking": False,
+        "integration_blocking": False,
+        "control_plane_blocking": False,
+        "product_readiness_blocking": not ready,
         "eligible_for_product_review": ready,
         "routing_authority": "edge-foundation",
         "canonical_routing": True,
@@ -143,8 +153,9 @@ def main() -> None:
         print(rendered, end="")
     print(
         "edge-foundation product readiness: "
-        f"status={result['status']} receipts={result['receipts_scanned']} "
-        f"eligible={result['eligible_real_receipts']} blockers={len(result['blockers'])}"
+        f"status={result['status']} operational_status={result['operational_status']} "
+        f"receipts={result['receipts_scanned']} eligible={result['eligible_real_receipts']} "
+        f"qualification_blockers={len(result['blockers'])}"
     )
     if args.require_ready and not result["eligible_for_product_review"]:
         raise SystemExit(2)
