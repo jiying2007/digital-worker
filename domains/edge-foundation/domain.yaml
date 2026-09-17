@@ -121,4 +121,8 @@ product_readiness:
   requires_real_pilot_evidence: true
   synthetic_pilot_counts: false
   controls_routing_authority: false
+  blocking_scope: product-readiness-only
+  development_blocking: false
+  integration_blocking: false
+  control_plane_blocking: false
   current_track_target: [debug, feature, review_release]
