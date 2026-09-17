@@ -5,13 +5,21 @@
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "schema_version", "status", "eligible_for_product_review", "routing_authority", "canonical_routing",
+    "schema_version", "status", "operational_status", "blocking_scope",
+    "development_blocking", "integration_blocking", "control_plane_blocking", "product_readiness_blocking",
+    "eligible_for_product_review", "routing_authority", "canonical_routing",
     "promotion_gate_source", "required_tracks", "track_coverage", "receipts_scanned",
     "eligible_real_receipts", "evidence_run_ids", "blockers"
   ],
   "properties": {
     "schema_version": {"const": 1},
     "status": {"enum": ["BLOCKED", "ELIGIBLE_FOR_PRODUCTIONIZATION_REVIEW"]},
+    "operational_status": {"enum": ["product_readiness_in_progress", "eligible_for_productionization_review"]},
+    "blocking_scope": {"enum": ["product-readiness-only", "none"]},
+    "development_blocking": {"const": false},
+    "integration_blocking": {"const": false},
+    "control_plane_blocking": {"const": false},
+    "product_readiness_blocking": {"type": "boolean"},
     "eligible_for_product_review": {"type": "boolean"},
     "routing_authority": {"const": "edge-foundation"},
     "canonical_routing": {"const": true},
@@ -31,6 +39,30 @@
     "evidence_run_ids": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
     "blockers": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
   },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "BLOCKED"}}},
+      "then": {
+        "properties": {
+          "operational_status": {"const": "product_readiness_in_progress"},
+          "blocking_scope": {"const": "product-readiness-only"},
+          "product_readiness_blocking": {"const": true},
+          "eligible_for_product_review": {"const": false}
+        }
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "ELIGIBLE_FOR_PRODUCTIONIZATION_REVIEW"}}},
+      "then": {
+        "properties": {
+          "operational_status": {"const": "eligible_for_productionization_review"},
+          "blocking_scope": {"const": "none"},
+          "product_readiness_blocking": {"const": false},
+          "eligible_for_product_review": {"const": true}
+        }
+      }
+    }
+  ],
   "$defs": {
     "trackCoverage": {
       "type": "object", "additionalProperties": false,
