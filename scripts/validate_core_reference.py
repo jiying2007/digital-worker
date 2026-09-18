@@ -43,7 +43,7 @@ def main() -> None:
         "03-流程与运行/01 任务生命周期与Gate.md", "03-流程与运行/02 Debug问题闭环流程.md", "03-流程与运行/03 功能开发Bring-up与多仓协同.md", "03-流程与运行/04 验证评审发布与异常恢复.md", "03-流程与运行/05 任务类型运行矩阵.md",
         "04-专业能力/01 嵌入式架构能力域指南.md", "04-专业能力/02 Linux BSP能力域指南.md", "04-专业能力/03 MCU RTOS能力域指南.md", "04-专业能力/04 驱动与组件能力域指南.md", "04-专业能力/05 调试与可靠性能力域指南.md",
         "05-工程交付/01 Skill能力地图.md", "05-工程交付/02 工程交接Runtime与关键产物.md", "05-工程交付/03 完整任务产物样例.md",
-        "05-工程交付/04 Skill规划清单与定义规范.md", "05-工程交付/05 Skill生命周期成熟度与准入.md", "05-工程交付/06 Skill评审成熟度台账.md", "05-工程交付/07 Skill评测与证据闭环.md",
+        "05-工程交付/04 Skill规划清单与定义规范.md", "05-工程交付/05 Skill生命周期成熟度与准入.md", "05-工程交付/06 Skill评审成熟度台账.md", "05-工程交付/07 Skill评测与证据闭环.md", "05-工程交付/08 嵌入式系统开发Skill全景与目标覆盖.md",
         "06-治理与评审/01 评审说明与决策清单.md", "06-治理与评审/02 权限安全风险与例外.md", "06-治理与评审/03 Pilot指标成熟度与生产化.md", "06-治理与评审/04 架构取舍与演进原则.md", "06-治理与评审/05 Verification责任与证据.md", "06-治理与评审/06 Independent Review与发布边界.md", "06-治理与评审/07 端到端评审检查表.md",
         "07-案例/01 UBIFS只读问题走查.md", "07-案例/02 多仓功能与OTA发布走查.md", "07-案例/03 MCU HardFault与RTOS并发走查.md", "07-案例/04 新板Bring-up走查.md", "07-案例/05 器件替代兼容性走查.md", "附录/术语与缩写.md",
     ]
@@ -80,10 +80,12 @@ def main() -> None:
     skill_lifecycle = read("05-工程交付/05 Skill生命周期成熟度与准入.md")
     skill_maturity = read("05-工程交付/06 Skill评审成熟度台账.md")
     skill_evaluation_guide = read("05-工程交付/07 Skill评测与证据闭环.md")
+    skill_coverage = read("05-工程交付/08 嵌入式系统开发Skill全景与目标覆盖.md")
     for item in skills:
         require(item["id"] in skill_map, f"Skill map missing {item['id']}"); require(item["owner_id"] in skill_map, f"Skill map missing owner {item['owner_id']}")
         require(item["id"] in skill_plan, f"Skill planning view missing canonical Skill {item['id']}")
         require(item["id"] in skill_maturity, f"Skill maturity ledger missing canonical Skill {item['id']}")
+        require(item["id"] in skill_coverage, f"full embedded Skill coverage missing canonical Skill {item['id']}")
     for marker in ["OBSERVED_GAP", "Required Inputs", "BLOCK Conditions", "Verification / Review Handoff", "Candidate Skill"]:
         require(marker in skill_plan, f"Skill planning view missing governance marker: {marker}")
     for marker in ["CANDIDATE", "EVALUATED", "PILOTED", "REPEATABLE", "GOVERNED", "DEPRECATED", "RETIRED"]:
@@ -92,6 +94,12 @@ def main() -> None:
         require(marker in skill_maturity, f"Skill maturity ledger missing evidence-boundary marker: {marker}")
     for marker in ["46 个 case", "case_evidence_eligible", "EVALUATED", "PILOTED", "portability_proven = false", "product_readiness_inherited = false"]:
         require(marker in skill_evaluation_guide, f"Skill evaluation guide missing evidence-boundary marker: {marker}")
+    coverage_markers = ["75 项", "23 `CURRENT_CANONICAL`", "9 `OBSERVED_GAP`", "33 `TARGET_COVERAGE`", "10 `CONDITIONAL_SPECIALIZATION`", "requirements-decomposition", "linux-board-bringup-analysis", "mcu-board-bringup-analysis", "embedded-test-design-automation", "embedded-threat-model", "factory-flashing-provisioning-analysis", "motor-control-foc-analysis"]
+    for marker in coverage_markers:
+        require(marker in skill_coverage, f"full embedded Skill coverage missing marker: {marker}")
+    observed_gap_ids = {"power-state-analysis", "ota-bootloader-analysis", "watchdog-reset-analysis", "device-substitution-qualification", "production-calibration-test-analysis", "long-run-soak-analysis", "latency-jitter-analysis", "kernel-config-diff-review", "flash-ecc-badblock-analysis"}
+    for skill_id in observed_gap_ids:
+        require(skill_id in skill_coverage, f"full embedded Skill coverage missing observed gap: {skill_id}")
 
     review_guide = read("00-评审导览/01 评审总览与阅读路径.md")
     review_snapshot = read("00-评审导览/03 当前机器状态快照.md")
