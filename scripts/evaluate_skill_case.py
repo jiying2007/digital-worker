@@ -65,6 +65,7 @@ def evaluate(
     semantic_evaluator_kind: str,
     semantic_evaluator_id: str | None,
     semantic_evidence_ref: str | None,
+    semantic_evidence_sha256: str | None,
     semantic_notes: str | None,
 ) -> dict:
     invocation_path = invocation_path.resolve()
@@ -88,11 +89,12 @@ def evaluate(
 
     if semantic_status == "NOT_EVALUATED":
         require(semantic_evaluator_kind == "none", "NOT_EVALUATED semantic status requires evaluator_kind=none")
-        require(semantic_evaluator_id is None and semantic_evidence_ref is None, "NOT_EVALUATED must not invent evaluator/evidence")
+        require(semantic_evaluator_id is None and semantic_evidence_ref is None and semantic_evidence_sha256 is None, "NOT_EVALUATED must not invent evaluator/evidence")
     else:
         require(semantic_evaluator_kind in {"human-review", "independent-evaluator"}, "semantic PASS/FAIL requires independent evaluator kind")
         require(bool(semantic_evaluator_id), "semantic PASS/FAIL requires evaluator_id")
         require(bool(semantic_evidence_ref), "semantic PASS/FAIL requires evidence_ref")
+        require(bool(semantic_evidence_sha256) and len(semantic_evidence_sha256) == 64, "semantic PASS/FAIL requires evidence_sha256")
 
     case_eligible = contract_pass and semantic_status == "PASS"
 
@@ -126,6 +128,7 @@ def evaluate(
             "evaluator_kind": semantic_evaluator_kind,
             "evaluator_id": semantic_evaluator_id,
             "evidence_ref": semantic_evidence_ref,
+            "evidence_sha256": semantic_evidence_sha256,
             "notes": semantic_notes,
         },
         "case_evidence_eligible": case_eligible,
@@ -143,6 +146,7 @@ def main() -> None:
     parser.add_argument("--semantic-evaluator-kind", choices=["none", "human-review", "independent-evaluator"], default="none")
     parser.add_argument("--semantic-evaluator-id")
     parser.add_argument("--semantic-evidence-ref")
+    parser.add_argument("--semantic-evidence-sha256")
     parser.add_argument("--semantic-notes")
     parser.add_argument("--output", type=Path)
     parser.add_argument("--require-case-eligible", action="store_true")
@@ -155,6 +159,7 @@ def main() -> None:
         args.semantic_evaluator_kind,
         args.semantic_evaluator_id,
         args.semantic_evidence_ref,
+        args.semantic_evidence_sha256,
         args.semantic_notes,
     )
     rendered = json.dumps(receipt, ensure_ascii=False, indent=2) + "\n"
