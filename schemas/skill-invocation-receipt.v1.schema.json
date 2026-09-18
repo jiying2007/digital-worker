@@ -1,0 +1,104 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://digital-worker.local/schemas/skill-invocation-receipt.v1.schema.json",
+  "title": "Skill Invocation Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "invocation_id", "run_id", "work_item_id", "source_type",
+    "skill_id", "skill_contract", "runtime_binding", "action_level",
+    "inputs", "outputs", "result", "started_at", "finished_at", "attestation"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "invocation_id": {"type": "string", "minLength": 1},
+    "run_id": {"type": "string", "minLength": 1},
+    "work_item_id": {"type": "string", "minLength": 1},
+    "source_type": {"enum": ["real", "synthetic"]},
+    "skill_id": {"type": "string", "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"},
+    "skill_contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "path", "sha256", "owner_kind", "owner", "max_action_level"],
+      "properties": {
+        "version": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "minLength": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "owner_kind": {"enum": ["role", "capability", "assurance"]},
+        "owner": {"type": "string", "minLength": 1},
+        "max_action_level": {"enum": ["A0_READ", "A1_ANALYZE", "A2_GENERATE", "A3_MODIFY_WORKTREE", "A4_BUILD_TEST", "A5_DEVICE_READ", "A6_DEVICE_WRITE", "A7_RELEASE"]}
+      }
+    },
+    "runtime_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "runtime_id"],
+      "properties": {
+        "provider": {"type": "string", "minLength": 1},
+        "runtime_id": {"type": "string", "minLength": 1},
+        "version": {"type": ["string", "null"]},
+        "execution_identity": {"type": ["string", "null"]}
+      }
+    },
+    "action_level": {"enum": ["A0_READ", "A1_ANALYZE", "A2_GENERATE", "A3_MODIFY_WORKTREE", "A4_BUILD_TEST", "A5_DEVICE_READ", "A6_DEVICE_WRITE", "A7_RELEASE"]},
+    "inputs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ref"],
+        "properties": {
+          "ref": {"type": "string", "minLength": 1},
+          "kind": {"type": ["string", "null"]},
+          "sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "outputs": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["ref", "sha256"],
+        "properties": {
+          "ref": {"type": "string", "minLength": 1},
+          "kind": {"type": ["string", "null"]},
+          "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+        }
+      }
+    },
+    "result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["status", "block_reason"],
+      "properties": {
+        "status": {"enum": ["COMPLETED", "BLOCKED", "FAILED"]},
+        "summary": {"type": ["string", "null"]},
+        "block_reason": {"type": ["string", "null"]}
+      }
+    },
+    "started_at": {"type": "string", "minLength": 1},
+    "finished_at": {"type": "string", "minLength": 1},
+    "attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["producer", "evidence_ref", "generated_at"],
+      "properties": {
+        "producer": {"enum": ["runtime-binding", "evaluation-harness"]},
+        "evidence_ref": {"type": "string", "minLength": 1},
+        "generated_at": {"type": "string", "minLength": 1}
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"result": {"properties": {"status": {"const": "COMPLETED"}}}}},
+      "then": {"properties": {"outputs": {"minItems": 1}}}
+    },
+    {
+      "if": {"properties": {"result": {"properties": {"status": {"const": "BLOCKED"}}}}},
+      "then": {"properties": {"result": {"properties": {"block_reason": {"type": "string", "minLength": 1}}}}}
+    }
+  ]
+}
