@@ -33,6 +33,8 @@
       }
     },
     "pilot_result_evaluated": {"type": "boolean"},
+    "skill_invocation_count": {"type": "integer", "minimum": 0},
+    "skill_invocation_evidence_present": {"type": "boolean"},
     "pilot_outcome": {"type": ["string", "null"], "enum": ["PASS", "BLOCKED", "REWORK", "INSUFFICIENT_EVIDENCE", null]},
     "eligibility_checks": {
       "type": "object", "additionalProperties": false,

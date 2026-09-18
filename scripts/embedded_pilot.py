@@ -29,6 +29,8 @@ STATUS_SCHEMA = ROOT / "schemas" / "pilot-status.v1.schema.json"
 PILOT_RECEIPT_EVALUATOR = ROOT / "scripts" / "evaluate_edge_foundation_pilot.py"
 PRODUCT_READINESS_EVALUATOR = ROOT / "scripts" / "evaluate_edge_foundation_product_readiness.py"
 MATERIAL_VALIDATOR = ROOT / "scripts" / "validate_material_manifest.py"
+SKILL_RECEIPT_SCHEMA = ROOT / "schemas" / "skill-invocation-receipt.v1.schema.json"
+SKILL_RECEIPT_VALIDATOR = ROOT / "scripts" / "validate_skill_invocation_receipt.py"
 TERMINAL_STATUSES = {"completed", "cancelled"}
 
 REF_SCHEMAS = {
@@ -141,6 +143,17 @@ def validate_material_manifest_ref(run_dir: Path, run: dict, require_terminal_re
     return completed
 
 
+def validate_skill_invocation_ref(run_dir: Path, run: dict, ref: str):
+    path = safe_ref(run_dir, ref)
+    doc = load_json(path)
+    validate_json(doc, SKILL_RECEIPT_SCHEMA)
+    command = [sys.executable, str(SKILL_RECEIPT_VALIDATOR), str(path), "--pilot-run", str(run_path(run_dir))]
+    completed = subprocess.run(command, check=False, capture_output=True, text=True)
+    detail = (completed.stderr or completed.stdout or "Skill invocation receipt validator failed").strip()
+    assert_true(completed.returncode == 0, f"Skill invocation receipt invalid: {detail}")
+    return doc
+
+
 def validate_linked_document(run_dir: Path, run: dict, field: str, schema_path: Path):
     ref = run.get(field)
     if not ref:
@@ -190,6 +203,10 @@ def current_artifacts(run_dir: Path, run: dict) -> tuple[list[dict], list[str]]:
             continue
         path = safe_ref(run_dir, ref)
         artifacts.append({"kind": field.removesuffix("_ref"), "path": ref, "sha256": sha256(path), "required": required})
+    for ref in run.get("skill_invocation_refs", []):
+        path = safe_ref(run_dir, ref)
+        doc = load_json(path)
+        artifacts.append({"kind": f"skill_invocation:{doc['skill_id']}", "path": ref, "sha256": sha256(path), "required": False})
     extras = run.get("extra_artifact_refs", {})
     for kind in required_extra:
         if kind not in extras:
@@ -247,6 +264,8 @@ def validate_run_dir(run_dir: Path) -> dict:
     for kind, ref in run.get("extra_artifact_refs", {}).items():
         assert_true(re.fullmatch(r"[A-Za-z0-9_.-]+", kind) is not None, f"invalid extra artifact kind: {kind}")
         safe_ref(run_dir, ref)
+    for ref in run.get("skill_invocation_refs", []):
+        validate_skill_invocation_ref(run_dir, run, ref)
     validate_material_manifest_ref(run_dir, run, require_terminal_ready=run["status"] == "completed")
     if run["status"] == "completed":
         required_refs, required_extra = required_artifacts(run)
@@ -298,7 +317,7 @@ def cmd_init(args):
         "human_owner": args.human_owner, "repo_root": args.repo_root, "base_commit": args.base_commit,
         "task_brief_ref": "task-brief.json", "engineering_task_package_ref": None,
         "delivery_receipt_ref": None, "verification_report_ref": None, "review_report_ref": None,
-        "pilot_result_ref": None, "evidence_bundle_ref": None, "extra_artifact_refs": {},
+        "pilot_result_ref": None, "skill_invocation_refs": [], "evidence_bundle_ref": None, "extra_artifact_refs": {},
         "status": "planned", "started_at": None, "finished_at": None, "notes": [],
     }
     write_json(run_path(run_dir), run)
@@ -346,6 +365,12 @@ def cmd_complete(args):
     for field, (source, filename) in attachments.items():
         if source:
             run[field] = copy_into(run_dir, source, filename)
+    skill_refs = run.setdefault("skill_invocation_refs", [])
+    for source in args.skill_invocation:
+        doc = load_json(source)
+        validate_json(doc, SKILL_RECEIPT_SCHEMA)
+        index = len(skill_refs) + 1
+        skill_refs.append(copy_into(run_dir, source, f"skill-invocations/{index:02d}-{doc['skill_id']}.json"))
     extras = run.setdefault("extra_artifact_refs", {})
     for kind, source in parse_extra(args.extra).items():
         suffix = source.suffix if source.suffix else ".artifact"
@@ -442,7 +467,7 @@ def build_parser():
     init.add_argument("--workflow-mode", required=True); init.add_argument("--human-owner", required=True); init.add_argument("--task-brief", type=Path, required=True)
     init.add_argument("--repo-root"); init.add_argument("--base-commit"); init.add_argument("--output-root", type=Path, default=PILOT_DIR / "runs"); init.set_defaults(func=cmd_init)
     status = sub.add_parser("status"); status.add_argument("run_dir", type=Path); status.add_argument("status", choices=["planned", "running", "blocked", "cancelled"]); status.add_argument("--note"); status.set_defaults(func=cmd_status)
-    complete = sub.add_parser("complete"); complete.add_argument("run_dir", type=Path); complete.add_argument("--engineering-task-package", type=Path); complete.add_argument("--delivery-receipt", type=Path); complete.add_argument("--verification-report", type=Path); complete.add_argument("--review-report", type=Path); complete.add_argument("--pilot-result", type=Path); complete.add_argument("--extra", action="append", default=[]); complete.set_defaults(func=cmd_complete)
+    complete = sub.add_parser("complete"); complete.add_argument("run_dir", type=Path); complete.add_argument("--engineering-task-package", type=Path); complete.add_argument("--delivery-receipt", type=Path); complete.add_argument("--verification-report", type=Path); complete.add_argument("--review-report", type=Path); complete.add_argument("--pilot-result", type=Path); complete.add_argument("--skill-invocation", type=Path, action="append", default=[]); complete.add_argument("--extra", action="append", default=[]); complete.set_defaults(func=cmd_complete)
     bundle = sub.add_parser("bundle"); bundle.add_argument("run_dir", type=Path); bundle.add_argument("--fail-incomplete", action="store_true"); bundle.set_defaults(func=cmd_bundle)
     validate = sub.add_parser("validate"); validate.add_argument("run_dir", type=Path); validate.set_defaults(func=cmd_validate)
     summary = sub.add_parser("summary"); summary.add_argument("runs_root", type=Path); summary.add_argument("--output", type=Path); summary.set_defaults(func=cmd_summary)

@@ -43,6 +43,7 @@ def main():
         require("review_report_ref" not in cfg["required_refs"], f"Independent Review must not hard-block iterative Pilot: {track}")
         for field in cfg["required_refs"]: require(field in run_properties, f"unknown Pilot ref: {track}/{field}")
     require(run_schema["properties"]["base_commit"].get("pattern") == "^[0-9a-fA-F]{40}$", "Pilot base_commit must be full 40-hex")
+    require("skill_invocation_refs" in run_properties, "Pilot run must support frozen Skill invocation refs")
     validate(ROOT / "tests/fixtures/engineering-task-package.valid.json", EDGE / "schemas/engineering-task-package.schema.json")
     validate(ROOT / "tests/fixtures/delivery-receipt.valid.json", ROOT / "schemas/delivery-receipt.v1.schema.json")
     validate(ROOT / "tests/fixtures/verification-report.valid.json", EDGE / "schemas/verification-report.schema.json")
@@ -50,7 +51,7 @@ def main():
     validate(ROOT / "tests/fixtures/pilot-result.feature.valid.json", ROOT / "schemas/pilot-result.v1.schema.json")
     validate(ROOT / "tests/fixtures/material-manifest.valid.json", EDGE / "schemas/material-manifest.schema.json")
     pilot_cli = (ROOT / "scripts/embedded_pilot.py").read_text(encoding="utf-8")
-    for marker in ["exact_git_sha", "validate_bundle_integrity", "TERMINAL_STATUSES", "superseding run", "pilot-receipt", "product-readiness"]: require(marker in pilot_cli, f"Pilot CLI missing terminal marker: {marker}")
+    for marker in ["exact_git_sha", "validate_bundle_integrity", "TERMINAL_STATUSES", "superseding run", "pilot-receipt", "product-readiness", "validate_skill_invocation_ref", "--skill-invocation", "skill_invocation_refs"]: require(marker in pilot_cli, f"Pilot CLI missing terminal marker: {marker}")
     scaffold = (ROOT / "scripts/embedded_pilot_scaffold.py").read_text(encoding="utf-8")
     for marker in ["reproduction_or_log", 'material_item("reproduction"', 'material_item("log"']: require(marker in scaffold, f"Pilot scaffold missing marker: {marker}")
     require((ROOT / "scripts/validate_material_manifest.py").is_file(), "material validator missing")
@@ -58,6 +59,8 @@ def main():
     require((ROOT / "schemas/pilot-status.v1.schema.json").is_file(), "Pilot status schema missing")
     require((ROOT / "schemas/edge-foundation-pilot-receipt.v1.schema.json").is_file(), "canonical Pilot receipt schema missing")
     require((ROOT / "schemas/edge-foundation-product-readiness.v1.schema.json").is_file(), "product-readiness schema missing")
+    require((ROOT / "schemas/skill-invocation-receipt.v1.schema.json").is_file(), "Skill invocation receipt schema missing")
+    require((ROOT / "scripts/validate_skill_invocation_receipt.py").is_file(), "Skill invocation receipt validator missing")
     print("Edge Foundation Pilot operations validation PASS: canonical target runtime, immutable evidence, optional unavailable-review policy, product readiness decoupled from routing")
 
 

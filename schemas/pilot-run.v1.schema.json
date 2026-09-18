@@ -22,6 +22,7 @@
     "verification_report_ref": {"type": ["string", "null"]},
     "review_report_ref": {"type": ["string", "null"]},
     "pilot_result_ref": {"type": ["string", "null"]},
+    "skill_invocation_refs": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
     "evidence_bundle_ref": {"type": ["string", "null"]},
     "extra_artifact_refs": {"type": "object", "additionalProperties": {"type": "string", "minLength": 1}},
     "status": {"enum": ["planned", "running", "completed", "blocked", "cancelled"]},
