@@ -105,7 +105,63 @@ class SkillInvocationReceiptTest(unittest.TestCase):
         completed = self.validate(receipt)
         self.assertNotEqual(completed.returncode, 0)
 
-    def test_pilot_run_freezes_and_validates_skill_receipt(self):
+    def test_complete_freezes_skill_receipt_into_evidence_bundle(self):
+        fixtures = ROOT / "tests" / "fixtures"
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            run_dir = root / "CI-PILOT-001"
+            init = subprocess.run(
+                [
+                    sys.executable, str(PILOT), "init",
+                    "--run-id", "CI-PILOT-001",
+                    "--track", "feature",
+                    "--source-type", "synthetic",
+                    "--task-type", "feature_development",
+                    "--workflow-mode", "short_chain",
+                    "--human-owner", "ci",
+                    "--task-brief", str(TASK_BRIEF),
+                    "--repo-root", "firmware/main",
+                    "--base-commit", "0123456789abcdef0123456789abcdef01234567",
+                    "--output-root", str(root),
+                ],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(init.returncode, 0, init.stderr or init.stdout)
+            pilot_run = json.loads((run_dir / "pilot-run.json").read_text(encoding="utf-8"))
+            receipt = make_receipt(
+                run_id=pilot_run["run_id"],
+                work_item_id=pilot_run["work_item_id"],
+                source_type=pilot_run["source_type"],
+            )
+            receipt_source = root / "skill-receipt.json"
+            receipt_source.write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+            complete = subprocess.run(
+                [
+                    sys.executable, str(PILOT), "complete", str(run_dir),
+                    "--engineering-task-package", str(fixtures / "engineering-task-package.valid.json"),
+                    "--delivery-receipt", str(fixtures / "delivery-receipt.valid.json"),
+                    "--verification-report", str(fixtures / "verification-report.valid.json"),
+                    "--pilot-result", str(fixtures / "pilot-result.feature.valid.json"),
+                    "--skill-invocation", str(receipt_source),
+                    "--extra", f"material_manifest={fixtures / 'material-manifest.valid.json'}",
+                    "--extra", f"acceptance_evidence_matrix={fixtures / 'acceptance-evidence-matrix.valid.md'}",
+                    "--extra", f"knowledge_harvest={fixtures / 'knowledge-harvest.valid.md'}",
+                ],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(complete.returncode, 0, complete.stderr or complete.stdout)
+            completed_run = json.loads((run_dir / "pilot-run.json").read_text(encoding="utf-8"))
+            self.assertEqual(completed_run["status"], "completed")
+            self.assertEqual(len(completed_run["skill_invocation_refs"]), 1)
+            skill_ref = completed_run["skill_invocation_refs"][0]
+            self.assertTrue((run_dir / skill_ref).is_file())
+            bundle = json.loads((run_dir / "evidence-bundle.json").read_text(encoding="utf-8"))
+            matching = [item for item in bundle["artifacts"] if item["path"] == skill_ref]
+            self.assertEqual(len(matching), 1)
+            self.assertEqual(matching[0]["kind"], "skill_invocation:boot-chain-analysis")
+            self.assertEqual(matching[0]["sha256"], hashlib.sha256((run_dir / skill_ref).read_bytes()).hexdigest())
+
+    def test_pilot_run_validates_attached_skill_receipt(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             init = subprocess.run(
