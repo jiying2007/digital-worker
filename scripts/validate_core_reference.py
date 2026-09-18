@@ -105,7 +105,7 @@ def main() -> None:
         require(marker in review_snapshot, f"machine review snapshot missing boundary marker: {marker}")
     for marker in ["## A. 架构与边界", "## D. Skill 体系", "## H. Linux / BSP", "## I. MCU / RTOS", "## K. Evidence", "## L. Verification", "## M. Independent Review", "## Q. Productionization"]:
         require(marker in review_checklist, f"review checklist missing section: {marker}")
-    for marker in ["D11", "Skill 成熟度证据", "E09", "E10", "CI fixture 不提升 canonical Skill 成熟度"]:
+    for marker in ["D11", "Skill 成熟度证据", "E09", "E10", "#131", "#132", "CI fixture 不提升 canonical Skill 成熟度"]:
         require(marker in decision_register, f"Decision/Evidence Register missing Skill maturity governance marker: {marker}")
     for marker in ["Skill invocation attribution coverage", "correct block rate", "independent semantic evaluation coverage", "E09", "E10"]:
         require(marker in pilot_maturity, f"Pilot maturity guide missing Skill metric/gate marker: {marker}")
