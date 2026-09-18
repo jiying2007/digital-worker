@@ -7,6 +7,8 @@
 
 答案都是否定“凭印象”。Skill 成熟度必须由定义完整性、评测、真实工程证据和治理共同决定。
 
+当前 23 个 canonical Skill 的逐项真实状态见 [Skill 评审成熟度台账](06%20Skill评审成熟度台账.md)。该台账刻意把 `DEFINED` 与 `EVALUATED / PILOTED / REPEATABLE` 分开，避免把文档完整度误写成工程成熟度。
+
 ## 1. 生命周期状态
 
 ```text
@@ -157,9 +159,9 @@ Skill 体系建议长期观察：
 
 当前最合理的顺序：
 
-1. 先完成 23 个 canonical Skill 的 Definition Hardening；
-2. 用已有 Golden Cases 检查 input/output/BLOCK；
-3. 从真实 Feature/Debug/Release Pilot 收集 Skill 使用记录；
+1. 保持 23 个 canonical Skill 的 Definition Hardening 作为 CI 基线；
+2. 让 Golden Case 显式绑定 Skill ID / contract version / input-output identity，并补 positive + BLOCK negative case；
+3. 从真实 Feature/Debug/Release Pilot 生成可冻结的 Skill invocation / output receipt；
 4. 统计“被迫在 Skill 外自由发挥”的重复方法；
 5. 再决定候选 Skill 是否晋级；
 6. 当第二 Runtime 有可比证据后，再评价 Portability；
