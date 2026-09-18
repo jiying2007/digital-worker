@@ -122,6 +122,7 @@ class RuntimeR2EvidenceTests(unittest.TestCase):
         self.assertTrue(controlled["knowledge_context_fingerprint"].startswith("sha256:"))
         self.assertTrue(controlled["runtime_source_set_identity_ref"].startswith("sha256:"))
         self.assertEqual(plan["frozen_inputs_sha256"], canonical_digest(controlled))
+        self.assertEqual(controlled["adk_release_identity_ref"], "manifests/r2_frozen_adk_release.lock.json")
         self.assertEqual(plan["adk_release_identity"]["commit"], ADK_COMMIT)
         self.assertEqual(plan["adk_release_identity"]["version"], "5.1.1")
 
