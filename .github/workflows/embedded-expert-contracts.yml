@@ -11,6 +11,8 @@ on:
       - '嵌入式系统专家团-核心参考/**'
       - 'config/integrations/**'
       - 'contracts/**'
+      - 'reports/review/**'
+      - 'reports/runtime-r2/freeze/**'
       - 'schemas/**'
       - 'scripts/**'
       - 'tests/**'
@@ -31,6 +33,8 @@ on:
       - '嵌入式系统专家团-核心参考/**'
       - 'config/integrations/**'
       - 'contracts/**'
+      - 'reports/review/**'
+      - 'reports/runtime-r2/freeze/**'
       - 'schemas/**'
       - 'scripts/**'
       - 'tests/**'
@@ -63,6 +67,11 @@ jobs:
         run: python scripts/validate_repo_layout.py
       - name: Validate root SKILLS review index
         run: python scripts/validate_skills_overview.py
+      - name: Validate derived review snapshot freshness
+        run: |
+          python scripts/generate_edge_foundation_review_snapshot.py \
+            --check-json reports/review/edge-foundation-review-snapshot.json \
+            --check-markdown "嵌入式系统专家团-核心参考/00-评审导览/03 当前机器状态快照.md"
       - name: Validate provider-neutral architecture
         run: python scripts/validate_provider_neutral_architecture.py
       - name: Validate canonical Edge Foundation architecture
