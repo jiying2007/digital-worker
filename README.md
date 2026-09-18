@@ -47,6 +47,7 @@ Product Readiness 只描述具体产品证据轨；它与 cross-repo Terminal Ma
 - [Skill Invocation Receipt Contract](schemas/skill-invocation-receipt.v1.schema.json)：Runtime/evaluation-owned Skill usage provenance，可由 Pilot 校验并冻结进 evidence bundle；
 - [Skill Evaluation Plan](domains/edge-foundation/evaluation/skill-evaluation-plan.yaml)：23 个 Skill 的 46 个 positive + BLOCK 场景，只定义评测要求、不等于成熟度证据；
 - [Skill Evaluation Receipt](schemas/skill-evaluation-receipt.v1.schema.json) / [Summary](schemas/skill-evaluation-summary.v1.schema.json)：绑定 invocation、独立语义评测与正负 case 聚合，只有完整 pair 才可形成 `EVALUATED` 证据；
+- [Skill 评测与证据闭环](嵌入式系统专家团-核心参考/05-工程交付/07%20Skill评测与证据闭环.md)：评审人员从 case plan 一路追到 EVALUATED、真实 PILOTED 与跨 Runtime portability 的阅读入口；
 - [Golden Cases](domains/edge-foundation/evaluation/golden-cases.yaml)：12 个目标评测案例；
 - [Knowledge Registry](domains/edge-foundation/knowledge/registry.yaml)：本地 bootstrap 知识入口，Source of Truth 仍留在原处；
 - `scripts/embedded_pilot.py` / `scripts/edge_pilot.py`：canonical Pilot CLI；
