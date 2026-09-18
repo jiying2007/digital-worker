@@ -87,7 +87,7 @@ def main() -> None:
         require(marker in skill_plan, f"Skill planning view missing governance marker: {marker}")
     for marker in ["CANDIDATE", "EVALUATED", "PILOTED", "REPEATABLE", "GOVERNED", "DEPRECATED", "RETIRED"]:
         require(marker in skill_lifecycle, f"Skill lifecycle view missing state marker: {marker}")
-    for marker in ["REAL_USAGE_NOT_ATTRIBUTED", "PORTABILITY_NOT_PROVEN", "DIRECT_CASE_PENDING", "skill-invocation-receipt.v1", "--skill-invocation", "存量真实 Pilot", "定义、治理与 Skill invocation receipt 基础设施已建立"]:
+    for marker in ["REAL_USAGE_NOT_ATTRIBUTED", "PORTABILITY_NOT_PROVEN", "DIRECT_CASE_PENDING", "skill-invocation-receipt.v1", "--skill-invocation", "skill-evaluation-plan.yaml", "skill-evaluation-receipt.v1", "evaluate_skill_maturity.py", "23 个 Skill 仍统一保持 `DEFINED`", "存量真实 Pilot"]:
         require(marker in skill_maturity, f"Skill maturity ledger missing evidence-boundary marker: {marker}")
 
     review_guide = read("00-评审导览/01 评审总览与阅读路径.md")
