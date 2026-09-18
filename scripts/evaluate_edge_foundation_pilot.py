@@ -125,6 +125,8 @@ def build_receipt(pilot_run_path: Path, pilot_result_path: Path | None, cross_do
         "assurance": list(target.get("assurance", [])),
         "cross_domain": {"candidate": cross_candidate, "activated": cross_activated, "trigger": cross_domain_trigger},
         "pilot_result_evaluated": pilot_result is not None,
+        "skill_invocation_count": len(pilot_run.get("skill_invocation_refs", [])),
+        "skill_invocation_evidence_present": bool(pilot_run.get("skill_invocation_refs", [])),
         "pilot_outcome": None if pilot_result is None else pilot_result["outcome"],
         "eligibility_checks": checks,
         "product_readiness_eligible": eligible,
