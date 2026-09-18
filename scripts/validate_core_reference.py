@@ -37,7 +37,7 @@ def main() -> None:
     actual_top_dirs = {p.name for p in CORE.iterdir() if p.is_dir()}
     require(actual_top_dirs == expected_top_dirs, f"core information architecture drift: {sorted(actual_top_dirs)}")
     required = [
-        "README.md", "00-评审导览/01 评审总览与阅读路径.md", "00-评审导览/02 架构到证据追踪矩阵.md",
+        "README.md", "00-评审导览/01 评审总览与阅读路径.md", "00-评审导览/02 架构到证据追踪矩阵.md", "00-评审导览/03 当前机器状态快照.md",
         "01-责任模型与协作/01 责任模型总览.md", "01-责任模型与协作/02 责任协作与RACI.md", "01-责任模型与协作/03 跨域协作与边界.md", "01-责任模型与协作/04 Capability能力与质量模型.md",
         "02-架构设计/01 总体架构设计.md", "02-架构设计/02 系统边界与控制面.md", "02-架构设计/03 身份证据与知识架构.md", "02-架构设计/04 质量属性与非功能约束.md",
         "03-流程与运行/01 任务生命周期与Gate.md", "03-流程与运行/02 Debug问题闭环流程.md", "03-流程与运行/03 功能开发Bring-up与多仓协同.md", "03-流程与运行/04 验证评审发布与异常恢复.md", "03-流程与运行/05 任务类型运行矩阵.md",
@@ -94,12 +94,15 @@ def main() -> None:
         require(marker in skill_evaluation_guide, f"Skill evaluation guide missing evidence-boundary marker: {marker}")
 
     review_guide = read("00-评审导览/01 评审总览与阅读路径.md")
+    review_snapshot = read("00-评审导览/03 当前机器状态快照.md")
     trace_matrix = read("00-评审导览/02 架构到证据追踪矩阵.md")
     review_checklist = read("06-治理与评审/07 端到端评审检查表.md")
     decision_register = read("06-治理与评审/01 评审说明与决策清单.md")
     pilot_maturity = read("06-治理与评审/03 Pilot指标成熟度与生产化.md")
     for marker in ["Architecture", "Engineering Depth", "Trust", "Productization", "Human View", "Canonical Authority"]:
         require(marker in review_guide or marker in trace_matrix, f"review navigation missing marker: {marker}")
+    for marker in ["Derived view only", "Review material", "Retained evaluation summaries", "R2 retained state", "Product readiness：由专用 evaluator 判定"]:
+        require(marker in review_snapshot, f"machine review snapshot missing boundary marker: {marker}")
     for marker in ["## A. 架构与边界", "## D. Skill 体系", "## H. Linux / BSP", "## I. MCU / RTOS", "## K. Evidence", "## L. Verification", "## M. Independent Review", "## Q. Productionization"]:
         require(marker in review_checklist, f"review checklist missing section: {marker}")
     for marker in ["D11", "Skill 成熟度证据", "E09", "E10", "CI fixture 不提升 canonical Skill 成熟度"]:

@@ -56,6 +56,7 @@ def main() -> None:
 
     required_markers = [
         "reviewer-facing index",
+        "当前机器状态快照",
         "不是第二份 Skill Registry",
         "23 个 canonical Skill",
         "Total Skill evaluation cases",

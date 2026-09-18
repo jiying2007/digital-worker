@@ -11,6 +11,7 @@
 ## 0. 评审入口
 
 - [评审总览与阅读路径](00-评审导览/01%20评审总览与阅读路径.md)：架构委员会、Embedded 专家、Verification/Review、管理/生产化决策的分角色阅读路径；
+- [当前机器状态快照](00-评审导览/03%20当前机器状态快照.md)：机器派生的当前架构/Skill/retained evidence/R2 状态，一页区分“可评审”和“已成熟”；
 - [架构到证据追踪矩阵](00-评审导览/02%20架构到证据追踪矩阵.md)：Domain → Expert → Capability → Skill → Runtime → Evidence → Assurance → Productization 的纵向追踪；
 - [端到端评审检查表](06-治理与评审/07%20端到端评审检查表.md)：从架构边界到 Linux/BSP、MCU/RTOS、Driver、Evidence、Security、Productionization 的系统检查项；
 - [仓库根 SKILLS](../SKILLS.md)：跨目录的 Skill 架构、规划、评测与成熟度总入口；
@@ -80,6 +81,7 @@ Edge Foundation target runtime 已是 **canonical execution authority**。Skill�
 ### 00 评审导览
 - [评审总览与阅读路径](00-评审导览/01%20评审总览与阅读路径.md)
 - [架构到证据追踪矩阵](00-评审导览/02%20架构到证据追踪矩阵.md)
+- [当前机器状态快照](00-评审导览/03%20当前机器状态快照.md)
 
 ### 01 责任模型与协作
 - [责任模型总览](01-责任模型与协作/01%20责任模型总览.md)

@@ -32,6 +32,7 @@ def main() -> None:
         "skill-invocation-receipt",
         "skill-evaluation-receipt",
         "skill-evaluation-summary",
+        "edge-foundation-review-snapshot",
     } <= ids
     print(f"contract catalog validation PASS: {len(ids)} authoritative local contracts")
 

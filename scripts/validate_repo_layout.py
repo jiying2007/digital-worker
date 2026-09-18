@@ -19,6 +19,9 @@ def main() -> None:
     required_files = [
         ROOT / "README.md",
         ROOT / "SKILLS.md",
+        ROOT / "reports/review/edge-foundation-review-snapshot.json",
+        ROOT / "schemas/edge-foundation-review-snapshot.v1.schema.json",
+        CORE / "00-评审导览/03 当前机器状态快照.md",
         EDGE / "domain.yaml",
         EDGE / "coordination.yaml",
         EDGE / "routing.yaml",
@@ -53,6 +56,7 @@ def main() -> None:
     for marker in ["Edge Foundation", "canonical", "Product readiness"]:
         require(marker.lower() in root_readme.lower(), f"root README missing terminal marker: {marker}")
     require("SKILLS.md" in root_readme, "root README must link the Skill review index")
+    require("当前机器 Review Snapshot" in root_readme, "root README must link the derived review snapshot")
     require("23 个 canonical Skill" in skills_overview and "仍统一保持 DEFINED" in skills_overview, "root SKILLS review baseline drift")
 
     require(len(list((EDGE / "skills").glob("*/SKILL.md"))) == 23, "target Skill tree must contain exactly 23 current Skill contracts")

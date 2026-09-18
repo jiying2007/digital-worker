@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "kind": "edge-foundation-review-snapshot",
+  "derived_view": true,
+  "authority": "none-derived-from-canonical-assets",
+  "sources": [
+    "SKILLS.md",
+    "domains/edge-foundation/domain.yaml",
+    "domains/edge-foundation/routing.yaml",
+    "domains/edge-foundation/gate-policy.yaml",
+    "domains/edge-foundation/skills.yaml",
+    "domains/edge-foundation/evaluation/skill-evaluation-plan.yaml",
+    "domains/edge-foundation/evaluation/evidence/",
+    "domains/edge-foundation/pilot/evidence/",
+    "reports/runtime-r2/freeze/"
+  ],
+  "architecture": {
+    "domain_status": "canonical-v1",
+    "domain_experts": 3,
+    "embedded_capabilities": 5,
+    "task_types": 14,
+    "gates": 8
+  },
+  "skills": {
+    "registered": 23,
+    "review_grade_contracts": 23,
+    "evaluation_plan_skills": 23,
+    "positive_cases": 23,
+    "block_cases": 23,
+    "total_evaluation_cases": 46,
+    "retained_evaluated_summaries": 0,
+    "evaluated_skill_ids": [],
+    "retained_real_invocation_receipts": 0,
+    "real_attributed_skill_ids": [],
+    "current_claimable_floor": "DEFINED",
+    "skill_portability_proven": false
+  },
+  "retained_evidence": {
+    "real_pilot_results": 1,
+    "real_pilot_pass_results": 1,
+    "real_pilot_pass_by_track": {
+      "debug": 0,
+      "feature": 1,
+      "review_release": 0
+    }
+  },
+  "runtime_replaceability": {
+    "r2_freeze_receipts": 1,
+    "r2_qualified_receipts": 0,
+    "status": "FROZEN_PENDING_QUALIFICATION",
+    "skill_portability_inherited": false
+  },
+  "review_material": {
+    "status": "READY",
+    "root_skills_index": true,
+    "review_guide": true,
+    "maturity_ledger": true,
+    "evaluation_guide": true,
+    "end_to_end_checklist": true
+  },
+  "external_decision_status": {
+    "product_readiness": "use-dedicated-product-readiness-evaluator",
+    "productionization": "use-human-governance-review",
+    "note": "This static snapshot does not infer Product readiness, Runtime Qualification, release authority, or Productionization from retained files or CI fixtures."
+  },
+  "remaining_evidence_gates": [
+    "E01-real-debug-closed-loop",
+    "E03-real-review-release-closed-loop",
+    "E06-real-multi-runtime-qualified-comparison",
+    "E09-retained-skill-evaluated-summary",
+    "E10-real-runtime-owned-skill-attribution"
+  ]
+}

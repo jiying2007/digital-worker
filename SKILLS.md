@@ -48,6 +48,7 @@ Skill 不是：
 | 当前有哪些 canonical Skill | 本文件 / [Skill 能力地图](嵌入式系统专家团-核心参考/05-工程交付/01%20Skill能力地图.md) | [`skills.yaml`](domains/edge-foundation/skills.yaml) |
 | Skill 为什么存在、怎么规划 | [Skill 规划清单与定义规范](嵌入式系统专家团-核心参考/05-工程交付/04%20Skill规划清单与定义规范.md) | real evidence + review decision |
 | 单个 Skill 怎么执行 | 各 `SKILL.md` | 各 canonical `SKILL.md` + Runtime contract |
+| 当前仓库静态事实快照 | [当前机器状态快照](嵌入式系统专家团-核心参考/00-评审导览/03%20当前机器状态快照.md) | derived snapshot JSON，非 authority |
 | Skill 当前成熟到哪 | [Skill 评审成熟度台账](嵌入式系统专家团-核心参考/05-工程交付/06%20Skill评审成熟度台账.md) | frozen evaluation / Pilot receipts |
 | 如何从 DEFINED → EVALUATED | [Skill 评测与证据闭环](嵌入式系统专家团-核心参考/05-工程交付/07%20Skill评测与证据闭环.md) | evaluation plan + receipts + evaluators |
 | 任务怎么选 Skill 上层责任 | Task/routing docs | [`routing.yaml`](domains/edge-foundation/routing.yaml) |
@@ -366,6 +367,7 @@ product_readiness_inherited = false
 
 ## 13. 主要相关入口
 
+- [当前机器 Review Snapshot](嵌入式系统专家团-核心参考/00-评审导览/03%20当前机器状态快照.md)
 - [Canonical Skill Registry](domains/edge-foundation/skills.yaml)
 - [Skill 能力地图](嵌入式系统专家团-核心参考/05-工程交付/01%20Skill能力地图.md)
 - [Skill 规划清单与定义规范](嵌入式系统专家团-核心参考/05-工程交付/04%20Skill规划清单与定义规范.md)
