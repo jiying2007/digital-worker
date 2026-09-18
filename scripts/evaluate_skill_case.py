@@ -168,7 +168,7 @@ def main() -> None:
         f"case={receipt['case_id']} skill={receipt['skill_id']} "
         f"contract={receipt['contract_verdict']['status']} "
         f"semantic={receipt['semantic_evaluation']['status']} "
-        f"case_eligible={receipt['lifecycle_evaluation_eligible']}"
+        f"case_evidence_eligible={receipt['case_evidence_eligible']}"
     )
     if args.require_case_eligible and not receipt["case_evidence_eligible"]:
         raise SystemExit(2)
