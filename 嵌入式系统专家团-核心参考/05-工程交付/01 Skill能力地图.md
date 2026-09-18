@@ -4,6 +4,7 @@ Skill 的 canonical ownership 与物理位置都以 `domains/edge-foundation/ski
 
 > 评审提示：本页回答“**现在有哪些 canonical Skill、归谁**”。  
 > “为什么这样规划、还缺什么、如何新增/拆分/合并”请看 [Skill 规划清单与定义规范](04%20Skill规划清单与定义规范.md)；  
+> “如果目标是覆盖完整嵌入式系统开发，还需要哪些 Skill”请看 [嵌入式系统开发 Skill 全景与目标覆盖](08%20嵌入式系统开发Skill全景与目标覆盖.md)；  
 > “Skill 文件存在是否代表成熟、如何准入/退役”请看 [Skill 生命周期、成熟度与准入](05%20Skill生命周期成熟度与准入.md)。
 
 ## 1. Edge Coordination Role（`edge-coordination`）
