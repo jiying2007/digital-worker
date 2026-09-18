@@ -284,7 +284,7 @@ def build_plan(
         },
         "acceptance_criteria": task.get("acceptance_criteria", []),
         "required_verification": task.get("required_verification", {}),
-        "adk_release_identity_ref": "manifests/adk_interface.lock.json",
+        "adk_release_identity_ref": "manifests/r2_frozen_adk_release.lock.json",
         "adk_asset_profile": assets.get("required_asset_profile"),
         "runtime_source_set_identity_ref": comparison_source_set_ref,
     }
