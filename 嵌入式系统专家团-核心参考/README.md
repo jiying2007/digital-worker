@@ -15,7 +15,8 @@
 - [端到端评审检查表](06-治理与评审/07%20端到端评审检查表.md)：从架构边界到 Linux/BSP、MCU/RTOS、Driver、Evidence、Security、Productionization 的系统检查项；
 - [Skill 规划清单与定义规范](05-工程交付/04%20Skill规划清单与定义规范.md)：当前 23 个 canonical Skill、定义模板、候选规划池和新增条件；
 - [Skill 生命周期、成熟度与准入](05-工程交付/05%20Skill生命周期成熟度与准入.md)：Skill 不是“文件存在即成熟”，而要经过定义、评测、真实 Pilot、复用与治理；
-- [Skill 评审成熟度台账](05-工程交付/06%20Skill评审成熟度台账.md)：逐个 Skill 区分 Definition、Golden Case、真实使用归因、Portability 与下一晋级条件。
+- [Skill 评审成熟度台账](05-工程交付/06%20Skill评审成熟度台账.md)：逐个 Skill 区分 Definition、Golden Case、真实使用归因、Portability 与下一晋级条件；
+- [Skill 评测与证据闭环](05-工程交付/07%20Skill评测与证据闭环.md)：从 46 个正负 case 到 invocation / evaluation / summary / EVALUATED / PILOTED / portability 的证据链。
 
 ### 正式评审的四条主线
 
@@ -112,6 +113,7 @@ Edge Foundation target runtime 已是 **canonical execution authority**。Skill�
 - [Skill 规划清单与定义规范](05-工程交付/04%20Skill规划清单与定义规范.md)
 - [Skill 生命周期、成熟度与准入](05-工程交付/05%20Skill生命周期成熟度与准入.md)
 - [Skill 评审成熟度台账](05-工程交付/06%20Skill评审成熟度台账.md)
+- [Skill 评测与证据闭环](05-工程交付/07%20Skill评测与证据闭环.md)
 
 ### 06 治理与可信保障
 - [评审说明与决策清单](06-治理与评审/01%20评审说明与决策清单.md)
@@ -130,7 +132,7 @@ Edge Foundation target runtime 已是 **canonical execution authority**。Skill�
 1. 查“评审应该先看什么” → `00-评审导览`；
 2. 查“谁负责什么” → `01-责任模型与协作` 与 `domains/edge-foundation/domain.yaml`；
 3. 查“Embedded 专业能力” → `04-专业能力` 的 5 个 Capability；
-4. 查“当前 Skill、为什么存在、还缺什么” → Skill 能力地图 + Skill 规划/成熟度文档；查“每个 Skill 当前证据成熟到哪一步” → Skill 评审成熟度台账；canonical ownership 仍只看 `domains/edge-foundation/skills.yaml`；
+4. 查“当前 Skill、为什么存在、还缺什么” → Skill 能力地图 + Skill 规划/成熟度文档；查“每个 Skill 当前证据成熟到哪一步” → Skill 评审成熟度台账；查“Skill 如何从 DEFINED 证据化晋级” → Skill 评测与证据闭环；canonical ownership 仍只看 `domains/edge-foundation/skills.yaml`；
 5. 查“任务怎么路由” → 任务类型运行矩阵与 `domains/edge-foundation/routing.yaml`；
 6. 查“Evidence 是否足够” → Gate、Verification、Pilot receipt；
 7. 查“产品是否可进入生产化评审” → `scripts/evaluate_edge_foundation_product_readiness.py`；
