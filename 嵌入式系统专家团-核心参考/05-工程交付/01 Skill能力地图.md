@@ -2,6 +2,10 @@
 
 Skill 的 canonical ownership 与物理位置都以 `domains/edge-foundation/skills.yaml` 为唯一权威。本页只按 **Role / Capability / Assurance** 分组解释，不创建第二份 Skill Registry。
 
+> 评审提示：本页回答“**现在有哪些 canonical Skill、归谁**”。  
+> “为什么这样规划、还缺什么、如何新增/拆分/合并”请看 [Skill 规划清单与定义规范](04%20Skill规划清单与定义规范.md)；  
+> “Skill 文件存在是否代表成熟、如何准入/退役”请看 [Skill 生命周期、成熟度与准入](05%20Skill生命周期成熟度与准入.md)。
+
 ## 1. Edge Coordination Role（`edge-coordination`）
 
 | Skill | 用途 |
@@ -83,3 +87,17 @@ Coordination Skill 负责组织任务，不产生 Embedded 专业事实。
 8. Action ceiling 以 Skill contract 与 `runtime/action-policy.yaml` 共同约束，默认不因 Runtime 品牌扩大。
 
 当前 registry 共 23 个 Skill。CI 会逐个校验 Skill 文件的 `id / owner_kind / owner / path / action ceiling` 与 `skills.yaml` 一致，并禁止旧组织 identity 重新进入 target Skill。
+
+## 10. 评审时如何解读这张图
+
+这 23 个 Skill 是当前 canonical invocation surface，但**不能从“已注册”直接推出“工程能力已成熟”**。
+
+评审至少区分三件事：
+
+| 问题 | 依据 |
+|---|---|
+| 这个 Skill 是否存在、归谁、文件在哪里？ | `skills.yaml` |
+| 这个 Skill 应该怎样定义、何时使用、何时 BLOCK？ | 对应 `SKILL.md` + Skill 定义规范 |
+| 这个 Skill 是否经过真实工程证明、能跨 Runtime 稳定复用？ | Golden Case + real Pilot + lifecycle maturity evidence |
+
+因此后续优化的 P0 不是无条件增加 Skill 数量，而是把当前 23 个 Skill 的 **Use When / Do Not Use For / Required Inputs / Method / Output / Evidence / BLOCK / Handoff / Evaluation / Limits** 补到一致的最低定义质量，再由真实任务决定 candidate 是否晋级。
