@@ -89,7 +89,7 @@ def main() -> None:
     review_guide = read("00-评审导览/01 评审总览与阅读路径.md")
     trace_matrix = read("00-评审导览/02 架构到证据追踪矩阵.md")
     review_checklist = read("06-治理与评审/07 端到端评审检查表.md")
-    for marker in ["Framework", "Engineering Depth", "Trust", "Productization", "Human View", "Machine / Decision Authority"]:
+    for marker in ["Architecture", "Engineering Depth", "Trust", "Productization", "Human View", "Canonical Authority"]:
         require(marker in review_guide or marker in trace_matrix, f"review navigation missing marker: {marker}")
     for marker in ["## A. 架构与边界", "## D. Skill 体系", "## H. Linux / BSP", "## I. MCU / RTOS", "## K. Evidence", "## L. Verification", "## M. Independent Review", "## Q. Productionization"]:
         require(marker in review_checklist, f"review checklist missing section: {marker}")
