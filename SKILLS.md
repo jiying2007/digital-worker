@@ -247,9 +247,13 @@ product_readiness_inherited = false
 - semantic evaluation 独立；
 - 不以 Provider 名字不同替代真实对照。
 
-## 8. Candidate Skill 规划池（非 canonical）
+## 8. Evidence-backed Candidate Skill 规划池（非 canonical）
 
-以下均为 **OBSERVED_GAP / planning candidate**，不允许被 canonical routing 直接调用：
+以下 9 项均为 **OBSERVED_GAP / planning candidate**，不允许被 canonical routing 直接调用。它们是已有重复工程信号的候选，不是完整嵌入式研发方法空间的全集。
+
+完整目标覆盖请看 [嵌入式系统开发 Skill 全景与目标覆盖](嵌入式系统专家团-核心参考/05-工程交付/08%20嵌入式系统开发Skill全景与目标覆盖.md)：当前规划视图为 23 `CURRENT_CANONICAL` + 9 `OBSERVED_GAP` + 33 `TARGET_COVERAGE` + 10 `CONDITIONAL_SPECIALIZATION`，总计 75 项 coverage inventory；其中非 canonical 项均不得被当前 routing 直接调用。
+
+当前 evidence-backed candidate：
 
 | Candidate | 候选责任 | 为什么观察到 | 晋级前至少需要 |
 |---|---|---|---|
@@ -374,6 +378,7 @@ product_readiness_inherited = false
 - [Skill 生命周期、成熟度与准入](嵌入式系统专家团-核心参考/05-工程交付/05%20Skill生命周期成熟度与准入.md)
 - [Skill 评审成熟度台账](嵌入式系统专家团-核心参考/05-工程交付/06%20Skill评审成熟度台账.md)
 - [Skill 评测与证据闭环](嵌入式系统专家团-核心参考/05-工程交付/07%20Skill评测与证据闭环.md)
+- [嵌入式系统开发 Skill 全景与目标覆盖](嵌入式系统专家团-核心参考/05-工程交付/08%20嵌入式系统开发Skill全景与目标覆盖.md)
 - [Skill Evaluation Plan](domains/edge-foundation/evaluation/skill-evaluation-plan.yaml)
 - [Skill Invocation Receipt Schema](schemas/skill-invocation-receipt.v1.schema.json)
 - [Skill Evaluation Receipt Schema](schemas/skill-evaluation-receipt.v1.schema.json)
