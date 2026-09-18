@@ -1,0 +1,74 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://digital-worker.local/schemas/skill-evaluation-summary.v1.schema.json",
+  "title": "Skill Evaluation Summary",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version", "skill_id", "status", "evaluation_complete",
+    "skill_contract_sha256", "evaluation_plan_sha256", "runtime_binding",
+    "source_type", "positive_case", "block_case", "checks", "blockers",
+    "portability_proven", "product_readiness_inherited", "generated_at"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "skill_id": {"type": "string", "minLength": 1},
+    "status": {"enum": ["DEFINED", "EVALUATED"]},
+    "evaluation_complete": {"type": "boolean"},
+    "skill_contract_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "evaluation_plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "runtime_binding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["provider", "runtime_id"],
+      "properties": {
+        "provider": {"type": "string", "minLength": 1},
+        "runtime_id": {"type": "string", "minLength": 1}
+      }
+    },
+    "source_type": {"enum": ["real", "synthetic"]},
+    "positive_case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["case_id", "evaluation_receipt_sha256", "invocation_receipt_sha256"],
+      "properties": {
+        "case_id": {"type": "string", "minLength": 1},
+        "evaluation_receipt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "invocation_receipt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "block_case": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["case_id", "evaluation_receipt_sha256", "invocation_receipt_sha256"],
+      "properties": {
+        "case_id": {"type": "string", "minLength": 1},
+        "evaluation_receipt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "invocation_receipt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    "checks": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "current_plan", "case_identity", "skill_identity", "case_evidence_eligible",
+        "same_skill_contract", "same_runtime", "same_source_type",
+        "invocation_hashes_match"
+      ],
+      "properties": {
+        "current_plan": {"type": "boolean"},
+        "case_identity": {"type": "boolean"},
+        "skill_identity": {"type": "boolean"},
+        "case_evidence_eligible": {"type": "boolean"},
+        "same_skill_contract": {"type": "boolean"},
+        "same_runtime": {"type": "boolean"},
+        "same_source_type": {"type": "boolean"},
+        "invocation_hashes_match": {"type": "boolean"}
+      }
+    },
+    "blockers": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "portability_proven": {"const": false},
+    "product_readiness_inherited": {"const": false},
+    "generated_at": {"type": "string", "minLength": 1}
+  }
+}
