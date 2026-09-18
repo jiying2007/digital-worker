@@ -94,7 +94,7 @@ def evaluate(
         require(bool(semantic_evaluator_id), "semantic PASS/FAIL requires evaluator_id")
         require(bool(semantic_evidence_ref), "semantic PASS/FAIL requires evidence_ref")
 
-    lifecycle_eligible = contract_pass and semantic_status == "PASS"
+    case_eligible = contract_pass and semantic_status == "PASS"
 
     receipt = {
         "schema_version": 1,
@@ -128,7 +128,7 @@ def evaluate(
             "evidence_ref": semantic_evidence_ref,
             "notes": semantic_notes,
         },
-        "lifecycle_evaluation_eligible": lifecycle_eligible,
+        "case_evidence_eligible": case_eligible,
         "generated_at": now_iso(),
     }
     validate_json(receipt, EVALUATION_SCHEMA)
@@ -145,7 +145,7 @@ def main() -> None:
     parser.add_argument("--semantic-evidence-ref")
     parser.add_argument("--semantic-notes")
     parser.add_argument("--output", type=Path)
-    parser.add_argument("--require-lifecycle-eligible", action="store_true")
+    parser.add_argument("--require-case-eligible", action="store_true")
     args = parser.parse_args()
 
     receipt = evaluate(
@@ -168,9 +168,9 @@ def main() -> None:
         f"case={receipt['case_id']} skill={receipt['skill_id']} "
         f"contract={receipt['contract_verdict']['status']} "
         f"semantic={receipt['semantic_evaluation']['status']} "
-        f"lifecycle_eligible={receipt['lifecycle_evaluation_eligible']}"
+        f"case_eligible={receipt['lifecycle_evaluation_eligible']}"
     )
-    if args.require_lifecycle_eligible and not receipt["lifecycle_evaluation_eligible"]:
+    if args.require_case_eligible and not receipt["case_evidence_eligible"]:
         raise SystemExit(2)
 
 
