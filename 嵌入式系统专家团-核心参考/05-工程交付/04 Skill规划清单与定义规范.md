@@ -115,9 +115,11 @@ Skill 不是：
 
 这 13 段是“定义完整性”标准，不意味着实际工程成熟度已经 PASS。
 
-## 4. Candidate Skill 规划池
+## 4. Evidence-backed Candidate Skill 规划池
 
-以下仅是 **候选缺口**，状态统一为 `OBSERVED_GAP`，不进入 canonical Registry。只有重复 real evidence 证明独立方法价值后才晋级。
+以下仅是已经观察到重复工程信号的 **候选缺口**，状态统一为 `OBSERVED_GAP`，不进入 canonical Registry。只有重复 real evidence 证明独立方法价值后才晋级。
+
+> 这 9 项 **不是完整嵌入式研发所需 Skill 的全集**。完整生命周期的目标覆盖清单见 [嵌入式系统开发 Skill 全景与目标覆盖](08%20嵌入式系统开发Skill全景与目标覆盖.md)。该全景进一步区分 `CURRENT_CANONICAL / OBSERVED_GAP / TARGET_COVERAGE / CONDITIONAL_SPECIALIZATION`，避免把“未来可能需要覆盖”误写成“当前候选已成立”。
 
 | Candidate | 候选 Owner | 触发来源 | 与现有 Skill 的关系 | 晋级所需证据 |
 |---|---|---|---|---|
