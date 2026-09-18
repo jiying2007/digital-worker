@@ -60,12 +60,13 @@
     "semantic_evaluation": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["status", "evaluator_kind", "evaluator_id", "evidence_ref", "notes"],
+      "required": ["status", "evaluator_kind", "evaluator_id", "evidence_ref", "evidence_sha256", "notes"],
       "properties": {
         "status": {"enum": ["NOT_EVALUATED", "PASS", "FAIL"]},
         "evaluator_kind": {"enum": ["none", "human-review", "independent-evaluator"]},
         "evaluator_id": {"type": ["string", "null"]},
         "evidence_ref": {"type": ["string", "null"]},
+        "evidence_sha256": {"type": ["string", "null"], "pattern": "^[0-9a-f]{64}$"},
         "notes": {"type": ["string", "null"]}
       }
     },
