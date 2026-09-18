@@ -10,11 +10,12 @@
 - 23/23 canonical Skill 已完成统一 review-grade contract hardening；
 - registry / owner / action ceiling / physical path 已由 CI fail-closed 校验；
 - 12 个 canonical Golden Case 仍主要验证 **task / routing / capability / assurance**，并没有显式记录“本 case 调用了哪些 Skill”；
-- 当前真实 Pilot evidence 也没有冻结 Skill invocation / Skill output identity；
+- 新的 `skill-invocation-receipt.v1` contract 与 Pilot 冻结入口已经建立，可校验 Skill contract hash/owner/version/action ceiling、Runtime binding、input/output refs 与 attestation；
+- **但现有已冻结真实 Pilot evidence 尚未补录这些 receipt**，因此历史/当前真实使用仍不能自动归因到具体 Skill；
 - 因此不能从“Golden Case PASS”或“真实 Pilot completed”直接推导任一 Skill 已达到 `EVALUATED`、`PILOTED` 或 `REPEATABLE`；
 - 当前可诚实声明的统一最低状态是：**23 个 Skill 均达到 DEFINED；更高成熟度必须逐个补 Skill-level evaluation / usage evidence。**
 
-换句话说：**定义闭环已建立，Skill 运行成熟度证据闭环尚未建立。**
+换句话说：**定义闭环与 Skill usage receipt 基础设施已建立；Skill evaluation 与真实历史使用证据闭环仍未完成。**
 
 ## 2. 状态语义
 
@@ -104,7 +105,7 @@ result / blocked reason
 
 就不能把它计入 Skill maturity。
 
-这不是文档问题，而是下一阶段真实 evidence contract 缺口。
+这些字段现在已有正式 contract；剩余缺口是让真实 Runtime binding 在后续 Run 中实际产生 attested receipt，并为 Golden Case 增加 Skill-specific evaluation verdict。
 
 ## 6. Skill 成熟度晋级规则
 
@@ -167,14 +168,15 @@ result / blocked reason
 
 ## 8. 当前最优先的下一步
 
-P0 不是继续扩 Skill 数量，而是建立 **Skill invocation / evaluation evidence**：
+P0 不是继续扩 Skill 数量，而是让已经建立的 usage receipt 真正产生证据，并补齐 **Skill evaluation evidence**：
 
-- Golden Case 增加显式 Skill target；
-- Runtime/Pilot 生成 Skill invocation receipt；
-- 正例与 BLOCK 负例都要可冻结；
-- evaluator 能输出 Skill-level verdict；
-- maturity ledger 从“文档声明”转为“receipt 驱动”。
+- Golden Case 增加显式 Skill target / contract version；
+- Runtime binding 在真实执行后输出 attested Skill invocation receipt，Digital Worker 只校验/冻结；
+- 正例与 BLOCK 负例都要形成 Skill-specific evaluation receipt/verdict；
+- evaluator 聚合 Skill-level usage/evaluation，而不是从 Capability case 反推；
+- 后续第二 Runtime 使用同一 frozen Contract 形成 portability 对照；
+- maturity ledger 最终从“人工状态说明”迁移为“receipt 驱动”。
 
 在这之前，当前 23 个 Skill 的正确结论是：
 
-> **定义与治理基线已建立；Skill-level evaluation、真实使用归因、跨 Runtime portability 仍是 EVIDENCE_PENDING。**
+> **定义、治理与 Skill invocation receipt 基础设施已建立；存量真实使用仍未归因，Skill-level evaluation 与跨 Runtime portability 仍是 EVIDENCE_PENDING。**
