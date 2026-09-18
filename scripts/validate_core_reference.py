@@ -33,16 +33,18 @@ def validate_links() -> None:
 
 
 def main() -> None:
-    expected_top_dirs = {"01-责任模型与协作", "02-架构设计", "03-流程与运行", "04-专业能力", "05-工程交付", "06-治理与评审", "07-案例", "附录"}
+    expected_top_dirs = {"00-评审导览", "01-责任模型与协作", "02-架构设计", "03-流程与运行", "04-专业能力", "05-工程交付", "06-治理与评审", "07-案例", "附录"}
     actual_top_dirs = {p.name for p in CORE.iterdir() if p.is_dir()}
     require(actual_top_dirs == expected_top_dirs, f"core information architecture drift: {sorted(actual_top_dirs)}")
     required = [
-        "README.md", "01-责任模型与协作/01 责任模型总览.md", "01-责任模型与协作/02 责任协作与RACI.md", "01-责任模型与协作/03 跨域协作与边界.md",
+        "README.md", "00-评审导览/01 评审总览与阅读路径.md", "00-评审导览/02 架构到证据追踪矩阵.md",
+        "01-责任模型与协作/01 责任模型总览.md", "01-责任模型与协作/02 责任协作与RACI.md", "01-责任模型与协作/03 跨域协作与边界.md", "01-责任模型与协作/04 Capability能力与质量模型.md",
         "02-架构设计/01 总体架构设计.md", "02-架构设计/02 系统边界与控制面.md", "02-架构设计/03 身份证据与知识架构.md", "02-架构设计/04 质量属性与非功能约束.md",
         "03-流程与运行/01 任务生命周期与Gate.md", "03-流程与运行/02 Debug问题闭环流程.md", "03-流程与运行/03 功能开发Bring-up与多仓协同.md", "03-流程与运行/04 验证评审发布与异常恢复.md", "03-流程与运行/05 任务类型运行矩阵.md",
         "04-专业能力/01 嵌入式架构能力域指南.md", "04-专业能力/02 Linux BSP能力域指南.md", "04-专业能力/03 MCU RTOS能力域指南.md", "04-专业能力/04 驱动与组件能力域指南.md", "04-专业能力/05 调试与可靠性能力域指南.md",
         "05-工程交付/01 Skill能力地图.md", "05-工程交付/02 工程交接Runtime与关键产物.md", "05-工程交付/03 完整任务产物样例.md",
-        "06-治理与评审/01 评审说明与决策清单.md", "06-治理与评审/02 权限安全风险与例外.md", "06-治理与评审/03 Pilot指标成熟度与生产化.md", "06-治理与评审/04 架构取舍与演进原则.md", "06-治理与评审/05 Verification责任与证据.md", "06-治理与评审/06 Independent Review与发布边界.md",
+        "05-工程交付/04 Skill规划清单与定义规范.md", "05-工程交付/05 Skill生命周期成熟度与准入.md",
+        "06-治理与评审/01 评审说明与决策清单.md", "06-治理与评审/02 权限安全风险与例外.md", "06-治理与评审/03 Pilot指标成熟度与生产化.md", "06-治理与评审/04 架构取舍与演进原则.md", "06-治理与评审/05 Verification责任与证据.md", "06-治理与评审/06 Independent Review与发布边界.md", "06-治理与评审/07 端到端评审检查表.md",
         "07-案例/01 UBIFS只读问题走查.md", "07-案例/02 多仓功能与OTA发布走查.md", "07-案例/03 MCU HardFault与RTOS并发走查.md", "07-案例/04 新板Bring-up走查.md", "07-案例/05 器件替代兼容性走查.md", "附录/术语与缩写.md",
     ]
     for rel in required:
@@ -74,8 +76,23 @@ def main() -> None:
 
     skills = load_yaml(EDGE / "skills.yaml")["skills"]; require(len(skills) == 23, "current Skill baseline drift")
     skill_map = read("05-工程交付/01 Skill能力地图.md")
+    skill_plan = read("05-工程交付/04 Skill规划清单与定义规范.md")
+    skill_lifecycle = read("05-工程交付/05 Skill生命周期成熟度与准入.md")
     for item in skills:
         require(item["id"] in skill_map, f"Skill map missing {item['id']}"); require(item["owner_id"] in skill_map, f"Skill map missing owner {item['owner_id']}")
+        require(item["id"] in skill_plan, f"Skill planning view missing canonical Skill {item['id']}")
+    for marker in ["OBSERVED_GAP", "Required Inputs", "BLOCK Conditions", "Verification / Review Handoff", "Candidate Skill"]:
+        require(marker in skill_plan, f"Skill planning view missing governance marker: {marker}")
+    for marker in ["CANDIDATE", "EVALUATED", "PILOTED", "REPEATABLE", "GOVERNED", "DEPRECATED", "RETIRED"]:
+        require(marker in skill_lifecycle, f"Skill lifecycle view missing state marker: {marker}")
+
+    review_guide = read("00-评审导览/01 评审总览与阅读路径.md")
+    trace_matrix = read("00-评审导览/02 架构到证据追踪矩阵.md")
+    review_checklist = read("06-治理与评审/07 端到端评审检查表.md")
+    for marker in ["Framework", "Engineering Depth", "Trust", "Productization", "Human View", "Machine / Decision Authority"]:
+        require(marker in review_guide or marker in trace_matrix, f"review navigation missing marker: {marker}")
+    for marker in ["## A. 架构与边界", "## D. Skill 体系", "## H. Linux / BSP", "## I. MCU / RTOS", "## K. Evidence", "## L. Verification", "## M. Independent Review", "## Q. Productionization"]:
+        require(marker in review_checklist, f"review checklist missing section: {marker}")
 
     routing = load_yaml(EDGE / "routing.yaml"); matrix = read("03-流程与运行/05 任务类型运行矩阵.md")
     require(routing["canonical_routing"] is True and len(routing["routing"]) == 14, "canonical routing baseline drift")
