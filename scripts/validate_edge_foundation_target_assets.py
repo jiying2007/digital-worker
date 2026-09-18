@@ -28,6 +28,7 @@ def main() -> None:
     skills = load(EDGE / "skills.yaml")
     gates = load(EDGE / "gate-policy.yaml")
     cases = load(EDGE / "evaluation/golden-cases.yaml")
+    skill_evaluation = load(EDGE / "evaluation/skill-evaluation-plan.yaml")
     routing = load(EDGE / "routing.yaml")
     runtime = load(EDGE / "runtime/task-modes.yaml")
 
@@ -36,6 +37,8 @@ def main() -> None:
     require(skills["ownership_authority"] == "canonical" and skills["execution_surface"] == "target", "Skill registry must be canonical target")
     require(gates["ownership_authority"] == "canonical" and gates["execution_surface"] == "canonical", "Gate policy must be canonical target")
     require(cases["status"] == "canonical" and cases["canonical_routing"] is True, "Golden Cases must be canonical")
+    require(skill_evaluation["status"] == "canonical-plan", "Skill evaluation plan must be canonical-plan")
+    require(set(skill_evaluation["skills"]) == {item["id"] for item in skills["skills"]}, "Skill evaluation plan/registry drift")
     require(routing["canonical_routing"] is True and routing["status"] == "canonical", "routing must be canonical")
 
     expert_ids = {item["id"] for item in domain["experts"]}
@@ -45,7 +48,7 @@ def main() -> None:
     assurance_ids = set(domain["assurance"]["responsibilities"])
     role_ids = {domain["coordination_role"]["id"]}
 
-    for path in [EDGE / "skills.yaml", EDGE / "gate-policy.yaml", EDGE / "evaluation/golden-cases.yaml", EDGE / "routing.yaml"]:
+    for path in [EDGE / "skills.yaml", EDGE / "gate-policy.yaml", EDGE / "evaluation/golden-cases.yaml", EDGE / "evaluation/skill-evaluation-plan.yaml", EDGE / "routing.yaml"]:
         text = path.read_text(encoding="utf-8")
         leaked = sorted(identity for identity in LEGACY_IDS if identity in text)
         require(not leaked, f"legacy identity leaked into target asset {path.relative_to(ROOT)}: {leaked}")
