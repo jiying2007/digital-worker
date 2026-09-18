@@ -1,0 +1,293 @@
+schema_version: 1
+id: edge-foundation-skill-evaluation-plan-v1
+status: canonical-plan
+skill_registry: ../skills.yaml
+purpose: >
+  Reviewer-facing and machine-checkable evaluation plan for canonical Skills.
+  Case definitions are evaluation requirements, not maturity evidence or execution receipts.
+
+rules:
+  every_registered_skill_requires_positive_and_block_case: true
+  case_definition_is_not_evaluation_evidence: true
+  invocation_receipt_required_for_case_verdict: true
+  semantic_quality_must_be_independently_evaluated: true
+  synthetic_contract_check_does_not_imply_skill_evaluated: true
+  evaluation_does_not_imply_product_readiness: true
+  evaluation_does_not_expand_action_authority: true
+
+skills:
+  embedded-task-classifier:
+    positive:
+      id: SEC-TASK-CLASSIFIER-POS
+      scenario: Clear feature request with explicit scope and acceptance maps to one minimal canonical route.
+      expected_invocation_status: COMPLETED
+      focus: [taxonomy-selection, minimal-route, assurance-selection]
+    block:
+      id: SEC-TASK-CLASSIFIER-BLOCK
+      scenario: Request is ambiguous enough that selecting a route would require inventing scope.
+      expected_invocation_status: BLOCKED
+      focus: [needs-information, no-largest-workflow-default]
+
+  embedded-material-readiness:
+    positive:
+      id: SEC-MATERIAL-READINESS-POS
+      scenario: Required source, revision, device and test materials are traceable and terminally sufficient.
+      expected_invocation_status: COMPLETED
+      focus: [identity-binding, readiness]
+    block:
+      id: SEC-MATERIAL-READINESS-BLOCK
+      scenario: Exact source or device identity is missing and no approved degradation exists.
+      expected_invocation_status: BLOCKED
+      focus: [critical-gap, no-assumption-substitution]
+
+  embedded-evidence-normalizer:
+    positive:
+      id: SEC-EVIDENCE-NORMALIZER-POS
+      scenario: Raw log and exact target metadata are normalized while preserving original provenance.
+      expected_invocation_status: COMPLETED
+      focus: [provenance, object-identity, derived-vs-original]
+    block:
+      id: SEC-EVIDENCE-NORMALIZER-BLOCK
+      scenario: Only an untraceable summary exists where direct evidence is required.
+      expected_invocation_status: BLOCKED
+      focus: [origin-missing, no-inference-promotion]
+
+  architecture-impact-analysis:
+    positive:
+      id: SEC-ARCH-IMPACT-POS
+      scenario: Bounded feature change has known interfaces and resource constraints and yields explicit change/verification impacts.
+      expected_invocation_status: COMPLETED
+      focus: [affected-contracts, nfr-impact, verification-impact]
+    block:
+      id: SEC-ARCH-IMPACT-BLOCK
+      scenario: Critical interface or resource facts are missing so a design recommendation would depend on hidden assumptions.
+      expected_invocation_status: BLOCKED
+      focus: [unknown-boundary, no-premature-design]
+
+  interface-contract-review:
+    positive:
+      id: SEC-INTERFACE-CONTRACT-POS
+      scenario: Versioned API or protocol change has explicit ownership, lifecycle, errors and rollback semantics.
+      expected_invocation_status: COMPLETED
+      focus: [compatibility, ownership, failure-semantics]
+    block:
+      id: SEC-INTERFACE-CONTRACT-BLOCK
+      scenario: Producer/consumer versions or buffer ownership are materially ambiguous.
+      expected_invocation_status: BLOCKED
+      focus: [ambiguous-semantics, no-happy-path-overclaim]
+
+  boot-chain-analysis:
+    positive:
+      id: SEC-BOOT-CHAIN-POS
+      scenario: Exact target boot evidence identifies the last confirmed stage and next discriminating observation.
+      expected_invocation_status: COMPLETED
+      focus: [stage-chain, exact-image, discriminating-observation]
+    block:
+      id: SEC-BOOT-CHAIN-BLOCK
+      scenario: Boot log belongs to another firmware or board identity.
+      expected_invocation_status: BLOCKED
+      focus: [identity-mismatch, no-cross-build-proof]
+
+  device-tree-review:
+    positive:
+      id: SEC-DEVICE-TREE-POS
+      scenario: Exact board revision DT resources match authoritative driver and board expectations.
+      expected_invocation_status: COMPLETED
+      focus: [resource-binding, revision-specificity]
+    block:
+      id: SEC-DEVICE-TREE-BLOCK
+      scenario: Board revision or required electrical resource fact is unknown.
+      expected_invocation_status: BLOCKED
+      focus: [revision-mismatch, hardware-escalation]
+
+  irq-dma-analysis:
+    positive:
+      id: SEC-IRQ-DMA-POS
+      scenario: Target trace establishes IRQ/DMA mapping, ownership, cache maintenance and completion sequence.
+      expected_invocation_status: COMPLETED
+      focus: [ownership, coherency, ordering]
+    block:
+      id: SEC-IRQ-DMA-BLOCK
+      scenario: Only a delay/retry workaround exists without target coherency or lifetime evidence.
+      expected_invocation_status: BLOCKED
+      focus: [no-workaround-as-root-cause, platform-evidence]
+
+  storage-filesystem-analysis:
+    positive:
+      id: SEC-STORAGE-FS-POS
+      scenario: Exact media/controller/MTD/UBI/filesystem evidence isolates the earliest abnormal storage layer.
+      expected_invocation_status: COMPLETED
+      focus: [layer-separation, non-destructive-first]
+    block:
+      id: SEC-STORAGE-FS-BLOCK
+      scenario: Only the final read-only/filesystem symptom is available while lower-layer causal evidence is missing.
+      expected_invocation_status: BLOCKED
+      focus: [symptom-not-root-cause, no-destructive-recovery]
+
+  mcu-startup-analysis:
+    positive:
+      id: SEC-MCU-STARTUP-POS
+      scenario: Exact MCU firmware traces reset/vector/runtime initialization to the last confirmed startup stage.
+      expected_invocation_status: COMPLETED
+      focus: [reset-vector, init-order, exact-build]
+    block:
+      id: SEC-MCU-STARTUP-BLOCK
+      scenario: Startup/vector/linker artifacts do not match the observed firmware.
+      expected_invocation_status: BLOCKED
+      focus: [artifact-mismatch, no-debugger-assisted-assumption]
+
+  linker-map-analysis:
+    positive:
+      id: SEC-LINKER-MAP-POS
+      scenario: Exact linker/MAP/ELF artifacts quantify ROM/RAM placement and remaining linked margins.
+      expected_invocation_status: COMPLETED
+      focus: [section-accounting, exact-build, configured-vs-runtime]
+    block:
+      id: SEC-LINKER-MAP-BLOCK
+      scenario: MAP/ELF identity is unknown or runtime headroom is claimed without runtime watermark evidence.
+      expected_invocation_status: BLOCKED
+      focus: [identity, no-linked-size-as-runtime-proof]
+
+  rtos-concurrency-analysis:
+    positive:
+      id: SEC-RTOS-CONCURRENCY-POS
+      scenario: Exact task/ISR trace and lock graph establish a scheduling or synchronization failure.
+      expected_invocation_status: COMPLETED
+      focus: [lock-order, scheduling, worst-case]
+    block:
+      id: SEC-RTOS-CONCURRENCY-BLOCK
+      scenario: Task priorities or timing trace are missing while a race/deadline conclusion is requested.
+      expected_invocation_status: BLOCKED
+      focus: [no-average-as-worst-case, no-race-by-guess]
+
+  driver-integration-review:
+    positive:
+      id: SEC-DRIVER-INTEGRATION-POS
+      scenario: Exact device integration covers lifecycle, resource ownership, error recovery and power paths.
+      expected_invocation_status: COMPLETED
+      focus: [lifecycle, recovery, compatibility]
+    block:
+      id: SEC-DRIVER-INTEGRATION-BLOCK
+      scenario: Device substitution is claimed compatible from pin/register similarity without failure/power evidence.
+      expected_invocation_status: BLOCKED
+      focus: [compatibility-matrix, no-drop-in-overclaim]
+
+  log-triage:
+    positive:
+      id: SEC-LOG-TRIAGE-POS
+      scenario: Raw target logs produce a provenance-preserving first-abnormal-event timeline.
+      expected_invocation_status: COMPLETED
+      focus: [timeline, observed-inferred-confirmed]
+    block:
+      id: SEC-LOG-TRIAGE-BLOCK
+      scenario: Logs are truncated or target identity is materially unknown for a root-cause claim.
+      expected_invocation_status: BLOCKED
+      focus: [raw-context, identity-gap]
+
+  crash-hardfault-analysis:
+    positive:
+      id: SEC-CRASH-HARDFAULT-POS
+      scenario: Matching dump/registers and symbols produce falsifiable hypotheses and a discriminating experiment.
+      expected_invocation_status: COMPLETED
+      focus: [exact-symbols, competing-hypotheses]
+    block:
+      id: SEC-CRASH-HARDFAULT-BLOCK
+      scenario: Symbols do not match the target build or critical fault context is missing.
+      expected_invocation_status: BLOCKED
+      focus: [pc-not-root-cause, identity-mismatch]
+
+  memory-corruption-analysis:
+    positive:
+      id: SEC-MEMORY-CORRUPTION-POS
+      scenario: Earliest corrupted state plus writer/lifetime evidence narrows candidate corruption origins.
+      expected_invocation_status: COMPLETED
+      focus: [earliest-corruption, candidate-writers, lifetime]
+    block:
+      id: SEC-MEMORY-CORRUPTION-BLOCK
+      scenario: Crash site is known but memory provenance cannot distinguish candidate writers.
+      expected_invocation_status: BLOCKED
+      focus: [victim-vs-origin, no-writer-without-evidence]
+
+  performance-analysis:
+    positive:
+      id: SEC-PERFORMANCE-POS
+      scenario: Frozen workload and measurement contract identify a bottleneck and comparable before/after delta.
+      expected_invocation_status: COMPLETED
+      focus: [baseline, reproducibility, tail-behavior]
+    block:
+      id: SEC-PERFORMANCE-BLOCK
+      scenario: Baseline or workload differs materially while an improvement or worst-case claim is requested.
+      expected_invocation_status: BLOCKED
+      focus: [incomparable-baseline, no-average-as-worst-case]
+
+  verification-plan-builder:
+    positive:
+      id: SEC-VERIFY-PLAN-POS
+      scenario: Every Acceptance criterion maps to an adequate verification layer and direct evidence requirement.
+      expected_invocation_status: COMPLETED
+      focus: [acceptance-mapping, layer-selection]
+    block:
+      id: SEC-VERIFY-PLAN-BLOCK
+      scenario: Acceptance is ambiguous or required target layer cannot be fixed.
+      expected_invocation_status: BLOCKED
+      focus: [no-layer-downgrade, ambiguous-acceptance]
+
+  regression-scope-analysis:
+    positive:
+      id: SEC-REGRESSION-SCOPE-POS
+      scenario: Exact change dependencies yield bounded direct and indirect regression coverage with justified exclusions.
+      expected_invocation_status: COMPLETED
+      focus: [impact-derived-scope, explicit-exclusions]
+    block:
+      id: SEC-REGRESSION-SCOPE-BLOCK
+      scenario: Affected interfaces or lifecycle paths remain unknown while sufficiency is claimed.
+      expected_invocation_status: BLOCKED
+      focus: [no-file-diff-only-scope, unknown-dependencies]
+
+  build-evidence-check:
+    positive:
+      id: SEC-BUILD-EVIDENCE-POS
+      scenario: Exact source/config/toolchain build produces a traceable hashed artifact.
+      expected_invocation_status: COMPLETED
+      focus: [build-provenance, artifact-identity]
+    block:
+      id: SEC-BUILD-EVIDENCE-BLOCK
+      scenario: Build step was skipped or build evidence is being used as Device/HIL proof.
+      expected_invocation_status: BLOCKED
+      focus: [layer-boundary, skipped-step]
+
+  device-evidence-check:
+    positive:
+      id: SEC-DEVICE-EVIDENCE-POS
+      scenario: Exact board/firmware/procedure/raw evidence directly supports one target-device Acceptance criterion.
+      expected_invocation_status: COMPLETED
+      focus: [target-identity, raw-evidence, scope]
+    block:
+      id: SEC-DEVICE-EVIDENCE-BLOCK
+      scenario: Evidence comes from another board or firmware version.
+      expected_invocation_status: BLOCKED
+      focus: [identity-mismatch, no-scope-broadening]
+
+  hil-evidence-check:
+    positive:
+      id: SEC-HIL-EVIDENCE-POS
+      scenario: Exact HIL case/fixture/target/run artifacts prove the exercised scenario.
+      expected_invocation_status: COMPLETED
+      focus: [fixture-identity, run-provenance, scenario-scope]
+    block:
+      id: SEC-HIL-EVIDENCE-BLOCK
+      scenario: Only an untraceable summary exists or the executed case does not cover the claimed scenario.
+      expected_invocation_status: BLOCKED
+      focus: [raw-run-required, no-unexecuted-generalization]
+
+  release-readiness-check:
+    positive:
+      id: SEC-RELEASE-READINESS-POS
+      scenario: Exact release candidate has required Verification, provenance, rollback and owned residual risks.
+      expected_invocation_status: COMPLETED
+      focus: [candidate-provenance, rollback, risk-ownership]
+    block:
+      id: SEC-RELEASE-READINESS-BLOCK
+      scenario: Required Verification or rollback evidence is unresolved.
+      expected_invocation_status: BLOCKED
+      focus: [independence, no-a7-by-review, no-failed-verification-rewrite]

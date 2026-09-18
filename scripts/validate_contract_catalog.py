@@ -29,6 +29,9 @@ def main() -> None:
         "engineering-task-package",
         "knowledge-reuse-evidence",
         "assurance-provider-evidence",
+        "skill-invocation-receipt",
+        "skill-evaluation-receipt",
+        "skill-evaluation-summary",
     } <= ids
     print(f"contract catalog validation PASS: {len(ids)} authoritative local contracts")
 

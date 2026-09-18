@@ -43,7 +43,7 @@ def main() -> None:
         "03-流程与运行/01 任务生命周期与Gate.md", "03-流程与运行/02 Debug问题闭环流程.md", "03-流程与运行/03 功能开发Bring-up与多仓协同.md", "03-流程与运行/04 验证评审发布与异常恢复.md", "03-流程与运行/05 任务类型运行矩阵.md",
         "04-专业能力/01 嵌入式架构能力域指南.md", "04-专业能力/02 Linux BSP能力域指南.md", "04-专业能力/03 MCU RTOS能力域指南.md", "04-专业能力/04 驱动与组件能力域指南.md", "04-专业能力/05 调试与可靠性能力域指南.md",
         "05-工程交付/01 Skill能力地图.md", "05-工程交付/02 工程交接Runtime与关键产物.md", "05-工程交付/03 完整任务产物样例.md",
-        "05-工程交付/04 Skill规划清单与定义规范.md", "05-工程交付/05 Skill生命周期成熟度与准入.md", "05-工程交付/06 Skill评审成熟度台账.md",
+        "05-工程交付/04 Skill规划清单与定义规范.md", "05-工程交付/05 Skill生命周期成熟度与准入.md", "05-工程交付/06 Skill评审成熟度台账.md", "05-工程交付/07 Skill评测与证据闭环.md",
         "06-治理与评审/01 评审说明与决策清单.md", "06-治理与评审/02 权限安全风险与例外.md", "06-治理与评审/03 Pilot指标成熟度与生产化.md", "06-治理与评审/04 架构取舍与演进原则.md", "06-治理与评审/05 Verification责任与证据.md", "06-治理与评审/06 Independent Review与发布边界.md", "06-治理与评审/07 端到端评审检查表.md",
         "07-案例/01 UBIFS只读问题走查.md", "07-案例/02 多仓功能与OTA发布走查.md", "07-案例/03 MCU HardFault与RTOS并发走查.md", "07-案例/04 新板Bring-up走查.md", "07-案例/05 器件替代兼容性走查.md", "附录/术语与缩写.md",
     ]
@@ -79,6 +79,7 @@ def main() -> None:
     skill_plan = read("05-工程交付/04 Skill规划清单与定义规范.md")
     skill_lifecycle = read("05-工程交付/05 Skill生命周期成熟度与准入.md")
     skill_maturity = read("05-工程交付/06 Skill评审成熟度台账.md")
+    skill_evaluation_guide = read("05-工程交付/07 Skill评测与证据闭环.md")
     for item in skills:
         require(item["id"] in skill_map, f"Skill map missing {item['id']}"); require(item["owner_id"] in skill_map, f"Skill map missing owner {item['owner_id']}")
         require(item["id"] in skill_plan, f"Skill planning view missing canonical Skill {item['id']}")
@@ -87,8 +88,10 @@ def main() -> None:
         require(marker in skill_plan, f"Skill planning view missing governance marker: {marker}")
     for marker in ["CANDIDATE", "EVALUATED", "PILOTED", "REPEATABLE", "GOVERNED", "DEPRECATED", "RETIRED"]:
         require(marker in skill_lifecycle, f"Skill lifecycle view missing state marker: {marker}")
-    for marker in ["REAL_USAGE_NOT_ATTRIBUTED", "PORTABILITY_NOT_PROVEN", "DIRECT_CASE_PENDING", "skill-invocation-receipt.v1", "--skill-invocation", "存量真实 Pilot", "定义、治理与 Skill invocation receipt 基础设施已建立"]:
+    for marker in ["REAL_USAGE_NOT_ATTRIBUTED", "PORTABILITY_NOT_PROVEN", "DIRECT_CASE_PENDING", "skill-invocation-receipt.v1", "--skill-invocation", "skill-evaluation-plan.yaml", "skill-evaluation-receipt.v1", "evaluate_skill_maturity.py", "23 个 Skill 仍统一保持 `DEFINED`", "存量真实 Pilot"]:
         require(marker in skill_maturity, f"Skill maturity ledger missing evidence-boundary marker: {marker}")
+    for marker in ["46 个 case", "case_evidence_eligible", "EVALUATED", "PILOTED", "portability_proven = false", "product_readiness_inherited = false"]:
+        require(marker in skill_evaluation_guide, f"Skill evaluation guide missing evidence-boundary marker: {marker}")
 
     review_guide = read("00-评审导览/01 评审总览与阅读路径.md")
     trace_matrix = read("00-评审导览/02 架构到证据追踪矩阵.md")

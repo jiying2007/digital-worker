@@ -114,6 +114,7 @@ def validate_contract_references(domain: dict) -> None:
         "target_assets.skill_registry": domain["target_assets"]["skill_registry"],
         "target_assets.gate_policy": domain["target_assets"]["gate_policy"],
         "target_assets.evaluation_cases": domain["target_assets"]["evaluation_cases"],
+        "target_assets.skill_evaluation_plan": domain["target_assets"]["skill_evaluation_plan"],
         "target_assets.knowledge_registry": domain["target_assets"]["knowledge_registry"],
         "target_assets.pilot_runtime": domain["target_assets"]["pilot_runtime"],
         "target_assets.pilot_assets": domain["target_assets"]["pilot_assets"],

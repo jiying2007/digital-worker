@@ -9,10 +9,12 @@
 
 - 23/23 canonical Skill 已完成统一 review-grade contract hardening；
 - registry / owner / action ceiling / physical path 已由 CI fail-closed 校验；
-- 12 个 canonical Golden Case 仍主要验证 **task / routing / capability / assurance**，并没有显式记录“本 case 调用了哪些 Skill”；
+- 12 个原有 canonical Golden Case 仍主要验证 **task / routing / capability / assurance**；同时新增独立 `skill-evaluation-plan.yaml`，为 23 个 Skill 明确了 46 个 positive + BLOCK case，但 case 定义本身不计成熟度证据；
 - 新的 `skill-invocation-receipt.v1` contract 与 Pilot 冻结入口已经建立，可校验 Skill contract hash/owner/version/action ceiling、Runtime binding、input/output refs 与 attestation；
 - **但现有已冻结真实 Pilot evidence 尚未补录这些 receipt**，因此历史/当前真实使用仍不能自动归因到具体 Skill；
-- 因此不能从“Golden Case PASS”或“真实 Pilot completed”直接推导任一 Skill 已达到 `EVALUATED`、`PILOTED` 或 `REPEATABLE`；
+- `skill-evaluation-receipt.v1` 与 `evaluate_skill_case.py` 已能把一次 invocation 对照一个 case，并把结构契约检查与独立 semantic evidence 分离；
+- `skill-evaluation-summary.v1` 与 `evaluate_skill_maturity.py` 要求同一 Skill 的 positive + BLOCK 两张 case evidence、同一 frozen contract、同一 Runtime 与同一 source type 才输出 `EVALUATED`；
+- **当前仓库仍没有持久化的、独立 semantic PASS 的完整 case pair**，因此不能从评测机制存在或 CI fixture PASS 推导任何 canonical Skill 已达到 `EVALUATED`；
 - 当前可诚实声明的统一最低状态是：**23 个 Skill 均达到 DEFINED；更高成熟度必须逐个补 Skill-level evaluation / usage evidence。**
 
 换句话说：**定义闭环与 Skill usage receipt 基础设施已建立；Skill evaluation 与真实历史使用证据闭环仍未完成。**
@@ -60,30 +62,25 @@
 | `hil-evidence-check` | verification | DEFINED | GC-DRIVER-001 提及 HIL hooks，但非 HIL case | REAL_USAGE_NOT_ATTRIBUTED | PORTABILITY_NOT_PROVEN | DEFINED | 新增真实 HIL case + fixture/target/run identity 负例 |
 | `release-readiness-check` | review | DEFINED | GC-OTA-001 | REAL_USAGE_NOT_ATTRIBUTED | PORTABILITY_NOT_PROVEN | DEFINED / DIRECT_CASE_PENDING | GC-OTA 冻结 review output + missing rollback/Verification BLOCK 负例 |
 
-## 4. 为什么不能把当前 Golden Case 直接算成 Skill EVALUATED
+## 4. Golden Case 与 Skill Evaluation Plan 的边界
 
-当前 `evaluation/golden-cases.yaml` 明确记录：
+当前评测资产分成两层：
 
-- task type；
-- target mode；
-- expected Expert / Capability；
-- required Assurance；
-- required evidence；
-- Gate behavior；
-- forbidden claims；
-- success signals。
+1. `evaluation/golden-cases.yaml`：继续验证 task / routing / Capability / Assurance / Gate / forbidden claims；
+2. `evaluation/skill-evaluation-plan.yaml`：专门覆盖 23 个 canonical Skill，每个 Skill 强制有 1 个 positive case + 1 个 BLOCK negative case，共 46 个 case。
 
-但它**没有**记录：
+第二层解决了“评什么”的规划缺口，但**仍不是评测结果**。case 定义只有在绑定：
 
-- selected Skill IDs；
-- Skill Contract version；
-- Skill input identity；
-- Skill output artifact identity/hash；
-- Runtime binding；
-- evaluation verdict per Skill；
-- negative/BLOCK case 是否由目标 Skill 正确触发。
+- exact `skill_id` 与 frozen Skill contract；
+- 一次通过 `skill-invocation-receipt.v1` 校验的 invocation；
+- expected vs observed invocation status；
+- 独立 semantic evaluator identity；
+- semantic evidence ref + SHA-256；
+- `skill-evaluation-receipt.v1`；
 
-所以当前 Golden Case 能证明 routing/capability/assurance 行为，却不能证明某个具体 Skill 在某个 Runtime 上按其 contract 被正确执行。
+之后，才形成一张可计入成熟度的 case evidence。
+
+单张 case evidence 也不能直接把 Skill 升为 `EVALUATED`。必须再由 `evaluate_skill_maturity.py` 同时聚合该 Skill 的 positive + BLOCK receipt，并确认两边使用同一 frozen Skill Contract、同一 Runtime implementation 和同一 source type，才可输出 bounded `EVALUATED` summary。该 summary 明确保持 `portability_proven=false`、`product_readiness_inherited=false`。
 
 ## 5. Skill invocation receipt 已建立，但存量真实 Pilot 仍未归因
 
@@ -186,13 +183,13 @@ runtime/evaluation attestation
 
 P0 不是继续扩 Skill 数量，而是让已经建立的 usage receipt 真正产生证据，并补齐 **Skill evaluation evidence**：
 
-- Golden Case 增加显式 Skill target / contract version；
+- 让 46 个已定义 Skill case 逐步获得真实/受控 invocation evidence，而不是继续增加 case 数量；
 - Runtime binding 在真实执行后输出 attested Skill invocation receipt，Digital Worker 只校验/冻结；
-- 正例与 BLOCK 负例都要形成 Skill-specific evaluation receipt/verdict；
-- evaluator 聚合 Skill-level usage/evaluation，而不是从 Capability case 反推；
+- 正例与 BLOCK 负例分别形成带独立 semantic evidence hash 的 Skill evaluation receipt；
+- 使用 `evaluate_skill_maturity.py` 形成可审计 `EVALUATED` summary，而不是从 Capability case 或 CI fixture 反推；
 - 后续第二 Runtime 使用同一 frozen Contract 形成 portability 对照；
 - maturity ledger 最终从“人工状态说明”迁移为“receipt 驱动”。
 
 在这之前，当前 23 个 Skill 的正确结论是：
 
-> **定义、治理与 Skill invocation receipt 基础设施已建立；存量真实使用仍未归因，Skill-level evaluation 与跨 Runtime portability 仍是 EVIDENCE_PENDING。**
+> **定义、治理、Skill invocation 与 evaluation/aggregation 基础设施已建立；但当前尚无持久化的完整 semantic PASS case pair，存量真实使用仍未归因，23 个 Skill 仍统一保持 `DEFINED`，真实 `EVALUATED / PILOTED / portability` 均为 EVIDENCE_PENDING。**

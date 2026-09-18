@@ -65,6 +65,8 @@ jobs:
         run: python scripts/validate_edge_foundation_architecture.py
       - name: Validate canonical Edge Foundation target assets
         run: python scripts/validate_edge_foundation_target_assets.py
+      - name: Validate Skill evaluation plan
+        run: python scripts/validate_skill_evaluation_plan.py
       - name: Validate canonical routing
         run: python scripts/validate_edge_foundation_routing.py --output /tmp/edge-foundation-routing.json
       - name: Upload canonical routing receipt

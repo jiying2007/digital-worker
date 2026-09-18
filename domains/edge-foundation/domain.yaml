@@ -90,6 +90,7 @@ target_assets:
   skill_registry: skills.yaml
   gate_policy: gate-policy.yaml
   evaluation_cases: evaluation/golden-cases.yaml
+  skill_evaluation_plan: evaluation/skill-evaluation-plan.yaml
   knowledge_registry: knowledge/registry.yaml
   pilot_runtime: runtime/
   pilot_assets: pilot/
