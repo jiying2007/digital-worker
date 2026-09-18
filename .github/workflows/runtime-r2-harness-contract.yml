@@ -10,12 +10,14 @@ on:
       - 'scripts/runtime_r2_evidence.py'
       - 'scripts/runtime_r2_intake.py'
       - 'scripts/runtime_r2_assemble_intake.py'
+      - 'reports/runtime-r2/freeze/**'
       - 'config/integrations/provider-capability-matrix.yaml'
       - 'config/integrations/runtime-execution-profiles.json'
       - 'scripts/runtime_execution_adapter.py'
       - 'tests/unit/test_runtime_execution_adapter.py'
       - 'tests/unit/test_runtime_execution_capability_projection.py'
       - 'tests/unit/test_runtime_r2_execution_boundary.py'
+      - 'tests/unit/test_runtime_r2_freeze_ledger.py'
       - 'tests/unit/test_runtime_r2_assemble_intake.py'
       - 'tests/unit/test_runtime_r2_domain_verification_workflow.py'
       - 'tests/unit/test_runtime_r2_independent_review_workflow.py'
@@ -29,12 +31,14 @@ on:
       - 'scripts/runtime_r2_evidence.py'
       - 'scripts/runtime_r2_intake.py'
       - 'scripts/runtime_r2_assemble_intake.py'
+      - 'reports/runtime-r2/freeze/**'
       - 'config/integrations/provider-capability-matrix.yaml'
       - 'config/integrations/runtime-execution-profiles.json'
       - 'scripts/runtime_execution_adapter.py'
       - 'tests/unit/test_runtime_execution_adapter.py'
       - 'tests/unit/test_runtime_execution_capability_projection.py'
       - 'tests/unit/test_runtime_r2_execution_boundary.py'
+      - 'tests/unit/test_runtime_r2_freeze_ledger.py'
       - 'tests/unit/test_runtime_r2_assemble_intake.py'
       - 'tests/unit/test_runtime_r2_domain_verification_workflow.py'
       - 'tests/unit/test_runtime_r2_independent_review_workflow.py'
@@ -84,6 +88,8 @@ jobs:
         run: python -m unittest tests.unit.test_runtime_execution_capability_projection -v
       - name: Ratchet provider-free Digital Worker R2 execution boundary
         run: python -m unittest tests.unit.test_runtime_r2_execution_boundary -v
+      - name: Validate retained real R2 freeze ledger boundary
+        run: python -m unittest tests.unit.test_runtime_r2_freeze_ledger -v
       - name: Validate deterministic tracked R2 intake assembly
         run: python -m unittest tests.unit.test_runtime_r2_assemble_intake -v
       - name: Validate attested independent R2 domain verification contract
