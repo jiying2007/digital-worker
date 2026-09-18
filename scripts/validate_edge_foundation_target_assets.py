@@ -64,6 +64,33 @@ def main() -> None:
             raise AssertionError(f"unsupported Skill owner kind: {skill_id} -> {kind}")
         resolved = (EDGE / item["path"]).resolve()
         require(resolved.is_file() and EDGE.resolve() in resolved.parents, f"Skill path is not target-local: {skill_id}")
+        skill_text = resolved.read_text(encoding="utf-8")
+        required_sections = [
+            "## Purpose",
+            "## Use When",
+            "## Do Not Use For",
+            "## Required Inputs",
+            "## Optional Inputs",
+            "## Method",
+            "## Outputs",
+            "## Evidence Rules",
+            "## BLOCK Conditions",
+            "## Verification / Review Handoff",
+            "## Evaluation",
+            "## Known Limits / Change Notes",
+        ]
+        for heading in required_sections:
+            require(heading in skill_text, f"Skill contract incomplete: {skill_id} missing {heading}")
+        for frontmatter_marker in [
+            f"id: {skill_id}",
+            f"owner_kind: {kind}",
+            f"owner: {owner}",
+            "max_action_level: A2_GENERATE",
+            "inputs:",
+            "outputs:",
+        ]:
+            require(frontmatter_marker in skill_text, f"Skill frontmatter drift: {skill_id} missing {frontmatter_marker}")
+        require(len(skill_text.strip()) >= 2200, f"Skill contract too thin for review-grade definition: {skill_id}")
 
     expected_gates = {"gate.k", "gate.m", "gate.0", "gate.t", "gate.e", "gate.v", "gate.r", "gate.c"}
     require(set(gates["gates"]) == expected_gates, "Gate set drift")
