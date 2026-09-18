@@ -13,6 +13,7 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 EDGE = ROOT / "domains" / "edge-foundation"
 EVALUATOR = ROOT / "scripts" / "evaluate_skill_case.py"
+MATURITY_EVALUATOR = ROOT / "scripts" / "evaluate_skill_maturity.py"
 PLAN_VALIDATOR = ROOT / "scripts" / "validate_skill_evaluation_plan.py"
 
 
@@ -24,7 +25,7 @@ def canonical_skill(skill_id: str) -> tuple[dict, dict, Path]:
     return item, frontmatter, path
 
 
-def invocation(status: str = "COMPLETED") -> dict:
+def invocation(status: str = "COMPLETED", runtime_id: str = "skill-eval-harness-v1") -> dict:
     item, fm, contract_path = canonical_skill("boot-chain-analysis")
     outputs = []
     block_reason = None
@@ -53,7 +54,7 @@ def invocation(status: str = "COMPLETED") -> dict:
         },
         "runtime_binding": {
             "provider": "evaluation-harness",
-            "runtime_id": "skill-eval-harness-v1",
+            "runtime_id": runtime_id,
             "version": "1",
             "execution_identity": None,
         },
@@ -162,6 +163,104 @@ class SkillEvaluationTest(unittest.TestCase):
         )
         self.assertNotEqual(completed.returncode, 0)
         self.assertIsNone(receipt)
+
+
+    def test_positive_and_block_semantic_evidence_aggregate_to_evaluated_without_portability_or_product_inheritance(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pos_inv_path = root / "positive-invocation.json"
+            neg_inv_path = root / "block-invocation.json"
+            pos_eval_path = root / "positive-evaluation.json"
+            neg_eval_path = root / "block-evaluation.json"
+            summary_path = root / "summary.json"
+            pos_inv_path.write_text(json.dumps(invocation("COMPLETED"), indent=2) + "\n", encoding="utf-8")
+            neg_inv_path.write_text(json.dumps(invocation("BLOCKED"), indent=2) + "\n", encoding="utf-8")
+
+            for case_id, inv_path, out_path, digest in [
+                ("SEC-BOOT-CHAIN-POS", pos_inv_path, pos_eval_path, "5" * 64),
+                ("SEC-BOOT-CHAIN-BLOCK", neg_inv_path, neg_eval_path, "6" * 64),
+            ]:
+                completed = subprocess.run(
+                    [
+                        sys.executable, str(EVALUATOR), case_id, str(inv_path),
+                        "--semantic-status", "PASS",
+                        "--semantic-evaluator-kind", "independent-evaluator",
+                        "--semantic-evaluator-id", "semantic-review-fixture",
+                        "--semantic-evidence-ref", f"review://{case_id}",
+                        "--semantic-evidence-sha256", digest,
+                        "--output", str(out_path),
+                        "--require-case-eligible",
+                    ],
+                    capture_output=True, text=True,
+                )
+                self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
+
+            aggregated = subprocess.run(
+                [
+                    sys.executable, str(MATURITY_EVALUATOR), "boot-chain-analysis",
+                    "--positive-evaluation", str(pos_eval_path),
+                    "--positive-invocation", str(pos_inv_path),
+                    "--block-evaluation", str(neg_eval_path),
+                    "--block-invocation", str(neg_inv_path),
+                    "--output", str(summary_path),
+                    "--require-evaluated",
+                ],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(aggregated.returncode, 0, aggregated.stderr or aggregated.stdout)
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+            self.assertEqual(summary["status"], "EVALUATED")
+            self.assertTrue(summary["evaluation_complete"])
+            self.assertFalse(summary["portability_proven"])
+            self.assertFalse(summary["product_readiness_inherited"])
+
+    def test_maturity_aggregation_rejects_mixed_runtime_pair(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            pos_inv_path = root / "positive-invocation.json"
+            neg_inv_path = root / "block-invocation.json"
+            pos_eval_path = root / "positive-evaluation.json"
+            neg_eval_path = root / "block-evaluation.json"
+            summary_path = root / "summary.json"
+            pos_inv_path.write_text(json.dumps(invocation("COMPLETED", "runtime-A"), indent=2) + "\n", encoding="utf-8")
+            neg_inv_path.write_text(json.dumps(invocation("BLOCKED", "runtime-B"), indent=2) + "\n", encoding="utf-8")
+
+            for case_id, inv_path, out_path, digest in [
+                ("SEC-BOOT-CHAIN-POS", pos_inv_path, pos_eval_path, "7" * 64),
+                ("SEC-BOOT-CHAIN-BLOCK", neg_inv_path, neg_eval_path, "8" * 64),
+            ]:
+                completed = subprocess.run(
+                    [
+                        sys.executable, str(EVALUATOR), case_id, str(inv_path),
+                        "--semantic-status", "PASS",
+                        "--semantic-evaluator-kind", "human-review",
+                        "--semantic-evaluator-id", "reviewer-fixture",
+                        "--semantic-evidence-ref", f"review://{case_id}",
+                        "--semantic-evidence-sha256", digest,
+                        "--output", str(out_path),
+                    ],
+                    capture_output=True, text=True,
+                )
+                self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
+
+            aggregated = subprocess.run(
+                [
+                    sys.executable, str(MATURITY_EVALUATOR), "boot-chain-analysis",
+                    "--positive-evaluation", str(pos_eval_path),
+                    "--positive-invocation", str(pos_inv_path),
+                    "--block-evaluation", str(neg_eval_path),
+                    "--block-invocation", str(neg_inv_path),
+                    "--output", str(summary_path),
+                    "--require-evaluated",
+                ],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(aggregated.returncode, 2, aggregated.stderr or aggregated.stdout)
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+            self.assertEqual(summary["status"], "DEFINED")
+            self.assertFalse(summary["checks"]["same_runtime"])
+            self.assertIn("positive-and-block-do-not-use-same-runtime-implementation", summary["blockers"])
+
 
 
 if __name__ == "__main__":
