@@ -55,6 +55,19 @@ Debug 额外要求 Hypothesis Registry；Feature 额外要求 Engineering Packag
 - human correction time；
 - review re-ask count。
 
+### Skill Quality / Maturity
+
+- Skill invocation attribution coverage：真实 Run 中可归因到 canonical Skill 的比例；
+- correct block rate：关键材料不足时正确 BLOCK 的比例；
+- unsupported Skill claim rate：Skill output 中缺直接 evidence 的实质 claim 比例；
+- Skill positive/BLOCK case coverage；
+- independent semantic evaluation coverage；
+- evaluated Skill count（必须来自持久化 bounded summary，不计 CI fixture）；
+- real-Pilot Skill count；
+- cross-Runtime comparable Skill count。
+
+这些指标只描述 Skill 能力成熟度，不得直接折算 Product readiness。
+
 ### Traceability
 
 - exact source coverage；
@@ -84,7 +97,9 @@ Debug 额外要求 Hypothesis Registry；Feature 额外要求 Engineering Packag
 - required V1 artifact 无缺失；
 - 至少一个真实 Knowledge reuse evidence；
 - 重大 identity/integration/verification gap 有 Owner；
-- Multi-runtime 至少完成两种 Runtime 的同条件对照。
+- Multi-runtime 至少完成两种 Runtime 的同条件对照；
+- 至少 1 个 canonical Skill 形成持久化 positive + BLOCK semantic evaluation pair（E09）；
+- 至少 1 个 real Run 冻结 Runtime-owned Skill invocation receipt（E10）。
 
 满足这些条件只是“有资格进入人工 Productionization Review”，不是自动 Production Ready。
 
@@ -102,7 +117,8 @@ Debug 额外要求 Hypothesis Registry；Feature 额外要求 Engineering Packag
 ## 7. 当前推进顺序
 
 ```text
-Debug real Pilot
+Skill evaluation retained evidence + real Skill attribution
+  → Debug real Pilot
   → Feature real Pilot
   → Review/Release real Pilot
   → 外部 Knowledge Source + real reuse
@@ -125,6 +141,8 @@ Debug real Pilot
 - 哪些知识真正被后续任务复用？
 - 哪些问题只是 Provider 限制，哪些是领域 Contract 缺陷？
 - 是否有重复缺口足以升级新 Schema/Skill/平台能力？
+- 哪些 Skill 只有 DEFINED，哪些已有持久化 EVALUATED summary？
+- real Run 是否留下 Skill invocation provenance，而不是只靠事后回忆？
 
 ## 9. 何时扩大自动化
 

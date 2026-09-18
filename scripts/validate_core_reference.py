@@ -96,10 +96,16 @@ def main() -> None:
     review_guide = read("00-评审导览/01 评审总览与阅读路径.md")
     trace_matrix = read("00-评审导览/02 架构到证据追踪矩阵.md")
     review_checklist = read("06-治理与评审/07 端到端评审检查表.md")
+    decision_register = read("06-治理与评审/01 评审说明与决策清单.md")
+    pilot_maturity = read("06-治理与评审/03 Pilot指标成熟度与生产化.md")
     for marker in ["Architecture", "Engineering Depth", "Trust", "Productization", "Human View", "Canonical Authority"]:
         require(marker in review_guide or marker in trace_matrix, f"review navigation missing marker: {marker}")
     for marker in ["## A. 架构与边界", "## D. Skill 体系", "## H. Linux / BSP", "## I. MCU / RTOS", "## K. Evidence", "## L. Verification", "## M. Independent Review", "## Q. Productionization"]:
         require(marker in review_checklist, f"review checklist missing section: {marker}")
+    for marker in ["D11", "Skill 成熟度证据", "E09", "E10", "CI fixture 不提升 canonical Skill 成熟度"]:
+        require(marker in decision_register, f"Decision/Evidence Register missing Skill maturity governance marker: {marker}")
+    for marker in ["Skill invocation attribution coverage", "correct block rate", "independent semantic evaluation coverage", "E09", "E10"]:
+        require(marker in pilot_maturity, f"Pilot maturity guide missing Skill metric/gate marker: {marker}")
 
     routing = load_yaml(EDGE / "routing.yaml"); matrix = read("03-流程与运行/05 任务类型运行矩阵.md")
     require(routing["canonical_routing"] is True and len(routing["routing"]) == 14, "canonical routing baseline drift")
