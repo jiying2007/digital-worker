@@ -7,7 +7,7 @@
   "required": [
     "schema_version", "evaluation_id", "case_id", "case_kind", "skill_id",
     "plan", "invocation_receipt", "contract_verdict", "semantic_evaluation",
-    "lifecycle_evaluation_eligible", "generated_at"
+    "case_evidence_eligible", "generated_at"
   ],
   "properties": {
     "schema_version": {"const": 1},
@@ -69,7 +69,7 @@
         "notes": {"type": ["string", "null"]}
       }
     },
-    "lifecycle_evaluation_eligible": {"type": "boolean"},
+    "case_evidence_eligible": {"type": "boolean"},
     "generated_at": {"type": "string", "minLength": 1}
   }
 }
