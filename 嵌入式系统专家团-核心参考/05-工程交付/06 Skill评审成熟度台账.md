@@ -85,27 +85,43 @@
 
 所以当前 Golden Case 能证明 routing/capability/assurance 行为，却不能证明某个具体 Skill 在某个 Runtime 上按其 contract 被正确执行。
 
-## 5. 当前真实 Pilot 也缺 Skill-level attribution
+## 5. Skill invocation receipt 已建立，但存量真实 Pilot 仍未归因
 
-当前真实 Pilot 资产已经能冻结 source/artifact/device/Verification 等重要 identity，但仓库搜索不到稳定的 Skill invocation / Skill output receipt 字段。
+当前已经具备正式的 Skill usage provenance 基础设施：
 
-因此即便某个真实任务“事实上用了”某 Skill，只要 frozen evidence 没有记录：
+- `schemas/skill-invocation-receipt.v1.schema.json`：冻结 invocation / run / work-item / source identity；
+- receipt 绑定 `skill_id`、canonical Skill contract version/path/SHA-256、owner 与 action ceiling；
+- receipt 绑定 Runtime provider/runtime/execution identity、input evidence refs、output refs + hashes、实际 action level、result 与 attestation；
+- `scripts/validate_skill_invocation_receipt.py` 会对 `skills.yaml`、`SKILL.md` 与 Action Policy fail-closed 校验；
+- 真实 receipt 必须由 `runtime-binding` attestation 提供，synthetic evaluation 才允许 `evaluation-harness`；
+- `embedded_pilot.py complete --skill-invocation <receipt.json>` 可为一个 Run 接入多个 Skill receipt；
+- Pilot 会把 receipt 复制进 Run，校验 run/work-item/source identity，并作为独立 artifact + SHA-256 冻结进 immutable evidence bundle；
+- canonical Pilot receipt 会暴露 `skill_invocation_count` 与 `skill_invocation_evidence_present`，但这些字段**不改变 Product readiness eligibility**。
+
+因此，新的问题已经不是“有没有 Skill receipt contract”，而是**哪些真实 Run 实际产生了 attested receipt**。
+
+现有已冻结的真实 Pilot（包括既有 Feature evidence）是在该 contract 建立之前形成的。没有原 Runtime 的 attestation、输入输出 identity 和执行 provenance，就不应事后回填一个“看起来完整”的 receipt。向后兼容的正确行为是：
+
+- 旧真实 Pilot 继续按原 evidence contract 成立；
+- `skill_invocation_refs` 缺失或为空，不使旧 Run 失效；
+- 但该 Run **不能**因此计入某个 Skill 的 `PILOTED`；
+- 后续新 Run 只有冻结真实 Runtime receipt，才允许建立 Skill-level usage attribution。
+
+receipt 至少冻结：
 
 ```text
 skill_id
-skill_contract_version
-owner
-runtime_binding
+skill_contract.version/path/sha256/owner/action_ceiling
+runtime_binding.provider/runtime_id/execution_identity
 input evidence refs
-output artifact/ref
-action level
+output artifact refs + hashes
+actual action level
 started/finished identity
 result / blocked reason
+runtime/evaluation attestation
 ```
 
-就不能把它计入 Skill maturity。
-
-这些字段现在已有正式 contract；剩余缺口是让真实 Runtime binding 在后续 Run 中实际产生 attested receipt，并为 Golden Case 增加 Skill-specific evaluation verdict。
+这解决了 `DEFINED → real usage provenance` 的机器证据基础，但仍**没有自动证明 `EVALUATED`**。Skill-specific Golden/evaluation case 还需要独立 verdict，正例与 BLOCK 负例都必须可检查。
 
 ## 6. Skill 成熟度晋级规则
 
