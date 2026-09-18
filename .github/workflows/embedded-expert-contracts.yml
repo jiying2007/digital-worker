@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - 'README.md'
+      - 'SKILLS.md'
       - '研发中心AI数字员工研发流程规划.md'
       - 'docs/**'
       - 'domains/**'
@@ -23,6 +24,7 @@ on:
     branches: [main]
     paths:
       - 'README.md'
+      - 'SKILLS.md'
       - '研发中心AI数字员工研发流程规划.md'
       - 'docs/**'
       - 'domains/**'
@@ -59,6 +61,8 @@ jobs:
         run: python -m pip install --disable-pip-version-check 'PyYAML==6.0.3' 'jsonschema==4.26.0'
       - name: Validate repository layout
         run: python scripts/validate_repo_layout.py
+      - name: Validate root SKILLS review index
+        run: python scripts/validate_skills_overview.py
       - name: Validate provider-neutral architecture
         run: python scripts/validate_provider_neutral_architecture.py
       - name: Validate canonical Edge Foundation architecture

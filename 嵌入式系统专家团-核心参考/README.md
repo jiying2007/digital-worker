@@ -13,6 +13,7 @@
 - [评审总览与阅读路径](00-评审导览/01%20评审总览与阅读路径.md)：架构委员会、Embedded 专家、Verification/Review、管理/生产化决策的分角色阅读路径；
 - [架构到证据追踪矩阵](00-评审导览/02%20架构到证据追踪矩阵.md)：Domain → Expert → Capability → Skill → Runtime → Evidence → Assurance → Productization 的纵向追踪；
 - [端到端评审检查表](06-治理与评审/07%20端到端评审检查表.md)：从架构边界到 Linux/BSP、MCU/RTOS、Driver、Evidence、Security、Productionization 的系统检查项；
+- [仓库根 SKILLS](../SKILLS.md)：跨目录的 Skill 架构、规划、评测与成熟度总入口；
 - [Skill 规划清单与定义规范](05-工程交付/04%20Skill规划清单与定义规范.md)：当前 23 个 canonical Skill、定义模板、候选规划池和新增条件；
 - [Skill 生命周期、成熟度与准入](05-工程交付/05%20Skill生命周期成熟度与准入.md)：Skill 不是“文件存在即成熟”，而要经过定义、评测、真实 Pilot、复用与治理；
 - [Skill 评审成熟度台账](05-工程交付/06%20Skill评审成熟度台账.md)：逐个 Skill 区分 Definition、Golden Case、真实使用归因、Portability 与下一晋级条件；

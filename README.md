@@ -41,6 +41,7 @@ Product Readiness 只描述具体产品证据轨；它与 cross-repo Terminal Ma
 - [Edge Foundation Domain](domains/edge-foundation/domain.yaml)：三 Domain Expert、Coordination、Execution、Assurance 与 Product readiness 边界；
 - [Canonical Routing](domains/edge-foundation/routing.yaml)：14 个任务类型到 Expert / Capability / Assurance 的正式路由；
 - [Runtime Policy](domains/edge-foundation/runtime/task-modes.yaml)：具体 workflow mode 与 execution 约束；
+- [SKILLS — Skill Architecture, Plan & Review Index](SKILLS.md)：仓库级 reviewer-facing Skill 总入口，覆盖 23 个 canonical Skill、candidate、生命周期与证据成熟度；
 - [Skill Registry](domains/edge-foundation/skills.yaml)：23 个 target Skill 的 canonical ownership 与物理位置；
 - [Skill 规划清单与定义规范](嵌入式系统专家团-核心参考/05-工程交付/04%20Skill规划清单与定义规范.md)：reviewer-facing Skill taxonomy、定义模板、候选规划池与新增/拆分规则；
 - [Skill 评审成熟度台账](嵌入式系统专家团-核心参考/05-工程交付/06%20Skill评审成熟度台账.md)：逐 Skill 区分 DEFINED / evaluation / real usage / portability，不把文档完整度冒充工程成熟度；

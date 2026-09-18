@@ -18,6 +18,7 @@ def require(condition: bool, message: str) -> None:
 def main() -> None:
     required_files = [
         ROOT / "README.md",
+        ROOT / "SKILLS.md",
         EDGE / "domain.yaml",
         EDGE / "coordination.yaml",
         EDGE / "routing.yaml",
@@ -30,6 +31,7 @@ def main() -> None:
         EDGE / "pilot/pilot-plan.yaml",
         EDGE / "knowledge/registry.yaml",
         EDGE / "evaluation/golden-cases.yaml",
+        EDGE / "evaluation/skill-evaluation-plan.yaml",
         EDGE / "assurance/verification.yaml",
         EDGE / "assurance/review.yaml",
         CORE / "README.md",
@@ -47,8 +49,11 @@ def main() -> None:
     require(domain["product_readiness"]["controls_routing_authority"] is False, "product readiness must be decoupled from routing")
 
     root_readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    skills_overview = (ROOT / "SKILLS.md").read_text(encoding="utf-8")
     for marker in ["Edge Foundation", "canonical", "Product readiness"]:
         require(marker.lower() in root_readme.lower(), f"root README missing terminal marker: {marker}")
+    require("SKILLS.md" in root_readme, "root README must link the Skill review index")
+    require("23 个 canonical Skill" in skills_overview and "仍统一保持 DEFINED" in skills_overview, "root SKILLS review baseline drift")
 
     require(len(list((EDGE / "skills").glob("*/SKILL.md"))) == 23, "target Skill tree must contain exactly 23 current Skill contracts")
     require(len(list((EDGE / "experts/embedded-system/capabilities").glob("*.yaml"))) == 5, "Embedded System Expert must contain exactly five current Capability contracts")
