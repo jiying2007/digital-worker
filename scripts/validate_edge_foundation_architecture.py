@@ -53,7 +53,7 @@ def main() -> None:
     assets = domain["target_assets"]
     require(assets["ownership_authority"] == "canonical" and assets["execution_surface"] == "canonical", "target assets must be canonical")
     require(assets["legacy_compatibility_removed"] is True, "target assets must not depend on legacy compatibility")
-    for key in ["skill_registry", "gate_policy", "evaluation_cases", "knowledge_registry", "pilot_runtime", "pilot_assets", "schema_root", "template_root"]:
+    for key in ["skill_registry", "gate_policy", "evaluation_cases", "skill_evaluation_plan", "knowledge_registry", "pilot_runtime", "pilot_assets", "schema_root", "template_root"]:
         require(assets.get(key), f"target asset pointer missing: {key}")
 
     readiness = domain["product_readiness"]
@@ -64,7 +64,7 @@ def main() -> None:
     target_files = [
         EDGE / "domain.yaml", EDGE / "coordination.yaml", EDGE / "routing.yaml", EDGE / "gate-policy.yaml",
         EDGE / "skills.yaml", EDGE / "assurance/verification.yaml", EDGE / "assurance/review.yaml",
-        EDGE / "evaluation/golden-cases.yaml",
+        EDGE / "evaluation/golden-cases.yaml", EDGE / "evaluation/skill-evaluation-plan.yaml",
         *sorted((EDGE / "experts/embedded-system/capabilities").glob("*.yaml")),
     ]
     for path in target_files:
