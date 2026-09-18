@@ -42,6 +42,9 @@ Product Readiness 只描述具体产品证据轨；它与 cross-repo Terminal Ma
 - [Canonical Routing](domains/edge-foundation/routing.yaml)：14 个任务类型到 Expert / Capability / Assurance 的正式路由；
 - [Runtime Policy](domains/edge-foundation/runtime/task-modes.yaml)：具体 workflow mode 与 execution 约束；
 - [Skill Registry](domains/edge-foundation/skills.yaml)：23 个 target Skill 的 canonical ownership 与物理位置；
+- [Skill 规划清单与定义规范](嵌入式系统专家团-核心参考/05-工程交付/04%20Skill规划清单与定义规范.md)：reviewer-facing Skill taxonomy、定义模板、候选规划池与新增/拆分规则；
+- [Skill 评审成熟度台账](嵌入式系统专家团-核心参考/05-工程交付/06%20Skill评审成熟度台账.md)：逐 Skill 区分 DEFINED / evaluation / real usage / portability，不把文档完整度冒充工程成熟度；
+- [Skill Invocation Receipt Contract](schemas/skill-invocation-receipt.v1.schema.json)：Runtime/evaluation-owned Skill usage provenance，可由 Pilot 校验并冻结进 evidence bundle；
 - [Golden Cases](domains/edge-foundation/evaluation/golden-cases.yaml)：12 个目标评测案例；
 - [Knowledge Registry](domains/edge-foundation/knowledge/registry.yaml)：本地 bootstrap 知识入口，Source of Truth 仍留在原处；
 - `scripts/embedded_pilot.py` / `scripts/edge_pilot.py`：canonical Pilot CLI；
