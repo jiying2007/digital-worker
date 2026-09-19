@@ -1,0 +1,29 @@
+{
+  "schema": "digital-worker-r2-frozen-adk-release-lock/v1",
+  "status": "immutable-release",
+  "scope": "runtime-r2-freeze-only",
+  "repository": "jiying2007/agent-dev-kit",
+  "version": "7.0.4",
+  "tag": "v7.0.4",
+  "commit": "1d6c28e89eb98a4af5ac978707730783f0c84437",
+  "tree": "c5b8fa7b11a81597ac2c7cd6fb44d7abf9605137",
+  "manifest_blob": "a5e5963545318c4a4498cda0d49d10f08c5f6412",
+  "artifact_sha256": "497e44ec83d2506c8721019aeca979965127b481203f33387806c51c0d1aff68",
+  "release": {
+    "id": 392045027,
+    "immutable": true,
+    "artifact_id": 574643409,
+    "artifact_name": "agent-dev-kit-7.0.4.tar.gz",
+    "release_contract_asset_sha256": "ec8e6463c045affc486c6102ab7e58a533557513df211884e9b4c81253325a20"
+  },
+  "promotion": {
+    "workflow_run_id": 35439578246,
+    "issued_at": "2026-09-19T11:18:10.294335Z",
+    "release_eligible": true
+  },
+  "boundary": {
+    "generic_cross_repo_provider_contract_is_not_r2_release_authority": true,
+    "release_identity_must_not_follow_agent_dev_kit_main": true,
+    "provider_execution_authorized": false
+  }
+}
