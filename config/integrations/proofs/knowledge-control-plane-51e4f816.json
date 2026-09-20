@@ -1,0 +1,444 @@
+{
+  "schema": "digital-worker-private-provider-git-proof/v1",
+  "status": "captured-from-github-git-api",
+  "purpose": "offline verification of a private provider contract without cross-repository runtime credentials",
+  "repository": "jiying2007/knowledge-hub",
+  "visibility": "private",
+  "commit": "51e4f8166657d9d082f523335d350d0e8c2890a9",
+  "contract_path": "registry/integrations/digital-worker.json",
+  "contract_version": "1.2",
+  "contract_canonical_sha256": "7e67ff9f19ef8a1bc627e589d888fcf8370297c7ceafa26e8d65d9d0630c3d11",
+  "contract_blob_sha": "e4d67e7704a353beb723d211ad7aa2770d646abe",
+  "contract_text": "{\n  \"schema_version\": 2,\n  \"contract_version\": \"1.2\",\n  \"status\": \"qualified-provider-adoption-candidate\",\n  \"implementation_status\": \"qualified\",\n  \"adoption_status\": \"candidate\",\n  \"consumer\": \"digital-worker\",\n  \"provider\": \"knowledge-hub\",\n  \"role\": \"knowledge-control-plane\",\n  \"ssot\": {\n    \"digital_worker\": [\n      \"work_item\",\n      \"expert_routing\",\n      \"gate\",\n      \"technical_decision\",\n      \"engineering_handoff\",\n      \"verification\",\n      \"review\"\n    ],\n    \"knowledge_hub\": [\n      \"knowledge_registry\",\n      \"knowledge_lifecycle\",\n      \"knowledge_context\",\n      \"knowledge_proposal_review\"\n    ],\n    \"source_systems\": [\n      \"source_code\",\n      \"build_artifact\",\n      \"device\",\n      \"ci_hil_evidence\"\n    ]\n  },\n  \"read_surfaces\": {\n    \"context\": \"tools/knowledge-context.sh\",\n    \"evidence_pack\": \"tools/knowledge-evidence-pack.sh\",\n    \"action_check\": \"tools/knowledge-action-check.sh\"\n  },\n  \"write_surfaces\": {\n    \"proposal_route\": \"tools/knowledge-proposal-route.sh\"\n  },\n  \"identity\": {\n    \"required_inputs\": [\n      \"work_item_id\",\n      \"run_id\",\n      \"scope_ref\"\n    ],\n    \"optional_context\": [\n      \"principal_id\",\n      \"organization_id\",\n      \"groups\",\n      \"delegated_by\",\n      \"purpose\",\n      \"traceparent\"\n    ],\n    \"returned_fields\": [\n      \"source_fingerprint\",\n      \"knowledge_ids\",\n      \"status\",\n      \"provenance\",\n      \"acl_state\"\n    ]\n  },\n  \"failure_semantics\": {\n    \"missing_required_source\": \"BLOCKED\",\n    \"conflicting_authority\": \"NEEDS_REVIEW\",\n    \"provisional_only\": \"NEEDS_REVIEW\",\n    \"provider_unavailable\": \"BLOCKED\",\n    \"principal_acl_denied\": \"BLOCKED\",\n    \"untrusted_instruction\": \"DATA_ONLY\"\n  },\n  \"write_policy\": {\n    \"direct_active_mutation\": false,\n    \"knowledge_harvest_must_route_as_proposal\": true,\n    \"owner_promotion_required\": true\n  },\n  \"runtime_contract\": {\n    \"phase\": \"P4-P9\",\n    \"provider_entrypoint\": \"tools/runtime/knowledge-digital-worker-interop.sh\",\n    \"platform_entrypoint\": \"tools/runtime/knowledge-platform-v5.sh\",\n    \"operations\": [\n      \"readiness\",\n      \"handshake\",\n      \"handoff\"\n    ],\n    \"required_provider_capabilities\": [\n      \"knowledge.search\",\n      \"knowledge.context\",\n      \"knowledge.evidence-pack\",\n      \"knowledge.action-check\",\n      \"a2a.preflight\",\n      \"execution.receipt.write\"\n    ],\n    \"protocols\": {\n      \"mcp\": \"2026-07-28\",\n      \"a2a\": \"1.0.0\"\n    },\n    \"mcp_native_profile\": \"stateless-2026-07-28\",\n    \"a2a_role\": \"provider-card-and-preflight-only\",\n    \"network_required\": false,\n    \"task_execution\": false\n  },\n  \"handoff_contract\": {\n    \"schema_version\": \"knowledge-hub.agent-handoff.v1\",\n    \"required_identity\": [\n      \"work_item_id\",\n      \"run_id\",\n      \"scope_ref\"\n    ],\n    \"task_binding\": \"sha256-only\",\n    \"task_echoed\": false,\n    \"execution_receipt_correlation\": \"optional-but-verified-if-present\",\n    \"execution_receipt_agent_binding\": \"must-match-from-agent-if-present\",\n    \"scope_enforcement\": \"from-and-target-agent-knowledge-scopes\",\n    \"principal_acl_enforcement\": \"p6-pre-ranking\",\n    \"trace_propagation\": \"w3c-traceparent-optional\",\n    \"consumer_work_item_ssot\": true,\n    \"canonical_write_permitted\": false,\n    \"handoff_executes_task\": false\n  },\n  \"compatibility_intelligence\": {\n    \"owner\": \"knowledge-hub\",\n    \"registry\": \"registry/compatibility-embedded-v0.json\",\n    \"digital_worker_access\": \"reference-only\"\n  },\n  \"provider_lock_policy\": \"integration may be selected without freezing the architecture provider choice\",\n  \"source_of_truth_policy\": \"stays-at-source\"\n}\n",
+  "commit_signature": {
+    "verified_by_github": true,
+    "reason": "valid",
+    "verified_at": "2026-09-15T14:11:48Z",
+    "signer_key_fingerprint": "968479A1AFF927E37D1A566BB5690EEEBB952194",
+    "trust_key_path": "config/integrations/trust/github-web-flow.gpg.asc",
+    "payload": "tree 5a4ac11ca9e9106cc97640fc675c864421bbd796\nparent a286df5516bf0d81a7fe43527b89800b4bc6e691\nauthor jiying2007 <33591504+jiying2007@users.noreply.github.com> 1789481507 +0800\ncommitter GitHub <noreply@github.com> 1789481507 +0800\n\nAdd read-only Operator discovery executor (#80)",
+    "signature": "-----BEGIN PGP SIGNATURE-----\n\nwsFcBAABCAAQBQJqqVIjCRC1aQ7uu5UhlAAAMFsQACq4xUEsMLQHwOvdHWazYY+n\nh0P3ZZij2C7Gm4+8kJsOGKhcEdbc4cSREUu2SVmenuUHVg4ghjteChv6xg59Cuuc\nWgc9WI57mmP8a04ojQXOH4i8poCCBjk8/z7hkFIVW7WV19lBCvUPg6O27Bm7uXyn\n+LmVw3LOvzv2+BPfWmgyL4UU0yhoIVac1rwb/AlW5sLIhUh2dxfAoASdi9DJ1WUt\nLF3zRca4AtKbwiBK7naIej7Urc4eY+Q5U+2exmOX44aUEPsYfnyYeKezRfoCTWjA\nmChtrBd273S+EPgCk7jCWhI+IHkxnGJoOD8E0G18kMsFCzAVshIFt4/8sTcckDV5\ncNrS98Ai0iQeDiY2UmYK0AseqSFVa4cIxdaCkh8HkNu9CsAYzfsEQa2fcXNd/uC6\n0e+xcnxmnbeiRC7160XIeat/GB11bCG4JXDVm7I08JG630knGI/0FYefiQMOyVsj\nqqNcODCZXilnnMURY+w8hgUoF5GYPt1XGiGetZ6MUIk0sxhWAeUVgBGYcSa0pj1b\ndRgnVr1XyCE3XDe+IP1+Rwdzvp7fSZfZldJzv3QG3aWJaOTVTg5P0sqUmD18FwuW\ngQ8E+LdhvTQwFlQtuMi7m8irxWBc7ECqE/XG5trQMBGBNZcAu1cTDjlyMKTp0Fyw\n+YJ6i0XHcPtQn8qtjqQa\n=qNJ7\n-----END PGP SIGNATURE-----\n"
+  },
+  "trees": [
+    {
+      "path_prefix": "",
+      "sha": "5a4ac11ca9e9106cc97640fc675c864421bbd796",
+      "entries": [
+        {
+          "path": ".github",
+          "mode": "040000",
+          "type": "tree",
+          "sha": "038f6cac60cee05dd92bc2d15067ccf05795f590"
+        },
+        {
+          "path": ".gitignore",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "798c0b4742effa5b298a79251b4feb748eb259cb"
+        },
+        {
+          "path": "AGENTS.md",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "5b9c5faf9e9223415c267c1fa9d32b30b7994d8d"
+        },
+        {
+          "path": "CONTRIBUTING.md",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "f4addd014ee66763dc37c99c62e69c38f6b6016a"
+        },
+        {
+          "path": "README.md",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "5648d3938774342bc19a9201847770f104570c01"
+        },
+        {
+          "path": "SECURITY.md",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "2a895889c0cb3afbacd6c33ceecf81eacb2fbfd6"
+        },
+        {
+          "path": "artifacts",
+          "mode": "040000",
+          "type": "tree",
+          "sha": "b09be74b14411f6cd846430ee6ed6208453fc78d"
+        },
+        {
+          "path": "docs",
+          "mode": "040000",
+          "type": "tree",
+          "sha": "d08adc582a5281551fd16ba97c52b59bac64ee98"
+        },
+        {
+          "path": "domains",
+          "mode": "040000",
+          "type": "tree",
+          "sha": "c0e1223ff7546bebcce2f5867c07adbfd39a913f"
+        },
+        {
+          "path": "governance",
+          "mode": "040000",
+          "type": "tree",
+          "sha": "5428d87c0c9bb2664e96323fc2e1ada9564f446d"
+        },
+        {
+          "path": "inbox",
+          "mode": "040000",
+          "type": "tree",
+          "sha": "c974db9a0ed79df1a2dc0aefceb8b02da5a0db67"
+        },
+        {
+          "path": "indexes",
+          "mode": "040000",
+          "type": "tree",
+          "sha": "531fedb69a7720b6ea8c89b7550b55cf2eefb1fe"
+        },
+        {
+          "path": "issues",
+          "mode": "040000",
+          "type": "tree",
+          "sha": "07cb563e7fa8377c94e06d7a52a9e13bf1ecd7d8"
+        },
+        {
+          "path": "notes",
+          "mode": "040000",
+          "type": "tree",
+          "sha": "b3d8e7a456217b0c7cb1d597e32b5187424560b1"
+        },
+        {
+          "path": "projects",
+          "mode": "040000",
+          "type": "tree",
+          "sha": "31fc8918702ac062501b4b9a13c8b9fbfe869671"
+        },
+        {
+          "path": "pyproject.toml",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "63ed9fed2777576be9df5f6efeacb239ec38a7cf"
+        },
+        {
+          "path": "registry",
+          "mode": "040000",
+          "type": "tree",
+          "sha": "33afa1c60ab3fd31321e4380e61142448a1d56c1"
+        },
+        {
+          "path": "requirements-dev.lock",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "aa178c92e8c4caf0be712d56745c3b4fb8a04d76"
+        },
+        {
+          "path": "requirements-dev.txt",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "e35f8c235418e13d665feae5f7404ba2d40bbcb8"
+        },
+        {
+          "path": "requirements-runtime.lock",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "7f79af6770fc34bf805996037859d72aa1b5d493"
+        },
+        {
+          "path": "requirements-runtime.txt",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "d6ce54603cdc3ba59e4b054b571786384e44f53a"
+        },
+        {
+          "path": "schemas",
+          "mode": "040000",
+          "type": "tree",
+          "sha": "59ec641ce1f2107043c53473a4004d4172109cc7"
+        },
+        {
+          "path": "sources",
+          "mode": "040000",
+          "type": "tree",
+          "sha": "65fe94922b99232f2e97298501ac2e4ba2538388"
+        },
+        {
+          "path": "templates",
+          "mode": "040000",
+          "type": "tree",
+          "sha": "0f24d8110f6945ac262136ff277b56d83fa5c6bf"
+        },
+        {
+          "path": "tests",
+          "mode": "040000",
+          "type": "tree",
+          "sha": "7b38767a7210d6d2f3fc0f1c9c621133a010f307"
+        },
+        {
+          "path": "tools",
+          "mode": "040000",
+          "type": "tree",
+          "sha": "6b05ccaa3f9ba052e1930cac71ffda40c4419040"
+        }
+      ]
+    },
+    {
+      "path_prefix": "registry",
+      "sha": "33afa1c60ab3fd31321e4380e61142448a1d56c1",
+      "entries": [
+        {
+          "path": "agent-review-policy.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "b063311d16f49af37ad5c5799d4eecc488e3567e"
+        },
+        {
+          "path": "artifact-policy.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "19f5e4d43bbd5f6efa4f5cb4e87654f7ca7b186b"
+        },
+        {
+          "path": "authorizations.jsonl",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "42301575113feaab64818203cab2c3f741aa22f4"
+        },
+        {
+          "path": "automation-runs.jsonl",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "4c45d6cd282a0a7e4b640fe67338af0d6658c222"
+        },
+        {
+          "path": "body-coverage.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "26e760ccda5c4ef817ca342e3ffa265b1c1cde58"
+        },
+        {
+          "path": "branch-lifecycle.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "0c958fab36668abbe2bc311c73d80788e549586c"
+        },
+        {
+          "path": "command-surface.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "bc56006ccb2e2ac55931c46c200a549de824b6a0"
+        },
+        {
+          "path": "compatibility-embedded-v0.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "c20ac0c2d994090296049a210f55e96266cbab66"
+        },
+        {
+          "path": "components.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "41eaf5ecee38ecbbd92fcab8dbd07d2f45072a37"
+        },
+        {
+          "path": "decisions.jsonl",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "bfbadc24833e79f5ed1b3be3afa809ef8d9a8f57"
+        },
+        {
+          "path": "engineering-budgets.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "ed3e4687d656641b0063cadc0235c5b35877e990"
+        },
+        {
+          "path": "integrations",
+          "mode": "040000",
+          "type": "tree",
+          "sha": "787bb310a49c1a0378d41eceb07266f02c056015"
+        },
+        {
+          "path": "items.jsonl",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "b4355781bd9e7f8fb4e016de7af70577b980ac87"
+        },
+        {
+          "path": "knowledge-platform-p5-p10.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "447dbf7add8a16ad023bfe28c378f84e03453450"
+        },
+        {
+          "path": "knowledge-runtime-p4.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "e3c9b8b18f6253a063f291b98bbda5a5fc8a0272"
+        },
+        {
+          "path": "knowledge-runtime-v3.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "249e6fbbe0b974d3ba37f3118e621b57e46956b3"
+        },
+        {
+          "path": "legacy-artifact-terminal-forms.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "4c2414b32e46e6308f6d05c84676c0ceec826199"
+        },
+        {
+          "path": "legacy-debt-burndown.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "36f39dc340f3d4d43dbd35436ccc1afcac79dd49"
+        },
+        {
+          "path": "lifecycle-events.jsonl",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "2ab93ba66feda1e523df05c6452e47443aa8908b"
+        },
+        {
+          "path": "maintenance-runs.jsonl",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "e161258c267ff866c01aac7b305dd5399d056f59"
+        },
+        {
+          "path": "mcp-conformance-policy.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "68d0f299eab32be661360c002a72f364ec1c406b"
+        },
+        {
+          "path": "owner-routing.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "e56d3020331b1210f7fa9490de895bdea3a8ae32"
+        },
+        {
+          "path": "owners.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "46931383885a1b5d276896bc7e969284696de542"
+        },
+        {
+          "path": "product-policy.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "0214a41a62980c1b4c8b8d37ef4e5d0937c4d053"
+        },
+        {
+          "path": "project-groups.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "303253c75b90cae2b0e620e76225407de4791f8a"
+        },
+        {
+          "path": "project-routes.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "6e85e5ed862faabc7033ad7772f95ef68452e637"
+        },
+        {
+          "path": "projects.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "edfccf93ae1d70c070faf1e6b19c39f709374995"
+        },
+        {
+          "path": "promotions.jsonl",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "b6ad0328a3a1559fee1f2f9ac2cba33e85801f91"
+        },
+        {
+          "path": "repositories.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "a0bfe3b5fdf2ceac99dca38d1c098dc93a803441"
+        },
+        {
+          "path": "retention.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "1c7418fcb072662ab6b54cea7e0ec892af617820"
+        },
+        {
+          "path": "retired-process-ledger.jsonl",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "247facdc97208004fb26581cc5d427bc5a51063e"
+        },
+        {
+          "path": "retired-sources.jsonl",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "e0fb64b4b6ecdf28a981550b49869119829bf1fc"
+        },
+        {
+          "path": "schema.md",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "220ac16d9dfef5de9e9f4a2dbe81ab3dabe9b0bf"
+        },
+        {
+          "path": "sources.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "b474e4d8c61cf08a433c91090ef69ba0e2cf3563"
+        },
+        {
+          "path": "terminal-closure.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "d6a7f4e1859f16e6dd7301b74f756298b87d19a9"
+        },
+        {
+          "path": "topics.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "1fdb6c99f9e77a556cc58862884a50046840b8d3"
+        },
+        {
+          "path": "workspaces.example.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "039c5d741f8a63b6727e395e5f5ceeeed79b8a87"
+        }
+      ]
+    },
+    {
+      "path_prefix": "registry/integrations",
+      "sha": "787bb310a49c1a0378d41eceb07266f02c056015",
+      "entries": [
+        {
+          "path": "README.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "bfcc34917c0bbabf061f1b2205eb909bf0cb9bbd"
+        },
+        {
+          "path": "digital-worker.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "e4d67e7704a353beb723d211ad7aa2770d646abe"
+        },
+        {
+          "path": "runtime-consumer-contract.json",
+          "mode": "100644",
+          "type": "blob",
+          "sha": "9067f80df68a81238771a401c0cf02252f9db3b8"
+        }
+      ]
+    }
+  ],
+  "boundary": {
+    "evidence_snapshot_only": true,
+    "source_of_truth_stays_at_source": true,
+    "provider_network_access_required_at_verification_time": false,
+    "provider_mutation_permitted": false
+  }
+}
