@@ -196,21 +196,23 @@ def verify_runtime_practice_eval(entry: dict, destination: Path, approved_bindin
             fail(f"runtime_practice_eval: portability certifier regression marker missing: {marker}")
 
     qualification = json.loads(paths["qualification"].read_text(encoding="utf-8"))
+    if qualification.get("schema") != "llm-agent-long-term-asset-qualification/v2":
+        fail("runtime_practice_eval: long-term qualification schema drift")
     requirements = {
         item.get("id"): item
-        for item in qualification.get("blocking_requirements", [])
+        for item in qualification.get("qualification_requirements", [])
         if isinstance(item, dict) and isinstance(item.get("id"), str)
     }
     lta02 = requirements.get("LTA-02")
     if not isinstance(lta02, dict):
         fail("runtime_practice_eval: LTA-02 qualification requirement missing")
     expected_lta02 = {
-        "status": "blocked_external_evidence",
+        "status": "evidence_collection_in_progress",
         "implementation_status": "certifier-ready",
         "required_evidence_level": evidence_level,
         "certifier": "tools.control_plane.runtime_portability",
         "default_evidence_path": "reports/long-term-assets/runtime-portability-current.json",
-        "remaining_external_blocker": "real-claude-runtime-execution-receipt-and-same-frozen-task-R2-comparison-evidence",
+        "pending_evidence": "real-codex-and-claude-runtime-execution-receipts-and-same-frozen-task-R2-comparison-evidence",
     }
     for key, expected in expected_lta02.items():
         if lta02.get(key) != expected:
@@ -219,6 +221,14 @@ def verify_runtime_practice_eval(entry: dict, destination: Path, approved_bindin
         fail("runtime_practice_eval: LTA-02 must require at least two healthy runtime bindings")
     if lta02.get("r1_binding_conformance_is_terminal_evidence") is not False:
         fail("runtime_practice_eval: R1 binding conformance must remain non-terminal")
+    terminal = qualification.get("terminal")
+    if not isinstance(terminal, dict):
+        fail("runtime_practice_eval: long-term terminal projection missing")
+    if terminal.get("qualified") is not False or terminal.get("status") != "qualification_pending":
+        fail("runtime_practice_eval: long-term terminal qualification must remain pending")
+    pending = terminal.get("pending_requirements")
+    if not isinstance(pending, list) or "LTA-02" not in pending:
+        fail("runtime_practice_eval: LTA-02 must remain a terminal pending requirement")
 
     cli_text = paths["cli"].read_text(encoding="utf-8")
     if '"runtime-portability": "tools.control_plane.runtime_portability"' not in cli_text:
@@ -232,7 +242,7 @@ def verify_runtime_practice_eval(entry: dict, destination: Path, approved_bindin
         "cli_contract": cli_rel,
         "evidence_level": evidence_level,
         "second_runtime_candidate_status": second_runtime_status,
-        "remaining_external_blocker": lta02["remaining_external_blocker"],
+        "pending_evidence": lta02["pending_evidence"],
     }
 
 
