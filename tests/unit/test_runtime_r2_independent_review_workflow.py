@@ -16,8 +16,8 @@ class RuntimeR2IndependentReviewWorkflowTests(unittest.TestCase):
         self.assertIn("workflow_dispatch:", self.text)
         self.assertNotIn("pull_request:", self.text)
         self.assertNotIn("\n  push:", self.text)
-        self.assertIn("actions: read", self.text)
         self.assertIn("contents: read", self.text)
+        self.assertNotIn("actions: read", self.text)
         self.assertIn('test "$DECISION" = APPROVE_R2_REVIEW', self.text)
         for forbidden in (
             "CODEX_RUNTIME_CREDENTIAL",
@@ -27,26 +27,33 @@ class RuntimeR2IndependentReviewWorkflowTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, self.text)
 
-    def test_review_requires_successful_domain_verification_subject(self) -> None:
+    def test_review_consumes_tracked_local_verification_receipt(self) -> None:
         for token in (
-            "Runtime R2 Domain Verification",
+            "verification_report_path",
+            "reports/runtime-r2/verification/",
             "digital-worker-runtime-r2-domain-verification/v1",
             "value['status']=='pass'",
+            "value['verification_execution_venue']=='local-terminal'",
+            "value['runtime_home_mode']=='shared-user-home'",
+            "value['credential_state_in_evidence'] is False",
+            "value['github_provider_credentials_required'] is False",
             "value['independent_review_status']=='pending'",
             "value['verification_pass_claimed_by_runtime'] is False",
             "provider_execution_actors",
-            "provider_workflow_runs",
+            "provider_execution_evidence",
+            "verification_tool_commit",
         ):
             self.assertIn(token, self.text)
-        self.assertGreaterEqual(self.text.count("run-id:"), 1)
+        self.assertNotIn("verification_run_id", self.text)
+        self.assertNotIn("Runtime R2 Domain Verification", self.text)
+        self.assertNotIn("actions/download-artifact", self.text)
 
-    def test_reviewer_must_be_distinct_from_both_provider_executors_and_verifier(self) -> None:
+    def test_reviewer_must_be_distinct_from_provider_executors_and_local_verifier(self) -> None:
         self.assertIn("reviewer not in set(actors.values())", self.text)
         self.assertIn("reviewer!=verifier", self.text)
         self.assertIn("review_actor_distinct_from_all_provider_executors", self.text)
         self.assertIn("review_actor_distinct_from_verifier", self.text)
         self.assertIn("BLOCKED_INDEPENDENT_REVIEW_REQUIRES_HUMAN_ACTOR", self.text)
-        self.assertNotIn("provider-execution-authorization", self.text)
 
     def test_review_report_matches_certifier_shape_but_remains_non_terminal(self) -> None:
         for token in (
@@ -54,13 +61,19 @@ class RuntimeR2IndependentReviewWorkflowTests(unittest.TestCase):
             "'status':'pass'",
             "'independent':True",
             "'execution_receipts':verification['execution_receipts']",
+            "'provider_execution_evidence':verification['provider_execution_evidence']",
             "'standard_id':verification['standard_id']",
             "'source_commit':verification['source_commit']",
+            "'verification_tool_commit':verification['verification_tool_commit']",
+            "'runtime_home_mode':'shared-user-home'",
+            "'credential_state_in_evidence':False",
+            "'verification_report_ref':os.environ['VERIFICATION_REPORT_PATH']",
             "'r2_qualified':False",
             "'release_ready_claimed':False",
             "'next_gate':'root-runtime-portability-certifier'",
         ):
             self.assertIn(token, self.text)
+        self.assertNotIn("provider_workflow_runs", self.text)
         self.assertNotIn("reports/long-term-assets/runtime-portability-current.json", self.text)
 
     def test_all_actions_are_full_sha_pinned(self) -> None:

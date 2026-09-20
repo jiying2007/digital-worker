@@ -4,7 +4,6 @@ on:
   pull_request:
     paths:
       - '.github/workflows/runtime-r2-freeze.yml'
-      - '.github/workflows/runtime-r2-domain-verification.yml'
       - '.github/workflows/runtime-r2-independent-review.yml'
       - '.github/workflows/runtime-r2-harness-contract.yml'
       - 'scripts/runtime_r2_evidence.py'
@@ -12,7 +11,7 @@ on:
       - 'config/integrations/cross-repo-lock.json'
       - 'tests/unit/test_runtime_r2_evidence.py'
       - 'scripts/runtime_r2_intake.py'
-      - 'scripts/runtime_r2_assemble_intake.py'
+      - 'scripts/runtime_r2_local_verify.py'
       - 'reports/runtime-r2/freeze/**'
       - 'config/integrations/provider-capability-matrix.yaml'
       - 'config/integrations/runtime-execution-profiles.json'
@@ -20,15 +19,13 @@ on:
       - 'tests/unit/test_runtime_execution_adapter.py'
       - 'tests/unit/test_runtime_execution_capability_projection.py'
       - 'tests/unit/test_runtime_r2_execution_boundary.py'
+      - 'tests/unit/test_runtime_r2_local_flow.py'
       - 'tests/unit/test_runtime_r2_freeze_ledger.py'
-      - 'tests/unit/test_runtime_r2_assemble_intake.py'
-      - 'tests/unit/test_runtime_r2_domain_verification_workflow.py'
       - 'tests/unit/test_runtime_r2_independent_review_workflow.py'
   push:
     branches: [main]
     paths:
       - '.github/workflows/runtime-r2-freeze.yml'
-      - '.github/workflows/runtime-r2-domain-verification.yml'
       - '.github/workflows/runtime-r2-independent-review.yml'
       - '.github/workflows/runtime-r2-harness-contract.yml'
       - 'scripts/runtime_r2_evidence.py'
@@ -36,7 +33,7 @@ on:
       - 'config/integrations/cross-repo-lock.json'
       - 'tests/unit/test_runtime_r2_evidence.py'
       - 'scripts/runtime_r2_intake.py'
-      - 'scripts/runtime_r2_assemble_intake.py'
+      - 'scripts/runtime_r2_local_verify.py'
       - 'reports/runtime-r2/freeze/**'
       - 'config/integrations/provider-capability-matrix.yaml'
       - 'config/integrations/runtime-execution-profiles.json'
@@ -44,9 +41,8 @@ on:
       - 'tests/unit/test_runtime_execution_adapter.py'
       - 'tests/unit/test_runtime_execution_capability_projection.py'
       - 'tests/unit/test_runtime_r2_execution_boundary.py'
+      - 'tests/unit/test_runtime_r2_local_flow.py'
       - 'tests/unit/test_runtime_r2_freeze_ledger.py'
-      - 'tests/unit/test_runtime_r2_assemble_intake.py'
-      - 'tests/unit/test_runtime_r2_domain_verification_workflow.py'
       - 'tests/unit/test_runtime_r2_independent_review_workflow.py'
 
 permissions:
@@ -75,12 +71,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m py_compile scripts/runtime_r2_evidence.py scripts/runtime_r2_intake.py scripts/runtime_r2_assemble_intake.py
+          python -m py_compile scripts/runtime_r2_evidence.py scripts/runtime_r2_intake.py scripts/runtime_r2_local_verify.py
           python - <<'PY'
           import pathlib, yaml
           for name in (
               'runtime-r2-freeze.yml',
-              'runtime-r2-domain-verification.yml',
               'runtime-r2-independent-review.yml',
               'runtime-r2-harness-contract.yml',
           ):
@@ -98,9 +93,7 @@ jobs:
         run: python -m unittest tests.unit.test_runtime_r2_execution_boundary -v
       - name: Validate retained real R2 freeze ledger boundary
         run: python -m unittest tests.unit.test_runtime_r2_freeze_ledger -v
-      - name: Validate deterministic tracked R2 intake assembly
-        run: python -m unittest tests.unit.test_runtime_r2_assemble_intake -v
-      - name: Validate attested independent R2 domain verification contract
-        run: python -m unittest tests.unit.test_runtime_r2_domain_verification_workflow -v
+      - name: Validate local R2 intake and domain verification flow
+        run: python -m unittest tests.unit.test_runtime_r2_local_flow -v
       - name: Validate fail-closed independent R2 review contract
         run: python -m unittest tests.unit.test_runtime_r2_independent_review_workflow -v

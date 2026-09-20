@@ -18,7 +18,7 @@ class WorkRunConsumerContractTests(unittest.TestCase):
     def test_codex_bootstrap_12_and_work_run_handoff_are_promoted(self) -> None:
         lock = json.loads(LOCK.read_text(encoding="utf-8"))
         codex = lock["runtime_bindings"]["codex"]
-        self.assertEqual(codex["commit"], "79acb193cef381b4c8b72f00e0af15f87e32765c")
+        self.assertEqual(codex["commit"], "c4a1fa995b281da909be10bfe5c41fe719ce2759")
         self.assertEqual(codex["contract_version"], "2.1")
         self.assertEqual(codex["session_bootstrap_contract_version"], "1.2")
         self.assertEqual(

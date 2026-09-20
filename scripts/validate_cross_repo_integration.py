@@ -46,7 +46,7 @@ def main() -> None:
     expected = {
         "knowledge_control_plane": ("jiying2007/knowledge-hub", "1.2"),
         "agent_asset_control_plane": ("jiying2007/agent-dev-kit", "2.0"),
-        "runtime_practice_eval": ("jiying2007/llm_agent", "1.3"),
+        "runtime_practice_eval": ("jiying2007/llm_agent", "1.5"),
     }
     for key, (repo, contract_version) in expected.items():
         provider = lock["providers"].get(key, {})
@@ -68,7 +68,7 @@ def main() -> None:
 
     runtime_eval = lock["providers"]["runtime_practice_eval"]
     require("R1_CODEX_CLAUDE" in runtime_eval.get("validation", ""), "llm_agent must project both R1 runtime bindings")
-    require("R2_POLICY" in runtime_eval.get("validation", ""), "llm_agent R2 portability policy must be explicitly promoted")
+    require("R2_LOCAL_TERMINAL_SHARED_USER_HOME_POLICY" in runtime_eval.get("validation", ""), "llm_agent shared-user-home R2 portability policy must be explicitly promoted")
     require("BLOCKER_PRESERVED" in runtime_eval.get("validation", ""), "llm_agent real-provider blocker must remain explicit")
 
     adk = lock["providers"]["agent_asset_control_plane"]

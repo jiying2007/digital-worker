@@ -100,6 +100,8 @@ jobs:
                       'codex':'scripts/runtime-r2-local.sh',
                       'claude-code':'control/scripts/runtime-r2-local.sh',
                   },
+                  'runtime_home_mode':'shared-user-home',
+                  'credential_state_in_evidence':False,
                   'github_provider_credentials_required':False,
                   'provider_credentials_must_not_enter_github':True,
               },
@@ -113,7 +115,7 @@ jobs:
               s.write('## R2 frozen campaign\n')
               s.write(f"- Digital Worker commit: `{campaign['digital_worker_commit']}`\n")
               s.write(f"- Frozen inputs SHA-256: `{campaign['frozen_inputs_sha256']}`\n")
-              s.write('- Provider execution remains unauthorized here. Run each exact runtime binding locally using its runtime-owned R2 adapter.\n')
+              s.write('- Provider execution remains unauthorized here. Run each exact runtime binding locally using its runtime-owned R2 adapter and the normal shared user runtime home.\n')
               s.write('- GitHub provider credentials are not required and must not be introduced for R2 execution.\n')
           PY
 
