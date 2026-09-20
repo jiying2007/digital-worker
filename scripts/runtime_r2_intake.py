@@ -117,7 +117,7 @@ def expected_tree_digest(native: Mapping[str, Any], runtime: str) -> str:
     return matches[0]
 
 
-def validate_freeze(root: Path, freeze_dir: Path) -> tuple[dict[str, Any], dict[str, Any], Path]:
+def validate_freeze(root: Path, freeze_dir: Path) -> tuple[dict[str, Any], dict[str, Any], Path, str]:
     freeze_dir = freeze_dir.resolve()
     campaign_path = freeze_dir / "campaign.json"
     plan_path = freeze_dir / "frozen-plan.json"
