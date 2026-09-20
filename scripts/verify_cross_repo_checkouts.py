@@ -236,50 +236,54 @@ def verify_runtime_practice_eval(entry: dict, destination: Path, approved_bindin
     }
 
 
+def verify_signed_provider(name: str, entry: dict) -> dict:
+    repo = entry["repository"]
+    commit = entry["commit"]
+    verification_mode = entry.get("verification_mode")
+    if verification_mode != "signed-git-object-proof":
+        fail(f"{name}: unsupported verification_mode: {verification_mode}")
+    proof_rel = entry.get("verification_proof")
+    trust_rel = entry.get("verification_trust_key")
+    if not isinstance(proof_rel, str) or not proof_rel or not isinstance(trust_rel, str) or not trust_rel:
+        fail(f"{name}: signed private-provider verification metadata is incomplete")
+    proof_path = ROOT / proof_rel
+    trust_path = ROOT / trust_rel
+    if not proof_path.is_file() or not trust_path.is_file():
+        fail(f"{name}: signed private-provider proof/trust key is missing")
+    try:
+        proof_result = verify_proof(
+            root=ROOT,
+            proof_path=proof_path,
+            expected_repository=repo,
+            expected_commit=commit,
+            expected_contract_path=entry["contract"],
+            expected_contract_version=str(entry["contract_version"]),
+            expected_contract_digest=entry["contract_canonical_sha256"],
+        )
+    except ProofError as exc:
+        fail(f"{name}: signed private-provider proof failed: {exc}")
+    return {
+        "name": name,
+        "repository": repo,
+        "commit": commit,
+        "contract": entry["contract"],
+        "contract_version": str(entry["contract_version"]),
+        "contract_canonical_sha256": entry["contract_canonical_sha256"],
+        "verification_mode": verification_mode,
+        "proof": proof_rel,
+        "proof_root_tree_sha": proof_result["root_tree_sha"],
+        "proof_contract_blob_sha": proof_result["contract_blob_sha"],
+        "signer_key_fingerprint": proof_result["signer_key_fingerprint"],
+        "provider_network_accessed": False,
+        "status": "PASS",
+    }
+
+
 def verify_assurance_binding(name: str, entry: dict, destination: Path, fetch: bool) -> dict:
     repo = entry["repository"]
     if repo != EXPECTED_REPOS[name]:
         fail(f"{name}: repository is not approved: {repo}")
     commit = entry["commit"]
-    verification_mode = entry.get("verification_mode")
-    if verification_mode == "signed-git-object-proof":
-        proof_rel = entry.get("verification_proof")
-        trust_rel = entry.get("verification_trust_key")
-        if not isinstance(proof_rel, str) or not proof_rel or not isinstance(trust_rel, str) or not trust_rel:
-            fail(f"{name}: signed private-provider verification metadata is incomplete")
-        proof_path = ROOT / proof_rel
-        trust_path = ROOT / trust_rel
-        if not proof_path.is_file() or not trust_path.is_file():
-            fail(f"{name}: signed private-provider proof/trust key is missing")
-        try:
-            proof_result = verify_proof(
-                root=ROOT,
-                proof_path=proof_path,
-                expected_repository=repo,
-                expected_commit=commit,
-                expected_contract_path=entry["contract"],
-                expected_contract_version=str(entry["contract_version"]),
-                expected_contract_digest=entry["contract_canonical_sha256"],
-            )
-        except ProofError as exc:
-            fail(f"{name}: signed private-provider proof failed: {exc}")
-        return {
-            "name": name,
-            "repository": repo,
-            "commit": commit,
-            "contract": entry["contract"],
-            "contract_version": str(entry["contract_version"]),
-            "contract_canonical_sha256": entry["contract_canonical_sha256"],
-            "verification_mode": verification_mode,
-            "proof": proof_rel,
-            "proof_root_tree_sha": proof_result["root_tree_sha"],
-            "proof_contract_blob_sha": proof_result["contract_blob_sha"],
-            "signer_key_fingerprint": proof_result["signer_key_fingerprint"],
-            "provider_network_accessed": False,
-            "status": "PASS",
-        }
-    if verification_mode not in (None, "live-checkout"):
-        fail(f"{name}: unsupported verification_mode: {verification_mode}")
     if fetch:
         checkout(repo, commit, destination)
         fetch_exact_tag(destination, entry["release_tag"])
@@ -348,6 +352,11 @@ def verify_one(
     if repo != expected_repo:
         fail(f"{name}: repository is not approved: {repo}")
     commit = entry["commit"]
+    verification_mode = entry.get("verification_mode")
+    if verification_mode == "signed-git-object-proof":
+        return verify_signed_provider(name, entry)
+    if verification_mode not in (None, "live-checkout"):
+        fail(f"{name}: unsupported verification_mode: {verification_mode}")
     if fetch:
         checkout(repo, commit, destination)
     if not destination.is_dir():
