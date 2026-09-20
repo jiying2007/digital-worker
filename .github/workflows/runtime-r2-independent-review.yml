@@ -72,6 +72,7 @@ jobs:
           assert value['comparison_id']=='R2-FEATURE-PCR02-OTA-001',value
           assert value['source_repository']=='jiying2007/digital-worker',value
           assert re.fullmatch(r'[0-9a-f]{40}',value['source_commit']),value
+          assert re.fullmatch(r'[0-9a-f]{40}',value['verification_tool_commit']),value
           assert value['verification_execution_venue']=='local-terminal',value
           assert value['github_provider_credentials_required'] is False,value
           assert value['independent_review_status']=='pending',value
@@ -113,6 +114,7 @@ jobs:
               'standard_id':verification['standard_id'],
               'source_repository':verification['source_repository'],
               'source_commit':verification['source_commit'],
+              'verification_tool_commit':verification['verification_tool_commit'],
               'execution_receipts':verification['execution_receipts'],
               'provider_execution_evidence':verification['provider_execution_evidence'],
               'independent':True,
