@@ -108,6 +108,7 @@ def verify_local_r2(
         "standard_id": "digital-worker-runtime-r2-host-verification/v2-local-terminal",
         "source_repository": "jiying2007/digital-worker",
         "source_commit": collection["digital_worker_commit"],
+        "verification_tool_commit": collection["verification_tool_commit"],
         "verification_execution_venue": "local-terminal",
         "github_provider_credentials_required": False,
         "provider_execution_actors": collection["provider_execution_actors"],
