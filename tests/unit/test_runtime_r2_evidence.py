@@ -11,8 +11,8 @@ ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = ROOT / "scripts" / "runtime_r2_evidence.py"
 BASE = "eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d"
 DW = "a" * 40
-CODEX_COMMIT = "d12e782b46430d6bfc828f24a41f94f871a7a19a"
-CLAUDE_COMMIT = "8cd87956507f9dbde0438c9135493c96f3b2d318"
+CODEX_COMMIT = "79acb193cef381b4c8b72f00e0af15f87e32765c"
+CLAUDE_COMMIT = "fba4551aa4a2abe5f74cff3c60e8318961b36add"
 ADK_VERSION = "7.0.4"
 ADK_COMMIT = "1d6c28e89eb98a4af5ac978707730783f0c84437"
 ADK_ARTIFACT_SHA256 = "497e44ec83d2506c8721019aeca979965127b481203f33387806c51c0d1aff68"
@@ -128,6 +128,8 @@ class RuntimeR2EvidenceTests(unittest.TestCase):
         self.assertEqual(plan["adk_release_identity"]["commit"], ADK_COMMIT)
         self.assertEqual(plan["adk_release_identity"]["version"], ADK_VERSION)
         self.assertEqual(plan["adk_release_identity"]["artifact_sha256"], ADK_ARTIFACT_SHA256)
+        self.assertEqual(plan["runtime_bindings"]["codex"]["commit"], CODEX_COMMIT)
+        self.assertEqual(plan["runtime_bindings"]["claude-code"]["commit"], CLAUDE_COMMIT)
         generic = json.loads((ROOT / "config/integrations/cross-repo-lock.json").read_text(encoding="utf-8"))
         self.assertEqual(generic["providers"]["agent_asset_control_plane"]["release_baseline"]["version"], "5.1.1")
         self.assertNotEqual(
