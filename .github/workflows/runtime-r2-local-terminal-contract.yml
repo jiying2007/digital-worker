@@ -68,6 +68,8 @@ jobs:
               '81c8890ef952104c629c99e11259da6f180ce7db',
               'e80116bf2c192b02b5b038120323ef4af4618fa6',
               '50e9b8d4d19d35d3315ba8400e87dfe851a749dd',
+              'c4a1fa995b281da909be10bfe5c41fe719ce2759',
+              'e6d2be534a85ac1208967774612f07b54c59a0b5',
           }
           assert bindings['codex']['commit'] not in retired
           assert bindings['claude-code']['commit'] not in retired
