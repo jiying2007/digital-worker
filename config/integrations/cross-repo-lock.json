@@ -59,7 +59,7 @@
     "codex": {
       "repository": "jiying2007/codex",
       "ref": "main",
-      "commit": "4a897459799a45d6d2b05af25026c3af6dfa596d",
+      "commit": "364277dc52fc0b18c4fc30168c8bb82878ad2204",
       "contract": "manifests/integrations/digital-worker-runtime-binding.json",
       "contract_version": "2.1",
       "contract_canonical_sha256": "73b297419fbea5e4bfd54ef846fe03d63e6797f00608718a8f9a8c5577ebd171",
@@ -77,7 +77,7 @@
     "claude-code": {
       "repository": "jiying2007/claude",
       "ref": "main",
-      "commit": "e0b016cf965bb2eadad07eb86264f971d5ca57e6",
+      "commit": "81c8890ef952104c629c99e11259da6f180ce7db",
       "contract": "manifests/integrations/digital-worker-runtime-binding.json",
       "contract_version": "1.0",
       "contract_canonical_sha256": "ac220eff715a512bc93913014f79ca5364be29a01359bd90e906c8184f44695f",
