@@ -134,7 +134,7 @@ def validate_freeze(root: Path, freeze_dir: Path) -> tuple[dict[str, Any], dict[
     require(isinstance(frozen, str) and SHA256.fullmatch(frozen) is not None, "freeze digest invalid")
     require(isinstance(dw_commit, str) and FULL_SHA.fullmatch(dw_commit) is not None, "Digital Worker commit invalid")
     require(isinstance(target_base, str) and FULL_SHA.fullmatch(target_base) is not None, "target base invalid")
-    require(git_head(root.resolve()) == dw_commit, "Digital Worker checkout HEAD does not match frozen campaign")
+    verification_tool_commit = git_head(root.resolve())
 
     controlled = plan.get("controlled_task")
     require(isinstance(controlled, dict), "frozen controlled_task missing")
@@ -153,7 +153,7 @@ def validate_freeze(root: Path, freeze_dir: Path) -> tuple[dict[str, Any], dict[
     require(runtime_execution.get("mode") == "runtime-owned-local-terminal", "freeze is not local-terminal R2")
     require(runtime_execution.get("github_provider_credentials_required") is False, "GitHub provider credentials must not be required")
     require(runtime_execution.get("provider_credentials_must_not_enter_github") is True, "provider credential boundary missing")
-    return campaign, plan, plan_path
+    return campaign, plan, plan_path, verification_tool_commit
 
 
 def choose_native(evidence_dir: Path, runtime: str) -> Path:
@@ -265,7 +265,7 @@ def intake(
 ) -> dict[str, Any]:
     root = root.resolve()
     out = out.resolve()
-    campaign, plan, frozen_plan = validate_freeze(root, freeze_dir)
+    campaign, plan, frozen_plan, verification_tool_commit = validate_freeze(root, freeze_dir)
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
@@ -297,6 +297,7 @@ def intake(
         "freeze_workflow_run_id": str(campaign.get("freeze_workflow_run_id") or ""),
         "frozen_inputs_sha256": campaign["frozen_inputs_sha256"],
         "digital_worker_commit": campaign["digital_worker_commit"],
+        "verification_tool_commit": verification_tool_commit,
         "target_base_commit": campaign["target_base_commit"],
         "execution_venue": "local-terminal",
         "github_provider_credentials_required": False,
