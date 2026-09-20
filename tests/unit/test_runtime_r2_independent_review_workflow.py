@@ -39,6 +39,7 @@ class RuntimeR2IndependentReviewWorkflowTests(unittest.TestCase):
             "value['verification_pass_claimed_by_runtime'] is False",
             "provider_execution_actors",
             "provider_execution_evidence",
+            "verification_tool_commit",
         ):
             self.assertIn(token, self.text)
         self.assertNotIn("verification_run_id", self.text)
@@ -61,6 +62,7 @@ class RuntimeR2IndependentReviewWorkflowTests(unittest.TestCase):
             "'provider_execution_evidence':verification['provider_execution_evidence']",
             "'standard_id':verification['standard_id']",
             "'source_commit':verification['source_commit']",
+            "'verification_tool_commit':verification['verification_tool_commit']",
             "'verification_report_ref':os.environ['VERIFICATION_REPORT_PATH']",
             "'r2_qualified':False",
             "'release_ready_claimed':False",
