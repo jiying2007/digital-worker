@@ -26,7 +26,6 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/runtime-r2-freeze.yml'
-      - '.github/workflows/runtime-r2-domain-verification.yml'
       - '.github/workflows/runtime-r2-independent-review.yml'
       - '.github/workflows/runtime-r2-harness-contract.yml'
       - 'scripts/runtime_r2_evidence.py'
@@ -34,7 +33,7 @@ on:
       - 'config/integrations/cross-repo-lock.json'
       - 'tests/unit/test_runtime_r2_evidence.py'
       - 'scripts/runtime_r2_intake.py'
-      - 'scripts/runtime_r2_assemble_intake.py'
+      - 'scripts/runtime_r2_local_verify.py'
       - 'reports/runtime-r2/freeze/**'
       - 'config/integrations/provider-capability-matrix.yaml'
       - 'config/integrations/runtime-execution-profiles.json'
@@ -42,9 +41,8 @@ on:
       - 'tests/unit/test_runtime_execution_adapter.py'
       - 'tests/unit/test_runtime_execution_capability_projection.py'
       - 'tests/unit/test_runtime_r2_execution_boundary.py'
+      - 'tests/unit/test_runtime_r2_local_flow.py'
       - 'tests/unit/test_runtime_r2_freeze_ledger.py'
-      - 'tests/unit/test_runtime_r2_assemble_intake.py'
-      - 'tests/unit/test_runtime_r2_domain_verification_workflow.py'
       - 'tests/unit/test_runtime_r2_independent_review_workflow.py'
 
 permissions:
