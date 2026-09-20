@@ -8,6 +8,9 @@ on:
       - '.github/workflows/runtime-r2-independent-review.yml'
       - '.github/workflows/runtime-r2-harness-contract.yml'
       - 'scripts/runtime_r2_evidence.py'
+      - 'manifests/r2_frozen_adk_release.lock.json'
+      - 'config/integrations/cross-repo-lock.json'
+      - 'tests/unit/test_runtime_r2_evidence.py'
       - 'scripts/runtime_r2_intake.py'
       - 'scripts/runtime_r2_assemble_intake.py'
       - 'reports/runtime-r2/freeze/**'
@@ -29,6 +32,9 @@ on:
       - '.github/workflows/runtime-r2-independent-review.yml'
       - '.github/workflows/runtime-r2-harness-contract.yml'
       - 'scripts/runtime_r2_evidence.py'
+      - 'manifests/r2_frozen_adk_release.lock.json'
+      - 'config/integrations/cross-repo-lock.json'
+      - 'tests/unit/test_runtime_r2_evidence.py'
       - 'scripts/runtime_r2_intake.py'
       - 'scripts/runtime_r2_assemble_intake.py'
       - 'reports/runtime-r2/freeze/**'
@@ -86,6 +92,8 @@ jobs:
         run: python -m unittest tests.unit.test_runtime_execution_adapter -v
       - name: Validate execution profile capability projection
         run: python -m unittest tests.unit.test_runtime_execution_capability_projection -v
+      - name: Validate frozen ADK 7.0.4 R2 identity and runtime bindings
+        run: python -m unittest tests.unit.test_runtime_r2_evidence -v
       - name: Ratchet provider-free Digital Worker R2 execution boundary
         run: python -m unittest tests.unit.test_runtime_r2_execution_boundary -v
       - name: Validate retained real R2 freeze ledger boundary
