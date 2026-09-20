@@ -35,6 +35,7 @@ jobs:
         with:
           persist-credentials: false
           fetch-depth: 1
+
       - name: Enforce explicit main-only freeze
         env:
           CONFIRMATION: ${{ inputs.confirmation }}
@@ -46,6 +47,7 @@ jobs:
           test "$GITHUB_REF" = refs/heads/main
           test "$CONFIRMATION" = FREEZE_REAL_R2
           [[ "$TARGET_BASE_COMMIT" =~ ^[0-9a-f]{40}$ ]]
+
       - name: Checkout exact frozen target base
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -54,6 +56,7 @@ jobs:
           path: r2-target-freeze
           persist-credentials: false
           fetch-depth: 1
+
       - name: Build deterministic frozen campaign
         env:
           TARGET_REPOSITORY: ${{ inputs.target_repository }}
@@ -70,13 +73,16 @@ jobs:
             --output "$RUNNER_TEMP/r2-freeze/frozen-plan.json"
           python - "$RUNNER_TEMP/r2-freeze/frozen-plan.json" "$RUNNER_TEMP/r2-freeze/campaign.json" <<'PY'
           import json, os, pathlib, sys
-          plan_path,out=map(pathlib.Path,sys.argv[1:]); plan=json.loads(plan_path.read_text())
+          plan_path,out=map(pathlib.Path,sys.argv[1:])
+          plan=json.loads(plan_path.read_text())
           assert plan['schema']=='digital-worker-runtime-r2-plan/v1'
           assert plan['controlled_task']['exact_base_commit']==os.environ['TARGET_BASE_COMMIT']
-          assert plan['adk_release_identity']['version']=='7.0.4', plan['adk_release_identity']
-          assert plan['adk_release_identity']['commit']=='1d6c28e89eb98a4af5ac978707730783f0c84437', plan['adk_release_identity']
-          assert plan['runtime_bindings']['codex']['commit']=='79acb193cef381b4c8b72f00e0af15f87e32765c', plan['runtime_bindings']
-          assert plan['runtime_bindings']['claude-code']['commit']=='fba4551aa4a2abe5f74cff3c60e8318961b36add', plan['runtime_bindings']
+          bindings=plan['runtime_bindings']
+          assert set(bindings)=={'codex','claude-code'}
+          assert bindings['codex']['repository']=='jiying2007/codex'
+          assert bindings['codex']['runtime_target']=='codex-cli'
+          assert bindings['claude-code']['repository']=='jiying2007/claude'
+          assert bindings['claude-code']['runtime_target']=='claude-code'
           campaign={
               'schema':'digital-worker-runtime-r2-campaign/v1',
               'campaign_id':plan['controlled_task']['run_id'],
@@ -86,10 +92,16 @@ jobs:
               'frozen_inputs_sha256':plan['frozen_inputs_sha256'],
               'target_repository':os.environ['TARGET_REPOSITORY'],
               'target_base_commit':os.environ['TARGET_BASE_COMMIT'],
-              'runtime_bindings':plan['runtime_bindings'],
-              'runtime_execution_workflows':{
-                  'codex':'jiying2007/codex/.github/workflows/runtime-r2-provider-execution.yml',
-                  'claude-code':'jiying2007/claude/.github/workflows/runtime-r2-provider-execution.yml',
+              'runtime_bindings':bindings,
+              'runtime_execution':{
+                  'mode':'runtime-owned-local-terminal',
+                  'runbook':'docs/runbooks/runtime-r2-local-terminal.md',
+                  'adapters':{
+                      'codex':'scripts/runtime-r2-local.sh',
+                      'claude-code':'control/scripts/runtime-r2-local.sh',
+                  },
+                  'github_provider_credentials_required':False,
+                  'provider_credentials_must_not_enter_github':True,
               },
               'provider_credentials_held_by_digital_worker':False,
               'provider_execution_authorized':False,
@@ -101,8 +113,10 @@ jobs:
               s.write('## R2 frozen campaign\n')
               s.write(f"- Digital Worker commit: `{campaign['digital_worker_commit']}`\n")
               s.write(f"- Frozen inputs SHA-256: `{campaign['frozen_inputs_sha256']}`\n")
-              s.write('- Provider execution remains unauthorized here; dispatch Codex and Claude separately in their own repositories.\n')
+              s.write('- Provider execution remains unauthorized here. Run each exact runtime binding locally using its runtime-owned R2 adapter.\n')
+              s.write('- GitHub provider credentials are not required and must not be introduced for R2 execution.\n')
           PY
+
       - name: Upload frozen campaign handoff
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
