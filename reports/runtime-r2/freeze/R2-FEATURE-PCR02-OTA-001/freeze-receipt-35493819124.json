@@ -1,0 +1,64 @@
+{
+  "schema": "digital-worker-runtime-r2-freeze-receipt/v1",
+  "status": "frozen-awaiting-independent-runtime-executions",
+  "campaign_id": "R2-FEATURE-PCR02-OTA-001",
+  "source_evidence": {
+    "repository": "jiying2007/digital-worker",
+    "workflow": ".github/workflows/runtime-r2-freeze.yml",
+    "workflow_run_id": "35493819124",
+    "workflow_run_attempt": 1,
+    "event": "workflow_dispatch",
+    "head_sha": "fdd6d8423517847ed9695c87e1a1a68e55b292e7",
+    "conclusion": "success"
+  },
+  "artifact": {
+    "id": "10600136622",
+    "name": "runtime-r2-freeze-35493819124",
+    "size_in_bytes": 4111,
+    "digest": "sha256:e5fb5f8fd246b7892b08aabba5157b03a23f90404c7f63d9dbba0765baf4e984",
+    "created_at": "2026-09-20T06:17:05Z",
+    "expires_at": "2026-12-19T06:16:54Z",
+    "campaign_json_sha256": "d8c272d9309abafb56400df4c3bce9ce6d063959d6772e9db225ec071ac88f59",
+    "frozen_plan_json_sha256": "06f2297f830f8cf0d0bd780bec47b20915569964e819c775a281b86875835517"
+  },
+  "frozen_identity": {
+    "digital_worker_commit": "fdd6d8423517847ed9695c87e1a1a68e55b292e7",
+    "frozen_inputs_sha256": "378fa49d74194618cfa7adac9929504275ad2fc2f9d17dcf3d7289a3eb804c56",
+    "target_repository": "jiying2007/ota_download_test",
+    "target_base_commit": "eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d",
+    "adk_release": {
+      "repository": "jiying2007/agent-dev-kit",
+      "version": "7.0.4",
+      "tag": "v7.0.4",
+      "commit": "1d6c28e89eb98a4af5ac978707730783f0c84437",
+      "tree": "c5b8fa7b11a81597ac2c7cd6fb44d7abf9605137",
+      "manifest_blob": "a5e5963545318c4a4498cda0d49d10f08c5f6412",
+      "artifact_sha256": "497e44ec83d2506c8721019aeca979965127b481203f33387806c51c0d1aff68"
+    },
+    "runtime_bindings": {
+      "codex": {
+        "repository": "jiying2007/codex",
+        "commit": "79acb193cef381b4c8b72f00e0af15f87e32765c",
+        "runtime_target": "codex-cli",
+        "contract_version": "2.1",
+        "contract_canonical_sha256": "73b297419fbea5e4bfd54ef846fe03d63e6797f00608718a8f9a8c5577ebd171"
+      },
+      "claude-code": {
+        "repository": "jiying2007/claude",
+        "commit": "fba4551aa4a2abe5f74cff3c60e8318961b36add",
+        "runtime_target": "claude-code",
+        "contract_version": "1.0",
+        "contract_canonical_sha256": "ac220eff715a512bc93913014f79ca5364be29a01359bd90e906c8184f44695f"
+      }
+    }
+  },
+  "authority_boundary": {
+    "provider_execution_authorized": false,
+    "verification_status": "pending",
+    "independent_review_status": "pending",
+    "r2_qualified": false,
+    "source_artifact_is_authoritative": true,
+    "tracked_receipt_is_derived_audit_anchor_only": true,
+    "historical_freeze_receipt_preserved": true
+  }
+}
