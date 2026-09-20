@@ -136,8 +136,6 @@ def verify_second_runtime_candidate(candidates: dict, approved_binding: dict | N
             "repository": "https://github.com/jiying2007/claude.git",
             "source_identity_mode": "exact-release-source-blobs",
             "binding_commit": approved_binding.get("commit"),
-            "exact_head_workflow_run": approved_binding.get("r1_exact_head_workflow_run"),
-            "fresh_main_workflow_run": approved_binding.get("r1_fresh_main_workflow_run"),
             "r1_binding_conformance": "passed",
             "verified_runtime_execution_receipt": "pending",
             "r2_real_provider_substitution": "pending",
@@ -150,7 +148,11 @@ def verify_second_runtime_candidate(candidates: dict, approved_binding: dict | N
     fail(f"runtime_practice_eval: unsupported claude-code candidate status: {status!r}")
 
 
-def verify_runtime_practice_eval(entry: dict, destination: Path, approved_binding: dict | None = None) -> dict:
+def verify_runtime_practice_eval(
+    entry: dict,
+    destination: Path,
+    approved_runtime_bindings: dict | None = None,
+) -> dict:
     certifier_rel = entry["runtime_portability_certifier"]
     test_rel = entry["runtime_portability_certifier_test"]
     qualification_rel = entry["runtime_portability_qualification_manifest"]
@@ -170,9 +172,85 @@ def verify_runtime_practice_eval(entry: dict, destination: Path, approved_bindin
     if contract.get("terminal_replaceability_evidence_level") != evidence_level:
         fail("runtime_practice_eval: terminal R2 evidence level does not match pinned runtime pilot contract")
     candidates = {item.get("runtime"): item for item in contract.get("candidate_runtime_bindings", []) if isinstance(item, dict)}
+    if set(candidates) != {"codex", "claude-code"}:
+        fail("runtime_practice_eval: runtime candidate set must be exactly codex + claude-code")
     if candidates.get("codex", {}).get("status") != "source-set-bound":
         fail("runtime_practice_eval: pinned Codex comparison binding is not source-set-bound")
-    second_runtime_status = verify_second_runtime_candidate(candidates, approved_binding)
+    approved_runtime_bindings = approved_runtime_bindings or {}
+    approved_codex = approved_runtime_bindings.get("codex")
+    if not isinstance(approved_codex, dict):
+        fail("runtime_practice_eval: Codex is R1-ready upstream but is not an approved Digital Worker runtime binding")
+    codex_expected = {
+        "repository": "https://github.com/jiying2007/codex.git",
+        "target": "codex-cli",
+        "source_identity_mode": "exact-release-source-blobs",
+        "binding_commit": approved_codex.get("commit"),
+        "status": "source-set-bound",
+    }
+    for key, expected in codex_expected.items():
+        if candidates["codex"].get(key) != expected:
+            fail(f"runtime_practice_eval: ready codex candidate {key} drift")
+    second_runtime_status = verify_second_runtime_candidate(
+        candidates,
+        approved_runtime_bindings.get("claude-code"),
+    )
+
+    ownership = contract.get("execution_ownership")
+    expected_ownership = {
+        "model": "runtime-owned-local-provider-execution+digital-worker-local-verification",
+        "provider_credentials_owner": "runtime-local-auth-state",
+        "runtime_execution_evidence_transport": "local-terminal-digest-bound-runtime-evidence",
+        "digital_worker_holds_provider_credentials": False,
+        "local_execution_receipt_is_not_r2_pass": True,
+    }
+    if not isinstance(ownership, dict):
+        fail("runtime_practice_eval: local-terminal execution ownership missing")
+    for key, expected in expected_ownership.items():
+        if ownership.get(key) != expected:
+            fail(f"runtime_practice_eval: local-terminal execution ownership {key} drift")
+
+    planes = contract.get("execution_plane_evidence")
+    if not isinstance(planes, dict):
+        fail("runtime_practice_eval: execution plane evidence missing")
+    adapter_expected = {
+        "codex": ("jiying2007/codex", "scripts/runtime-r2-local.sh", approved_codex.get("commit")),
+        "claude-code": (
+            "jiying2007/claude",
+            "control/scripts/runtime-r2-local.sh",
+            (approved_runtime_bindings.get("claude-code") or {}).get("commit"),
+        ),
+    }
+    for runtime, (repository, adapter, commit) in adapter_expected.items():
+        plane = planes.get(runtime)
+        if not isinstance(plane, dict):
+            fail(f"runtime_practice_eval: execution plane missing: {runtime}")
+        for key, expected in {
+            "repository": repository,
+            "execution_plane_commit": commit,
+            "frozen_binding_commit": commit,
+            "provider_execution_adapter": adapter,
+            "execution_venue": "local-terminal",
+            "credential_owner": "runtime-local-auth-state",
+        }.items():
+            if plane.get(key) != expected:
+                fail(f"runtime_practice_eval: {runtime} execution plane {key} drift")
+        if "provider_execution_workflow" in plane:
+            fail(f"runtime_practice_eval: retired provider workflow resurfaced: {runtime}")
+    dw_plane = planes.get("digital-worker")
+    if not isinstance(dw_plane, dict):
+        fail("runtime_practice_eval: digital-worker verification plane missing")
+    for key, expected in {
+        "repository": "jiying2007/digital-worker",
+        "provider_credentials_held": False,
+        "combined_provider_workflow_present": False,
+        "freeze_workflow": ".github/workflows/runtime-r2-freeze.yml",
+        "local_intake": "scripts/runtime_r2_intake.py",
+        "local_verifier": "scripts/runtime_r2_local_verify.py",
+        "verifier_identity_mode": "receipt-bound-tool-commit",
+        "independent_review_workflow": ".github/workflows/runtime-r2-independent-review.yml",
+    }.items():
+        if dw_plane.get(key) != expected:
+            fail(f"runtime_practice_eval: digital-worker verification plane {key} drift")
 
     certifier_text = paths["certifier"].read_text(encoding="utf-8")
     for marker in [
@@ -415,8 +493,11 @@ def verify_one(
         report["release_baseline"] = baseline
 
     if name == "runtime_practice_eval":
-        approved = (approved_runtime_bindings or {}).get("claude-code")
-        report["runtime_portability"] = verify_runtime_practice_eval(entry, destination, approved)
+        report["runtime_portability"] = verify_runtime_practice_eval(
+            entry,
+            destination,
+            approved_runtime_bindings,
+        )
 
     if name == "codex":
         bootstrap = verify_contract(
