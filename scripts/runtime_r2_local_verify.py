@@ -85,6 +85,10 @@ def verify_local_r2(
         raise VerificationError("runtime intake overclaimed verification or qualification authority")
     if collection.get("execution_venue") != "local-terminal":
         raise VerificationError("R2 local verification requires local-terminal execution venue")
+    if collection.get("runtime_home_mode") != "shared-user-home":
+        raise VerificationError("R2 local verification requires shared-user-home runtime mode")
+    if collection.get("credential_state_in_evidence") is not False:
+        raise VerificationError("R2 local verification forbids credential state in evidence")
 
     test_evidence: dict[str, str] = {}
     for runtime, prefix in (("codex", "codex"), ("claude-code", "claude")):
@@ -110,6 +114,8 @@ def verify_local_r2(
         "source_commit": collection["digital_worker_commit"],
         "verification_tool_commit": collection["verification_tool_commit"],
         "verification_execution_venue": "local-terminal",
+        "runtime_home_mode": "shared-user-home",
+        "credential_state_in_evidence": False,
         "github_provider_credentials_required": False,
         "provider_execution_actors": collection["provider_execution_actors"],
         "provider_execution_evidence": collection["provider_execution_evidence"],
