@@ -8,8 +8,8 @@ The canonical split is:
 
 - GitHub / Digital Worker freezes identities, task inputs, and governance.
 - Each runtime executes the frozen task in its own local terminal domain.
-- The runtime emits a native execution receipt and an evidence bundle.
-- Digital Worker projects that native receipt into the portable R2 receipt and later owns comparison / qualification.
+- The runtime emits a native execution receipt plus a local evidence directory.
+- Digital Worker consumes those local evidence directories, projects native receipts into portable receipts, independently host-verifies both replay-complete result trees, and emits a small verification receipt.
 - Runtime receipts never claim Verification PASS, Product Ready, Release Ready, or R2 qualification by themselves.
 
 ## Credential boundary
@@ -23,7 +23,9 @@ Provider authentication stays local to the runtime:
 
 GitHub must not require or store CODEX_RUNTIME_CREDENTIAL or CLAUDE_RUNTIME_CREDENTIAL for R2 execution. A GitHub PAT must never be reused as OpenAI or Anthropic provider authentication.
 
-The local R2 evidence bundle records authorization metadata and digests only. It must never archive authentication files, access tokens, API keys, cookies, or local credential stores.
+The canonical Digital Worker intake reads only explicitly named evidence files from the local evidence directory. Authentication files, access tokens, API keys, cookies, runtime homes, caches, and session stores are never intake evidence and must never be committed or uploaded.
+
+Historical local adapters may place an isolated runtime home below the requested output directory. After the local verification receipt is emitted, delete that runtime-home/build state before copying, archiving, or committing any evidence.
 
 ## Why a new freeze is required after runtime changes
 
@@ -102,20 +104,49 @@ The adapter creates an isolated HOME. If that home is not authenticated, it exit
 
 Expected outputs include claude-native.json, claude-native-validated.json, claude-portable.json, claude.patch, result-tree.tar.gz, Claude execution evidence, the local evidence bundle, and its SHA-256.
 
-## Import and qualification
+## Local intake and Domain Verification
 
 The two runtime executions are independent provider receipts. They are not themselves R2 qualification.
 
-Digital Worker must verify that both portable receipts:
+Run Digital Worker verification from a current Digital Worker checkout. The verifier records its own implementation commit separately from the older frozen governance commit, so a historical freeze remains valid while verification tooling evolves:
+
+    python3 scripts/runtime_r2_local_verify.py \
+      --root /path/to/current-digital-worker \
+      --freeze-dir /path/to/runtime-r2-freeze-<run-id> \
+      --codex-evidence-dir /path/to/codex-evidence \
+      --claude-evidence-dir /path/to/claude-evidence \
+      --out /path/to/r2-verification \
+      --verification-actor local-user:<user>@<host>
+
+The verifier fail-closes unless both runtime results:
 
 - reference the same frozen_inputs_sha256;
-- match the exact frozen runtime bindings;
-- started from the same exact target base;
-- preserve the same Digital Worker governance / acceptance semantics;
+- match the exact frozen runtime binding commits;
+- preserve the exact frozen target base and Digital Worker governance identity;
 - contain no Verification / Release authority claim;
-- provide replay-complete result evidence.
+- record local-terminal execution with no GitHub provider credential;
+- provide replay-complete result-tree evidence whose digest matches the native receipt;
+- independently pass the target host unit tests and OTA manifest verifier.
 
-Only the Digital Worker R2 evaluator / review path may derive the Replaceability result.
+Expected output:
+
+    runtime-r2-domain-verification.json
+    codex-domain-host-tests.log
+    codex-domain-ota-verify.log
+    claude-domain-host-tests.log
+    claude-domain-ota-verify.log
+
+Only the small verification receipt and bounded log digests belong in long-lived repository review evidence. Runtime homes, provider credentials, caches, full local sessions, and other private runtime state do not.
+
+## Independent Review
+
+Copy the verification receipt into the canonical tracked path:
+
+    reports/runtime-r2/verification/R2-FEATURE-PCR02-OTA-001/runtime-r2-domain-verification.json
+
+Commit that small receipt through normal repository review, then run the manual Runtime R2 Independent Review workflow against that tracked path. The reviewer must be distinct from both provider execution actors and the local verification actor.
+
+The independent review remains non-terminal and only makes the evidence eligible for the root runtime-portability certifier. Neither runtime execution nor local verification may self-qualify R2.
 
 ## Repository closure versus R2 evidence
 
