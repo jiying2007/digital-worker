@@ -16,16 +16,18 @@ The canonical split is:
 
 ADK_ADMIN_TOKEN is the only canonical GitHub administration / privileged cross-repository token. It may be used by git / gh when GitHub access requires it.
 
-Provider authentication stays local to the runtime:
+Provider authentication stays local to the runtime and R2 reuses the normal shared user runtime home:
 
-- Codex: local Codex CLI login state under the selected CODEX_HOME.
-- Claude Code: local Claude Code login state under the selected HOME.
+- Codex: reuse the caller's existing `CODEX_HOME`, or `~/.codex` when `CODEX_HOME` is unset.
+- Claude Code: reuse the caller's existing user `HOME` and `~/.claude`.
+
+The canonical R2 mode is `shared-user-home`. Do not create a runtime home under the evidence directory. Existing provider/network configuration and authentication remain local runtime state.
 
 GitHub must not require or store CODEX_RUNTIME_CREDENTIAL or CLAUDE_RUNTIME_CREDENTIAL for R2 execution. A GitHub PAT must never be reused as OpenAI or Anthropic provider authentication.
 
-The canonical Digital Worker intake reads only explicitly named evidence files from the local evidence directory. Authentication files, access tokens, API keys, cookies, runtime homes, caches, and session stores are never intake evidence and must never be committed or uploaded.
+The canonical Digital Worker intake reads only explicitly named evidence files from the local evidence directory. Authentication files, access tokens, API keys, cookies, shared runtime homes, caches, sessions, and local provider configuration are never intake evidence and must never be committed or uploaded. Runtime receipts must state `runtime_home_mode=shared-user-home` and `credential_state_in_evidence=false`.
 
-Historical local adapters may place an isolated runtime home below the requested output directory. After the local verification receipt is emitted, delete that runtime-home/build state before copying, archiving, or committing any evidence.
+The evidence output directory is evidence-only. It must never become `CODEX_HOME`, user `HOME`, or a credential store.
 
 ## Why a new freeze is required after runtime changes
 
@@ -56,9 +58,9 @@ Download the resulting artifact and retain both campaign.json and frozen-plan.js
 
 ## Local prerequisites
 
-Both runtime-owned local adapters require Python 3.9 or newer. The canonical adapters resolve `PYTHON_BIN` with a default of `python3` and never depend on a host's ambiguous `python` alias.
+Both runtime-owned local adapters require Python 3.11 or newer. The canonical adapters resolve `PYTHON_BIN` with a default of `python3`.
 
-For a historical frozen runtime commit created before that hardening, do not modify the frozen checkout. If the host's `python` still points to Python 2, a temporary PATH shim that maps `python` to the same installed `python3` interpreter is allowed as execution-environment setup; it does not change the frozen runtime source identity.
+Historical freezes that bind older adapters remain immutable audit evidence, but they are not the canonical execution path after this hard-cut. Do not modify a historical frozen checkout to simulate the new shared-home behavior; create a fresh freeze bound to the current runtime adapters instead.
 
 The Codex local adapter also requires the Python packages used by its exact asset/evidence path, including PyYAML and jsonschema. Validate these before starting a long R2 execution.
 
@@ -84,9 +86,11 @@ Run the adapter from the exact Codex binding checkout:
       --frozen-plan /path/to/frozen-plan.json \
       --out /path/to/evidence/codex
 
-The adapter creates an isolated CODEX_HOME. If that isolated home is not authenticated, it exits without qualifying the run and prints the exact local login command. Authenticate that isolated home, restore/recreate the target as a clean exact-base checkout if necessary, and rerun.
+The adapter reuses the caller's existing Codex runtime home. By default that is the existing `CODEX_HOME`, or `~/.codex` when `CODEX_HOME` is unset. The normal Codex CLI must already work in that environment.
 
-Expected outputs include codex-native.json, codex-portable.json, codex.patch, result-tree.tar.gz, provider output/event evidence, the local evidence bundle, and its SHA-256.
+Frozen managed assets are applied to the shared Codex home using the repository's existing protected-path and allowed-live-drift policy. Authentication/session/cache state and allowed local provider configuration such as `config.toml` are local runtime state and are excluded from the R2 evidence identity. The adapter refuses to use a runtime home inside the evidence directory.
+
+Expected outputs include codex-native.json, codex-portable.json, codex.patch, result-tree.tar.gz, provider output/event evidence, the local evidence bundle, and its SHA-256. The shared `CODEX_HOME` itself is never bundled.
 
 ## Claude Code execution
 
@@ -100,9 +104,9 @@ Run the adapter from the exact Claude binding checkout and supply exact ADK chec
       --adk-release-root /path/to/agent-dev-kit-exact-release-commit \
       --out /path/to/evidence/claude
 
-The adapter creates an isolated HOME. If that home is not authenticated, it exits without qualifying the run and prints how to open Claude Code with that isolated home and complete /login. Restore/recreate the target as a clean exact-base checkout before retrying if execution touched it.
+The adapter reuses the caller's existing user `HOME` and therefore the existing `~/.claude` authentication/provider configuration. The normal Claude Code CLI must already work in that environment. Materialized frozen runtime assets are installed into that shared runtime home, while credential state remains local and outside evidence.
 
-Expected outputs include claude-native.json, claude-native-validated.json, claude-portable.json, claude.patch, result-tree.tar.gz, Claude execution evidence, the local evidence bundle, and its SHA-256.
+The adapter refuses to use a runtime home inside the evidence directory. Expected outputs include claude-native.json, claude-native-validated.json, claude-portable.json, claude.patch, result-tree.tar.gz, Claude execution evidence, the local evidence bundle, and its SHA-256. The shared user home is never bundled.
 
 ## Local intake and Domain Verification
 
@@ -124,7 +128,9 @@ The verifier fail-closes unless both runtime results:
 - match the exact frozen runtime binding commits;
 - preserve the exact frozen target base and Digital Worker governance identity;
 - contain no Verification / Release authority claim;
-- record local-terminal execution with no GitHub provider credential;
+- record local-terminal execution using `shared-user-home`;
+- explicitly state that credential state did not enter evidence;
+- record no GitHub provider credential;
 - provide replay-complete result-tree evidence whose digest matches the native receipt;
 - independently pass the target host unit tests and OTA manifest verifier.
 
