@@ -52,6 +52,14 @@ The GitHub freeze workflow is deterministic and provider-credential-free:
 
 Download the resulting artifact and retain both campaign.json and frozen-plan.json. GitHub authentication used to read the artifact is a GitHub trust-domain concern only.
 
+## Local prerequisites
+
+Both runtime-owned local adapters require Python 3.9 or newer. The canonical adapters resolve `PYTHON_BIN` with a default of `python3` and never depend on a host's ambiguous `python` alias.
+
+For a historical frozen runtime commit created before that hardening, do not modify the frozen checkout. If the host's `python` still points to Python 2, a temporary PATH shim that maps `python` to the same installed `python3` interpreter is allowed as execution-environment setup; it does not change the frozen runtime source identity.
+
+The Codex local adapter also requires the Python packages used by its exact asset/evidence path, including PyYAML and jsonschema. Validate these before starting a long R2 execution.
+
 ## Prepare exact local checkouts
 
 For every execution, the following identities must match frozen-plan.json exactly:
