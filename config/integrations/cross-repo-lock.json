@@ -45,7 +45,7 @@
       "commit": "d1963480e1fc235be232c360500f2b4ccc363756",
       "contract": "manifests/digital_worker_runtime_pilot.json",
       "contract_version": "1.3",
-      "contract_canonical_sha256": "8a22d73149d38177f7cdcb29a955d6245905d09edfdc34974f5af2c81a9b6873",
+      "contract_canonical_sha256": "fddc92eb47458968ecda024e75137b36e94e2e41fe789a339143741f69be3ea8",
       "runtime_portability_certifier": "tools/control_plane/runtime_portability.py",
       "runtime_portability_certifier_test": "tests/test_runtime_portability_certifier.sh",
       "runtime_portability_qualification_manifest": "manifests/long_term_asset_qualification.json",
