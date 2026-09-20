@@ -16,6 +16,7 @@ PILOT_RESULT = EVIDENCE_ROOT / "pilot-result.json"
 MATERIAL_MANIFEST = EVIDENCE_ROOT / "extras/material_manifest.json"
 CROSS_REPO_LOCK = ROOT / "config/integrations/cross-repo-lock.json"
 CONTRACT_CATALOG = ROOT / "contracts/catalog.json"
+R2_ADK_RELEASE_LOCK = ROOT / "manifests/r2_frozen_adk_release.lock.json"
 DOMAIN_REF = "domains/edge-foundation/runtime/workflow.yaml"
 ROUTING_REF = "domains/edge-foundation/routing.yaml"
 PORTABLE_SCHEMA = "digital-worker-runtime-portability-receipt/v1"
@@ -159,6 +160,10 @@ def build_plan(
     pilot = _load(root / PILOT_RESULT.relative_to(ROOT), "pilot result")
     material = _load(root / MATERIAL_MANIFEST.relative_to(ROOT), "material manifest")
     lock = _load(root / CROSS_REPO_LOCK.relative_to(ROOT), "cross-repo lock")
+    r2_adk_lock = _load(
+        root / R2_ADK_RELEASE_LOCK.relative_to(ROOT),
+        "R2 frozen ADK release lock",
+    )
     catalog_path = root / CONTRACT_CATALOG.relative_to(ROOT)
     if not catalog_path.is_file():
         raise R2EvidenceError("contract catalog is missing")
@@ -193,18 +198,41 @@ def build_plan(
     knowledge_digest = _require_sha256(
         knowledge.get("contract_canonical_sha256"), "knowledge contract digest"
     )
-    release = assets.get("release_baseline")
-    if not isinstance(release, dict):
-        raise R2EvidenceError("ADK release baseline is missing")
+    if r2_adk_lock.get("schema") != "digital-worker-r2-frozen-adk-release-lock/v1":
+        raise R2EvidenceError("R2 frozen ADK release lock schema is unsupported")
+    if r2_adk_lock.get("status") != "immutable-release":
+        raise R2EvidenceError("R2 frozen ADK release lock must describe an immutable release")
+    if r2_adk_lock.get("scope") != "runtime-r2-freeze-only":
+        raise R2EvidenceError("R2 frozen ADK release lock scope drifted")
+    if r2_adk_lock.get("repository") != assets.get("repository"):
+        raise R2EvidenceError("R2 frozen ADK release repository does not match the ADK provider")
+    release_meta = r2_adk_lock.get("release")
+    if not isinstance(release_meta, Mapping) or release_meta.get("immutable") is not True:
+        raise R2EvidenceError("R2 frozen ADK release must be remotely immutable")
+    promotion_meta = r2_adk_lock.get("promotion")
+    if not isinstance(promotion_meta, Mapping) or promotion_meta.get("release_eligible") is not True:
+        raise R2EvidenceError("R2 frozen ADK release must be promotion-eligible")
+    boundary = r2_adk_lock.get("boundary")
+    if (
+        not isinstance(boundary, Mapping)
+        or boundary.get("generic_cross_repo_provider_contract_is_not_r2_release_authority") is not True
+        or boundary.get("release_identity_must_not_follow_agent_dev_kit_main") is not True
+        or boundary.get("provider_execution_authorized") is not False
+    ):
+        raise R2EvidenceError("R2 frozen ADK release authority boundary is incomplete")
+    version = r2_adk_lock.get("version")
+    tag = r2_adk_lock.get("tag")
+    if not isinstance(version, str) or not version or tag != f"v{version}":
+        raise R2EvidenceError("R2 frozen ADK release version/tag identity is invalid")
     adk_release = {
-        "repository": assets.get("repository"),
-        "version": release.get("version"),
-        "tag": release.get("tag"),
-        "commit": _require_full_sha(release.get("commit"), "ADK release commit"),
-        "tree": _require_full_sha(release.get("tree"), "ADK release tree"),
-        "manifest_blob": _require_full_sha(release.get("manifest_blob"), "ADK manifest blob"),
+        "repository": r2_adk_lock.get("repository"),
+        "version": version,
+        "tag": tag,
+        "commit": _require_full_sha(r2_adk_lock.get("commit"), "ADK release commit"),
+        "tree": _require_full_sha(r2_adk_lock.get("tree"), "ADK release tree"),
+        "manifest_blob": _require_full_sha(r2_adk_lock.get("manifest_blob"), "ADK manifest blob"),
         "artifact_sha256": _require_sha256(
-            release.get("release_artifact_sha256"), "ADK release artifact digest"
+            r2_adk_lock.get("artifact_sha256"), "ADK release artifact digest"
         ),
     }
 

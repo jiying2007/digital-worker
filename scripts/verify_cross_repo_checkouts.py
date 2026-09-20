@@ -2,9 +2,7 @@
 """Verify exact cross-repo pins against real provider checkouts.
 
 By default this verifies repositories already present below --root. With --fetch it
-creates detached, depth-1 checkouts from the exact SHAs in cross-repo-lock.json.
-The report is deterministic evidence that a lock points to a real commit and the
-contracts at that commit still have the expected canonical JSON digests/versions.
+creates detached, depth-1 checkouts from the exact SHAs in cross-repo-lock.json for public providers. Private providers may instead use a signed Git object proof that is verified offline against a pinned trust key. The report is deterministic evidence that a lock points to an exact provider identity and the contracts at that identity still have the expected canonical JSON digests/versions.
 """
 from __future__ import annotations
 
@@ -14,6 +12,8 @@ import json
 import shutil
 import subprocess
 from pathlib import Path
+
+from private_provider_proof import ProofError, verify_proof
 
 ROOT = Path(__file__).resolve().parents[1]
 LOCK = ROOT / "config" / "integrations" / "cross-repo-lock.json"
@@ -196,21 +196,23 @@ def verify_runtime_practice_eval(entry: dict, destination: Path, approved_bindin
             fail(f"runtime_practice_eval: portability certifier regression marker missing: {marker}")
 
     qualification = json.loads(paths["qualification"].read_text(encoding="utf-8"))
+    if qualification.get("schema") != "llm-agent-long-term-asset-qualification/v2":
+        fail("runtime_practice_eval: long-term qualification schema drift")
     requirements = {
         item.get("id"): item
-        for item in qualification.get("blocking_requirements", [])
+        for item in qualification.get("qualification_requirements", [])
         if isinstance(item, dict) and isinstance(item.get("id"), str)
     }
     lta02 = requirements.get("LTA-02")
     if not isinstance(lta02, dict):
         fail("runtime_practice_eval: LTA-02 qualification requirement missing")
     expected_lta02 = {
-        "status": "blocked_external_evidence",
+        "status": "evidence_collection_in_progress",
         "implementation_status": "certifier-ready",
         "required_evidence_level": evidence_level,
         "certifier": "tools.control_plane.runtime_portability",
         "default_evidence_path": "reports/long-term-assets/runtime-portability-current.json",
-        "remaining_external_blocker": "real-claude-runtime-execution-receipt-and-same-frozen-task-R2-comparison-evidence",
+        "pending_evidence": "real-codex-and-claude-runtime-execution-receipts-and-same-frozen-task-R2-comparison-evidence",
     }
     for key, expected in expected_lta02.items():
         if lta02.get(key) != expected:
@@ -219,6 +221,14 @@ def verify_runtime_practice_eval(entry: dict, destination: Path, approved_bindin
         fail("runtime_practice_eval: LTA-02 must require at least two healthy runtime bindings")
     if lta02.get("r1_binding_conformance_is_terminal_evidence") is not False:
         fail("runtime_practice_eval: R1 binding conformance must remain non-terminal")
+    terminal = qualification.get("terminal")
+    if not isinstance(terminal, dict):
+        fail("runtime_practice_eval: long-term terminal projection missing")
+    if terminal.get("qualified") is not False or terminal.get("status") != "qualification_pending":
+        fail("runtime_practice_eval: long-term terminal qualification must remain pending")
+    pending = terminal.get("pending_requirements")
+    if not isinstance(pending, list) or "LTA-02" not in pending:
+        fail("runtime_practice_eval: LTA-02 must remain a terminal pending requirement")
 
     cli_text = paths["cli"].read_text(encoding="utf-8")
     if '"runtime-portability": "tools.control_plane.runtime_portability"' not in cli_text:
@@ -232,7 +242,50 @@ def verify_runtime_practice_eval(entry: dict, destination: Path, approved_bindin
         "cli_contract": cli_rel,
         "evidence_level": evidence_level,
         "second_runtime_candidate_status": second_runtime_status,
-        "remaining_external_blocker": lta02["remaining_external_blocker"],
+        "pending_evidence": lta02["pending_evidence"],
+    }
+
+
+def verify_signed_provider(name: str, entry: dict) -> dict:
+    repo = entry["repository"]
+    commit = entry["commit"]
+    verification_mode = entry.get("verification_mode")
+    if verification_mode != "signed-git-object-proof":
+        fail(f"{name}: unsupported verification_mode: {verification_mode}")
+    proof_rel = entry.get("verification_proof")
+    trust_rel = entry.get("verification_trust_key")
+    if not isinstance(proof_rel, str) or not proof_rel or not isinstance(trust_rel, str) or not trust_rel:
+        fail(f"{name}: signed private-provider verification metadata is incomplete")
+    proof_path = ROOT / proof_rel
+    trust_path = ROOT / trust_rel
+    if not proof_path.is_file() or not trust_path.is_file():
+        fail(f"{name}: signed private-provider proof/trust key is missing")
+    try:
+        proof_result = verify_proof(
+            root=ROOT,
+            proof_path=proof_path,
+            expected_repository=repo,
+            expected_commit=commit,
+            expected_contract_path=entry["contract"],
+            expected_contract_version=str(entry["contract_version"]),
+            expected_contract_digest=entry["contract_canonical_sha256"],
+        )
+    except ProofError as exc:
+        fail(f"{name}: signed private-provider proof failed: {exc}")
+    return {
+        "name": name,
+        "repository": repo,
+        "commit": commit,
+        "contract": entry["contract"],
+        "contract_version": str(entry["contract_version"]),
+        "contract_canonical_sha256": entry["contract_canonical_sha256"],
+        "verification_mode": verification_mode,
+        "proof": proof_rel,
+        "proof_root_tree_sha": proof_result["root_tree_sha"],
+        "proof_contract_blob_sha": proof_result["contract_blob_sha"],
+        "signer_key_fingerprint": proof_result["signer_key_fingerprint"],
+        "provider_network_accessed": False,
+        "status": "PASS",
     }
 
 
@@ -309,6 +362,11 @@ def verify_one(
     if repo != expected_repo:
         fail(f"{name}: repository is not approved: {repo}")
     commit = entry["commit"]
+    verification_mode = entry.get("verification_mode")
+    if verification_mode == "signed-git-object-proof":
+        return verify_signed_provider(name, entry)
+    if verification_mode not in (None, "live-checkout"):
+        fail(f"{name}: unsupported verification_mode: {verification_mode}")
     if fetch:
         checkout(repo, commit, destination)
     if not destination.is_dir():
@@ -441,7 +499,7 @@ def verify_one(
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, required=True, help="directory containing provider checkouts")
-    parser.add_argument("--fetch", action="store_true", help="fetch exact locked SHAs from approved public GitHub repositories")
+    parser.add_argument("--fetch", action="store_true", help="fetch exact locked SHAs for public providers; signed proofs remain offline")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
 

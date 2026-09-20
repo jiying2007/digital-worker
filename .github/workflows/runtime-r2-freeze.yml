@@ -73,6 +73,10 @@ jobs:
           plan_path,out=map(pathlib.Path,sys.argv[1:]); plan=json.loads(plan_path.read_text())
           assert plan['schema']=='digital-worker-runtime-r2-plan/v1'
           assert plan['controlled_task']['exact_base_commit']==os.environ['TARGET_BASE_COMMIT']
+          assert plan['adk_release_identity']['version']=='7.0.4', plan['adk_release_identity']
+          assert plan['adk_release_identity']['commit']=='1d6c28e89eb98a4af5ac978707730783f0c84437', plan['adk_release_identity']
+          assert plan['runtime_bindings']['codex']['commit']=='79acb193cef381b4c8b72f00e0af15f87e32765c', plan['runtime_bindings']
+          assert plan['runtime_bindings']['claude-code']['commit']=='fba4551aa4a2abe5f74cff3c60e8318961b36add', plan['runtime_bindings']
           campaign={
               'schema':'digital-worker-runtime-r2-campaign/v1',
               'campaign_id':plan['controlled_task']['run_id'],

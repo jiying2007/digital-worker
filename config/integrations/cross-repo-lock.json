@@ -12,7 +12,10 @@
       "contract_version": "1.2",
       "contract_canonical_sha256": "7e67ff9f19ef8a1bc627e589d888fcf8370297c7ceafa26e8d65d9d0630c3d11",
       "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_ROUTE_REGISTERED_FIRST_REAL_REUSE_ELIGIBLE",
-      "notes": "Governed digital-worker project/repository route is registered and machine-validated in Knowledge Hub; digital-worker has one checked-in real governed reuse receipt at KNOWLEDGE-E3-GOVERNANCE-001. This does not qualify the Knowledge provider, complete the Knowledge Closed Loop, product readiness, or provider default selection."
+      "notes": "Governed digital-worker project/repository route is registered and machine-validated in Knowledge Hub; digital-worker has one checked-in real governed reuse receipt at KNOWLEDGE-E3-GOVERNANCE-001. This does not qualify the Knowledge provider, complete the Knowledge Closed Loop, product readiness, or provider default selection.",
+      "verification_mode": "signed-git-object-proof",
+      "verification_proof": "config/integrations/proofs/knowledge-control-plane-51e4f816.json",
+      "verification_trust_key": "config/integrations/trust/github-web-flow.gpg.asc"
     },
     "agent_asset_control_plane": {
       "repository": "jiying2007/agent-dev-kit",
@@ -39,10 +42,10 @@
     "runtime_practice_eval": {
       "repository": "jiying2007/llm_agent",
       "ref": "main",
-      "commit": "04ec33d8bf1c42e8bd6b3530407372d5a1c2715b",
+      "commit": "d8bdf422469fefd37c35c91eb22b9504ae02ac11",
       "contract": "manifests/digital_worker_runtime_pilot.json",
       "contract_version": "1.3",
-      "contract_canonical_sha256": "8a22d73149d38177f7cdcb29a955d6245905d09edfdc34974f5af2c81a9b6873",
+      "contract_canonical_sha256": "fddc92eb47458968ecda024e75137b36e94e2e41fe789a339143741f69be3ea8",
       "runtime_portability_certifier": "tools/control_plane/runtime_portability.py",
       "runtime_portability_certifier_test": "tests/test_runtime_portability_certifier.sh",
       "runtime_portability_qualification_manifest": "manifests/long_term_asset_qualification.json",
@@ -56,10 +59,10 @@
     "codex": {
       "repository": "jiying2007/codex",
       "ref": "main",
-      "commit": "d12e782b46430d6bfc828f24a41f94f871a7a19a",
+      "commit": "79acb193cef381b4c8b72f00e0af15f87e32765c",
       "contract": "manifests/integrations/digital-worker-runtime-binding.json",
       "contract_version": "2.1",
-      "contract_canonical_sha256": "78b175cad9446739198cebbf5c97deb0225203f03d635b8004ae218e6601049e",
+      "contract_canonical_sha256": "73b297419fbea5e4bfd54ef846fe03d63e6797f00608718a8f9a8c5577ebd171",
       "runtime_target": "codex-cli",
       "required_asset_profile": "embedded-fullstack",
       "source_identity_mode": "exact-release-source-blobs",
@@ -74,10 +77,10 @@
     "claude-code": {
       "repository": "jiying2007/claude",
       "ref": "main",
-      "commit": "8cd87956507f9dbde0438c9135493c96f3b2d318",
+      "commit": "fba4551aa4a2abe5f74cff3c60e8318961b36add",
       "contract": "manifests/integrations/digital-worker-runtime-binding.json",
       "contract_version": "1.0",
-      "contract_canonical_sha256": "ebb67f04a0398af9b1ccebdc29edac6a4f07c9752ecdfee68820e9dc8875bf90",
+      "contract_canonical_sha256": "ac220eff715a512bc93913014f79ca5364be29a01359bd90e906c8184f44695f",
       "runtime_target": "claude-code",
       "required_asset_profile": "embedded-fullstack",
       "source_identity_mode": "exact-release-source-blobs",
@@ -87,8 +90,8 @@
       "session_bootstrap_contract_canonical_sha256": "b950fdc743b2c1e55e1c3bb329df5bf5c3d11de170a657be679c7479a1769691",
       "execution_receipt_schema": "schemas/runtime-execution-receipt.v2.schema.json",
       "execution_receipt_schema_version": 2,
-      "r1_exact_head_workflow_run": "jiying2007/claude/actions/runs/35115950799",
-      "r1_fresh_main_workflow_run": "jiying2007/claude/actions/runs/35116031702",
+      "r1_exact_head_workflow_run": "jiying2007/claude/actions/runs/35477726658",
+      "r1_fresh_main_workflow_run": "jiying2007/claude/actions/runs/35477771868",
       "verified_runtime_execution_receipt": "PENDING",
       "r2_real_provider_substitution": "PENDING",
       "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_SOURCE_SET_READY_R1_REAL_RUNTIME_RECEIPT_PENDING_R2_PENDING"
@@ -110,7 +113,9 @@
       "safe_core_governance_digest": "aacf1f25695ac49489fd292ec79c32208d76c9bf3777311629796a1b1666741e",
       "review_receipt_kind": "codex-review",
       "review_receipt_schema_version": 5,
-      "supported_assurance_roles": ["independent-review-evidence"],
+      "supported_assurance_roles": [
+        "independent-review-evidence"
+      ],
       "release_tag": "v4.8.7",
       "release_immutable": true,
       "release_artifact_sha256": "7af39c098d2e678ea8dfa2fde271a82e52d15417300f8191a30ded54da317c7e",
