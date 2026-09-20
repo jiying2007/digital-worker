@@ -202,6 +202,8 @@ def verify_runtime_practice_eval(
         "runtime_execution_evidence_transport": "local-terminal-digest-bound-runtime-evidence",
         "digital_worker_holds_provider_credentials": False,
         "local_execution_receipt_is_not_r2_pass": True,
+        "runtime_home_mode": "shared-user-home",
+        "runtime_local_state_policy": "reuse-local-auth-and-provider-config-exclude-from-evidence",
     }
     if not isinstance(ownership, dict):
         fail("runtime_practice_eval: local-terminal execution ownership missing")
@@ -230,6 +232,8 @@ def verify_runtime_practice_eval(
             "frozen_binding_commit": commit,
             "provider_execution_adapter": adapter,
             "execution_venue": "local-terminal",
+            "runtime_home_mode": "shared-user-home",
+            "credential_state_in_evidence": False,
             "credential_owner": "runtime-local-auth-state",
         }.items():
             if plane.get(key) != expected:
@@ -259,6 +263,8 @@ def verify_runtime_practice_eval(
         "class PortabilityBlocked",
         "LTA-02 requires at least two real runtime execution receipts",
         "execution receipt contains a forbidden verification PASS claim",
+        "provider runtime home mode drift",
+        "provider credential state entered evidence",
     ]:
         if marker not in certifier_text:
             fail(f"runtime_practice_eval: portability certifier marker missing: {marker}")
