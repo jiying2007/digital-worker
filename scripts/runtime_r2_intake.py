@@ -151,6 +151,8 @@ def validate_freeze(root: Path, freeze_dir: Path) -> tuple[dict[str, Any], dict[
     runtime_execution = campaign.get("runtime_execution")
     require(isinstance(runtime_execution, dict), "freeze runtime_execution boundary missing")
     require(runtime_execution.get("mode") == "runtime-owned-local-terminal", "freeze is not local-terminal R2")
+    require(runtime_execution.get("runtime_home_mode") == "shared-user-home", "freeze runtime home mode is not shared-user-home")
+    require(runtime_execution.get("credential_state_in_evidence") is False, "freeze must exclude credential state from evidence")
     require(runtime_execution.get("github_provider_credentials_required") is False, "GitHub provider credentials must not be required")
     require(runtime_execution.get("provider_credentials_must_not_enter_github") is True, "provider credential boundary missing")
     return campaign, plan, plan_path, verification_tool_commit
@@ -208,6 +210,8 @@ def validate_runtime(
     require(auth.get("verification_or_release_authority") is False, f"{runtime} provider receipt overclaims authority")
     require(auth.get("frozen_inputs_sha256") == plan.get("frozen_inputs_sha256"), f"{runtime} provider authorization freeze mismatch")
     require(auth.get("github_provider_credential_used") is False, f"{runtime} local evidence must not use GitHub provider credentials")
+    require(auth.get("runtime_home_mode") == "shared-user-home", f"{runtime} runtime home must be shared-user-home")
+    require(auth.get("credential_state_in_evidence") is False, f"{runtime} credential state must not enter evidence")
     actor = auth.get("actor")
     require(isinstance(actor, str) and actor, f"{runtime} provider actor missing")
 
@@ -246,6 +250,8 @@ def validate_runtime(
 
     return {
         "execution_venue": "local-terminal",
+        "runtime_home_mode": "shared-user-home",
+        "credential_state_in_evidence": False,
         "provider_actor": actor,
         "runtime_binding_commit": identity.get("runtime_binding_commit"),
         "native_receipt_sha256": sha256_file(native_path),
@@ -300,6 +306,8 @@ def intake(
         "verification_tool_commit": verification_tool_commit,
         "target_base_commit": campaign["target_base_commit"],
         "execution_venue": "local-terminal",
+        "runtime_home_mode": "shared-user-home",
+        "credential_state_in_evidence": False,
         "github_provider_credentials_required": False,
         "verification_pass_claimed": False,
         "r2_qualified": False,
