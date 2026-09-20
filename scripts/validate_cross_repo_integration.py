@@ -57,6 +57,9 @@ def main() -> None:
         require(provider.get("validation"), f"{key} validation state must be explicit")
 
     knowledge = lock["providers"]["knowledge_control_plane"]
+    require(knowledge.get("verification_mode") == "signed-git-object-proof", "private Knowledge Hub verification mode drift")
+    require(knowledge.get("verification_proof") == "config/integrations/proofs/knowledge-control-plane-51e4f816.json", "private Knowledge Hub proof path drift")
+    require(knowledge.get("verification_trust_key") == "config/integrations/trust/github-web-flow.gpg.asc", "private Knowledge Hub trust key drift")
     require("ROUTE_REGISTERED" in knowledge.get("validation", ""), "Knowledge Hub governed route must be explicitly promoted")
     require(
         "FIRST_REAL_REUSE_ELIGIBLE" in knowledge.get("validation", ""),
