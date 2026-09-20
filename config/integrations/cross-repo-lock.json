@@ -12,7 +12,10 @@
       "contract_version": "1.2",
       "contract_canonical_sha256": "7e67ff9f19ef8a1bc627e589d888fcf8370297c7ceafa26e8d65d9d0630c3d11",
       "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_ROUTE_REGISTERED_FIRST_REAL_REUSE_ELIGIBLE",
-      "notes": "Governed digital-worker project/repository route is registered and machine-validated in Knowledge Hub; digital-worker has one checked-in real governed reuse receipt at KNOWLEDGE-E3-GOVERNANCE-001. This does not qualify the Knowledge provider, complete the Knowledge Closed Loop, product readiness, or provider default selection."
+      "notes": "Governed digital-worker project/repository route is registered and machine-validated in Knowledge Hub; digital-worker has one checked-in real governed reuse receipt at KNOWLEDGE-E3-GOVERNANCE-001. This does not qualify the Knowledge provider, complete the Knowledge Closed Loop, product readiness, or provider default selection.",
+      "verification_mode": "signed-git-object-proof",
+      "verification_proof": "config/integrations/proofs/knowledge-control-plane-51e4f816.json",
+      "verification_trust_key": "config/integrations/trust/github-web-flow.gpg.asc"
     },
     "agent_asset_control_plane": {
       "repository": "jiying2007/agent-dev-kit",
