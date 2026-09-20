@@ -72,6 +72,8 @@ def freeze(root: Path, plan: dict) -> Path:
                     "codex": "scripts/runtime-r2-local.sh",
                     "claude-code": "control/scripts/runtime-r2-local.sh",
                 },
+                "runtime_home_mode": "shared-user-home",
+                "credential_state_in_evidence": False,
                 "github_provider_credentials_required": False,
                 "provider_credentials_must_not_enter_github": True,
             },
@@ -187,6 +189,8 @@ def runtime_dir(root: Path, runtime: str, plan: dict) -> Path:
             "authorization_mode": "explicit-local-operator-execution",
             "actor": f"local-test-{runtime}",
             "runtime_host": "local-terminal",
+            "runtime_home_mode": "shared-user-home",
+            "credential_state_in_evidence": False,
             "frozen_inputs_sha256": plan["frozen_inputs_sha256"],
             "verification_or_release_authority": False,
             "github_provider_credential_used": False,
@@ -215,6 +219,8 @@ class RuntimeR2LocalFlowTests(unittest.TestCase):
             collection = intake.intake(ROOT, freeze_dir, codex_dir, claude_dir, intake_out)
             self.assertEqual(collection["schema"], "digital-worker-runtime-r2-local-intake/v1")
             self.assertEqual(collection["execution_venue"], "local-terminal")
+            self.assertEqual(collection["runtime_home_mode"], "shared-user-home")
+            self.assertFalse(collection["credential_state_in_evidence"])
             self.assertFalse(collection["github_provider_credentials_required"])
             self.assertEqual(set(collection["execution_receipts"]), {"codex", "claude-code"})
             self.assertEqual(
@@ -233,6 +239,8 @@ class RuntimeR2LocalFlowTests(unittest.TestCase):
             )
             self.assertEqual(report["status"], "pass")
             self.assertEqual(report["verification_execution_venue"], "local-terminal")
+            self.assertEqual(report["runtime_home_mode"], "shared-user-home")
+            self.assertFalse(report["credential_state_in_evidence"])
             self.assertFalse(report["github_provider_credentials_required"])
             self.assertFalse(report["verification_pass_claimed_by_runtime"])
             self.assertEqual(report["independent_review_status"], "pending")
