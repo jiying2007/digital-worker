@@ -62,6 +62,8 @@ jobs:
           assert re.fullmatch(r'[0-9a-f]{40}', bindings['claude-code']['commit'])
           assert 'REPLAY_POSTFLIGHT_GATED' in bindings['codex']['validation']
           assert 'REPLAY_POSTFLIGHT_GATED' in bindings['claude-code']['validation']
+          assert 'WORKSPACE_SCAFFOLDING_ALLOWED' in bindings['claude-code']['validation']
+          assert 'BOUNDED_CONFIGURABLE_TURN_BUDGET' in bindings['claude-code']['validation']
 
           retired={
               '79acb193cef381b4c8b72f00e0af15f87e32765c',
@@ -75,6 +77,7 @@ jobs:
               'e358b029607cf9dc5429eb7c2ca05b5d4a13c0f1',
               '1d77de27ef01d9be403ce0bd8ce50e2ece5d8967',
               'cc3044eefd42d2f95f68d2ae85024845e9edcf63',
+              '6ef0c97503d2e81dae0ddbe8a477449c4961b690',
           }
           assert bindings['codex']['commit'] not in retired
           assert bindings['claude-code']['commit'] not in retired
@@ -99,6 +102,10 @@ jobs:
           assert '.git-free result tree' in text or '.git' in text and 'result tree' in text
           assert 'replay postflight' in text
           assert 'not Domain Verification' in text
+          assert 'Bash(mkdir *)' in text
+          assert 'CLAUDE_R2_MAX_TURNS' in text
+          assert '--max-turns' in text
+          assert '1–64' in text
           assert 'Python 3.11' in text
           assert 'openai-api-key' not in text
           assert 'anthropic_api_key' not in text
