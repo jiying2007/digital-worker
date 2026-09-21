@@ -203,8 +203,10 @@ def validate_runtime(
 
     auth_path = evidence_dir / "provider-authorization.json"
     result_archive = evidence_dir / "result-tree.tar.gz"
+    postflight_path = evidence_dir / "result-postflight.json"
     require(auth_path.is_file(), f"{runtime} provider authorization missing")
     require(result_archive.is_file(), f"{runtime} result-tree.tar.gz missing")
+    require(postflight_path.is_file(), f"{runtime} result-postflight.json missing")
     auth = load_json(auth_path, f"{runtime} provider authorization")
     require(auth.get("authorized") is True, f"{runtime} provider execution not authorized")
     require(auth.get("verification_or_release_authority") is False, f"{runtime} provider receipt overclaims authority")
@@ -233,6 +235,30 @@ def validate_runtime(
     require(portable.get("frozen_inputs_sha256") == plan.get("frozen_inputs_sha256"), f"{runtime} portable receipt freeze mismatch")
     require(portable.get("verification_pass_claimed") is False, f"{runtime} portable receipt must disclaim Verification PASS")
 
+    replay_postflight = portable.get("replay_postflight")
+    require(isinstance(replay_postflight, dict), f"{runtime} portable replay_postflight missing")
+    postflight_sha = replay_postflight.get("sha256")
+    require(
+        isinstance(postflight_sha, str) and SHA256.fullmatch(postflight_sha) is not None,
+        f"{runtime} portable replay postflight digest invalid",
+    )
+    require(
+        sha256_file(postflight_path) == postflight_sha,
+        f"{runtime} replay postflight digest does not match result-postflight.json",
+    )
+    postflight = load_json(postflight_path, f"{runtime} result postflight")
+    require(postflight.get("status") == "pass", f"{runtime} replay postflight must pass")
+    require(postflight.get("replay_self_contained") is True, f"{runtime} replay postflight must be self-contained")
+    require(postflight.get("verification_pass_claimed") is False, f"{runtime} replay postflight must disclaim Verification PASS")
+    require(postflight.get("domain_verification_pass_claimed") is False, f"{runtime} replay postflight must disclaim Domain Verification PASS")
+    require(postflight.get("r2_qualified") is False, f"{runtime} replay postflight must remain non-terminal")
+    refs = portable.get("evidence_refs")
+    require(
+        isinstance(refs, list)
+        and refs.count("replay-postflight:sha256:" + postflight_sha) == 1,
+        f"{runtime} portable receipt must bind exactly one replay-postflight evidence ref",
+    )
+
     identity = portable.get("runtime_identity")
     require(isinstance(identity, dict), f"{runtime} portable runtime identity missing")
     require(identity.get("runtime_host") is not None, f"{runtime} runtime host missing")
@@ -246,7 +272,7 @@ def validate_runtime(
     require(actual_tree == expected_tree_digest(native, runtime), f"{runtime} result tree digest mismatch")
 
     copied: dict[str, str] = {}
-    for source in (auth_path, native_path, result_archive):
+    for source in (auth_path, native_path, result_archive, postflight_path):
         destination = evidence_out / source.name
         shutil.copyfile(source, destination)
         copied[source.name] = sha256_file(destination)
@@ -267,6 +293,7 @@ def validate_runtime(
         "runtime_binding_commit": identity.get("runtime_binding_commit"),
         "native_receipt_sha256": sha256_file(native_path),
         "portable_receipt_sha256": sha256_file(portable_path),
+        "replay_postflight_sha256": postflight_sha,
         "result_archive_sha256": sha256_file(result_archive),
         "result_tree_sha256": actual_tree,
         "evidence_files": copied,

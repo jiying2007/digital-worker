@@ -586,6 +586,24 @@ def project_receipt(
             "portable runtime identity is incomplete: " + ", ".join(missing)
         )
     _validate_identity_against_frozen_binding(runtime, identity, plan)
+
+    refs = native.get("evidence_refs")
+    if not isinstance(refs, list):
+        raise R2EvidenceError(f"{runtime} native receipt evidence_refs are missing")
+    postflight_refs = [
+        item.removeprefix("replay-postflight:sha256:")
+        for item in refs
+        if isinstance(item, str) and item.startswith("replay-postflight:sha256:")
+    ]
+    if len(postflight_refs) != 1:
+        raise R2EvidenceError(
+            f"{runtime} native receipt must bind exactly one replay-postflight evidence ref"
+        )
+    postflight_sha = _require_sha256(
+        postflight_refs[0],
+        f"{runtime} replay postflight digest",
+    )
+
     native_sha = _file_digest(native_receipt)
     return {
         "schema": PORTABLE_SCHEMA,
@@ -598,7 +616,13 @@ def project_receipt(
             "ref": native_receipt.name,
             "sha256": native_sha,
         },
-        "evidence_refs": [f"native-receipt:sha256:{native_sha}"],
+        "replay_postflight": {
+            "sha256": postflight_sha,
+        },
+        "evidence_refs": [
+            f"native-receipt:sha256:{native_sha}",
+            f"replay-postflight:sha256:{postflight_sha}",
+        ],
     }
 
 

@@ -8,7 +8,8 @@ The canonical split is:
 
 - GitHub / Digital Worker freezes identities, task inputs, and governance.
 - Each runtime executes the frozen task in its own local terminal domain.
-- The runtime emits a native execution receipt plus a local evidence directory.
+- The runtime exports a `.git`-free replay result tree and must pass Digital Worker's replay postflight before it may emit evidence-ready native/portable receipts.
+- The replay postflight validates the frozen descriptor schema, independently checks frozen artifact identity, and executes every declared host-verifier step from the exported result tree. It is runtime-local conformance evidence, not Domain Verification.
 - Digital Worker consumes those local evidence directories, projects native receipts into portable receipts, independently host-verifies both replay-complete result trees, and emits a small verification receipt.
 - Runtime receipts never claim Verification PASS, Product Ready, Release Ready, or R2 qualification by themselves.
 
@@ -58,7 +59,7 @@ Download the resulting artifact and retain both campaign.json and frozen-plan.js
 
 ## Local prerequisites
 
-Both runtime-owned local adapters require Python 3.11 or newer. The canonical adapters resolve `PYTHON_BIN` with a default of `python3`.
+Both runtime-owned local adapters require Python 3.11 or newer and `jsonschema` for the mandatory replay postflight. The canonical adapters resolve `PYTHON_BIN` with a default of `python3`.
 
 Historical freezes that bind older adapters remain immutable audit evidence, but they are not the canonical execution path after this hard-cut. Do not modify a historical frozen checkout to simulate the new shared-home behavior; create a fresh freeze bound to the current runtime adapters instead.
 
@@ -90,7 +91,9 @@ The adapter reuses the caller's existing Codex runtime home. By default that is 
 
 Frozen managed assets are applied to the shared Codex home using the repository's existing protected-path and allowed-live-drift policy. Authentication/session/cache state and allowed local provider configuration such as `config.toml` are local runtime state and are excluded from the R2 evidence identity. The adapter refuses to use a runtime home inside the evidence directory.
 
-Expected outputs include codex-native.json, codex-portable.json, codex.patch, result-tree.tar.gz, provider output/event evidence, the local evidence bundle, and its SHA-256. The shared `CODEX_HOME` itself is never bundled.
+After provider execution, the adapter exports `result-tree.tar.gz` without `.git` and invokes `scripts/runtime_r2_result_postflight.py`. Evidence-ready output is forbidden unless `.r2/host-verifier.json` validates against the frozen schema and every declared replay step passes. The native receipt binds the resulting replay-postflight digest.
+
+Expected outputs include codex-native.json, codex-portable.json, codex.patch, result-tree.tar.gz, result-postflight.json plus bounded postflight logs, provider output/event evidence, the local evidence bundle, and its SHA-256. The shared `CODEX_HOME` itself is never bundled.
 
 ## Claude Code execution
 
@@ -108,7 +111,9 @@ The adapter reuses the caller's existing user `HOME` for local authentication/pr
 
 Materialized frozen runtime assets are installed into the shared runtime home. The provider authorization receipt must record `execution_context_mode=frozen-project-local`, `user_setting_source_loaded=false`, `runtime_home_mode=shared-user-home`, and `credential_state_in_evidence=false`. The normal Claude Code CLI must already work in the shared environment.
 
-The adapter refuses to use a runtime home inside the evidence directory. Expected outputs include claude-native.json, claude-native-validated.json, claude-portable.json, claude.patch, result-tree.tar.gz, Claude execution evidence, the local evidence bundle, and its SHA-256. The shared user home is never bundled.
+The adapter refuses to use a runtime home inside the evidence directory. After provider execution, it exports `result-tree.tar.gz` without `.git` and invokes the same Digital Worker replay postflight authority. A Claude CLI exit code of zero is insufficient for evidence-ready output: descriptor schema validation and all declared replay steps must also pass.
+
+Expected outputs include claude-native.json, claude-native-validated.json, claude-portable.json, claude.patch, result-tree.tar.gz, result-postflight.json plus bounded postflight logs, Claude execution evidence, the local evidence bundle, and its SHA-256. The shared user home is never bundled.
 
 ## Local intake and Domain Verification
 
@@ -135,6 +140,8 @@ The verifier fail-closes unless both runtime results:
 - for Claude, prove the controlled execution context excluded user-level behavioral settings (`execution_context_mode=frozen-project-local`, `user_setting_source_loaded=false`);
 - record no GitHub provider credential;
 - provide replay-complete result-tree evidence whose digest matches the native receipt;
+- bind exactly one replay-postflight digest produced from the exported `.git`-free result tree;
+- preserve the authority boundary that replay postflight is required before evidence-ready but is not Domain Verification;
 - independently pass the target host unit tests and OTA manifest verifier.
 
 Expected output:

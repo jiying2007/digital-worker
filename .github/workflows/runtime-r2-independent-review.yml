@@ -87,6 +87,7 @@ jobs:
           assert all(x.get('execution_venue')=='local-terminal' for x in evidence.values()),evidence
           assert all(x.get('runtime_home_mode')=='shared-user-home' for x in evidence.values()),evidence
           assert all(x.get('credential_state_in_evidence') is False for x in evidence.values()),evidence
+          assert all(re.fullmatch(r'[0-9a-f]{64}',x.get('replay_postflight_sha256','')) for x in evidence.values()),evidence
           verifier=value['verification_actor']; assert isinstance(verifier,str) and verifier,verifier
           reviewer=os.environ['REVIEWER']
           assert reviewer!=verifier,(reviewer,verifier)

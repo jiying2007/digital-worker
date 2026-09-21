@@ -42,24 +42,24 @@
     "runtime_practice_eval": {
       "repository": "jiying2007/llm_agent",
       "ref": "main",
-      "commit": "4cdeb4a8395fd97941105c2ccc9eb765fc487726",
+      "commit": "d28677f7fc58a9720f396cd7bc8f6ef07823df66",
       "contract": "manifests/digital_worker_runtime_pilot.json",
       "contract_version": "1.5",
-      "contract_canonical_sha256": "3c6a38e75cb8e0300dedb731c52c084a6ee19b274031949f320a5585e8d8e4ab",
+      "contract_canonical_sha256": "4e18113d0c72a2debea50f849efb54488d21201ff5e2186e741a75c00e93c7da",
       "runtime_portability_certifier": "tools/control_plane/runtime_portability.py",
       "runtime_portability_certifier_test": "tests/test_runtime_portability_certifier.sh",
       "runtime_portability_qualification_manifest": "manifests/long_term_asset_qualification.json",
       "runtime_portability_cli_contract": "tools/control_plane/cli.py",
       "runtime_portability_evidence_level": "R2-real-provider-substitution",
       "runtime_portability_status": "certifier-ready-real-evidence-pending",
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_R1_CODEX_CLAUDE_R2_LOCAL_TERMINAL_SHARED_USER_HOME_POLICY_FROZEN_BEHAVIORAL_CONTEXT_R2_CERTIFIER_READY_REAL_EVIDENCE_PENDING_BLOCKER_PRESERVED"
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_R1_CODEX_CLAUDE_R2_LOCAL_TERMINAL_SHARED_USER_HOME_POLICY_FROZEN_BEHAVIORAL_CONTEXT_REPLAY_POSTFLIGHT_REQUIRED_R2_CERTIFIER_READY_REAL_EVIDENCE_PENDING_BLOCKER_PRESERVED"
     }
   },
   "runtime_bindings": {
     "codex": {
       "repository": "jiying2007/codex",
       "ref": "main",
-      "commit": "1d77de27ef01d9be403ce0bd8ce50e2ece5d8967",
+      "commit": "541c058731b5f5ee3ab7d5fdee29b64a76158085",
       "contract": "manifests/integrations/digital-worker-runtime-binding.json",
       "contract_version": "2.1",
       "contract_canonical_sha256": "73b297419fbea5e4bfd54ef846fe03d63e6797f00608718a8f9a8c5577ebd171",
@@ -72,12 +72,12 @@
       "session_bootstrap_contract_canonical_sha256": "d60b577b9cb3908cdbe29a6f1637858201f6ee392f55a20933cb85c411ef0de0",
       "execution_receipt_schema": "schemas/runtime-execution-receipt.v2.schema.json",
       "execution_receipt_schema_version": 2,
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_SOURCE_SET_BOUND_FORMAL_IDENTITY_WORK_RUN_RECEIPT_V2_R2_SHARED_USER_HOME_MODEL_INHERIT"
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_SOURCE_SET_BOUND_FORMAL_IDENTITY_WORK_RUN_RECEIPT_V2_R2_SHARED_USER_HOME_MODEL_INHERIT_REPLAY_POSTFLIGHT_GATED"
     },
     "claude-code": {
       "repository": "jiying2007/claude",
       "ref": "main",
-      "commit": "cc3044eefd42d2f95f68d2ae85024845e9edcf63",
+      "commit": "6ef0c97503d2e81dae0ddbe8a477449c4961b690",
       "contract": "manifests/integrations/digital-worker-runtime-binding.json",
       "contract_version": "1.0",
       "contract_canonical_sha256": "ac220eff715a512bc93913014f79ca5364be29a01359bd90e906c8184f44695f",
@@ -94,7 +94,7 @@
       "r1_fresh_main_workflow_run": "jiying2007/claude/actions/runs/35477771868",
       "verified_runtime_execution_receipt": "PENDING",
       "r2_real_provider_substitution": "PENDING",
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_SOURCE_SET_READY_R1_R2_SHARED_USER_HOME_FROZEN_PROJECT_LOCAL_CONTEXT_USER_SETTINGS_EXCLUDED_REAL_RUNTIME_RECEIPT_PENDING"
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_SOURCE_SET_READY_R1_R2_SHARED_USER_HOME_FROZEN_PROJECT_LOCAL_CONTEXT_USER_SETTINGS_EXCLUDED_REPLAY_POSTFLIGHT_GATED_REAL_RUNTIME_RECEIPT_PENDING"
     }
   },
   "assurance_bindings": {

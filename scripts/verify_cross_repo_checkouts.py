@@ -217,6 +217,9 @@ def verify_runtime_practice_eval(
     for rule in (
         "runtime_user_behavioral_settings_must_not_enter_controlled_execution_context",
         "shared_home_reuse_is_auth_provider_state_not_behavioral_instruction_reuse",
+        "runtime_execution_evidence_ready_requires_replay_postflight",
+        "replay_postflight_must_use_exported_git_free_result_tree",
+        "replay_postflight_is_not_domain_verification",
     ):
         if hard_rules.get(rule) is not True:
             fail(f"runtime_practice_eval: behavioral execution-context hard rule weakened: {rule}")
@@ -245,6 +248,8 @@ def verify_runtime_practice_eval(
             "runtime_home_mode": "shared-user-home",
             "credential_state_in_evidence": False,
             "credential_owner": "runtime-local-auth-state",
+            "replay_postflight_required": True,
+            "replay_postflight_authority": "digital-worker:scripts/runtime_r2_result_postflight.py",
         }.items():
             if plane.get(key) != expected:
                 fail(f"runtime_practice_eval: {runtime} execution plane {key} drift")
@@ -260,6 +265,7 @@ def verify_runtime_practice_eval(
         "freeze_workflow": ".github/workflows/runtime-r2-freeze.yml",
         "local_intake": "scripts/runtime_r2_intake.py",
         "local_verifier": "scripts/runtime_r2_local_verify.py",
+        "result_postflight": "scripts/runtime_r2_result_postflight.py",
         "verifier_identity_mode": "receipt-bound-tool-commit",
         "independent_review_workflow": ".github/workflows/runtime-r2-independent-review.yml",
     }.items():
@@ -275,6 +281,9 @@ def verify_runtime_practice_eval(
         "execution receipt contains a forbidden verification PASS claim",
         "provider runtime home mode drift",
         "provider credential state entered evidence",
+        "execution receipt replay_postflight is missing",
+        "replay-postflight:sha256:",
+        "provider replay postflight digest drift",
     ]:
         if marker not in certifier_text:
             fail(f"runtime_practice_eval: portability certifier marker missing: {marker}")
@@ -285,6 +294,7 @@ def verify_runtime_practice_eval(
         "self-test-only two-runtime fixture",
         "R1 binding conformance must never qualify terminal portability.",
         "runtime binding is not source-set-bound/ready: claude-code",
+        "replay_postflights",
     ]:
         if marker not in test_text:
             fail(f"runtime_practice_eval: portability certifier regression marker missing: {marker}")
