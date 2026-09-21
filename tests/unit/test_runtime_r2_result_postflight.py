@@ -124,13 +124,13 @@ class RuntimeR2ResultPostflightTests(unittest.TestCase):
     def test_descriptor_extra_field_fails_closed(self) -> None:
         descriptor = {
             "schema": "digital-worker-runtime-r2-host-verifier/v1",
-            "replay_self_contained": True,
             "working_directory": ".",
             "steps": [
                 {
+                    "id": "verify-frozen-artifact",
                     "kind": "python",
-                    "entrypoint": "tools/verify.py",
-                    "args": [],
+                    "command": ["python3", "tools/verify.py"],
+                    "receipt": ".r2/host-verifier-receipt.json",
                 }
             ],
         }
