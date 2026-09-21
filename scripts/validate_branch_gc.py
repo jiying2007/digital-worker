@@ -37,11 +37,17 @@ required_snippets = [
     "git/refs/heads/",
     "dry-run PASS",
     "allowlist is empty; nothing to do",
-    "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+    "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
 ]
 for snippet in required_snippets:
     if snippet not in text:
         fail(f"Branch GC safety contract missing: {snippet!r}")
+
+for retired_action in (
+    "actions/checkout@11d5960a326750d5838078e36cf38b85af677262",
+):
+    if retired_action in text:
+        fail(f"retired Node20-generation action pin returned: {retired_action}")
 
 if "branches: [main]" not in text:
     fail("Branch GC push trigger must stay limited to main")
