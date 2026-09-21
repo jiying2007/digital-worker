@@ -48,8 +48,8 @@ roles:
       credential_ownership: runtime-or-executor
       runtime_identity_independent_from_transport: true
       controlled_r2_profiles:
-        codex: codex-github-adapter
-        claude_code: claude-github-adapter
+        codex: codex-cli-native
+        claude_code: claude-cli-native
     candidates:
       codex:
         identity_ref: config/integrations/cross-repo-lock.json#/runtime_bindings/codex
@@ -74,9 +74,9 @@ roles:
         runtime_target: claude-code
         source_identity_mode: exact-release-source-blobs
         status: source-set-bound
-        binding_commit: 8cd87956507f9dbde0438c9135493c96f3b2d318
-        r1_exact_head_workflow_run: jiying2007/claude/actions/runs/35115950799
-        r1_fresh_main_workflow_run: jiying2007/claude/actions/runs/35116031702
+        binding_commit: 5614184bde6c4a1d1feab1a6cef5030ca4adf482
+        r1_exact_head_workflow_run: jiying2007/claude/actions/runs/35477726658
+        r1_fresh_main_workflow_run: jiying2007/claude/actions/runs/35477771868
         r1_binding_ready: true
         verified_runtime_execution_receipt: pending
         r2_real_provider_substitution: pending
@@ -108,15 +108,14 @@ roles:
       external_practice_intake: native
       runtime_target_health: native
       loop_readiness: native
-      runtime_binding_comparison: r2-policy-ready
-      exact_release_source_set_comparison: r2-policy-ready
-      runtime_portability_certifier: native-fail-closed
-      runtime_portability_certifier_readiness: certifier-ready-real-evidence-pending
+      runtime_binding_comparison: periodic-r2-observer
+      exact_release_source_set_comparison: periodic-r2-observer
       execution_receipt_consumption: source-set-v2-ready
-      r2_real_provider_evidence: pending-external-evidence
-      terminal_replaceability: blocked-until-r2-real-provider-evidence
+      r2_qualification_authority: digital-worker-independent-verifier
+      r2_real_provider_evidence: current-campaign-blocked
+      terminal_replaceability: claim-gated-by-fresh-r2
       production_runtime: unsupported-by-design
-    decision: candidate-evaluation-lab
+    decision: optional-evolution-observer
 
   engineering_fact_sources:
     candidates: [git, ci, hil, artifact-store]
@@ -141,7 +140,12 @@ rules:
   formal_mode_requires_exact_pinned_knowledge: true
   terminal_replaceability_requires_r2_real_provider_substitution: true
   r1_binding_conformance_is_not_terminal_replaceability: true
-  r2_certifier_readiness_does_not_imply_terminal_replaceability: true
+  repository_closure_requires_r2: false
+  product_release_requires_r2: false
+  runtime_binding_r1_required: true
+  runtime_portability_qualification_requires_r2: true
+  r2_is_periodic_qualification: true
+  r2_failure_does_not_invalidate_repository_health: true
   governed_knowledge_route_registration_does_not_imply_real_reuse: true
   knowledge_closed_loop_requires_real_reuse_evidence: true
   single_real_reuse_does_not_imply_provider_qualification: true
