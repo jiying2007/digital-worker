@@ -366,6 +366,11 @@ def build_plan(
             "schema_sha256": _file_digest(host_verifier_schema_path),
             "replay_self_contained": True,
             "git_metadata_required": False,
+            "descriptor_shape": {
+                "top_level_fields": ["schema", "replay_self_contained", "steps"],
+                "step_fields": ["kind", "entrypoint", "args"],
+                "allowed_kinds": ["python", "shell", "unittest"],
+            },
         },
         "digital_worker_governance_identity_ref": governance_ref,
         "material_manifest": {"ref": material_ref, "sha256": material_sha},
@@ -397,9 +402,13 @@ def build_plan(
         "You MUST implement the requested repository changes in the target worktree; do not stop at analysis, explanation, recommendations, or a no-op response. "
         "Provide a runnable host verifier that fails closed on malformed identity, source-identity mismatch, path traversal, "
         "size mismatch, SHA mismatch, and duplicate checksum entries; add automated negative tests for these failure modes. "
-        "The exported result tree MUST contain .r2/host-verifier.json conforming to digital-worker-runtime-r2-host-verifier/v1. "
-        "That descriptor MUST enumerate every host verification step (python, shell, or unittest), and all declared steps MUST "
-        "succeed when replayed from the exported result tree without .git metadata, local repository remotes, runtime home state, "
+        "The exported result tree MUST contain .r2/host-verifier.json conforming exactly to digital-worker-runtime-r2-host-verifier/v1. "
+        "The descriptor top-level fields MUST be exactly schema, replay_self_contained, and steps. "
+        "Each step MUST contain exactly kind, entrypoint, and args; kind MUST be one of python, shell, unittest. "
+        "Do NOT use command, id, receipt, working_directory, or any undeclared field in the descriptor. "
+        "Set replay_self_contained=true. For python/shell, entrypoint is the relative file path and args is the argv tail. "
+        "For unittest, entrypoint is the relative test directory and args may contain unittest-discover options such as -p PATTERN. "
+        "All declared steps MUST succeed when replayed from the exported result tree without .git metadata, local repository remotes, runtime home state, "
         "or provider credentials. Source-identity verification MUST use frozen task/manifest data rather than live git metadata. "
         "Configure Hosted CI to run the host verifier against the real package and retain a machine receipt, but do not push. "
         "Run the required host verification locally, and do not release, write devices, or claim Verification PASS/Product Ready/Release Ready. "
