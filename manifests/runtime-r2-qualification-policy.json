@@ -29,12 +29,12 @@
       "codex",
       "claude-code"
     ],
-    "replay_without-provider-state_required": true,
     "independent_verifier_required": true,
     "independent_human_review_required": false,
     "root_certifier_required": false,
     "same-campaign-retry_policy": "bounded-diagnostic-retry-only",
-    "repeated-provider-failure_policy": "record-blocked-and-fix-runtime-before-requalification"
+    "repeated-provider-failure_policy": "record-blocked-and-fix-runtime-before-requalification",
+    "replay_without_provider_state_required": true
   },
   "evidence": {
     "long_lived_tracked_assets": [
