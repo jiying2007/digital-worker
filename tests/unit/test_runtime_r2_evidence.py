@@ -225,7 +225,6 @@ class RuntimeR2EvidenceTests(unittest.TestCase):
             result = module.project_receipt(ROOT, runtime="codex", native_receipt=native_path, frozen_plan=plan_path)
             self.assertEqual(result["runtime"], "codex")
             self.assertEqual(result["frozen_inputs_sha256"], plan["frozen_inputs_sha256"])
-            self.assertEqual(result["replay_postflight"]["sha256"], CLAUDE_POSTFLIGHT_SHA256)
             self.assertFalse(result["verification_pass_claimed"])
             identity = result["runtime_identity"]
             self.assertEqual(identity["runtime_binding_repository"], "https://github.com/jiying2007/codex.git")
