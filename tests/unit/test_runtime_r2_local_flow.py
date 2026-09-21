@@ -60,7 +60,13 @@ def build_plan() -> dict:
         "sha256": PACKAGE_SHA,
     }
     plan["controlled_task"]["artifact_identity"] = identity
+    plan["controlled_task"]["artifact_identity_contract"] = {
+        "ref": "fixture/r2-artifact-identity.v1.json",
+        "sha256": "a" * 64,
+    }
     plan["engineering_task_package"]["artifact_identity"] = identity
+    plan["engineering_task_package"]["artifact_identity_contract_ref"] = "fixture/r2-artifact-identity.v1.json"
+    plan["engineering_task_package"]["artifact_identity_contract_sha256"] = "a" * 64
     plan["comparison_source_set"]["artifact_identity"] = identity
     plan["frozen_inputs_sha256"] = evidence._digest(plan["controlled_task"])
     return plan
