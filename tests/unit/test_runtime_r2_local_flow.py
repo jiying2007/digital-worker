@@ -14,6 +14,7 @@ BASE = "eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d"
 PACKAGE_PATH = "ota_pkg_v1.1.21.tar.gz"
 PACKAGE_BYTES = b"test"
 PACKAGE_SHA = hashlib.sha256(PACKAGE_BYTES).hexdigest()
+PACKAGE_BLOB = "b" * 40
 
 
 def load_module(name: str, path: Path):
@@ -50,17 +51,23 @@ def current_head() -> str:
 
 def build_plan() -> dict:
     plan = evidence.build_plan(ROOT, digital_worker_commit=current_head(), target_head=BASE, target_clean=True)
-    criteria = list(plan["controlled_task"]["acceptance_criteria"])
-    criteria = [
-        item.replace("76,778,472-byte package", "4-byte package")
-        if isinstance(item, str)
-        else item
-        for item in criteria
-    ]
-    plan["controlled_task"]["acceptance_criteria"] = criteria
-    plan["engineering_task_package"]["evidence_refs"] = [
-        f"{PACKAGE_PATH} sha256:{PACKAGE_SHA}",
-    ]
+    identity = {
+        "repository": "jiying2007/ota_download_test",
+        "source_commit": BASE,
+        "source_blob_sha": PACKAGE_BLOB,
+        "path": PACKAGE_PATH,
+        "size_bytes": len(PACKAGE_BYTES),
+        "sha256": PACKAGE_SHA,
+    }
+    plan["controlled_task"]["artifact_identity"] = identity
+    plan["controlled_task"]["artifact_identity_contract"] = {
+        "ref": "fixture/r2-artifact-identity.v1.json",
+        "sha256": "a" * 64,
+    }
+    plan["engineering_task_package"]["artifact_identity"] = identity
+    plan["engineering_task_package"]["artifact_identity_contract_ref"] = "fixture/r2-artifact-identity.v1.json"
+    plan["engineering_task_package"]["artifact_identity_contract_sha256"] = "a" * 64
+    plan["comparison_source_set"]["artifact_identity"] = identity
     plan["frozen_inputs_sha256"] = evidence._digest(plan["controlled_task"])
     return plan
 
@@ -114,11 +121,16 @@ def result_tree(root: Path, runtime: str) -> tuple[Path, str]:
     write_json(
         tree / "artifacts/pcr02-ota-v1.1.21.identity.json",
         {
-            "runtime": runtime,
-            "package_path": PACKAGE_PATH,
-            "size": len(PACKAGE_BYTES),
-            "sha256": PACKAGE_SHA,
-            "source_commit": BASE,
+            "schema_version": 1,
+            "artifact": {
+                "repository": "jiying2007/ota_download_test",
+                "source_commit": BASE,
+                "source_blob_sha": PACKAGE_BLOB,
+                "path": PACKAGE_PATH,
+                "size_bytes": len(PACKAGE_BYTES),
+                "sha256": PACKAGE_SHA,
+            },
+            "runtime_note": runtime,
         },
     )
     (tree / "scripts/verify_pcr02_ota_identity.sh").write_text(
@@ -272,6 +284,45 @@ class RuntimeR2LocalFlowTests(unittest.TestCase):
             self.assertFalse(report["verification_pass_claimed_by_runtime"])
             self.assertEqual(report["independent_review_status"], "pending")
             self.assertEqual(set(report["provider_execution_evidence"]), {"codex", "claude-code"})
+
+    def test_domain_verification_rejects_manifest_missing_source_identity(self) -> None:
+        plan = build_plan()
+        with tempfile.TemporaryDirectory() as tmp_value:
+            tmp = Path(tmp_value)
+            freeze_dir = freeze(tmp, plan)
+            codex_dir = runtime_dir(tmp, "codex", plan)
+            claude_dir = runtime_dir(tmp, "claude-code", plan)
+
+            with tarfile.open(codex_dir / "result-tree.tar.gz", "r:gz") as tf:
+                tree = tmp / "bad-codex"
+                tf.extractall(tree)
+            manifest = tree / "artifacts/pcr02-ota-v1.1.21.identity.json"
+            value = json.loads(manifest.read_text(encoding="utf-8"))
+            del value["artifact"]["source_blob_sha"]
+            write_json(manifest, value)
+
+            archive = codex_dir / "result-tree.tar.gz"
+            with tarfile.open(archive, "w:gz") as tf:
+                for path in sorted(x for x in tree.rglob("*") if x.is_file()):
+                    tf.add(path, arcname=path.relative_to(tree).as_posix())
+
+            native = json.loads((codex_dir / "codex-native.json").read_text(encoding="utf-8"))
+            native["evidence_refs"] = ["worktree-result:sha256:" + tree_digest(tree)]
+            write_json(codex_dir / "codex-native.json", native)
+
+            verify_out = tmp / "verification-bad"
+            with self.assertRaisesRegex(
+                verify.VerificationError,
+                "no machine-readable identity JSON binds frozen",
+            ):
+                verify.verify_local_r2(
+                    ROOT,
+                    freeze_dir,
+                    codex_dir,
+                    claude_dir,
+                    verify_out,
+                    "local-verifier:test",
+                )
 
 
 if __name__ == "__main__":
