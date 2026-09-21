@@ -107,8 +107,11 @@ jobs:
               },
               'provider_credentials_held_by_digital_worker':False,
               'provider_execution_authorized':False,
-              'verification_status':'pending',
-              'independent_review_status':'pending',
+              'qualification_mode':'periodic-non-blocking',
+              'qualification_policy_ref':'manifests/runtime-r2-qualification-policy.json',
+              'repository_closure_blocking':False,
+              'product_release_blocking':False,
+              'qualification_status':'pending',
           }
           out.write_text(json.dumps(campaign,indent=2,sort_keys=True)+'\n')
           with open(os.environ['GITHUB_STEP_SUMMARY'],'a',encoding='utf-8') as s:
@@ -117,6 +120,7 @@ jobs:
               s.write(f"- Frozen inputs SHA-256: `{campaign['frozen_inputs_sha256']}`\n")
               s.write('- Provider execution remains unauthorized here. Run each exact runtime binding locally using its runtime-owned R2 adapter and the normal shared user runtime home.\n')
               s.write('- GitHub provider credentials are not required and must not be introduced for R2 execution.\n')
+              s.write('- R2 is periodic qualification evidence; it does not block repository closure or product release.\n')
           PY
 
       - name: Upload frozen campaign handoff
