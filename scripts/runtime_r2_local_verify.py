@@ -156,33 +156,6 @@ def _verify_checksum_list(result_tree: pathlib.Path, package_path: str, expected
     return sha256_file(checksum_path)
 
 
-def _find_identity_manifest(
-    result_tree: pathlib.Path,
-    package_path: str,
-    expected_size: int,
-    expected_sha: str,
-    base_commit: str,
-) -> pathlib.Path:
-    for path in sorted(result_tree.rglob("*.json")):
-        if ".git" in path.parts or not path.is_file():
-            continue
-        try:
-            value = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
-            continue
-        leaves = set(_json_leaf_values(value))
-        if (
-            package_path in leaves
-            and str(expected_size) in leaves
-            and expected_sha in leaves
-            and base_commit in leaves
-        ):
-            return path
-    raise VerificationError(
-        "no machine-readable identity JSON binds frozen package path/size/SHA/source identity"
-    )
-
-
 def _verify_frozen_artifact_identity(
     result_tree: pathlib.Path,
     plan: dict[str, Any],
