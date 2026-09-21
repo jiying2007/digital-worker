@@ -88,6 +88,9 @@ jobs:
           assert 'frozen-project-local' in intake_text
           assert 'user_setting_source_loaded' in intake_text
           assert 'shared user runtime home' in text
+          assert '--setting-sources project,local' in text
+          assert 'execution_context_mode=frozen-project-local' in text
+          assert 'user_setting_source_loaded=false' in text
           assert 'Python 3.11' in text
           assert 'openai-api-key' not in text
           assert 'anthropic_api_key' not in text
