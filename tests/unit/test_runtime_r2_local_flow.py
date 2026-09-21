@@ -11,6 +11,9 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 BASE = "eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d"
+PACKAGE_PATH = "ota_pkg_v1.1.21.tar.gz"
+PACKAGE_BYTES = b"test"
+PACKAGE_SHA = hashlib.sha256(PACKAGE_BYTES).hexdigest()
 
 
 def load_module(name: str, path: Path):
@@ -46,7 +49,20 @@ def current_head() -> str:
 
 
 def build_plan() -> dict:
-    return evidence.build_plan(ROOT, digital_worker_commit=current_head(), target_head=BASE, target_clean=True)
+    plan = evidence.build_plan(ROOT, digital_worker_commit=current_head(), target_head=BASE, target_clean=True)
+    criteria = list(plan["controlled_task"]["acceptance_criteria"])
+    criteria = [
+        item.replace("76,778,472-byte package", "4-byte package")
+        if isinstance(item, str)
+        else item
+        for item in criteria
+    ]
+    plan["controlled_task"]["acceptance_criteria"] = criteria
+    plan["engineering_task_package"]["evidence_refs"] = [
+        f"{PACKAGE_PATH} sha256:{PACKAGE_SHA}",
+    ]
+    plan["frozen_inputs_sha256"] = evidence._digest(plan["controlled_task"])
+    return plan
 
 
 def freeze(root: Path, plan: dict) -> Path:
@@ -88,16 +104,27 @@ def freeze(root: Path, plan: dict) -> Path:
 
 def result_tree(root: Path, runtime: str) -> tuple[Path, str]:
     tree = root / f"{runtime}-result"
-    (tree / "tests").mkdir(parents=True)
-    (tree / "tests/test_smoke.py").write_text(
-        "import unittest\n\nclass Smoke(unittest.TestCase):\n    def test_ok(self): self.assertTrue(True)\n",
+    (tree / "artifacts").mkdir(parents=True)
+    (tree / "scripts").mkdir(parents=True)
+    (tree / PACKAGE_PATH).write_bytes(PACKAGE_BYTES)
+    (tree / "SHA256SUMS.txt").write_text(
+        f"{PACKAGE_SHA}  {PACKAGE_PATH}\n",
         encoding="utf-8",
     )
-    (tree / "verify_ota_manifest.py").write_text(
-        "import argparse\np=argparse.ArgumentParser(); p.add_argument('--manifest'); p.parse_args()\n",
+    write_json(
+        tree / "artifacts/pcr02-ota-v1.1.21.identity.json",
+        {
+            "runtime": runtime,
+            "package_path": PACKAGE_PATH,
+            "size": len(PACKAGE_BYTES),
+            "sha256": PACKAGE_SHA,
+            "source_commit": BASE,
+        },
+    )
+    (tree / "scripts/verify_pcr02_ota_identity.sh").write_text(
+        "#!/usr/bin/env bash\nset -euo pipefail\nsha256sum -c SHA256SUMS.txt\n",
         encoding="utf-8",
     )
-    write_json(tree / "ota-manifest.v1.json", {"runtime": runtime})
     digest = tree_digest(tree)
     archive = root / f"{runtime}-result-tree.tar.gz"
     with tarfile.open(archive, "w:gz") as tf:
