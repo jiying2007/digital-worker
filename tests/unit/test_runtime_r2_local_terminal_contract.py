@@ -57,6 +57,7 @@ class RuntimeR2LocalTerminalContractTest(unittest.TestCase):
         self.assertTrue(campaign["independent_verifier_required"])
         self.assertFalse(campaign["independent_human_review_required"])
         self.assertFalse(campaign["root_certifier_required"])
+        self.assertTrue(campaign["verifier_actor_must_be_distinct_from_provider_execution_actors"])
 
     def test_runbook_preserves_qualification_and_trust_boundaries(self):
         text = RUNBOOK.read_text(encoding="utf-8")

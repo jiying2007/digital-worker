@@ -34,7 +34,8 @@
     "root_certifier_required": false,
     "same-campaign-retry_policy": "bounded-diagnostic-retry-only",
     "repeated-provider-failure_policy": "record-blocked-and-fix-runtime-before-requalification",
-    "replay_without_provider_state_required": true
+    "replay_without_provider_state_required": true,
+    "verifier_actor_must_be_distinct_from_provider_execution_actors": true
   },
   "evidence": {
     "long_lived_tracked_assets": [

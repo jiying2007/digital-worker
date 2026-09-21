@@ -326,6 +326,7 @@ class RuntimeR2LocalFlowTests(unittest.TestCase):
             intake_out = tmp / "intake"
             collection = intake.intake(ROOT, freeze_dir, codex_dir, claude_dir, intake_out)
             self.assertEqual(collection["schema"], "digital-worker-runtime-r2-local-intake/v1")
+            self.assertEqual(collection["status"], "provider-executions-collected-pending-digital-worker-verification")
             self.assertEqual(collection["execution_venue"], "local-terminal")
             self.assertEqual(collection["runtime_home_mode"], "shared-user-home")
             self.assertFalse(collection["credential_state_in_evidence"])
@@ -357,12 +358,33 @@ class RuntimeR2LocalFlowTests(unittest.TestCase):
             self.assertFalse(report["credential_state_in_evidence"])
             self.assertFalse(report["github_provider_credentials_required"])
             self.assertFalse(report["verification_pass_claimed_by_runtime"])
+            self.assertTrue(report["verifier_actor_distinct_from_provider_execution_actors"])
             self.assertEqual(report["qualification_status"], "qualified")
             self.assertTrue(report["r2_qualified"])
             self.assertFalse(report["repository_closure_blocking"])
             self.assertFalse(report["product_release_blocking"])
             self.assertEqual(report["qualification_policy_ref"], "manifests/runtime-r2-qualification-policy.json")
             self.assertEqual(set(report["provider_execution_evidence"]), {"codex", "claude-code"})
+
+    def test_domain_verification_rejects_provider_actor_as_verifier(self) -> None:
+        plan = build_plan()
+        with tempfile.TemporaryDirectory() as tmp_value:
+            tmp = Path(tmp_value)
+            freeze_dir = freeze(tmp, plan)
+            codex_dir = runtime_dir(tmp, "codex", plan)
+            claude_dir = runtime_dir(tmp, "claude-code", plan)
+            with self.assertRaisesRegex(
+                verify.VerificationError,
+                "independent verifier must be distinct",
+            ):
+                verify.verify_local_r2(
+                    ROOT,
+                    freeze_dir,
+                    codex_dir,
+                    claude_dir,
+                    tmp / "verification-self-review",
+                    "local-test-codex",
+                )
 
     def test_native_host_verification_executes_declared_python_step(self) -> None:
         plan = build_plan()
