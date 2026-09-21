@@ -46,7 +46,7 @@ def main() -> None:
     expected = {
         "knowledge_control_plane": ("jiying2007/knowledge-hub", "1.2"),
         "agent_asset_control_plane": ("jiying2007/agent-dev-kit", "2.0"),
-        "runtime_practice_eval": ("jiying2007/llm_agent", "1.5"),
+        "runtime_practice_eval": ("jiying2007/llm_agent", "1.6"),
     }
     for key, (repo, contract_version) in expected.items():
         provider = lock["providers"].get(key, {})
@@ -74,6 +74,7 @@ def main() -> None:
     require("PERIODIC_R2_QUALIFICATION_AUTHORITY_OWNED_BY_DIGITAL_WORKER" in runtime_eval.get("validation", ""), "periodic R2 authority must be explicitly promoted")
     require("CURRENT_REAL_PROVIDER_EVIDENCE_BLOCKED" in runtime_eval.get("validation", ""), "current blocked real-provider evidence must remain explicit")
     require("REPOSITORY_HEALTH_NON_BLOCKING" in runtime_eval.get("validation", ""), "R2 failure must remain non-blocking for repository health")
+    require("ROOT_RECERTIFIER_RETIRED" in runtime_eval.get("validation", ""), "llm_agent duplicate R2 certifier must remain retired")
 
     adk = lock["providers"]["agent_asset_control_plane"]
     require(adk.get("runtime_binding_contract_version") == "2.0", "ADK runtime-binding contract version drift")
