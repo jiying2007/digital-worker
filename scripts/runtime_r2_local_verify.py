@@ -205,15 +205,26 @@ def _run_native_host_verification(
     if tests.is_dir() and any(tests.rglob("test*.py")):
         commands.append([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"])
 
-    shell_verifiers = list(result_tree.glob("verify*.sh"))
-    scripts_dir = result_tree / "scripts"
-    if scripts_dir.is_dir():
-        shell_verifiers.extend(scripts_dir.glob("verify*.sh"))
+    verifier_dirs = [result_tree]
+    for dirname in ("scripts", "tools"):
+        candidate = result_tree / dirname
+        if candidate.is_dir():
+            verifier_dirs.append(candidate)
+
+    shell_verifiers: list[pathlib.Path] = []
+    python_verifiers: list[pathlib.Path] = []
+    for directory in verifier_dirs:
+        shell_verifiers.extend(directory.glob("verify*.sh"))
+        python_verifiers.extend(directory.glob("verify*.py"))
+
     for path in sorted(set(shell_verifiers)):
         commands.append(["bash", path.relative_to(result_tree).as_posix()])
 
     legacy = result_tree / "verify_ota_manifest.py"
     manifest = result_tree / "ota-manifest.v1.json"
+    generic_python = sorted(set(python_verifiers) - {legacy})
+    for path in generic_python:
+        commands.append([sys.executable, path.relative_to(result_tree).as_posix()])
     if legacy.is_file() and manifest.is_file():
         commands.append([sys.executable, legacy.name, "--manifest", manifest.name])
 
