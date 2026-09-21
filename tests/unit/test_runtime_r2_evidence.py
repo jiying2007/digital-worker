@@ -145,6 +145,23 @@ class RuntimeR2EvidenceTests(unittest.TestCase):
             "domains/edge-foundation/pilot/evidence/FEATURE-PCR02-OTA-001/extras/r2-artifact-identity.v1.json",
         )
         self.assertEqual(len(controlled["artifact_identity_contract"]["sha256"]), 64)
+        self.assertEqual(
+            controlled["host_verifier_contract"]["descriptor_path"],
+            ".r2/host-verifier.json",
+        )
+        self.assertEqual(
+            controlled["host_verifier_contract"]["schema"],
+            "digital-worker-runtime-r2-host-verifier/v1",
+        )
+        self.assertEqual(
+            controlled["host_verifier_contract"]["schema_ref"],
+            "schemas/runtime-r2-host-verifier.v1.schema.json",
+        )
+        self.assertEqual(len(controlled["host_verifier_contract"]["schema_sha256"]), 64)
+        self.assertTrue(controlled["host_verifier_contract"]["replay_self_contained"])
+        self.assertFalse(controlled["host_verifier_contract"]["git_metadata_required"])
+        self.assertIn(".r2/host-verifier.json", plan["prompt"])
+        self.assertIn("without .git metadata", plan["prompt"])
         self.assertEqual(controlled["adk_release_identity_ref"], "manifests/r2_frozen_adk_release.lock.json")
         self.assertEqual(plan["adk_release_identity"]["commit"], ADK_COMMIT)
         self.assertEqual(plan["adk_release_identity"]["version"], ADK_VERSION)
