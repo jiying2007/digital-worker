@@ -60,6 +60,8 @@ jobs:
           assert bindings['claude-code']['repository'] == 'jiying2007/claude'
           assert re.fullmatch(r'[0-9a-f]{40}', bindings['codex']['commit'])
           assert re.fullmatch(r'[0-9a-f]{40}', bindings['claude-code']['commit'])
+          assert 'REPLAY_POSTFLIGHT_GATED' in bindings['codex']['validation']
+          assert 'REPLAY_POSTFLIGHT_GATED' in bindings['claude-code']['validation']
 
           retired={
               '79acb193cef381b4c8b72f00e0af15f87e32765c',
@@ -93,6 +95,10 @@ jobs:
           assert '--setting-sources project,local' in text
           assert 'execution_context_mode=frozen-project-local' in text
           assert 'user_setting_source_loaded=false' in text
+          assert 'runtime_r2_result_postflight.py' in text
+          assert '.git-free result tree' in text or '.git' in text and 'result tree' in text
+          assert 'replay postflight' in text
+          assert 'not Domain Verification' in text
           assert 'Python 3.11' in text
           assert 'openai-api-key' not in text
           assert 'anthropic_api_key' not in text
