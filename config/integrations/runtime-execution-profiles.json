@@ -10,19 +10,11 @@
       "executable": "codex",
       "credential_mode": "runtime-managed-session",
       "endpoint_mode": "runtime-managed",
-      "intended_scope": ["development", "operator-run"],
-      "source_set_binding": "required",
-      "execution_receipt": "real-execution-facts-only",
-      "verification_authority": false
-    },
-    "codex-github-adapter": {
-      "runtime": "codex",
-      "runtime_target": "codex-cli",
-      "executor": "github-action",
-      "action": "openai/codex-action@5c3f4ccdb2b8790f73d6b21751ac00e602aa0c02",
-      "credential_mode": "externally-injected",
-      "endpoint_mode": "optional-runtime-endpoint",
-      "intended_scope": ["controlled-r2"],
+      "intended_scope": [
+        "development",
+        "operator-run",
+        "controlled-r2"
+      ],
       "source_set_binding": "required",
       "execution_receipt": "real-execution-facts-only",
       "verification_authority": false
@@ -34,19 +26,10 @@
       "executable": "claude",
       "credential_mode": "runtime-managed-session",
       "endpoint_mode": "runtime-managed",
-      "intended_scope": ["operator-run", "controlled-r2"],
-      "source_set_binding": "required",
-      "execution_receipt": "real-execution-facts-only",
-      "verification_authority": false
-    },
-    "claude-github-adapter": {
-      "runtime": "claude-code",
-      "runtime_target": "claude-code",
-      "executor": "github-action",
-      "action": "anthropics/claude-code-action/base-action@3b8197d3d486006dd4af54613517f21ac6ac625e",
-      "credential_mode": "externally-injected",
-      "endpoint_mode": "optional-runtime-endpoint",
-      "intended_scope": ["controlled-r2"],
+      "intended_scope": [
+        "operator-run",
+        "controlled-r2"
+      ],
       "source_set_binding": "required",
       "execution_receipt": "real-execution-facts-only",
       "verification_authority": false
@@ -61,6 +44,7 @@
     "relay_or_gateway_must_not_change_declared_runtime_identity": true,
     "execution_output_is_not_verification_pass": true,
     "provider_or_gateway_receipt_is_not_domain_decision_authority": true,
-    "r2_requires_same_frozen_task_and_independent_runtime_execution": true
+    "r2_requires_same_frozen_task_and_independent_runtime_execution": true,
+    "r2_provider_execution_must_use_runtime_owned_local_terminal": true
   }
 }
