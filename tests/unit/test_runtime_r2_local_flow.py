@@ -229,6 +229,14 @@ def runtime_dir(root: Path, runtime: str, plan: dict) -> Path:
             "actor": f"local-test-{runtime}",
             "runtime_host": "local-terminal",
             "runtime_home_mode": "shared-user-home",
+            **(
+                {
+                    "execution_context_mode": "frozen-project-local",
+                    "user_setting_source_loaded": False,
+                }
+                if runtime == "claude-code"
+                else {}
+            ),
             "credential_state_in_evidence": False,
             "frozen_inputs_sha256": plan["frozen_inputs_sha256"],
             "verification_or_release_authority": False,
@@ -266,6 +274,9 @@ class RuntimeR2LocalFlowTests(unittest.TestCase):
                 collection["provider_execution_evidence"]["codex"]["runtime_binding_commit"],
                 plan["runtime_bindings"]["codex"]["commit"],
             )
+            claude_evidence = collection["provider_execution_evidence"]["claude-code"]
+            self.assertEqual(claude_evidence["execution_context_mode"], "frozen-project-local")
+            self.assertFalse(claude_evidence["user_setting_source_loaded"])
 
             verify_out = tmp / "verification"
             report = verify.verify_local_r2(
@@ -284,6 +295,23 @@ class RuntimeR2LocalFlowTests(unittest.TestCase):
             self.assertFalse(report["verification_pass_claimed_by_runtime"])
             self.assertEqual(report["independent_review_status"], "pending")
             self.assertEqual(set(report["provider_execution_evidence"]), {"codex", "claude-code"})
+
+    def test_local_intake_rejects_claude_user_setting_source(self) -> None:
+        plan = build_plan()
+        with tempfile.TemporaryDirectory() as tmp_value:
+            tmp = Path(tmp_value)
+            freeze_dir = freeze(tmp, plan)
+            codex_dir = runtime_dir(tmp, "codex", plan)
+            claude_dir = runtime_dir(tmp, "claude-code", plan)
+            auth_path = claude_dir / "provider-authorization.json"
+            auth = json.loads(auth_path.read_text(encoding="utf-8"))
+            auth["user_setting_source_loaded"] = True
+            write_json(auth_path, auth)
+            with self.assertRaisesRegex(
+                intake.IntakeError,
+                "user setting source must not enter controlled R2 execution",
+            ):
+                intake.intake(ROOT, freeze_dir, codex_dir, claude_dir, tmp / "bad-intake")
 
     def test_domain_verification_rejects_manifest_missing_source_identity(self) -> None:
         plan = build_plan()
