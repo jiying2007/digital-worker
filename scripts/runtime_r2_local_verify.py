@@ -195,41 +195,98 @@ def _verify_frozen_artifact_identity(
     log.write_text("\n".join(rows), encoding="utf-8")
 
 
+def _safe_result_rel(value: Any, label: str) -> pathlib.PurePosixPath:
+    if not isinstance(value, str) or not value:
+        raise VerificationError(f"{label} must be a non-empty relative path")
+    path = pathlib.PurePosixPath(value)
+    if path.is_absolute() or ".." in path.parts:
+        raise VerificationError(f"{label} must be a safe relative path")
+    return path
+
+
 def _run_native_host_verification(
     result_tree: pathlib.Path,
     log: pathlib.Path,
+    plan: dict[str, Any],
 ) -> None:
+    controlled = plan.get("controlled_task")
+    if not isinstance(controlled, dict):
+        raise VerificationError("frozen plan controlled task is missing")
+    contract = controlled.get("host_verifier_contract")
+    if not isinstance(contract, dict):
+        raise VerificationError("frozen host verifier contract is missing")
+    if contract.get("schema") != "digital-worker-runtime-r2-host-verifier/v1":
+        raise VerificationError("unsupported frozen host verifier contract")
+    if contract.get("replay_self_contained") is not True:
+        raise VerificationError("frozen host verifier contract must be replay-self-contained")
+    if contract.get("git_metadata_required") is not False:
+        raise VerificationError("frozen host verifier contract must not require git metadata")
+
+    descriptor_rel = _safe_result_rel(
+        contract.get("descriptor_path"),
+        "host verifier descriptor path",
+    )
+    descriptor_path = result_tree.joinpath(*descriptor_rel.parts)
+    if not descriptor_path.is_file() or descriptor_path.is_symlink():
+        raise VerificationError(
+            f"result tree missing host verifier descriptor: {descriptor_rel.as_posix()}"
+        )
+    descriptor = load_json(descriptor_path)
+    if descriptor.get("schema") != "digital-worker-runtime-r2-host-verifier/v1":
+        raise VerificationError("host verifier descriptor schema is invalid")
+    if descriptor.get("replay_self_contained") is not True:
+        raise VerificationError("host verifier descriptor must declare replay_self_contained=true")
+    steps = descriptor.get("steps")
+    if not isinstance(steps, list) or not steps:
+        raise VerificationError("host verifier descriptor must contain at least one step")
+
     commands: list[list[str]] = []
+    for index, step in enumerate(steps):
+        if not isinstance(step, dict):
+            raise VerificationError(f"host verifier step {index} must be an object")
+        if set(step) != {"kind", "entrypoint", "args"}:
+            raise VerificationError(f"host verifier step {index} fields are invalid")
+        kind = step.get("kind")
+        if kind not in {"python", "shell", "unittest"}:
+            raise VerificationError(f"host verifier step {index} kind is invalid")
+        entrypoint_rel = _safe_result_rel(
+            step.get("entrypoint"),
+            f"host verifier step {index} entrypoint",
+        )
+        args = step.get("args")
+        if (
+            not isinstance(args, list)
+            or len(args) > 32
+            or not all(isinstance(item, str) and "\x00" not in item for item in args)
+        ):
+            raise VerificationError(f"host verifier step {index} args are invalid")
 
-    tests = result_tree / "tests"
-    if tests.is_dir() and any(tests.rglob("test*.py")):
-        commands.append([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"])
-
-    verifier_dirs = [result_tree]
-    for dirname in ("scripts", "tools"):
-        candidate = result_tree / dirname
-        if candidate.is_dir():
-            verifier_dirs.append(candidate)
-
-    shell_verifiers: list[pathlib.Path] = []
-    python_verifiers: list[pathlib.Path] = []
-    for directory in verifier_dirs:
-        shell_verifiers.extend(directory.glob("verify*.sh"))
-        python_verifiers.extend(directory.glob("verify*.py"))
-
-    for path in sorted(set(shell_verifiers)):
-        commands.append(["bash", path.relative_to(result_tree).as_posix()])
-
-    legacy = result_tree / "verify_ota_manifest.py"
-    manifest = result_tree / "ota-manifest.v1.json"
-    generic_python = sorted(set(python_verifiers) - {legacy})
-    for path in generic_python:
-        commands.append([sys.executable, path.relative_to(result_tree).as_posix()])
-    if legacy.is_file() and manifest.is_file():
-        commands.append([sys.executable, legacy.name, "--manifest", manifest.name])
-
-    if not commands:
-        raise VerificationError("result tree exposes no runnable host verifier")
+        entrypoint = result_tree.joinpath(*entrypoint_rel.parts)
+        if kind == "unittest":
+            if not entrypoint.is_dir() or entrypoint.is_symlink():
+                raise VerificationError(
+                    f"host verifier unittest directory missing: {entrypoint_rel.as_posix()}"
+                )
+            command = [
+                sys.executable,
+                "-m",
+                "unittest",
+                "discover",
+                "-s",
+                entrypoint_rel.as_posix(),
+                "-v",
+                *args,
+            ]
+        else:
+            if not entrypoint.is_file() or entrypoint.is_symlink():
+                raise VerificationError(
+                    f"host verifier entrypoint missing: {entrypoint_rel.as_posix()}"
+                )
+            if kind == "python":
+                command = [sys.executable, entrypoint_rel.as_posix(), *args]
+            else:
+                command = ["bash", entrypoint_rel.as_posix(), *args]
+        commands.append(command)
 
     chunks: list[str] = []
     for command in commands:
@@ -250,6 +307,7 @@ def _run_native_host_verification(
                 f"verification command failed ({completed.returncode}): {' '.join(command)}"
             )
     log.write_text("\n".join(chunks) + "\n", encoding="utf-8")
+
 
 
 def verify_local_r2(
@@ -305,7 +363,7 @@ def verify_local_r2(
         unit_log = out / f"{prefix}-domain-host-tests.log"
         ota_log = out / f"{prefix}-domain-ota-verify.log"
         _verify_frozen_artifact_identity(result_tree, plan, ota_log)
-        _run_native_host_verification(result_tree, unit_log)
+        _run_native_host_verification(result_tree, unit_log, plan)
         test_evidence[f"{prefix}_host_tests_sha256"] = sha256_file(unit_log)
         test_evidence[f"{prefix}_ota_verify_sha256"] = sha256_file(ota_log)
 

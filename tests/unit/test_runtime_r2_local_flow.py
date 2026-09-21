@@ -113,6 +113,7 @@ def result_tree(root: Path, runtime: str) -> tuple[Path, str]:
     tree = root / f"{runtime}-result"
     (tree / "artifacts").mkdir(parents=True)
     (tree / "scripts").mkdir(parents=True)
+    (tree / ".r2").mkdir(parents=True)
     (tree / PACKAGE_PATH).write_bytes(PACKAGE_BYTES)
     (tree / "SHA256SUMS.txt").write_text(
         f"{PACKAGE_SHA}  {PACKAGE_PATH}\n",
@@ -143,11 +144,33 @@ def result_tree(root: Path, runtime: str) -> tuple[Path, str]:
             "raise SystemExit(0 if actual == expected else 1)\n",
             encoding="utf-8",
         )
+        steps = [
+            {
+                "kind": "python",
+                "entrypoint": "verify_artifact.py",
+                "args": [],
+            }
+        ]
     else:
         (tree / "scripts/verify_pcr02_ota_identity.sh").write_text(
             "#!/usr/bin/env bash\nset -euo pipefail\nsha256sum -c SHA256SUMS.txt\n",
             encoding="utf-8",
         )
+        steps = [
+            {
+                "kind": "shell",
+                "entrypoint": "scripts/verify_pcr02_ota_identity.sh",
+                "args": [],
+            }
+        ]
+    write_json(
+        tree / ".r2/host-verifier.json",
+        {
+            "schema": "digital-worker-runtime-r2-host-verifier/v1",
+            "replay_self_contained": True,
+            "steps": steps,
+        },
+    )
     digest = tree_digest(tree)
     archive = root / f"{runtime}-result-tree.tar.gz"
     with tarfile.open(archive, "w:gz") as tf:
@@ -307,20 +330,48 @@ class RuntimeR2LocalFlowTests(unittest.TestCase):
             self.assertEqual(report["independent_review_status"], "pending")
             self.assertEqual(set(report["provider_execution_evidence"]), {"codex", "claude-code"})
 
-    def test_native_host_verification_discovers_root_python_verifier(self) -> None:
+    def test_native_host_verification_executes_declared_python_step(self) -> None:
+        plan = build_plan()
         with tempfile.TemporaryDirectory() as tmp_value:
             tmp = Path(tmp_value)
             tree = tmp / "tree"
-            tree.mkdir()
+            (tree / ".r2").mkdir(parents=True)
             (tree / "verify_artifact.py").write_text(
                 "print('python verifier pass')\n",
                 encoding="utf-8",
             )
+            write_json(
+                tree / ".r2/host-verifier.json",
+                {
+                    "schema": "digital-worker-runtime-r2-host-verifier/v1",
+                    "replay_self_contained": True,
+                    "steps": [
+                        {
+                            "kind": "python",
+                            "entrypoint": "verify_artifact.py",
+                            "args": [],
+                        }
+                    ],
+                },
+            )
             log = tmp / "host.log"
-            verify._run_native_host_verification(tree, log)
+            verify._run_native_host_verification(tree, log, plan)
             text = log.read_text(encoding="utf-8")
             self.assertIn("verify_artifact.py", text)
             self.assertIn("[exit=0]", text)
+
+    def test_native_host_verification_rejects_missing_descriptor(self) -> None:
+        plan = build_plan()
+        with tempfile.TemporaryDirectory() as tmp_value:
+            tmp = Path(tmp_value)
+            tree = tmp / "tree"
+            tree.mkdir()
+            log = tmp / "host.log"
+            with self.assertRaisesRegex(
+                verify.VerificationError,
+                "missing host verifier descriptor",
+            ):
+                verify._run_native_host_verification(tree, log, plan)
 
     def test_local_intake_rejects_claude_user_setting_source(self) -> None:
         plan = build_plan()
