@@ -33,22 +33,25 @@ class RuntimeExecutionCapabilityProjectionTests(unittest.TestCase):
         self.assertEqual(codex["capabilities"]["runtime_managed_auth_session"], "native")
         self.assertEqual(codex["capabilities"]["transport_auth_decoupling"], "provider-neutral-profile")
 
-    def test_controlled_r2_profiles_match_execution_profile_ssot(self) -> None:
+    def test_controlled_r2_profiles_use_runtime_owned_local_cli(self) -> None:
         profiles = self.registry["profiles"]
         controlled = self.capability["roles"]["runtime_binding"]["execution_profiles"]["controlled_r2_profiles"]
         expected = {
-            "codex": "codex-github-adapter",
-            "claude_code": "claude-github-adapter",
+            "codex": "codex-cli-native",
+            "claude_code": "claude-cli-native",
         }
         self.assertEqual(controlled, expected)
+        self.assertEqual(set(profiles), {"codex-cli-native", "claude-cli-native"})
         self.assertEqual(profiles[controlled["codex"]]["runtime"], "codex")
         self.assertEqual(profiles[controlled["claude_code"]]["runtime"], "claude-code")
         for profile_name in controlled.values():
             profile = profiles[profile_name]
-            self.assertEqual(profile["executor"], "github-action")
-            self.assertEqual(profile["credential_mode"], "externally-injected")
+            self.assertEqual(profile["executor"], "native-cli")
+            self.assertEqual(profile["credential_mode"], "runtime-managed-session")
+            self.assertIn("controlled-r2", profile["intended_scope"])
             self.assertEqual(profile["source_set_binding"], "required")
             self.assertFalse(profile["verification_authority"])
+        self.assertTrue(self.registry["rules"]["r2_provider_execution_must_use_runtime_owned_local_terminal"])
 
     def test_transport_contract_remains_provider_neutral(self) -> None:
         registry_text = PROFILE_PATH.read_text(encoding="utf-8")

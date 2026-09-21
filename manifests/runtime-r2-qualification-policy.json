@@ -1,0 +1,71 @@
+{
+  "schema": "digital-worker-runtime-r2-qualification-policy/v1",
+  "status": "active",
+  "purpose": "periodic-real-runtime-replaceability-qualification",
+  "scope": {
+    "repository_closure_blocking": false,
+    "product_release_blocking": false,
+    "runtime_binding_r1_required": true,
+    "runtime_portability_claim_requires_r2": true,
+    "terminal_replaceability_claim_requires_r2": true,
+    "r2_failure_invalidates_repository_health": false
+  },
+  "cadence": {
+    "mode": "periodic-plus-change-triggered",
+    "period": "quarterly",
+    "recommended_max_age_days": 120,
+    "change_triggers": [
+      "new-runtime-binding",
+      "runtime-adapter-semantic-change",
+      "provider-or-model-major-change",
+      "adk-runtime-contract-major-change",
+      "explicit-requalification-request"
+    ]
+  },
+  "campaign": {
+    "frozen_same_task_required": true,
+    "independent_real_runtime_execution_required": true,
+    "minimum_real_runtimes": [
+      "codex",
+      "claude-code"
+    ],
+    "independent_verifier_required": true,
+    "independent_human_review_required": false,
+    "root_certifier_required": false,
+    "same-campaign-retry_policy": "bounded-diagnostic-retry-only",
+    "repeated-provider-failure_policy": "record-blocked-and-fix-runtime-before-requalification",
+    "replay_without_provider_state_required": true
+  },
+  "evidence": {
+    "long_lived_tracked_assets": [
+      "frozen-campaign-identity",
+      "runtime-r2-qualification-receipt"
+    ],
+    "runtime_local_evidence": [
+      "provider-execution-output",
+      "result-tree",
+      "replay-postflight",
+      "runtime-native-or-portable-receipts"
+    ],
+    "runtime_local_evidence_must_not_include": [
+      "provider-credentials",
+      "runtime-home",
+      "session-cache",
+      "access-tokens"
+    ],
+    "qualification_receipt_authority": "digital-worker-independent-verifier",
+    "runtime_receipt_is_not_qualification": true
+  },
+  "state_semantics": {
+    "qualified": "current periodic campaign proved the declared runtime replaceability claim",
+    "blocked": "campaign evidence is incomplete or a runtime failed qualification; repository health remains independent",
+    "stale": "last successful qualification exceeded the freshness window or a material trigger requires requalification",
+    "not_run": "no current qualification claim may be made"
+  },
+  "governance": {
+    "historical_campaigns_immutable": true,
+    "failed_campaigns_are_valid_evidence": true,
+    "do_not_tune_until_pass": true,
+    "claim_scope_must_not_exceed_evidence": true
+  }
+}

@@ -46,13 +46,12 @@
       "contract": "manifests/digital_worker_runtime_pilot.json",
       "contract_version": "1.5",
       "contract_canonical_sha256": "5e353fe1bd3cacb94b9372b21fea97021a094c619a163cd868d82c574c229dfa",
-      "runtime_portability_certifier": "tools/control_plane/runtime_portability.py",
-      "runtime_portability_certifier_test": "tests/test_runtime_portability_certifier.sh",
-      "runtime_portability_qualification_manifest": "manifests/long_term_asset_qualification.json",
-      "runtime_portability_cli_contract": "tools/control_plane/cli.py",
-      "runtime_portability_evidence_level": "R2-real-provider-substitution",
-      "runtime_portability_status": "certifier-ready-real-evidence-pending",
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_R1_CODEX_CLAUDE_R2_LOCAL_TERMINAL_SHARED_USER_HOME_POLICY_FROZEN_BEHAVIORAL_CONTEXT_REPLAY_POSTFLIGHT_REQUIRED_WORKSPACE_SCAFFOLDING_AND_BOUNDED_TURN_BUDGET_R2_CERTIFIER_READY_REAL_EVIDENCE_PENDING_BLOCKER_PRESERVED"
+      "runtime_portability_evidence_level": "R2-periodic-real-provider-substitution",
+      "runtime_portability_status": "periodic-qualification-policy-active-current-evidence-blocked",
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_OPTIONAL_EVOLUTION_OBSERVER_R1_CODEX_CLAUDE_PERIODIC_R2_QUALIFICATION_AUTHORITY_OWNED_BY_DIGITAL_WORKER_CURRENT_REAL_PROVIDER_EVIDENCE_BLOCKED_REPOSITORY_HEALTH_NON_BLOCKING",
+      "role": "optional-evolution-observer",
+      "qualification_authority": "jiying2007/digital-worker",
+      "qualification_policy": "manifests/runtime-r2-qualification-policy.json"
     }
   },
   "runtime_bindings": {
@@ -156,6 +155,13 @@
     "knowledge_closed_loop_requires_real_reuse_evidence": true,
     "single_real_reuse_does_not_imply_provider_qualification": true,
     "pin_freshness_does_not_imply_compatibility": true,
-    "pin_promotion_requires_checkout_verification": true
+    "pin_promotion_requires_checkout_verification": true,
+    "repository_closure_requires_r2": false,
+    "product_release_requires_r2": false,
+    "runtime_binding_r1_required": true,
+    "runtime_portability_qualification_requires_r2": true,
+    "r2_is_periodic_qualification": true,
+    "r2_failure_does_not_invalidate_repository_health": true,
+    "r2_current_status_must_not_upgrade_or_downgrade_other_maturity_axes": true
   }
 }

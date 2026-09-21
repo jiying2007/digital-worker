@@ -1,173 +1,201 @@
-# Runtime R2 — Local Terminal Execution
+# Runtime R2 — Periodic Qualification
 
 ## Purpose
 
-R2 proves a real Runtime/Provider substitution against one exact frozen task. It does not require the provider invocation itself to run inside GitHub Actions.
+R2 is the periodic real-runtime qualification for the replaceability claim. It is not a repository-closure gate, product-release gate, or daily development gate.
 
-The canonical split is:
+The canonical authority is `manifests/runtime-r2-qualification-policy.json`.
 
-- GitHub / Digital Worker freezes identities, task inputs, and governance.
-- Each runtime executes the frozen task in its own local terminal domain.
-- The runtime exports a `.git`-free replay result tree and must pass Digital Worker's replay postflight before it may emit evidence-ready native/portable receipts.
-- The replay postflight validates the frozen descriptor schema, independently checks frozen artifact identity, and executes every declared host-verifier step from the exported result tree. It is runtime-local conformance evidence, not Domain Verification.
-- Digital Worker consumes those local evidence directories, projects native receipts into portable receipts, independently host-verifies both replay-complete result trees, and emits a small verification receipt.
-- Runtime receipts never claim Verification PASS, Product Ready, Release Ready, or R2 qualification by themselves.
+R1 remains the mandatory runtime-binding conformance layer. R2 is run periodically and after material runtime changes to prove, with real providers, that the same frozen task can still be completed and replay-verified without changing Domain semantics.
+
+## What R2 can and cannot decide
+
+R2 may decide only whether the declared runtime portability / terminal replaceability claim is currently qualified.
+
+R2 status must not automatically change:
+
+- repository health or repository closure;
+- Product Readiness or release authority;
+- ADK release qualification;
+- Knowledge Provider qualification;
+- Domain Verification for an unrelated product run.
+
+A failed or incomplete R2 campaign is valid evidence. Record it as `blocked`; do not repeatedly tune provider behavior until a PASS appears.
+
+## Cadence
+
+Run one fresh campaign:
+
+- quarterly; and
+- after a new Runtime Binding;
+- after a runtime-adapter semantic change;
+- after a provider/model major change;
+- after an ADK/runtime-contract major change;
+- when requalification is explicitly requested.
+
+The recommended freshness window is 120 days. A stale qualification removes the current replaceability claim; it does not make the repository unhealthy.
+
+## Simplified qualification chain
+
+The long-term chain is intentionally small:
+
+```text
+freeze exact same task
+        ↓
+real Codex execution ──┐
+                       ├─ replay postflight
+real Claude execution ─┘
+        ↓
+independent Digital Worker verification
+        ↓
+one R2 qualification receipt
+```
+
+Each campaign therefore proves real provider execution under one frozen comparison boundary; it is not a synthetic smoke test.
+
+The four invariants are:
+
+1. both real runtimes execute the same frozen task independently;
+2. runtime/provider state and credentials do not enter the result evidence;
+3. each exported result tree replays without `.git`, runtime-home state, or provider credentials;
+4. Digital Worker, not either runtime, decides qualification.
+
+An additional human independent-review workflow and a second root certifier are not required for periodic R2 qualification.
 
 ## Credential boundary
 
-ADK_ADMIN_TOKEN is the only canonical GitHub administration / privileged cross-repository token. It may be used by git / gh when GitHub access requires it.
+GitHub and provider credentials remain separate trust domains.
 
-Provider authentication stays local to the runtime and R2 reuses the normal shared user runtime home:
+- `ADK_ADMIN_TOKEN` may be used only for Git/GitHub administration when needed.
+- Codex reuses the caller's existing `CODEX_HOME` or `~/.codex`.
+- Claude Code reuses the caller's existing user `HOME` / `~/.claude`.
+- GitHub must not store OpenAI/Anthropic provider credentials for R2.
+- A GitHub PAT must never be reused as provider authentication.
+- runtime homes, authentication files, caches, sessions, cookies, and tokens are never R2 evidence.
 
-- Codex: reuse the caller's existing `CODEX_HOME`, or `~/.codex` when `CODEX_HOME` is unset.
-- Claude Code: reuse the caller's existing user `HOME` and `~/.claude`.
+The evidence output directory must never be used as a runtime home.
 
-The canonical R2 mode is `shared-user-home`. Do not create a runtime home under the evidence directory. Existing provider/network configuration and authentication remain local runtime state.
+## 1. Freeze one exact campaign
 
-GitHub must not require or store CODEX_RUNTIME_CREDENTIAL or CLAUDE_RUNTIME_CREDENTIAL for R2 execution. A GitHub PAT must never be reused as OpenAI or Anthropic provider authentication.
+Freeze remains provider-credential-free:
 
-The canonical Digital Worker intake reads only explicitly named evidence files from the local evidence directory. Authentication files, access tokens, API keys, cookies, shared runtime homes, caches, sessions, and local provider configuration are never intake evidence and must never be committed or uploaded. Runtime receipts must state `runtime_home_mode=shared-user-home` and `credential_state_in_evidence=false`.
+```bash
+gh workflow run runtime-r2-freeze.yml \
+  --repo jiying2007/digital-worker \
+  --ref main \
+  -f confirmation=FREEZE_REAL_R2 \
+  -f target_repository=jiying2007/ota_download_test \
+  -f target_base_commit=<exact-40-hex>
+```
 
-The evidence output directory is evidence-only. It must never become `CODEX_HOME`, user `HOME`, or a credential store.
+Retain `campaign.json` and `frozen-plan.json`. Historical freezes are immutable.
 
-## Why a new freeze is required after runtime changes
+A runtime-adapter or binding change requires a new freeze because the frozen plan binds exact runtime commits.
 
-A frozen R2 plan binds the exact runtime repository commit. Therefore a new runtime-owned local adapter cannot execute an older frozen plan whose runtime binding points to a commit that predates that adapter.
+## 2. Prepare independent exact checkouts
 
-Historical freeze receipts remain immutable audit evidence. Do not rewrite them.
+For each runtime execution, match `frozen-plan.json` exactly:
 
-After changing either runtime binding:
-
-1. merge the runtime change;
-2. update config/integrations/cross-repo-lock.json to the exact merged runtime commit;
-3. validate Digital Worker;
-4. run a fresh Runtime R2 Freeze Campaign;
-5. execute only the runtime commits named by that new frozen plan.
-
-## Freeze
-
-The GitHub freeze workflow is deterministic and provider-credential-free:
-
-    gh workflow run runtime-r2-freeze.yml \
-      --repo jiying2007/digital-worker \
-      --ref main \
-      -f confirmation=FREEZE_REAL_R2 \
-      -f target_repository=jiying2007/ota_download_test \
-      -f target_base_commit=eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d
-
-Download the resulting artifact and retain both campaign.json and frozen-plan.json. GitHub authentication used to read the artifact is a GitHub trust-domain concern only.
-
-## Local prerequisites
-
-Both runtime-owned local adapters require Python 3.11 or newer and `jsonschema` for the mandatory replay postflight. The canonical adapters resolve `PYTHON_BIN` with a default of `python3`.
-
-Historical freezes that bind older adapters remain immutable audit evidence, but they are not the canonical execution path after this hard-cut. Do not modify a historical frozen checkout to simulate the new shared-home behavior; create a fresh freeze bound to the current runtime adapters instead.
-
-The Codex local adapter also requires the Python packages used by its exact asset/evidence path, including PyYAML and jsonschema. Validate these before starting a long R2 execution.
-
-## Prepare exact local checkouts
-
-For every execution, the following identities must match frozen-plan.json exactly:
-
-- Digital Worker commit;
-- Codex or Claude runtime binding commit;
+- Digital Worker governance commit;
+- runtime-binding commit;
 - target base commit;
-- immutable ADK release / consumer contract identities;
+- immutable ADK release / consumer-contract identities;
 - clean target worktree.
 
-Do not reuse one runtime's modified target worktree for the other runtime. Use two independent clean target checkouts/worktrees from the same exact base commit.
+Codex and Claude must use separate clean target worktrees. Never reuse another runtime's modified worktree.
 
-## Codex execution
+Both runtime-owned adapters require Python 3.11+ and `jsonschema`. ADK execution must use the same reviewed Python environment, for example by binding `ADK_PYTHON_BIN` to the selected R2 interpreter.
 
-Run the adapter from the exact Codex binding checkout:
+## 3. Execute Codex locally
 
-    bash scripts/runtime-r2-local.sh \
-      --digital-worker-root /path/to/digital-worker-exact-freeze-commit \
-      --target-root /path/to/codex-r2-target \
-      --frozen-plan /path/to/frozen-plan.json \
-      --out /path/to/evidence/codex
+From the exact Codex binding checkout:
 
-The adapter reuses the caller's existing Codex runtime home. By default that is the existing `CODEX_HOME`, or `~/.codex` when `CODEX_HOME` is unset. The normal Codex CLI must already work in that environment.
+```bash
+bash scripts/runtime-r2-local.sh \
+  --digital-worker-root /path/to/digital-worker-exact-freeze-commit \
+  --target-root /path/to/codex-r2-target \
+  --frozen-plan /path/to/frozen-plan.json \
+  --out /path/to/evidence/codex
+```
 
-Frozen managed assets are applied to the shared Codex home using the repository's existing protected-path and allowed-live-drift policy. Authentication/session/cache state and allowed local provider configuration such as `config.toml` are local runtime state and are excluded from the R2 evidence identity. The adapter refuses to use a runtime home inside the evidence directory.
+The adapter must fail closed unless the frozen identities match and replay postflight passes.
 
-After provider execution, the adapter exports `result-tree.tar.gz` without `.git` and invokes `scripts/runtime_r2_result_postflight.py`. Evidence-ready output is forbidden unless `.r2/host-verifier.json` validates against the frozen schema and every declared replay step passes. The native receipt binds the resulting replay-postflight digest.
+## 4. Execute Claude Code locally
 
-Expected outputs include codex-native.json, codex-portable.json, codex.patch, result-tree.tar.gz, result-postflight.json plus bounded postflight logs, provider output/event evidence, the local evidence bundle, and its SHA-256. The shared `CODEX_HOME` itself is never bundled.
+From the exact Claude binding checkout:
 
-## Claude Code execution
+```bash
+bash control/scripts/runtime-r2-local.sh \
+  --digital-worker-root /path/to/digital-worker-exact-freeze-commit \
+  --target-root /path/to/claude-r2-target \
+  --frozen-plan /path/to/frozen-plan.json \
+  --adk-contract-root /path/to/agent-dev-kit-exact-contract-commit \
+  --adk-release-root /path/to/agent-dev-kit-exact-release-commit \
+  --out /path/to/evidence/claude
+```
 
-Run the adapter from the exact Claude binding checkout and supply exact ADK checkouts:
+Use the adapter's bounded turn budget. A runtime process returning exit code zero is not sufficient; replay postflight must still pass.
 
-    bash control/scripts/runtime-r2-local.sh \
-      --digital-worker-root /path/to/digital-worker-exact-freeze-commit \
-      --target-root /path/to/claude-r2-target \
-      --frozen-plan /path/to/frozen-plan.json \
-      --adk-contract-root /path/to/agent-dev-kit-exact-contract-commit \
-      --adk-release-root /path/to/agent-dev-kit-exact-release-commit \
-      --out /path/to/evidence/claude
+If a real runtime repeatedly omits a frozen MUST requirement, asks for permission already granted by the adapter, or otherwise cannot produce replay-complete evidence, record the campaign as blocked and fix the runtime adapter before the next qualification campaign. Do not manually repair the runtime result tree and present it as native provider evidence.
 
-The adapter reuses the caller's existing user `HOME` for local authentication/provider state, but controlled R2 execution must not inherit user-level behavioral instructions or settings. The canonical invocation uses `--setting-sources project,local`, so the shared home supplies login/network/provider state while user-scope Claude behavior remains outside the frozen execution context.
+## 5. Replay postflight
 
-Materialized frozen runtime assets are installed into the shared runtime home. The provider authorization receipt must record `execution_context_mode=frozen-project-local`, `user_setting_source_loaded=false`, `runtime_home_mode=shared-user-home`, and `credential_state_in_evidence=false`. The normal Claude Code CLI must already work in the shared environment.
+Each adapter exports a `.git`-free `result-tree.tar.gz` and runs Digital Worker's replay authority.
 
-The adapter permits the minimal workspace scaffolding required by this task, including `Bash(mkdir *)`, while keeping the rest of the Bash allowlist bounded. Its turn budget is explicit and bounded: default 32 turns, configurable with `--max-turns N` or `CLAUDE_R2_MAX_TURNS`, and constrained to 1–64. A fixed 20-turn ceiling is retired because the real R2 campaign reached the limit while still in legitimate tool-use.
+Replay postflight must independently verify:
 
-The adapter refuses to use a runtime home inside the evidence directory. After provider execution, it exports `result-tree.tar.gz` without `.git` and invokes the same Digital Worker replay postflight authority. A Claude CLI exit code of zero is insufficient for evidence-ready output: descriptor schema validation and all declared replay steps must also pass.
+- frozen artifact identity;
+- machine-readable frozen identity binding;
+- the frozen host-verifier descriptor schema;
+- every declared host-verifier step;
+- absence of Verification/Release/R2 authority claims by the runtime.
 
-Expected outputs include claude-native.json, claude-native-validated.json, claude-portable.json, claude.patch, result-tree.tar.gz, result-postflight.json plus bounded postflight logs, Claude execution evidence, the local evidence bundle, and its SHA-256. The shared user home is never bundled.
+A runtime-local postflight is conformance evidence, not the final qualification decision.
 
-## Local intake and Domain Verification
+## 6. Independent qualification
 
-The two runtime executions are independent provider receipts. They are not themselves R2 qualification.
+When both runtime evidence directories are replay-complete, run Digital Worker verification:
 
-Run Digital Worker verification from a current Digital Worker checkout. The verifier records its own implementation commit separately from the older frozen governance commit, so a historical freeze remains valid while verification tooling evolves:
+```bash
+python3 scripts/runtime_r2_local_verify.py \
+  --root /path/to/current-digital-worker \
+  --freeze-dir /path/to/runtime-r2-freeze-<run-id> \
+  --codex-evidence-dir /path/to/codex-evidence \
+  --claude-evidence-dir /path/to/claude-evidence \
+  --out /path/to/r2-verification \
+  --verification-actor local-user:<user>@<host>
+```
 
-    python3 scripts/runtime_r2_local_verify.py \
-      --root /path/to/current-digital-worker \
-      --freeze-dir /path/to/runtime-r2-freeze-<run-id> \
-      --codex-evidence-dir /path/to/codex-evidence \
-      --claude-evidence-dir /path/to/claude-evidence \
-      --out /path/to/r2-verification \
-      --verification-actor local-user:<user>@<host>
+The verifier is the qualification authority. It checks both provider results against the same frozen inputs and independently replays the required target verification.
 
-The verifier fail-closes unless both runtime results:
+The current verifier emits `runtime-r2-domain-verification.json`. Until the receipt schema naturally evolves, that small verifier-owned document is the canonical R2 qualification receipt.
 
-- reference the same frozen_inputs_sha256;
-- match the exact frozen runtime binding commits;
-- preserve the exact frozen target base and Digital Worker governance identity;
-- contain no Verification / Release authority claim;
-- record local-terminal execution using `shared-user-home`;
-- explicitly state that credential state did not enter evidence;
-- for Claude, prove the controlled execution context excluded user-level behavioral settings (`execution_context_mode=frozen-project-local`, `user_setting_source_loaded=false`);
-- record no GitHub provider credential;
-- provide replay-complete result-tree evidence whose digest matches the native receipt;
-- bind exactly one replay-postflight digest produced from the exported `.git`-free result tree;
-- preserve the authority boundary that replay postflight is required before evidence-ready but is not Domain Verification;
-- independently pass the target host unit tests and OTA manifest verifier.
+No runtime receipt may self-qualify R2.
 
-Expected output:
+## Long-lived evidence
 
-    runtime-r2-domain-verification.json
-    codex-domain-host-tests.log
-    codex-domain-ota-verify.log
-    claude-domain-host-tests.log
-    claude-domain-ota-verify.log
+Keep the repository-facing R2 surface small.
 
-Only the small verification receipt and bounded log digests belong in long-lived repository review evidence. Runtime homes, provider credentials, caches, full local sessions, and other private runtime state do not.
+Long-lived tracked evidence should contain only:
 
-## Independent Review
+- the frozen campaign identity needed to identify the exact comparison; and
+- the small Digital Worker qualification receipt (or its future compatible replacement).
 
-Copy the verification receipt into the canonical tracked path:
+Provider execution output, result trees, replay logs, runtime-native/portable receipts, runtime homes, caches, and credentials remain local/audit evidence and are not normal long-lived repository assets.
 
-    reports/runtime-r2/verification/R2-FEATURE-PCR02-OTA-001/runtime-r2-domain-verification.json
+## Failure semantics
 
-Commit that small receipt through normal repository review, then run the manual Runtime R2 Independent Review workflow against that tracked path. The reviewer must be distinct from both provider execution actors and the local verification actor.
+Use these states:
 
-The independent review remains non-terminal and only makes the evidence eligible for the root runtime-portability certifier. Neither runtime execution nor local verification may self-qualify R2.
+- `qualified`: a current campaign proves the declared replaceability claim;
+- `blocked`: current campaign evidence is incomplete or a runtime failed qualification;
+- `stale`: prior qualification is outside the freshness window or a material change requires requalification;
+- `not_run`: no current R2 claim may be made.
 
-## Repository closure versus R2 evidence
+`blocked`, `stale`, and `not_run` do not invalidate repository closure or product release. They only prohibit claiming current R2 runtime replaceability.
 
-Repository-local code, CI, contract, release, and governance closure must not be blocked by missing OpenAI/Anthropic credentials in GitHub.
+## Repository closure versus R2
 
-Cross-repository Replaceability terminal evidence remains pending until the real local Codex and Claude executions are completed, imported, and evaluated. Moving provider execution to a local terminal removes a credential/venue coupling; it does not weaken the real-provider R2 evidence requirement.
+Repository-local code, CI, contracts, release mechanics, governance, and R1 runtime-binding conformance may reach closure independently of R2.
+
+R2 remains a long-term periodic qualification asset so that Provider-neutral / replaceable-runtime claims can be demonstrated when needed without putting real-provider execution in the daily production hot path.

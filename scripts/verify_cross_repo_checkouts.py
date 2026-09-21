@@ -153,33 +153,40 @@ def verify_runtime_practice_eval(
     destination: Path,
     approved_runtime_bindings: dict | None = None,
 ) -> dict:
-    certifier_rel = entry["runtime_portability_certifier"]
-    test_rel = entry["runtime_portability_certifier_test"]
-    qualification_rel = entry["runtime_portability_qualification_manifest"]
-    cli_rel = entry["runtime_portability_cli_contract"]
-    paths = {
-        "certifier": destination / certifier_rel,
-        "test": destination / test_rel,
-        "qualification": destination / qualification_rel,
-        "cli": destination / cli_rel,
-    }
-    for label, path in paths.items():
-        if not path.is_file() or path.is_symlink():
-            fail(f"runtime_practice_eval: {label} missing or not a regular file at locked commit: {path.relative_to(destination)}")
+    """Verify the pinned llm_agent observer without delegating R2 authority to it.
 
-    contract = json.loads((destination / entry["contract"]).read_text(encoding="utf-8"))
-    evidence_level = entry["runtime_portability_evidence_level"]
-    if contract.get("terminal_replaceability_evidence_level") != evidence_level:
-        fail("runtime_practice_eval: terminal R2 evidence level does not match pinned runtime pilot contract")
-    candidates = {item.get("runtime"): item for item in contract.get("candidate_runtime_bindings", []) if isinstance(item, dict)}
+    llm_agent remains useful as an external practice/evolution observer. Digital
+    Worker's local policy and independent verifier own periodic R2 qualification.
+    The pinned observer contract is therefore checked for runtime candidate
+    identity and local-terminal execution semantics only; its historical
+    certifier/qualification surfaces are not consumer authority here.
+    """
+    if entry.get("role") != "optional-evolution-observer":
+        fail("runtime_practice_eval: llm_agent must remain an optional evolution observer")
+    if entry.get("qualification_authority") != "jiying2007/digital-worker":
+        fail("runtime_practice_eval: Digital Worker must own periodic R2 qualification")
+    if entry.get("qualification_policy") != "manifests/runtime-r2-qualification-policy.json":
+        fail("runtime_practice_eval: periodic R2 qualification policy ref drift")
+    if entry.get("runtime_portability_evidence_level") != "R2-periodic-real-provider-substitution":
+        fail("runtime_practice_eval: periodic R2 evidence level drift")
+
+    contract_path = destination / entry["contract"]
+    if not contract_path.is_file() or contract_path.is_symlink():
+        fail("runtime_practice_eval: pinned observer contract missing")
+    contract = json.loads(contract_path.read_text(encoding="utf-8"))
+
+    candidates = {
+        item.get("runtime"): item
+        for item in contract.get("candidate_runtime_bindings", [])
+        if isinstance(item, dict)
+    }
     if set(candidates) != {"codex", "claude-code"}:
         fail("runtime_practice_eval: runtime candidate set must be exactly codex + claude-code")
-    if candidates.get("codex", {}).get("status") != "source-set-bound":
-        fail("runtime_practice_eval: pinned Codex comparison binding is not source-set-bound")
+
     approved_runtime_bindings = approved_runtime_bindings or {}
     approved_codex = approved_runtime_bindings.get("codex")
     if not isinstance(approved_codex, dict):
-        fail("runtime_practice_eval: Codex is R1-ready upstream but is not an approved Digital Worker runtime binding")
+        fail("runtime_practice_eval: approved Digital Worker Codex binding missing")
     codex_expected = {
         "repository": "https://github.com/jiying2007/codex.git",
         "target": "codex-cli",
@@ -188,180 +195,61 @@ def verify_runtime_practice_eval(
         "status": "source-set-bound",
     }
     for key, expected in codex_expected.items():
-        if candidates["codex"].get(key) != expected:
-            fail(f"runtime_practice_eval: ready codex candidate {key} drift")
+        if candidates.get("codex", {}).get(key) != expected:
+            fail(f"runtime_practice_eval: observer codex candidate {key} drift")
+
     second_runtime_status = verify_second_runtime_candidate(
         candidates,
         approved_runtime_bindings.get("claude-code"),
     )
 
     ownership = contract.get("execution_ownership")
-    expected_ownership = {
+    if not isinstance(ownership, dict):
+        fail("runtime_practice_eval: observer local-terminal execution ownership missing")
+    for key, expected in {
         "model": "runtime-owned-local-provider-execution+digital-worker-local-verification",
         "provider_credentials_owner": "runtime-local-auth-state",
         "runtime_execution_evidence_transport": "local-terminal-digest-bound-runtime-evidence",
         "digital_worker_holds_provider_credentials": False,
         "local_execution_receipt_is_not_r2_pass": True,
         "runtime_home_mode": "shared-user-home",
-        "runtime_local_state_policy": "reuse-local-auth-and-provider-state-exclude-credential-state-and-user-behavioral-settings-from-evidence-execution-context",
-    }
-    if not isinstance(ownership, dict):
-        fail("runtime_practice_eval: local-terminal execution ownership missing")
-    for key, expected in expected_ownership.items():
+    }.items():
         if ownership.get(key) != expected:
-            fail(f"runtime_practice_eval: local-terminal execution ownership {key} drift")
-
-    hard_rules = contract.get("hard_rules")
-    if not isinstance(hard_rules, dict):
-        fail("runtime_practice_eval: hard rules missing")
-    for rule in (
-        "runtime_user_behavioral_settings_must_not_enter_controlled_execution_context",
-        "shared_home_reuse_is_auth_provider_state_not_behavioral_instruction_reuse",
-        "runtime_execution_evidence_ready_requires_replay_postflight",
-        "replay_postflight_must_use_exported_git_free_result_tree",
-        "replay_postflight_is_not_domain_verification",
-        "runtime_required_workspace_scaffolding_must_be_permitted",
-        "runtime_turn_budget_must_be_bounded_and_configurable",
-    ):
-        if hard_rules.get(rule) is not True:
-            fail(f"runtime_practice_eval: behavioral execution-context hard rule weakened: {rule}")
+            fail(f"runtime_practice_eval: observer execution ownership {key} drift")
 
     planes = contract.get("execution_plane_evidence")
     if not isinstance(planes, dict):
-        fail("runtime_practice_eval: execution plane evidence missing")
-    adapter_expected = {
-        "codex": ("jiying2007/codex", "scripts/runtime-r2-local.sh", approved_codex.get("commit")),
-        "claude-code": (
-            "jiying2007/claude",
-            "control/scripts/runtime-r2-local.sh",
-            (approved_runtime_bindings.get("claude-code") or {}).get("commit"),
-        ),
-    }
-    for runtime, (repository, adapter, commit) in adapter_expected.items():
+        fail("runtime_practice_eval: observer execution plane evidence missing")
+    for runtime, repository, adapter in (
+        ("codex", "jiying2007/codex", "scripts/runtime-r2-local.sh"),
+        ("claude-code", "jiying2007/claude", "control/scripts/runtime-r2-local.sh"),
+    ):
         plane = planes.get(runtime)
+        approved = approved_runtime_bindings.get(runtime) or {}
         if not isinstance(plane, dict):
-            fail(f"runtime_practice_eval: execution plane missing: {runtime}")
-        expected_plane = {
+            fail(f"runtime_practice_eval: observer execution plane missing: {runtime}")
+        for key, expected in {
             "repository": repository,
-            "execution_plane_commit": commit,
-            "frozen_binding_commit": commit,
+            "execution_plane_commit": approved.get("commit"),
+            "frozen_binding_commit": approved.get("commit"),
             "provider_execution_adapter": adapter,
             "execution_venue": "local-terminal",
             "runtime_home_mode": "shared-user-home",
             "credential_state_in_evidence": False,
-            "credential_owner": "runtime-local-auth-state",
             "replay_postflight_required": True,
-            "replay_postflight_authority": "digital-worker:scripts/runtime_r2_result_postflight.py",
-        }
-        if runtime == "claude-code":
-            expected_plane.update({
-                "workspace_scaffolding_permission": "Bash(mkdir *)",
-                "turn_budget": {
-                    "default": 32,
-                    "min": 1,
-                    "max": 64,
-                    "configurable": True,
-                },
-            })
-        for key, expected in expected_plane.items():
+        }.items():
             if plane.get(key) != expected:
-                fail(f"runtime_practice_eval: {runtime} execution plane {key} drift")
+                fail(f"runtime_practice_eval: observer {runtime} execution plane {key} drift")
         if "provider_execution_workflow" in plane:
             fail(f"runtime_practice_eval: retired provider workflow resurfaced: {runtime}")
-    dw_plane = planes.get("digital-worker")
-    if not isinstance(dw_plane, dict):
-        fail("runtime_practice_eval: digital-worker verification plane missing")
-    for key, expected in {
-        "repository": "jiying2007/digital-worker",
-        "provider_credentials_held": False,
-        "combined_provider_workflow_present": False,
-        "freeze_workflow": ".github/workflows/runtime-r2-freeze.yml",
-        "local_intake": "scripts/runtime_r2_intake.py",
-        "local_verifier": "scripts/runtime_r2_local_verify.py",
-        "result_postflight": "scripts/runtime_r2_result_postflight.py",
-        "verifier_identity_mode": "receipt-bound-tool-commit",
-        "independent_review_workflow": ".github/workflows/runtime-r2-independent-review.yml",
-    }.items():
-        if dw_plane.get(key) != expected:
-            fail(f"runtime_practice_eval: digital-worker verification plane {key} drift")
-
-    certifier_text = paths["certifier"].read_text(encoding="utf-8")
-    for marker in [
-        'TERMINAL_EVIDENCE_LEVEL = "R2-real-provider-substitution"',
-        'DEFAULT_EVIDENCE = "reports/long-term-assets/runtime-portability-current.json"',
-        "class PortabilityBlocked",
-        "LTA-02 requires at least two real runtime execution receipts",
-        "execution receipt contains a forbidden verification PASS claim",
-        "provider runtime home mode drift",
-        "provider credential state entered evidence",
-        "execution receipt replay_postflight is missing",
-        "replay-postflight:sha256:",
-        "provider replay postflight digest drift",
-        "claude-code required workspace scaffolding permission drift",
-        "claude-code turn budget contract drift",
-    ]:
-        if marker not in certifier_text:
-            fail(f"runtime_practice_eval: portability certifier marker missing: {marker}")
-
-    test_text = paths["test"].read_text(encoding="utf-8")
-    for marker in [
-        "Missing real comparison evidence is a BLOCKED external-evidence state, never PASS.",
-        "self-test-only two-runtime fixture",
-        "R1 binding conformance must never qualify terminal portability.",
-        "runtime binding is not source-set-bound/ready: claude-code",
-        "replay_postflights",
-    ]:
-        if marker not in test_text:
-            fail(f"runtime_practice_eval: portability certifier regression marker missing: {marker}")
-
-    qualification = json.loads(paths["qualification"].read_text(encoding="utf-8"))
-    if qualification.get("schema") != "llm-agent-long-term-asset-qualification/v2":
-        fail("runtime_practice_eval: long-term qualification schema drift")
-    requirements = {
-        item.get("id"): item
-        for item in qualification.get("qualification_requirements", [])
-        if isinstance(item, dict) and isinstance(item.get("id"), str)
-    }
-    lta02 = requirements.get("LTA-02")
-    if not isinstance(lta02, dict):
-        fail("runtime_practice_eval: LTA-02 qualification requirement missing")
-    expected_lta02 = {
-        "status": "evidence_collection_in_progress",
-        "implementation_status": "certifier-ready",
-        "required_evidence_level": evidence_level,
-        "certifier": "tools.control_plane.runtime_portability",
-        "default_evidence_path": "reports/long-term-assets/runtime-portability-current.json",
-        "pending_evidence": "real-codex-and-claude-runtime-execution-receipts-and-same-frozen-task-R2-comparison-evidence",
-    }
-    for key, expected in expected_lta02.items():
-        if lta02.get(key) != expected:
-            fail(f"runtime_practice_eval: LTA-02 {key} drift: {lta02.get(key)!r} != {expected!r}")
-    if lta02.get("required_healthy_runtime_bindings", 0) < 2:
-        fail("runtime_practice_eval: LTA-02 must require at least two healthy runtime bindings")
-    if lta02.get("r1_binding_conformance_is_terminal_evidence") is not False:
-        fail("runtime_practice_eval: R1 binding conformance must remain non-terminal")
-    terminal = qualification.get("terminal")
-    if not isinstance(terminal, dict):
-        fail("runtime_practice_eval: long-term terminal projection missing")
-    if terminal.get("qualified") is not False or terminal.get("status") != "qualification_pending":
-        fail("runtime_practice_eval: long-term terminal qualification must remain pending")
-    pending = terminal.get("pending_requirements")
-    if not isinstance(pending, list) or "LTA-02" not in pending:
-        fail("runtime_practice_eval: LTA-02 must remain a terminal pending requirement")
-
-    cli_text = paths["cli"].read_text(encoding="utf-8")
-    if '"runtime-portability": "tools.control_plane.runtime_portability"' not in cli_text:
-        fail("runtime_practice_eval: runtime-portability CLI surface missing")
 
     return {
         "status": entry["runtime_portability_status"],
-        "certifier": certifier_rel,
-        "certifier_test": test_rel,
-        "qualification_manifest": qualification_rel,
-        "cli_contract": cli_rel,
-        "evidence_level": evidence_level,
+        "role": entry["role"],
+        "qualification_authority": entry["qualification_authority"],
+        "qualification_policy": entry["qualification_policy"],
+        "evidence_level": entry["runtime_portability_evidence_level"],
         "second_runtime_candidate_status": second_runtime_status,
-        "pending_evidence": lta02["pending_evidence"],
     }
 
 

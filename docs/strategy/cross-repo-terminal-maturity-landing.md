@@ -39,7 +39,7 @@
 | Identity | Work、Digital Worker Domain/Governance、Knowledge、ADK、Runtime、Engineering、Artifact、Device、Verification/Review subject 均可 exact trace |
 | Delivery | 代表性工程任务可从 intake 到 closure 重放；L1→L2 等升级不会依赖旧 session 隐式补链 |
 | Assurance | Fact / Receipt / Report / Qualification 分层稳定，Decision Authority 正交，Verifier/Reviewer 独立性与 decision provenance 有证据 |
-| Replaceability | Binding conformance 与真实 Provider substitution 分层；真实 Runtime / Assurance / Knowledge 替换证据不改变 Domain Contract，失败可退回 |
+| Replaceability | R1 Binding conformance 是稳定日常基线；R2 作为周期性真实 Runtime qualification 独立维护，fresh evidence 只约束 replaceability claim，不阻塞其它成熟轴 |
 | Operations | repository governance、release、rollback、drift、freshness、knowledge lifecycle、owner 机制长期可运营 |
 
 任何单轴未闭环时，只能声明对应轴已成熟，不得声明整体 terminal maturity。
@@ -331,25 +331,32 @@ engineering-task-package
 
 R1 只能证明 **binding/adapter conformance**，不能作为真实 Provider-neutral 已实证的终态证据。
 
-#### R2 — Real Provider Substitution
+#### R2 — Periodic Real Runtime Qualification
 
-整体 Replaceability 轴进入 terminal maturity 前，至少需要：
+R2 不再是 repository closure、Product Release 或整体 Terminal Maturity 的持续阻塞条件。它是 Runtime Portability / Terminal Replaceability claim 的周期性资格认证。
 
-1. **真实 Runtime Binding 替换/对比**：同一受控任务在当前 Codex Binding 与第二个真实 Runtime/Provider Binding 上执行，exact Digital Worker governance、Domain acceptance / verification semantics 不变；
-2. **Assurance Provider 替换演练**：至少一次不依赖 Codex Safe 的 Verification/Review 仍能由真实替代 Provider/Human 路径完成；
-3. **Knowledge Provider degradation drill**：Provider unavailable/stale/ACL unresolved 时显式 degrade/BLOCKED，不回退到未治理 cache 冒充事实；如果要宣称“Knowledge Provider 已实证可替换”，还需第二真实 Provider/迁移证据，而不仅是 degradation；
-4. **Interaction handoff drill**：架构始终保持 Interaction Provider 可替换；若 terminal claim 使用“已实证可替换”措辞，则至少一次第二真实入口/Provider 消费同一稳定 task/work-item contract。未执行时只能声明 interaction contract-ready；
-5. **Runtime drift / rollback drill**：source set、distribution 或 live state 漂移可检测并可回滚；
-6. **Missing evidence drill**：删除/缺失关键 fact/receipt/report 后，terminal qualification 必须 fail-closed；
-7. **State isolation drill**：人为制造 Runtime/ADK/Product 某一维 PASS，验证其它 qualification/maturity 维度不会被自动提升。
+Canonical policy：`manifests/runtime-r2-qualification-policy.json`。
+
+每次 R2 campaign 只保留四个核心要求：
+
+1. **same frozen task**：Codex 与 Claude 等真实 Runtime 对同一个 exact frozen task 独立执行；
+2. **real provider execution**：不得用 fake/controlled adapter 代替真实 Provider；
+3. **replay-complete result**：导出的结果树脱离 `.git`、runtime home、provider credential 后仍可由冻结 verifier 重放；
+4. **independent qualification authority**：最终资格由 Digital Worker verifier 决定，Runtime receipt 不得自我声明 R2 PASS。
+
+R2 采用 quarterly + material-change-triggered cadence。新 Runtime Binding、adapter 语义变化、Provider/model major change、ADK/runtime-contract major change 都触发重新资格认证。
+
+R2 状态只使用 `qualified / blocked / stale / not_run`。其中 `blocked` 是有效失败证据：不允许为了得到 PASS 无限调 prompt/turn budget/人工修补 result tree；重复失败应先修 Runtime adapter，再进入下一次 fresh campaign。
+
+Assurance Provider、Knowledge Provider、Interaction Provider 的替换/降级演练仍可独立存在，但不再塞进 Runtime R2 qualification，避免一个资格认证承担多个控制面的成熟度判断。
 
 退出条件：
 
-- 至少一次 R2 真实第二 Runtime/Provider 证据成立；
-- Assurance 不依赖单一 Codex Safe 实现；
-- failure/drift/missing-evidence/state-isolation 路径可恢复且有 receipt；
-- Provider 替换只改变 Adapter/Binding identity，不要求改 Domain Contract；
-- 对 Interaction/Knowledge 的“demonstrated replaceability”声明范围与实际证据严格一致。
+- R1 Binding conformance 可稳定执行；
+- R2 periodic policy、freeze、真实 runtime execution、replay 与独立 verifier 路径可用；
+- 只有在存在 fresh `qualified` receipt 时才声明当前 Runtime replaceability；
+- `blocked/stale/not_run` 不会降低 repository health、Product Readiness 或其它 maturity axis；
+- failure/drift/missing-evidence/state-isolation 仍保持 fail-closed。
 
 ### 阶段 4：Productionization Governance
 
@@ -383,7 +390,7 @@ R1 只能证明 **binding/adapter conformance**，不能作为真实 Provider-ne
 - Identity 轴闭环，包含 exact Digital Worker Domain/Governance identity 与 exact reviewed subject provenance；
 - Delivery 轴闭环，L1→L2 等 escalation 可重放；
 - Assurance 轴闭环，Decision Provenance 与 supersession 可审计；
-- Replaceability 轴闭环，并至少取得一次 R2 真实第二 Runtime/Provider substitution evidence；
+- Replaceability architecture 与 R1 Binding conformance 闭环；R2 periodic qualification capability 可重复运行，且当前 replaceability claim 不超过最新 R2 evidence；
 - Operations 轴闭环；
 - Product Readiness / Runtime Qualification / ADK Qualification / Knowledge Provider Qualification 不被用作 terminal maturity 的隐式替代；
 - 没有高优先级未声明 owner 的 cross-repo semantic debt；
@@ -505,7 +512,7 @@ P2 在真实 adoption evidence 不足前保持建议/人工选择，不进入不
 - [ ] Runtime Profile 是否不会隐式改变 Asset Profile semantics？
 - [ ] `llm_agent` 离线时 production delivery 是否仍可运行？
 - [ ] 不使用 Codex Safe 时 assurance architecture 是否仍成立？
-- [ ] 是否至少有一次 R2 真实第二 Runtime/Provider 的 substitution evidence？
+- [ ] 若声明当前 Runtime 已实证可替换，是否存在 fresh R2 qualified evidence；若 R2 blocked/stale/not_run，是否仅撤回该 claim 而不误伤其它成熟轴？
 - [ ] fake/controlled alternate Binding 是否只被标记为 R1 conformance？
 - [ ] 替换 Runtime Binding 时 Domain Contract 是否保持不变？
 - [ ] 若声明 Interaction/Knowledge Provider 已“实证可替换”，是否有对应真实第二 Provider evidence？
@@ -528,7 +535,7 @@ P2 在真实 adoption evidence 不足前保持建议/人工选择，不进入不
 - Delivery Receipt 后续演进应显式收窄 `validation` 为 execution/self-validation、`decisions` 为 engineering/implementation decisions，避免被 consumer 越权解释；
 - 临时 Pilot adapter、one-shot migration、shadow scaffolding 完成后应物理退役，不长期留在活动面；
 - 新 Provider 以 Adapter/Binding 接入，不因产品名称进入上位 Domain architecture；
-- replaceability claim 必须携带 evidence level：至少区分 `R1 binding-conformance` 与 `R2 real-provider-substitution`；
+- replaceability claim 必须携带 evidence level：至少区分 `R1 binding-conformance` 与 fresh `R2 periodic real-provider-substitution qualification`；
 - Terminal Maturity evaluator 只在真实 Pilot 后字段稳定时建立，并只聚合已有 evidence/receipt/report，不执行新的 Domain/Provider 判定；
 - frozen docs 中 provider/runtime/profile 示例必须服从 canonical owner；优先引用 category/manifest，而不是长期硬编码易漂移的具体 selector。
 
@@ -536,6 +543,6 @@ P2 在真实 adoption evidence 不足前保持建议/人工选择，不进入不
 
 成熟落地的重点不再是增加新的 Agent、控制面或编排器，而是证明以下闭环长期成立：
 
-> **正确语义由正确 owner 持有；本次执行通过包含 exact Digital Worker governance identity 的 Source Set 组合；治理升级会 re-bootstrap/re-freeze 而不会提升旧 evidence；真实 facts 保留在原系统；每个 artifact 的 authority/evidence kind 可解释；Provider 只提供受边界约束的 fact/receipt/report；Verifier/Reviewer/Approver 对 exact subject 做独立 run-specific decision 并保留 supersession provenance；Qualification 不从局部 PASS 或其它状态维度自动继承；Knowledge 经过生命周期沉淀；能力通过 `llm_agent` 的慢环持续演进，而生产快环不依赖该实验室；Provider-neutral 的设计声明最终由 R2 真实替换证据证明。**
+> **正确语义由正确 owner 持有；本次执行通过包含 exact Digital Worker governance identity 的 Source Set 组合；治理升级会 re-bootstrap/re-freeze 而不会提升旧 evidence；真实 facts 保留在原系统；每个 artifact 的 authority/evidence kind 可解释；Provider 只提供受边界约束的 fact/receipt/report；Verifier/Reviewer/Approver 对 exact subject 做独立 run-specific decision 并保留 supersession provenance；Qualification 不从局部 PASS 或其它状态维度自动继承；Knowledge 经过生命周期沉淀；能力通过 `llm_agent` 的慢环持续演进，而生产快环不依赖该实验室；Provider-neutral 架构长期成立，只有“当前 Runtime 已实证可替换”这一 claim 需要 fresh R2 periodic qualification。**
 
 达到本方案全部 terminal exit criteria 后，体系进入 steady-state evolution，而不是继续进行顶层架构重构。

@@ -7,6 +7,7 @@ on:
       - '.github/workflows/runtime-r2-local-terminal-contract.yml'
       - 'config/integrations/cross-repo-lock.json'
       - 'docs/runbooks/runtime-r2-local-terminal.md'
+      - 'manifests/runtime-r2-qualification-policy.json'
       - 'scripts/runtime_r2_evidence.py'
       - 'tests/unit/test_runtime_r2_freeze_ledger.py'
       - 'tests/unit/test_runtime_r2_local_terminal_contract.py'
@@ -17,6 +18,7 @@ on:
       - '.github/workflows/runtime-r2-local-terminal-contract.yml'
       - 'config/integrations/cross-repo-lock.json'
       - 'docs/runbooks/runtime-r2-local-terminal.md'
+      - 'manifests/runtime-r2-qualification-policy.json'
       - 'scripts/runtime_r2_evidence.py'
       - 'tests/unit/test_runtime_r2_freeze_ledger.py'
       - 'tests/unit/test_runtime_r2_local_terminal_contract.py'
@@ -82,32 +84,32 @@ jobs:
           assert bindings['codex']['commit'] not in retired
           assert bindings['claude-code']['commit'] not in retired
 
-          text='\n'.join([
-              freeze.read_text(encoding='utf-8'),
-              pathlib.Path('docs/runbooks/runtime-r2-local-terminal.md').read_text(encoding='utf-8'),
-          ])
+          runbook=pathlib.Path('docs/runbooks/runtime-r2-local-terminal.md').read_text(encoding='utf-8')
           freeze_text=freeze.read_text(encoding='utf-8')
+          policy=json.loads(pathlib.Path('manifests/runtime-r2-qualification-policy.json').read_text(encoding='utf-8'))
           assert 'runtime-r2-provider-execution.yml' not in freeze_text
           assert "'runtime_home_mode':'shared-user-home'" in freeze_text
           assert "'credential_state_in_evidence':False" in freeze_text
+          assert "'qualification_mode':'periodic-non-blocking'" in freeze_text
+          assert "'repository_closure_blocking':False" in freeze_text
+          assert "'product_release_blocking':False" in freeze_text
           intake_text=pathlib.Path('scripts/runtime_r2_intake.py').read_text(encoding='utf-8')
           assert 'execution_context_mode' in intake_text
           assert 'frozen-project-local' in intake_text
           assert 'user_setting_source_loaded' in intake_text
-          assert 'shared user runtime home' in text
-          assert '--setting-sources project,local' in text
-          assert 'execution_context_mode=frozen-project-local' in text
-          assert 'user_setting_source_loaded=false' in text
-          assert 'runtime_r2_result_postflight.py' in text
-          assert '.git-free result tree' in text or '.git' in text and 'result tree' in text
-          assert 'replay postflight' in text
-          assert 'not Domain Verification' in text
-          assert 'Bash(mkdir *)' in text
-          assert 'CLAUDE_R2_MAX_TURNS' in text
-          assert '--max-turns' in text
-          assert '1–64' in text
-          assert 'Python 3.11' in text
-          assert 'openai-api-key' not in text
-          assert 'anthropic_api_key' not in text
-          print('[PASS] Digital Worker freezes exact shared-user-home runtime identities without GitHub provider credentials or credential-state evidence')
+          assert 'Python 3.11' in runbook
+          assert 'replay postflight' in runbook
+          assert 'same frozen task' in runbook
+          assert 'quarterly' in runbook
+          assert 'blocked' in runbook
+          assert 'repository closure' in runbook
+          assert policy['scope']['repository_closure_blocking'] is False
+          assert policy['scope']['product_release_blocking'] is False
+          assert policy['scope']['runtime_binding_r1_required'] is True
+          assert policy['scope']['runtime_portability_claim_requires_r2'] is True
+          assert policy['campaign']['independent_human_review_required'] is False
+          assert policy['campaign']['root_certifier_required'] is False
+          assert 'openai-api-key' not in runbook
+          assert 'anthropic_api_key' not in runbook
+          print('[PASS] Digital Worker keeps R2 provider-free, periodic, replay-gated, and non-blocking for repository/product closure')
           PY

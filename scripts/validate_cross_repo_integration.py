@@ -68,8 +68,12 @@ def main() -> None:
 
     runtime_eval = lock["providers"]["runtime_practice_eval"]
     require("R1_CODEX_CLAUDE" in runtime_eval.get("validation", ""), "llm_agent must project both R1 runtime bindings")
-    require("R2_LOCAL_TERMINAL_SHARED_USER_HOME_POLICY" in runtime_eval.get("validation", ""), "llm_agent shared-user-home R2 portability policy must be explicitly promoted")
-    require("BLOCKER_PRESERVED" in runtime_eval.get("validation", ""), "llm_agent real-provider blocker must remain explicit")
+    require(runtime_eval.get("role") == "optional-evolution-observer", "llm_agent must remain an optional evolution observer")
+    require(runtime_eval.get("qualification_authority") == "jiying2007/digital-worker", "Digital Worker must own R2 qualification authority")
+    require(runtime_eval.get("qualification_policy") == "manifests/runtime-r2-qualification-policy.json", "R2 qualification policy ref drift")
+    require("PERIODIC_R2_QUALIFICATION_AUTHORITY_OWNED_BY_DIGITAL_WORKER" in runtime_eval.get("validation", ""), "periodic R2 authority must be explicitly promoted")
+    require("CURRENT_REAL_PROVIDER_EVIDENCE_BLOCKED" in runtime_eval.get("validation", ""), "current blocked real-provider evidence must remain explicit")
+    require("REPOSITORY_HEALTH_NON_BLOCKING" in runtime_eval.get("validation", ""), "R2 failure must remain non-blocking for repository health")
 
     adk = lock["providers"]["agent_asset_control_plane"]
     require(adk.get("runtime_binding_contract_version") == "2.0", "ADK runtime-binding contract version drift")
@@ -138,11 +142,16 @@ def main() -> None:
         "l1_to_l2_requires_new_bootstrap_and_execution_source_set", "runtime_local_gate_is_not_domain_gate",
         "runtime_output_is_not_verification_pass", "runtime_execution_receipt_must_not_contain_verification_pass",
         "terminal_replaceability_requires_r2_real_provider_substitution", "r1_binding_conformance_is_not_terminal_replaceability",
+        "runtime_binding_r1_required", "runtime_portability_qualification_requires_r2", "r2_is_periodic_qualification",
+        "r2_failure_does_not_invalidate_repository_health", "r2_current_status_must_not_upgrade_or_downgrade_other_maturity_axes",
         "governed_knowledge_route_registration_does_not_imply_real_reuse", "knowledge_closed_loop_requires_real_reuse_evidence",
         "single_real_reuse_does_not_imply_provider_qualification",
         "pin_freshness_does_not_imply_compatibility", "pin_promotion_requires_checkout_verification",
     ]:
         require(rules[key] is True, f"required source-set rule disabled: {key}")
+
+    require(rules["repository_closure_requires_r2"] is False, "repository closure must not depend on R2")
+    require(rules["product_release_requires_r2"] is False, "product release must not depend on R2")
 
     ownership = yaml.safe_load(OWNERSHIP.read_text(encoding="utf-8"))
     require(ownership["schema_version"] == 3, "ownership contract must use source-set schema v3")
@@ -260,19 +269,31 @@ def main() -> None:
         },
         "llm_agent capability projection must reference the authoritative cross-repo lock identity",
     )
-    require(cap_eval["capabilities"]["runtime_binding_comparison"] == "r2-policy-ready", "llm_agent R2 comparison policy projection missing")
-    require(cap_eval["capabilities"]["terminal_replaceability"] == "blocked-until-r2-real-provider-evidence", "llm_agent real-provider blocker projection must stay explicit")
+    require(cap_eval["decision"] == "optional-evolution-observer", "llm_agent capability role must stay observational")
+    require(cap_eval["capabilities"]["runtime_binding_comparison"] == "periodic-r2-observer", "llm_agent periodic R2 observer projection missing")
+    require(cap_eval["capabilities"]["exact_release_source_set_comparison"] == "periodic-r2-observer", "llm_agent source-set observer projection missing")
+    require(cap_eval["capabilities"]["r2_qualification_authority"] == "digital-worker-independent-verifier", "Digital Worker verifier must own R2 qualification")
+    require(cap_eval["capabilities"]["r2_real_provider_evidence"] == "current-campaign-blocked", "current blocked R2 evidence projection must stay explicit")
+    require(cap_eval["capabilities"]["terminal_replaceability"] == "claim-gated-by-fresh-r2", "replaceability claim must be gated by fresh R2")
     require(cap_eval["capabilities"]["production_runtime"] == "unsupported-by-design", "llm_agent must not become production runtime")
+    require("runtime_portability_certifier" not in cap_eval["capabilities"], "retired root R2 certifier capability resurfaced")
 
     for key in [
         "terminal_replaceability_requires_r2_real_provider_substitution",
         "r1_binding_conformance_is_not_terminal_replaceability",
+        "runtime_binding_r1_required",
+        "runtime_portability_qualification_requires_r2",
+        "r2_is_periodic_qualification",
+        "r2_failure_does_not_invalidate_repository_health",
         "governed_knowledge_route_registration_does_not_imply_real_reuse",
         "knowledge_closed_loop_requires_real_reuse_evidence",
         "single_real_reuse_does_not_imply_provider_qualification",
         "capability_projection_must_reference_cross_repo_lock_identity",
     ]:
         require(capability["rules"][key] is True, f"required capability projection rule disabled: {key}")
+
+    require(capability["rules"]["repository_closure_requires_r2"] is False, "capability projection must not make repository closure depend on R2")
+    require(capability["rules"]["product_release_requires_r2"] is False, "capability projection must not make product release depend on R2")
 
     rendered_capability = json.dumps(capability, ensure_ascii=False, sort_keys=True)
     for retired_projection_key in [
