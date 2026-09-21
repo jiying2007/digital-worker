@@ -336,7 +336,7 @@ def intake(
 
     collection = {
         "schema": INTAKE_SCHEMA,
-        "status": "provider-executions-collected-pending-digital-worker-verification-review",
+        "status": "provider-executions-collected-pending-digital-worker-verification",
         "campaign_id": campaign["campaign_id"],
         "freeze_workflow_run_id": str(campaign.get("freeze_workflow_run_id") or ""),
         "frozen_inputs_sha256": campaign["frozen_inputs_sha256"],
