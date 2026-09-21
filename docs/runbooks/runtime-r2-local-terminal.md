@@ -104,7 +104,9 @@ Run the adapter from the exact Claude binding checkout and supply exact ADK chec
       --adk-release-root /path/to/agent-dev-kit-exact-release-commit \
       --out /path/to/evidence/claude
 
-The adapter reuses the caller's existing user `HOME` and therefore the existing `~/.claude` authentication/provider configuration. The normal Claude Code CLI must already work in that environment. Materialized frozen runtime assets are installed into that shared runtime home, while credential state remains local and outside evidence.
+The adapter reuses the caller's existing user `HOME` for local authentication/provider state, but controlled R2 execution must not inherit user-level behavioral instructions or settings. The canonical invocation uses `--setting-sources project,local`, so the shared home supplies login/network/provider state while user-scope Claude behavior remains outside the frozen execution context.
+
+Materialized frozen runtime assets are installed into the shared runtime home. The provider authorization receipt must record `execution_context_mode=frozen-project-local`, `user_setting_source_loaded=false`, `runtime_home_mode=shared-user-home`, and `credential_state_in_evidence=false`. The normal Claude Code CLI must already work in the shared environment.
 
 The adapter refuses to use a runtime home inside the evidence directory. Expected outputs include claude-native.json, claude-native-validated.json, claude-portable.json, claude.patch, result-tree.tar.gz, Claude execution evidence, the local evidence bundle, and its SHA-256. The shared user home is never bundled.
 
@@ -130,6 +132,7 @@ The verifier fail-closes unless both runtime results:
 - contain no Verification / Release authority claim;
 - record local-terminal execution using `shared-user-home`;
 - explicitly state that credential state did not enter evidence;
+- for Claude, prove the controlled execution context excluded user-level behavioral settings (`execution_context_mode=frozen-project-local`, `user_setting_source_loaded=false`);
 - record no GitHub provider credential;
 - provide replay-complete result-tree evidence whose digest matches the native receipt;
 - independently pass the target host unit tests and OTA manifest verifier.
