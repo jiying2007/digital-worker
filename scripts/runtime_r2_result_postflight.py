@@ -4,8 +4,13 @@ from __future__ import annotations
 import argparse
 import json
 import pathlib
+import sys
 import tempfile
 from typing import Any
+
+SCRIPTS_DIR = pathlib.Path(__file__).resolve().parent
+if str(SCRIPTS_DIR) not in sys.path:
+    sys.path.insert(0, str(SCRIPTS_DIR))
 
 from runtime_r2_intake import IntakeError, safe_extract_tar
 from runtime_r2_local_verify import (
