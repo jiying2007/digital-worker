@@ -48,13 +48,5 @@
   ],
   "downstream_contract": [
     "Use the retained identity receipt as an input to the separate Review/Release Pilot."
-  ],
-  "artifact_identity": {
-    "repository": "jiying2007/ota_download_test",
-    "source_commit": "eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d",
-    "source_blob_sha": "dc4fe914ab618fa208287de90731bd2ca9c1c3a7",
-    "path": "ota_pkg_v1.1.21.tar.gz",
-    "size_bytes": 76778472,
-    "sha256": "7687d8058f85271e75ff3726957385afa1618aa2078dc0a6b3215d470af4a4bb"
-  }
+  ]
 }
