@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import unittest
 from pathlib import Path
 
@@ -7,13 +8,16 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 MATRIX = ROOT / "config" / "integrations" / "provider-capability-matrix.yaml"
+LOCK = ROOT / "config" / "integrations" / "cross-repo-lock.json"
 
 
 class ProviderCapabilityMatrixRuntimeCandidateTests(unittest.TestCase):
     def setUp(self) -> None:
         self.doc = yaml.safe_load(MATRIX.read_text(encoding="utf-8"))
+        self.lock = json.loads(LOCK.read_text(encoding="utf-8"))
         self.runtime = self.doc["roles"]["runtime_binding"]
         self.claude = self.runtime["candidates"]["claude_code"]
+        self.authoritative_claude = self.lock["runtime_bindings"]["claude-code"]
 
     def test_claude_candidate_projects_exact_r1_ready_identity(self) -> None:
         self.assertEqual(
@@ -26,15 +30,15 @@ class ProviderCapabilityMatrixRuntimeCandidateTests(unittest.TestCase):
         self.assertEqual(self.claude["status"], "source-set-bound")
         self.assertEqual(
             self.claude["binding_commit"],
-            "8cd87956507f9dbde0438c9135493c96f3b2d318",
+            self.authoritative_claude["commit"],
         )
         self.assertEqual(
             self.claude["r1_exact_head_workflow_run"],
-            "jiying2007/claude/actions/runs/35115950799",
+            self.authoritative_claude["r1_exact_head_workflow_run"],
         )
         self.assertEqual(
             self.claude["r1_fresh_main_workflow_run"],
-            "jiying2007/claude/actions/runs/35116031702",
+            self.authoritative_claude["r1_fresh_main_workflow_run"],
         )
 
     def test_r1_ready_candidate_remains_non_terminal(self) -> None:
