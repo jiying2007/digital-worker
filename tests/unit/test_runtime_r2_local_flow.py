@@ -102,8 +102,11 @@ def freeze(root: Path, plan: dict) -> Path:
             },
             "provider_credentials_held_by_digital_worker": False,
             "provider_execution_authorized": False,
-            "verification_status": "pending",
-            "independent_review_status": "pending",
+            "qualification_mode": "periodic-non-blocking",
+            "qualification_policy_ref": "manifests/runtime-r2-qualification-policy.json",
+            "repository_closure_blocking": False,
+            "product_release_blocking": False,
+            "qualification_status": "pending",
         },
     )
     return out
@@ -354,7 +357,11 @@ class RuntimeR2LocalFlowTests(unittest.TestCase):
             self.assertFalse(report["credential_state_in_evidence"])
             self.assertFalse(report["github_provider_credentials_required"])
             self.assertFalse(report["verification_pass_claimed_by_runtime"])
-            self.assertEqual(report["independent_review_status"], "pending")
+            self.assertEqual(report["qualification_status"], "qualified")
+            self.assertTrue(report["r2_qualified"])
+            self.assertFalse(report["repository_closure_blocking"])
+            self.assertFalse(report["product_release_blocking"])
+            self.assertEqual(report["qualification_policy_ref"], "manifests/runtime-r2-qualification-policy.json")
             self.assertEqual(set(report["provider_execution_evidence"]), {"codex", "claude-code"})
 
     def test_native_host_verification_executes_declared_python_step(self) -> None:
