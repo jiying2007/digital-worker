@@ -41,6 +41,7 @@ class RuntimeR2IndependentReviewWorkflowTests(unittest.TestCase):
             "value['verification_pass_claimed_by_runtime'] is False",
             "provider_execution_actors",
             "provider_execution_evidence",
+            "replay_postflight_sha256",
             "verification_tool_commit",
         ):
             self.assertIn(token, self.text)
