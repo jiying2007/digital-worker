@@ -111,6 +111,8 @@ The adapter reuses the caller's existing user `HOME` for local authentication/pr
 
 Materialized frozen runtime assets are installed into the shared runtime home. The provider authorization receipt must record `execution_context_mode=frozen-project-local`, `user_setting_source_loaded=false`, `runtime_home_mode=shared-user-home`, and `credential_state_in_evidence=false`. The normal Claude Code CLI must already work in the shared environment.
 
+The adapter permits the minimal workspace scaffolding required by this task, including `Bash(mkdir *)`, while keeping the rest of the Bash allowlist bounded. Its turn budget is explicit and bounded: default 32 turns, configurable with `--max-turns N` or `CLAUDE_R2_MAX_TURNS`, and constrained to 1–64. A fixed 20-turn ceiling is retired because the real R2 campaign reached the limit while still in legitimate tool-use.
+
 The adapter refuses to use a runtime home inside the evidence directory. After provider execution, it exports `result-tree.tar.gz` without `.git` and invokes the same Digital Worker replay postflight authority. A Claude CLI exit code of zero is insufficient for evidence-ready output: descriptor schema validation and all declared replay steps must also pass.
 
 Expected outputs include claude-native.json, claude-native-validated.json, claude-portable.json, claude.patch, result-tree.tar.gz, result-postflight.json plus bounded postflight logs, Claude execution evidence, the local evidence bundle, and its SHA-256. The shared user home is never bundled.
