@@ -14,6 +14,7 @@ TASK_BRIEF = EVIDENCE_ROOT / "task-brief.json"
 ENGINEERING_PACKAGE = EVIDENCE_ROOT / "engineering-task-package.json"
 PILOT_RESULT = EVIDENCE_ROOT / "pilot-result.json"
 MATERIAL_MANIFEST = EVIDENCE_ROOT / "extras/material_manifest.json"
+R2_ARTIFACT_IDENTITY = EVIDENCE_ROOT / "extras/r2-artifact-identity.v1.json"
 CROSS_REPO_LOCK = ROOT / "config/integrations/cross-repo-lock.json"
 CONTRACT_CATALOG = ROOT / "contracts/catalog.json"
 R2_ADK_RELEASE_LOCK = ROOT / "manifests/r2_frozen_adk_release.lock.json"
@@ -149,23 +150,22 @@ def _runtime_binding_snapshot(lock: Mapping[str, Any]) -> dict[str, dict[str, An
 
 
 def _artifact_identity_contract(
+    contract: Mapping[str, Any],
     task: Mapping[str, Any],
     package: Mapping[str, Any],
     base: str,
 ) -> dict[str, Any]:
-    task_identity = task.get("artifact_identity")
-    package_identity = package.get("artifact_identity")
-    if not isinstance(task_identity, Mapping) or not isinstance(package_identity, Mapping):
-        raise R2EvidenceError("artifact identity contract is missing")
-    if dict(task_identity) != dict(package_identity):
-        raise R2EvidenceError("task/package artifact identity contracts do not match")
+    if contract.get("schema") != "digital-worker-runtime-r2-artifact-identity/v1":
+        raise R2EvidenceError("unsupported R2 artifact identity contract schema")
+    if contract.get("work_item_id") != task.get("work_item_id"):
+        raise R2EvidenceError("artifact identity work item does not match task brief")
 
-    repository = task_identity.get("repository")
-    source_commit = task_identity.get("source_commit")
-    source_blob_sha = task_identity.get("source_blob_sha")
-    path = task_identity.get("path")
-    size_bytes = task_identity.get("size_bytes")
-    sha256 = task_identity.get("sha256")
+    repository = contract.get("repository")
+    source_commit = contract.get("source_commit")
+    source_blob_sha = contract.get("source_blob_sha")
+    path = contract.get("path")
+    size_bytes = contract.get("size_bytes")
+    sha256 = contract.get("sha256")
 
     if repository != package.get("repo_root"):
         raise R2EvidenceError("artifact identity repository does not match target repository")
@@ -201,6 +201,8 @@ def build_plan(
     package = _load(root / ENGINEERING_PACKAGE.relative_to(ROOT), "engineering task package")
     pilot = _load(root / PILOT_RESULT.relative_to(ROOT), "pilot result")
     material = _load(root / MATERIAL_MANIFEST.relative_to(ROOT), "material manifest")
+    artifact_contract_path = root / R2_ARTIFACT_IDENTITY.relative_to(ROOT)
+    artifact_contract = _load(artifact_contract_path, "R2 artifact identity contract")
     lock = _load(root / CROSS_REPO_LOCK.relative_to(ROOT), "cross-repo lock")
     r2_adk_lock = _load(
         root / R2_ADK_RELEASE_LOCK.relative_to(ROOT),
@@ -216,7 +218,7 @@ def build_plan(
     base = _require_full_sha(task.get("base_branch_or_commit"), "task brief base")
     if package.get("base_commit") != base:
         raise R2EvidenceError("engineering package base commit does not match task brief")
-    artifact_identity = _artifact_identity_contract(task, package, base)
+    artifact_identity = _artifact_identity_contract(artifact_contract, task, package, base)
     if target_head != base:
         raise R2EvidenceError(f"target checkout HEAD mismatch: expected {base}, got {target_head}")
     if target_clean is not True:
@@ -316,6 +318,8 @@ def build_plan(
             "acceptance_criteria": task.get("acceptance_criteria", []),
             "required_verification": task.get("required_verification", {}),
             "artifact_identity": artifact_identity,
+            "artifact_identity_contract_ref": R2_ARTIFACT_IDENTITY.relative_to(ROOT).as_posix(),
+            "artifact_identity_contract_sha256": _file_digest(artifact_contract_path),
             "material_manifest_ref": material_ref,
             "material_manifest_sha256": material_sha,
             "source_feature_pilot_run_id": pilot["run_id"],
@@ -347,6 +351,10 @@ def build_plan(
         "exact_base_commit": base,
         "dirty_baseline": False,
         "artifact_identity": artifact_identity,
+        "artifact_identity_contract": {
+            "ref": R2_ARTIFACT_IDENTITY.relative_to(ROOT).as_posix(),
+            "sha256": _file_digest(artifact_contract_path),
+        },
         "digital_worker_governance_identity_ref": governance_ref,
         "material_manifest": {"ref": material_ref, "sha256": material_sha},
         "knowledge_context_fingerprint": knowledge_fingerprint,
