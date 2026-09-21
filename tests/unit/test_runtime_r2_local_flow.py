@@ -133,10 +133,21 @@ def result_tree(root: Path, runtime: str) -> tuple[Path, str]:
             "runtime_note": runtime,
         },
     )
-    (tree / "scripts/verify_pcr02_ota_identity.sh").write_text(
-        "#!/usr/bin/env bash\nset -euo pipefail\nsha256sum -c SHA256SUMS.txt\n",
-        encoding="utf-8",
-    )
+    if runtime == "claude-code":
+        (tree / "verify_artifact.py").write_text(
+            "from pathlib import Path\n"
+            "import hashlib\n"
+            "package = Path('ota_pkg_v1.1.21.tar.gz')\n"
+            "expected = '" + PACKAGE_SHA + "'\n"
+            "actual = hashlib.sha256(package.read_bytes()).hexdigest()\n"
+            "raise SystemExit(0 if actual == expected else 1)\n",
+            encoding="utf-8",
+        )
+    else:
+        (tree / "scripts/verify_pcr02_ota_identity.sh").write_text(
+            "#!/usr/bin/env bash\nset -euo pipefail\nsha256sum -c SHA256SUMS.txt\n",
+            encoding="utf-8",
+        )
     digest = tree_digest(tree)
     archive = root / f"{runtime}-result-tree.tar.gz"
     with tarfile.open(archive, "w:gz") as tf:
@@ -295,6 +306,21 @@ class RuntimeR2LocalFlowTests(unittest.TestCase):
             self.assertFalse(report["verification_pass_claimed_by_runtime"])
             self.assertEqual(report["independent_review_status"], "pending")
             self.assertEqual(set(report["provider_execution_evidence"]), {"codex", "claude-code"})
+
+    def test_native_host_verification_discovers_root_python_verifier(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_value:
+            tmp = Path(tmp_value)
+            tree = tmp / "tree"
+            tree.mkdir()
+            (tree / "verify_artifact.py").write_text(
+                "print('python verifier pass')\n",
+                encoding="utf-8",
+            )
+            log = tmp / "host.log"
+            verify._run_native_host_verification(tree, log)
+            text = log.read_text(encoding="utf-8")
+            self.assertIn("verify_artifact.py", text)
+            self.assertIn("[exit=0]", text)
 
     def test_local_intake_rejects_claude_user_setting_source(self) -> None:
         plan = build_plan()
