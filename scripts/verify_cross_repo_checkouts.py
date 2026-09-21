@@ -220,6 +220,8 @@ def verify_runtime_practice_eval(
         "runtime_execution_evidence_ready_requires_replay_postflight",
         "replay_postflight_must_use_exported_git_free_result_tree",
         "replay_postflight_is_not_domain_verification",
+        "runtime_required_workspace_scaffolding_must_be_permitted",
+        "runtime_turn_budget_must_be_bounded_and_configurable",
     ):
         if hard_rules.get(rule) is not True:
             fail(f"runtime_practice_eval: behavioral execution-context hard rule weakened: {rule}")
@@ -239,7 +241,7 @@ def verify_runtime_practice_eval(
         plane = planes.get(runtime)
         if not isinstance(plane, dict):
             fail(f"runtime_practice_eval: execution plane missing: {runtime}")
-        for key, expected in {
+        expected_plane = {
             "repository": repository,
             "execution_plane_commit": commit,
             "frozen_binding_commit": commit,
@@ -250,7 +252,18 @@ def verify_runtime_practice_eval(
             "credential_owner": "runtime-local-auth-state",
             "replay_postflight_required": True,
             "replay_postflight_authority": "digital-worker:scripts/runtime_r2_result_postflight.py",
-        }.items():
+        }
+        if runtime == "claude-code":
+            expected_plane.update({
+                "workspace_scaffolding_permission": "Bash(mkdir *)",
+                "turn_budget": {
+                    "default": 32,
+                    "min": 1,
+                    "max": 64,
+                    "configurable": True,
+                },
+            })
+        for key, expected in expected_plane.items():
             if plane.get(key) != expected:
                 fail(f"runtime_practice_eval: {runtime} execution plane {key} drift")
         if "provider_execution_workflow" in plane:
@@ -284,6 +297,8 @@ def verify_runtime_practice_eval(
         "execution receipt replay_postflight is missing",
         "replay-postflight:sha256:",
         "provider replay postflight digest drift",
+        "claude-code required workspace scaffolding permission drift",
+        "claude-code turn budget contract drift",
     ]:
         if marker not in certifier_text:
             fail(f"runtime_practice_eval: portability certifier marker missing: {marker}")
