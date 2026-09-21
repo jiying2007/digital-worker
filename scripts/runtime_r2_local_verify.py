@@ -48,61 +48,83 @@ def run_logged(command: list[str], cwd: pathlib.Path, log: pathlib.Path) -> None
 
 
 
-def _expected_artifact(plan: dict[str, Any]) -> tuple[str, int, str, str]:
+
+def _expected_artifact(plan: dict[str, Any]) -> dict[str, Any]:
     controlled = plan.get("controlled_task")
-    package = plan.get("engineering_task_package")
-    if not isinstance(controlled, dict) or not isinstance(package, dict):
-        raise VerificationError("frozen plan artifact identity inputs are missing")
+    if not isinstance(controlled, dict):
+        raise VerificationError("frozen plan controlled task is missing")
+    identity = controlled.get("artifact_identity")
+    if not isinstance(identity, dict):
+        raise VerificationError("frozen plan structured artifact identity is missing")
 
-    expected_size: int | None = None
-    for criterion in controlled.get("acceptance_criteria", []):
-        if not isinstance(criterion, str):
-            continue
-        match = re.search(r"([0-9][0-9,]*)-byte package", criterion)
-        if match:
-            expected_size = int(match.group(1).replace(",", ""))
-            break
+    required = {
+        "repository": str,
+        "source_commit": str,
+        "source_blob_sha": str,
+        "path": str,
+        "size_bytes": int,
+        "sha256": str,
+    }
+    for field, expected_type in required.items():
+        value = identity.get(field)
+        if not isinstance(value, expected_type) or isinstance(value, bool):
+            raise VerificationError(f"frozen artifact identity field is invalid: {field}")
 
-    package_path: str | None = None
-    expected_sha: str | None = None
-    for ref in package.get("evidence_refs", []):
-        if not isinstance(ref, str):
-            continue
-        match = re.fullmatch(r"(\S+)\s+sha256:([0-9a-f]{64})", ref)
-        if match:
-            package_path, expected_sha = match.groups()
-            break
+    if identity["repository"] != controlled.get("repo_root"):
+        raise VerificationError("frozen artifact repository does not match controlled target")
+    if identity["source_commit"] != controlled.get("exact_base_commit"):
+        raise VerificationError("frozen artifact source commit does not match exact base")
+    if re.fullmatch(r"[0-9a-f]{40}", identity["source_commit"]) is None:
+        raise VerificationError("frozen artifact source commit is not an exact Git commit")
+    if re.fullmatch(r"[0-9a-f]{40}", identity["source_blob_sha"]) is None:
+        raise VerificationError("frozen artifact source blob is not an exact Git blob")
+    if re.fullmatch(r"[0-9a-f]{64}", identity["sha256"]) is None:
+        raise VerificationError("frozen artifact SHA-256 is invalid")
+    if identity["size_bytes"] <= 0:
+        raise VerificationError("frozen artifact size must be positive")
 
-    base_commit = controlled.get("exact_base_commit")
-    if (
-        expected_size is None
-        or package_path is None
-        or expected_sha is None
-        or not isinstance(base_commit, str)
-        or re.fullmatch(r"[0-9a-f]{40}", base_commit) is None
-    ):
-        raise VerificationError("frozen plan does not expose exact OTA path/size/SHA/source identity")
-
-    rel = pathlib.PurePosixPath(package_path)
+    rel = pathlib.PurePosixPath(identity["path"])
     if rel.is_absolute() or ".." in rel.parts:
         raise VerificationError("frozen OTA package path is unsafe")
-    return package_path, expected_size, expected_sha, base_commit
+    return dict(identity)
 
 
-def _json_leaf_values(value: Any) -> list[str]:
+def _iter_dicts(value: Any):
     if isinstance(value, dict):
-        rows: list[str] = []
+        yield value
         for item in value.values():
-            rows.extend(_json_leaf_values(item))
-        return rows
-    if isinstance(value, list):
-        rows = []
+            yield from _iter_dicts(item)
+    elif isinstance(value, list):
         for item in value:
-            rows.extend(_json_leaf_values(item))
-        return rows
-    if value is None:
-        return []
-    return [str(value)]
+            yield from _iter_dicts(item)
+
+
+def _find_identity_manifest(
+    result_tree: pathlib.Path,
+    expected: dict[str, Any],
+) -> pathlib.Path:
+    fields = (
+        "repository",
+        "source_commit",
+        "source_blob_sha",
+        "path",
+        "size_bytes",
+        "sha256",
+    )
+    for path in sorted(result_tree.rglob("*.json")):
+        if ".git" in path.parts or not path.is_file():
+            continue
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        for node in _iter_dicts(value):
+            if all(node.get(field) == expected[field] for field in fields):
+                return path
+    raise VerificationError(
+        "no machine-readable identity JSON binds frozen repository/source_commit/"
+        "source_blob_sha/path/size_bytes/sha256"
+    )
 
 
 def _verify_checksum_list(result_tree: pathlib.Path, package_path: str, expected_sha: str) -> str:
@@ -166,7 +188,10 @@ def _verify_frozen_artifact_identity(
     plan: dict[str, Any],
     log: pathlib.Path,
 ) -> None:
-    package_path, expected_size, expected_sha, base_commit = _expected_artifact(plan)
+    expected = _expected_artifact(plan)
+    package_path = expected["path"]
+    expected_size = expected["size_bytes"]
+    expected_sha = expected["sha256"]
     package = result_tree.joinpath(*pathlib.PurePosixPath(package_path).parts)
     if not package.is_file():
         raise VerificationError(f"result tree missing frozen OTA package: {package_path}")
@@ -180,18 +205,14 @@ def _verify_frozen_artifact_identity(
         raise VerificationError("OTA package SHA-256 mismatch against frozen task")
 
     checksum_sha = _verify_checksum_list(result_tree, package_path, expected_sha)
-    identity = _find_identity_manifest(
-        result_tree,
-        package_path,
-        expected_size,
-        expected_sha,
-        base_commit,
-    )
+    identity = _find_identity_manifest(result_tree, expected)
     rows = [
+        f"repository={expected['repository']}",
+        f"source_commit={expected['source_commit']}",
+        f"source_blob_sha={expected['source_blob_sha']}",
         f"package={package_path}",
         f"size={actual_size}",
         f"sha256={actual_sha}",
-        f"base_commit={base_commit}",
         f"identity_manifest={identity.relative_to(result_tree).as_posix()}",
         f"identity_manifest_sha256={sha256_file(identity)}",
         f"checksum_list_sha256={checksum_sha}",
