@@ -6,6 +6,7 @@ import hashlib
 import json
 import os
 import pathlib
+import re
 import subprocess
 import sys
 from typing import Any
@@ -44,6 +45,207 @@ def run_logged(command: list[str], cwd: pathlib.Path, log: pathlib.Path) -> None
     log.write_text(completed.stdout, encoding="utf-8")
     if completed.returncode != 0:
         raise VerificationError(f"verification command failed ({completed.returncode}): {' '.join(command)}")
+
+
+
+def _expected_artifact(plan: dict[str, Any]) -> tuple[str, int, str, str]:
+    controlled = plan.get("controlled_task")
+    package = plan.get("engineering_task_package")
+    if not isinstance(controlled, dict) or not isinstance(package, dict):
+        raise VerificationError("frozen plan artifact identity inputs are missing")
+
+    expected_size: int | None = None
+    for criterion in controlled.get("acceptance_criteria", []):
+        if not isinstance(criterion, str):
+            continue
+        match = re.search(r"([0-9][0-9,]*)-byte package", criterion)
+        if match:
+            expected_size = int(match.group(1).replace(",", ""))
+            break
+
+    package_path: str | None = None
+    expected_sha: str | None = None
+    for ref in package.get("evidence_refs", []):
+        if not isinstance(ref, str):
+            continue
+        match = re.fullmatch(r"(\S+)\s+sha256:([0-9a-f]{64})", ref)
+        if match:
+            package_path, expected_sha = match.groups()
+            break
+
+    base_commit = controlled.get("exact_base_commit")
+    if (
+        expected_size is None
+        or package_path is None
+        or expected_sha is None
+        or not isinstance(base_commit, str)
+        or re.fullmatch(r"[0-9a-f]{40}", base_commit) is None
+    ):
+        raise VerificationError("frozen plan does not expose exact OTA path/size/SHA/source identity")
+
+    rel = pathlib.PurePosixPath(package_path)
+    if rel.is_absolute() or ".." in rel.parts:
+        raise VerificationError("frozen OTA package path is unsafe")
+    return package_path, expected_size, expected_sha, base_commit
+
+
+def _json_leaf_values(value: Any) -> list[str]:
+    if isinstance(value, dict):
+        rows: list[str] = []
+        for item in value.values():
+            rows.extend(_json_leaf_values(item))
+        return rows
+    if isinstance(value, list):
+        rows = []
+        for item in value:
+            rows.extend(_json_leaf_values(item))
+        return rows
+    if value is None:
+        return []
+    return [str(value)]
+
+
+def _verify_checksum_list(result_tree: pathlib.Path, package_path: str, expected_sha: str) -> str:
+    checksum_path = result_tree / "SHA256SUMS.txt"
+    if not checksum_path.is_file():
+        raise VerificationError("result tree missing SHA256SUMS.txt")
+
+    entries: list[tuple[str, str]] = []
+    seen_paths: set[str] = set()
+    for lineno, raw in enumerate(checksum_path.read_text(encoding="utf-8").splitlines(), 1):
+        line = raw.strip()
+        if not line:
+            continue
+        match = re.fullmatch(r"([0-9a-f]{64})\s+[* ]?(.+)", line)
+        if match is None:
+            raise VerificationError(f"malformed SHA256SUMS.txt entry at line {lineno}")
+        digest, path = match.groups()
+        path = path.strip()
+        if path in seen_paths:
+            raise VerificationError(f"duplicate checksum entry: {path}")
+        seen_paths.add(path)
+        entries.append((path, digest))
+
+    matches = [digest for path, digest in entries if path == package_path]
+    if len(matches) != 1:
+        raise VerificationError(f"expected exactly one checksum entry for {package_path}")
+    if matches[0] != expected_sha:
+        raise VerificationError("checksum list SHA-256 does not match frozen artifact identity")
+    return sha256_file(checksum_path)
+
+
+def _find_identity_manifest(
+    result_tree: pathlib.Path,
+    package_path: str,
+    expected_size: int,
+    expected_sha: str,
+    base_commit: str,
+) -> pathlib.Path:
+    for path in sorted(result_tree.rglob("*.json")):
+        if ".git" in path.parts or not path.is_file():
+            continue
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            continue
+        leaves = set(_json_leaf_values(value))
+        if (
+            package_path in leaves
+            and str(expected_size) in leaves
+            and expected_sha in leaves
+            and base_commit in leaves
+        ):
+            return path
+    raise VerificationError(
+        "no machine-readable identity JSON binds frozen package path/size/SHA/source identity"
+    )
+
+
+def _verify_frozen_artifact_identity(
+    result_tree: pathlib.Path,
+    plan: dict[str, Any],
+    log: pathlib.Path,
+) -> None:
+    package_path, expected_size, expected_sha, base_commit = _expected_artifact(plan)
+    package = result_tree.joinpath(*pathlib.PurePosixPath(package_path).parts)
+    if not package.is_file():
+        raise VerificationError(f"result tree missing frozen OTA package: {package_path}")
+    actual_size = package.stat().st_size
+    if actual_size != expected_size:
+        raise VerificationError(
+            f"OTA package size mismatch: expected {expected_size}, got {actual_size}"
+        )
+    actual_sha = sha256_file(package)
+    if actual_sha != expected_sha:
+        raise VerificationError("OTA package SHA-256 mismatch against frozen task")
+
+    checksum_sha = _verify_checksum_list(result_tree, package_path, expected_sha)
+    identity = _find_identity_manifest(
+        result_tree,
+        package_path,
+        expected_size,
+        expected_sha,
+        base_commit,
+    )
+    rows = [
+        f"package={package_path}",
+        f"size={actual_size}",
+        f"sha256={actual_sha}",
+        f"base_commit={base_commit}",
+        f"identity_manifest={identity.relative_to(result_tree).as_posix()}",
+        f"identity_manifest_sha256={sha256_file(identity)}",
+        f"checksum_list_sha256={checksum_sha}",
+        "status=pass",
+        "",
+    ]
+    log.write_text("\n".join(rows), encoding="utf-8")
+
+
+def _run_native_host_verification(
+    result_tree: pathlib.Path,
+    log: pathlib.Path,
+) -> None:
+    commands: list[list[str]] = []
+
+    tests = result_tree / "tests"
+    if tests.is_dir() and any(tests.rglob("test*.py")):
+        commands.append([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"])
+
+    shell_verifiers = sorted(
+        {
+            *result_tree.glob("verify*.sh"),
+            *(result_tree / "scripts").glob("verify*.sh") if (result_tree / "scripts").is_dir() else [],
+        }
+    )
+    commands.extend([["bash", path.relative_to(result_tree).as_posix()] for path in shell_verifiers])
+
+    legacy = result_tree / "verify_ota_manifest.py"
+    manifest = result_tree / "ota-manifest.v1.json"
+    if legacy.is_file() and manifest.is_file():
+        commands.append([sys.executable, legacy.name, "--manifest", manifest.name])
+
+    if not commands:
+        raise VerificationError("result tree exposes no runnable host verifier")
+
+    chunks: list[str] = []
+    for command in commands:
+        completed = subprocess.run(
+            command,
+            cwd=result_tree,
+            check=False,
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+        )
+        chunks.append("$ " + " ".join(command))
+        chunks.append(completed.stdout)
+        chunks.append(f"[exit={completed.returncode}]")
+        if completed.returncode != 0:
+            log.write_text("\n".join(chunks) + "\n", encoding="utf-8")
+            raise VerificationError(
+                f"verification command failed ({completed.returncode}): {' '.join(command)}"
+            )
+    log.write_text("\n".join(chunks) + "\n", encoding="utf-8")
 
 
 def verify_local_r2(
@@ -90,6 +292,7 @@ def verify_local_r2(
     if collection.get("credential_state_in_evidence") is not False:
         raise VerificationError("R2 local verification forbids credential state in evidence")
 
+    plan = load_json(freeze_dir.resolve() / "frozen-plan.json")
     test_evidence: dict[str, str] = {}
     for runtime, prefix in (("codex", "codex"), ("claude-code", "claude")):
         result_tree = intake_out / runtime / "result-tree"
@@ -97,8 +300,8 @@ def verify_local_r2(
             raise VerificationError(f"missing replay-complete result tree: {runtime}")
         unit_log = out / f"{prefix}-domain-host-tests.log"
         ota_log = out / f"{prefix}-domain-ota-verify.log"
-        run_logged([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"], result_tree, unit_log)
-        run_logged([sys.executable, "verify_ota_manifest.py", "--manifest", "ota-manifest.v1.json"], result_tree, ota_log)
+        _verify_frozen_artifact_identity(result_tree, plan, ota_log)
+        _run_native_host_verification(result_tree, unit_log)
         test_evidence[f"{prefix}_host_tests_sha256"] = sha256_file(unit_log)
         test_evidence[f"{prefix}_ota_verify_sha256"] = sha256_file(ota_log)
 
@@ -126,8 +329,8 @@ def verify_local_r2(
             "native-to-portable-receipt",
             "replay-complete-result-tree",
             "provider-result-identity",
-            "host-unit-tests",
-            "ota-manifest-verifier",
+            "runtime-native-host-verifier",
+            "independent-ota-artifact-identity",
         ],
         "verification_actor": verification_actor,
         "verification_pass_claimed_by_runtime": False,
