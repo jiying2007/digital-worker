@@ -211,13 +211,12 @@ def _run_native_host_verification(
     if tests.is_dir() and any(tests.rglob("test*.py")):
         commands.append([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"])
 
-    shell_verifiers = sorted(
-        {
-            *result_tree.glob("verify*.sh"),
-            *(result_tree / "scripts").glob("verify*.sh") if (result_tree / "scripts").is_dir() else [],
-        }
-    )
-    commands.extend([["bash", path.relative_to(result_tree).as_posix()] for path in shell_verifiers])
+    shell_verifiers = list(result_tree.glob("verify*.sh"))
+    scripts_dir = result_tree / "scripts"
+    if scripts_dir.is_dir():
+        shell_verifiers.extend(scripts_dir.glob("verify*.sh"))
+    for path in sorted(set(shell_verifiers)):
+        commands.append(["bash", path.relative_to(result_tree).as_posix()])
 
     legacy = result_tree / "verify_ota_manifest.py"
     manifest = result_tree / "ota-manifest.v1.json"
