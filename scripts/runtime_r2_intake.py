@@ -212,6 +212,15 @@ def validate_runtime(
     require(auth.get("github_provider_credential_used") is False, f"{runtime} local evidence must not use GitHub provider credentials")
     require(auth.get("runtime_home_mode") == "shared-user-home", f"{runtime} runtime home must be shared-user-home")
     require(auth.get("credential_state_in_evidence") is False, f"{runtime} credential state must not enter evidence")
+    if runtime == "claude-code":
+        require(
+            auth.get("execution_context_mode") == "frozen-project-local",
+            "claude-code controlled execution context must exclude user behavioral settings",
+        )
+        require(
+            auth.get("user_setting_source_loaded") is False,
+            "claude-code user setting source must not enter controlled R2 execution",
+        )
     actor = auth.get("actor")
     require(isinstance(actor, str) and actor, f"{runtime} provider actor missing")
 
@@ -251,6 +260,8 @@ def validate_runtime(
     return {
         "execution_venue": "local-terminal",
         "runtime_home_mode": "shared-user-home",
+        "execution_context_mode": auth.get("execution_context_mode"),
+        "user_setting_source_loaded": auth.get("user_setting_source_loaded"),
         "credential_state_in_evidence": False,
         "provider_actor": actor,
         "runtime_binding_commit": identity.get("runtime_binding_commit"),

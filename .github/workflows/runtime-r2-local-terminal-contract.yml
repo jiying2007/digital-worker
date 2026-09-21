@@ -70,6 +70,7 @@ jobs:
               '50e9b8d4d19d35d3315ba8400e87dfe851a749dd',
               'c4a1fa995b281da909be10bfe5c41fe719ce2759',
               'e6d2be534a85ac1208967774612f07b54c59a0b5',
+              'e358b029607cf9dc5429eb7c2ca05b5d4a13c0f1',
           }
           assert bindings['codex']['commit'] not in retired
           assert bindings['claude-code']['commit'] not in retired
@@ -82,7 +83,14 @@ jobs:
           assert 'runtime-r2-provider-execution.yml' not in freeze_text
           assert "'runtime_home_mode':'shared-user-home'" in freeze_text
           assert "'credential_state_in_evidence':False" in freeze_text
+          intake_text=pathlib.Path('scripts/runtime_r2_intake.py').read_text(encoding='utf-8')
+          assert 'execution_context_mode' in intake_text
+          assert 'frozen-project-local' in intake_text
+          assert 'user_setting_source_loaded' in intake_text
           assert 'shared user runtime home' in text
+          assert '--setting-sources project,local' in text
+          assert 'execution_context_mode=frozen-project-local' in text
+          assert 'user_setting_source_loaded=false' in text
           assert 'Python 3.11' in text
           assert 'openai-api-key' not in text
           assert 'anthropic_api_key' not in text

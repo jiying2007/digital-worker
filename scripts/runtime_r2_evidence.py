@@ -382,6 +382,7 @@ def build_plan(
         f"size_bytes={artifact_identity['size_bytes']}, "
         f"sha256={artifact_identity['sha256']}. "
         "README text and SHA256SUMS alone do not satisfy the machine-readable manifest requirement. "
+        "You MUST implement the requested repository changes in the target worktree; do not stop at analysis, explanation, recommendations, or a no-op response. "
         "Provide a runnable host verifier that fails closed on malformed identity, source-identity mismatch, path traversal, "
         "size mismatch, SHA mismatch, and duplicate checksum entries; add automated negative tests for these failure modes. "
         "Configure Hosted CI to run the host verifier against the real package and retain a machine receipt, but do not push. "

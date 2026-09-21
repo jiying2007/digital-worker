@@ -203,13 +203,23 @@ def verify_runtime_practice_eval(
         "digital_worker_holds_provider_credentials": False,
         "local_execution_receipt_is_not_r2_pass": True,
         "runtime_home_mode": "shared-user-home",
-        "runtime_local_state_policy": "reuse-local-auth-and-provider-config-exclude-from-evidence",
+        "runtime_local_state_policy": "reuse-local-auth-and-provider-state-exclude-credential-state-and-user-behavioral-settings-from-evidence-execution-context",
     }
     if not isinstance(ownership, dict):
         fail("runtime_practice_eval: local-terminal execution ownership missing")
     for key, expected in expected_ownership.items():
         if ownership.get(key) != expected:
             fail(f"runtime_practice_eval: local-terminal execution ownership {key} drift")
+
+    hard_rules = contract.get("hard_rules")
+    if not isinstance(hard_rules, dict):
+        fail("runtime_practice_eval: hard rules missing")
+    for rule in (
+        "runtime_user_behavioral_settings_must_not_enter_controlled_execution_context",
+        "shared_home_reuse_is_auth_provider_state_not_behavioral_instruction_reuse",
+    ):
+        if hard_rules.get(rule) is not True:
+            fail(f"runtime_practice_eval: behavioral execution-context hard rule weakened: {rule}")
 
     planes = contract.get("execution_plane_evidence")
     if not isinstance(planes, dict):
