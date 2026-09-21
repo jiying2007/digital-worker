@@ -27,7 +27,7 @@ Domain（领域）
 
 因此当前 **Product readiness = 1/3 eligible，仍为 BLOCKED**。Synthetic evidence 只验证工具链，不计入产品成熟度；Product readiness 不会切换、回滚或决定 canonical routing，也不能自动声明 Production Ready / Release Ready。
 
-Product Readiness 只描述具体产品证据轨；它与 cross-repo Terminal Maturity、Runtime Qualification、ADK Release Qualification 相互正交，任何一项 PASS/READY 都不得自动提升另一项状态。
+Product Readiness 只描述具体产品证据轨；它与 cross-repo Terminal Maturity、Runtime Qualification、ADK Release Qualification 相互正交，任何一项 PASS/READY 都不得自动提升另一项状态。Runtime R2 采用周期性资格认证：仓库闭环、日常 CI 与产品发布不因 R2 blocked/stale/not-run 被阻塞；只有声明当前 Runtime Portability / Terminal Replaceability 时才要求 fresh R2 real-provider evidence。
 
 当前目标仍是 **E2 Engineering Closed Loop，并为 E3 Knowledge Closed Loop 建基础**。
 
@@ -41,6 +41,7 @@ Product Readiness 只描述具体产品证据轨；它与 cross-repo Terminal Ma
 - [Edge Foundation Domain](domains/edge-foundation/domain.yaml)：三 Domain Expert、Coordination、Execution、Assurance 与 Product readiness 边界；
 - [Canonical Routing](domains/edge-foundation/routing.yaml)：14 个任务类型到 Expert / Capability / Assurance 的正式路由；
 - [Runtime Policy](domains/edge-foundation/runtime/task-modes.yaml)：具体 workflow mode 与 execution 约束；
+- [Runtime R2 Qualification Policy](manifests/runtime-r2-qualification-policy.json)：真实 Runtime 替换的周期性、非仓库阻塞资格认证边界；
 - [当前机器 Review Snapshot](嵌入式系统专家团-核心参考/00-评审导览/03%20当前机器状态快照.md)：从 canonical 资产派生的当前静态事实汇总，不替代 Product/Runtime/Productionization evaluator；
 - [SKILLS — Skill Architecture, Plan & Review Index](SKILLS.md)：仓库级 reviewer-facing Skill 总入口，覆盖 23 个 canonical Skill、candidate、生命周期与证据成熟度；
 - [Skill Registry](domains/edge-foundation/skills.yaml)：23 个 target Skill 的 canonical ownership 与物理位置；
@@ -72,7 +73,7 @@ Product Readiness 只描述具体产品证据轨；它与 cross-repo Terminal Ma
 - Interaction Provider：WorkBuddy、飞书、Web、CLI/IDE 入口或未来其它协作入口；Interaction Provider 不因“能发起任务”自动成为 Engineering Runtime Binding；
 - Thin Session Bootstrap：单次会话装配 project/mode/contract/skill/provider identity，不成为新的控制面。
 
-稳定原则：**Responsibility ≠ Runtime；Expert ≠ Agent；Capability 不默认等于 Agent；Knowledge index 不替代 authoritative Source；Product readiness 不决定 routing authority；Governance escalation 不提升既有 evidence 等级；Product Readiness / Terminal Maturity / Runtime Qualification / ADK Qualification 互不继承。**
+稳定原则：**Responsibility ≠ Runtime；Expert ≠ Agent；Capability 不默认等于 Agent；Knowledge index 不替代 authoritative Source；Product readiness 不决定 routing authority；Governance escalation 不提升既有 evidence 等级；Product Readiness / Terminal Maturity / Runtime Qualification / ADK Qualification 互不继承；R1 是日常 binding conformance，R2 是周期性 replaceability qualification，不进入日常生产热路径。**
 
 ## 真实 Run 最小闭环
 
