@@ -147,6 +147,48 @@ def _runtime_binding_snapshot(lock: Mapping[str, Any]) -> dict[str, dict[str, An
     return result
 
 
+
+def _artifact_identity_contract(
+    task: Mapping[str, Any],
+    package: Mapping[str, Any],
+    base: str,
+) -> dict[str, Any]:
+    task_identity = task.get("artifact_identity")
+    package_identity = package.get("artifact_identity")
+    if not isinstance(task_identity, Mapping) or not isinstance(package_identity, Mapping):
+        raise R2EvidenceError("artifact identity contract is missing")
+    if dict(task_identity) != dict(package_identity):
+        raise R2EvidenceError("task/package artifact identity contracts do not match")
+
+    repository = task_identity.get("repository")
+    source_commit = task_identity.get("source_commit")
+    source_blob_sha = task_identity.get("source_blob_sha")
+    path = task_identity.get("path")
+    size_bytes = task_identity.get("size_bytes")
+    sha256 = task_identity.get("sha256")
+
+    if repository != package.get("repo_root"):
+        raise R2EvidenceError("artifact identity repository does not match target repository")
+    if source_commit != base:
+        raise R2EvidenceError("artifact identity source commit does not match exact base")
+    _require_full_sha(source_commit, "artifact identity source commit")
+    _require_full_sha(source_blob_sha, "artifact identity source blob")
+    _require_sha256(sha256, "artifact identity SHA-256")
+    if not isinstance(path, str) or not path or path.startswith("/") or ".." in Path(path).parts:
+        raise R2EvidenceError("artifact identity path must be a safe relative path")
+    if not isinstance(size_bytes, int) or isinstance(size_bytes, bool) or size_bytes <= 0:
+        raise R2EvidenceError("artifact identity size_bytes must be a positive integer")
+
+    return {
+        "repository": repository,
+        "source_commit": source_commit,
+        "source_blob_sha": source_blob_sha,
+        "path": path,
+        "size_bytes": size_bytes,
+        "sha256": sha256,
+    }
+
+
 def build_plan(
     root: Path,
     *,
@@ -174,6 +216,7 @@ def build_plan(
     base = _require_full_sha(task.get("base_branch_or_commit"), "task brief base")
     if package.get("base_commit") != base:
         raise R2EvidenceError("engineering package base commit does not match task brief")
+    artifact_identity = _artifact_identity_contract(task, package, base)
     if target_head != base:
         raise R2EvidenceError(f"target checkout HEAD mismatch: expected {base}, got {target_head}")
     if target_clean is not True:
@@ -272,6 +315,7 @@ def build_plan(
             "workflow_mode": route["actual_mode"],
             "acceptance_criteria": task.get("acceptance_criteria", []),
             "required_verification": task.get("required_verification", {}),
+            "artifact_identity": artifact_identity,
             "material_manifest_ref": material_ref,
             "material_manifest_sha256": material_sha,
             "source_feature_pilot_run_id": pilot["run_id"],
@@ -290,6 +334,7 @@ def build_plan(
         "material_manifest_sha256": material_sha,
         "target_repository": package.get("repo_root"),
         "exact_base_commit": base,
+        "artifact_identity": artifact_identity,
     }
     comparison_source_set_ref = f"sha256:{_digest(comparison_source_set)}"
 
@@ -301,6 +346,7 @@ def build_plan(
         "repo_root": package.get("repo_root"),
         "exact_base_commit": base,
         "dirty_baseline": False,
+        "artifact_identity": artifact_identity,
         "digital_worker_governance_identity_ref": governance_ref,
         "material_manifest": {"ref": material_ref, "sha256": material_sha},
         "knowledge_context_fingerprint": knowledge_fingerprint,
@@ -320,8 +366,19 @@ def build_plan(
     prompt = (
         "Execute the frozen PCR02 OTA artifact-identity engineering task from the exact base commit. "
         "Use only the supplied frozen task/package/material inputs. Do not read or reuse another runtime's output or patch. "
-        "Implement the acceptance criteria in the target worktree, run the required host verification, and do not push, release, "
-        "write devices, or claim Verification PASS/Product Ready/Release Ready. Leave the resulting patch only in the local worktree."
+        "The machine-readable manifest MUST explicitly bind all six frozen artifact identity fields: "
+        f"repository={artifact_identity['repository']}, "
+        f"source_commit={artifact_identity['source_commit']}, "
+        f"source_blob_sha={artifact_identity['source_blob_sha']}, "
+        f"path={artifact_identity['path']}, "
+        f"size_bytes={artifact_identity['size_bytes']}, "
+        f"sha256={artifact_identity['sha256']}. "
+        "README text and SHA256SUMS alone do not satisfy the machine-readable manifest requirement. "
+        "Provide a runnable host verifier that fails closed on malformed identity, source-identity mismatch, path traversal, "
+        "size mismatch, SHA mismatch, and duplicate checksum entries; add automated negative tests for these failure modes. "
+        "Configure Hosted CI to run the host verifier against the real package and retain a machine receipt, but do not push. "
+        "Run the required host verification locally, and do not release, write devices, or claim Verification PASS/Product Ready/Release Ready. "
+        "Leave the resulting patch only in the local worktree."
     )
     return {
         "schema": "digital-worker-runtime-r2-plan/v1",
