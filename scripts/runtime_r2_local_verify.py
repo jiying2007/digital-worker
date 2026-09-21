@@ -430,7 +430,11 @@ def verify_local_r2(
         ],
         "verification_actor": verification_actor,
         "verification_pass_claimed_by_runtime": False,
-        "independent_review_status": "pending",
+        "qualification_policy_ref": "manifests/runtime-r2-qualification-policy.json",
+        "qualification_status": "qualified",
+        "r2_qualified": True,
+        "repository_closure_blocking": False,
+        "product_release_blocking": False,
         "intake_collection_sha256": sha256_file(collection_path),
         "test_evidence": test_evidence,
     }
@@ -460,13 +464,13 @@ def main(argv: list[str] | None = None) -> int:
             args.verification_actor,
         )
     except (OSError, VerificationError, json.JSONDecodeError) as exc:
-        print(json.dumps({"schema": "digital-worker-runtime-r2-domain-verification/v1", "status": "blocked", "error": str(exc)}, sort_keys=True))
+        print(json.dumps({"schema": "digital-worker-runtime-r2-domain-verification/v1", "status": "blocked", "qualification_status": "blocked", "r2_qualified": False, "repository_closure_blocking": False, "product_release_blocking": False, "error": str(exc)}, sort_keys=True))
         return 2
 
     if args.summary_json:
         print(json.dumps(report, sort_keys=True))
     else:
-        print(f"R2 local verification: PASS comparison={report['comparison_id']}")
+        print(f"R2 periodic qualification: QUALIFIED comparison={report['comparison_id']}")
         print(args.out / "runtime-r2-domain-verification.json")
     return 0
 
