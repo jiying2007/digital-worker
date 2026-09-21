@@ -18,6 +18,8 @@ ADK_COMMIT = "1d6c28e89eb98a4af5ac978707730783f0c84437"
 ADK_ARTIFACT_SHA256 = "497e44ec83d2506c8721019aeca979965127b481203f33387806c51c0d1aff68"
 ARTIFACT_BLOB = "dc4fe914ab618fa208287de90731bd2ca9c1c3a7"
 ARTIFACT_SHA256 = "7687d8058f85271e75ff3726957385afa1618aa2078dc0a6b3215d470af4a4bb"
+CODEX_POSTFLIGHT_SHA256 = "8" * 64
+CLAUDE_POSTFLIGHT_SHA256 = "9" * 64
 
 spec = importlib.util.spec_from_file_location("runtime_r2_evidence", SCRIPT)
 assert spec is not None and spec.loader is not None
@@ -75,7 +77,10 @@ def codex_native(plan: dict) -> dict:
             "result_commit": None,
         },
         "execution": {"status": "completed", "runtime_local_gates": ["host"]},
-        "evidence_refs": ["provider-run:test"],
+        "evidence_refs": [
+            "provider-run:test",
+            "replay-postflight:sha256:" + CODEX_POSTFLIGHT_SHA256,
+        ],
     }
 
 
@@ -105,7 +110,10 @@ def claude_native(plan: dict) -> dict:
             "exit_code": 0,
             "summary": "test",
         },
-        "evidence_refs": ["provider-run:test"],
+        "evidence_refs": [
+            "provider-run:test",
+            "replay-postflight:sha256:" + CLAUDE_POSTFLIGHT_SHA256,
+        ],
     }
 
 
@@ -217,12 +225,18 @@ class RuntimeR2EvidenceTests(unittest.TestCase):
             result = module.project_receipt(ROOT, runtime="codex", native_receipt=native_path, frozen_plan=plan_path)
             self.assertEqual(result["runtime"], "codex")
             self.assertEqual(result["frozen_inputs_sha256"], plan["frozen_inputs_sha256"])
+            self.assertEqual(result["replay_postflight"]["sha256"], CLAUDE_POSTFLIGHT_SHA256)
             self.assertFalse(result["verification_pass_claimed"])
             identity = result["runtime_identity"]
             self.assertEqual(identity["runtime_binding_repository"], "https://github.com/jiying2007/codex.git")
             self.assertEqual(identity["runtime_binding_commit"], CODEX_COMMIT)
             self.assertEqual(identity["runtime_target"], "codex-cli")
             self.assertEqual(result["native_receipt"]["sha256"], hashlib.sha256(native_path.read_bytes()).hexdigest())
+            self.assertEqual(result["replay_postflight"]["sha256"], CODEX_POSTFLIGHT_SHA256)
+            self.assertIn(
+                "replay-postflight:sha256:" + CODEX_POSTFLIGHT_SHA256,
+                result["evidence_refs"],
+            )
 
     def test_codex_projection_rejects_frozen_work_run_or_base_drift(self) -> None:
         plan = build_plan()
@@ -260,6 +274,24 @@ class RuntimeR2EvidenceTests(unittest.TestCase):
             self.assertEqual(result["runtime_identity"]["runtime_binding_repository"], "https://github.com/jiying2007/claude.git")
             self.assertEqual(result["runtime_identity"]["runtime_binding_commit"], CLAUDE_COMMIT)
             self.assertEqual(result["frozen_inputs_sha256"], plan["frozen_inputs_sha256"])
+
+    def test_projection_rejects_missing_replay_postflight_ref(self) -> None:
+        plan = build_plan()
+        native = codex_native(plan)
+        native["evidence_refs"] = ["provider-run:test"]
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            plan_path = tmp / "plan.json"
+            native_path = tmp / "native.json"
+            write_json(plan_path, plan)
+            write_json(native_path, native)
+            with self.assertRaisesRegex(module.R2EvidenceError, "exactly one replay-postflight"):
+                module.project_receipt(
+                    ROOT,
+                    runtime="codex",
+                    native_receipt=native_path,
+                    frozen_plan=plan_path,
+                )
 
     def test_forbidden_runtime_decision_claim_fails_closed(self) -> None:
         plan = build_plan()
