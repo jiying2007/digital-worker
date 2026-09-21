@@ -179,7 +179,7 @@ def result_tree(root: Path, runtime: str) -> tuple[Path, str]:
     return archive, digest
 
 
-def codex_native(plan: dict, digest: str) -> dict:
+def codex_native(plan: dict, digest: str, postflight_sha: str) -> dict:
     controlled = plan["controlled_task"]
     binding = plan["runtime_bindings"]["codex"]
     return {
@@ -213,11 +213,14 @@ def codex_native(plan: dict, digest: str) -> dict:
             "result_commit": None,
         },
         "execution": {"status": "completed", "runtime_local_gates": ["host"]},
-        "evidence_refs": ["worktree-result:sha256:" + digest],
+        "evidence_refs": [
+            "worktree-result:sha256:" + digest,
+            "replay-postflight:sha256:" + postflight_sha,
+        ],
     }
 
 
-def claude_native(plan: dict, digest: str) -> dict:
+def claude_native(plan: dict, digest: str, postflight_sha: str) -> dict:
     binding = plan["runtime_bindings"]["claude-code"]
     return {
         "schema_version": 2,
@@ -244,7 +247,10 @@ def claude_native(plan: dict, digest: str) -> dict:
             "exit_code": 0,
             "summary": "test",
         },
-        "evidence_refs": ["worktree-result:sha256:" + digest],
+        "evidence_refs": [
+            "worktree-result:sha256:" + digest,
+            "replay-postflight:sha256:" + postflight_sha,
+        ],
     }
 
 
@@ -254,6 +260,24 @@ def runtime_dir(root: Path, runtime: str, plan: dict) -> Path:
     archive, digest = result_tree(root, runtime)
     target_archive = out / "result-tree.tar.gz"
     target_archive.write_bytes(archive.read_bytes())
+    write_json(
+        out / "result-postflight.json",
+        {
+            "schema": "digital-worker-runtime-r2-result-postflight/v1",
+            "status": "pass",
+            "replay_self_contained": True,
+            "git_metadata_present": False,
+            "descriptor_path": ".r2/host-verifier.json",
+            "descriptor_schema": "digital-worker-runtime-r2-host-verifier/v1",
+            "result_archive_sha256": sha(target_archive),
+            "host_log_sha256": "a" * 64,
+            "ota_log_sha256": "b" * 64,
+            "verification_pass_claimed": False,
+            "domain_verification_pass_claimed": False,
+            "r2_qualified": False,
+        },
+    )
+    postflight_sha = sha(out / "result-postflight.json")
     write_json(
         out / "provider-authorization.json",
         {
@@ -278,11 +302,11 @@ def runtime_dir(root: Path, runtime: str, plan: dict) -> Path:
         },
     )
     if runtime == "codex":
-        write_json(out / "codex-native.json", codex_native(plan, digest))
+        write_json(out / "codex-native.json", codex_native(plan, digest, postflight_sha))
         (out / "codex-events.jsonl").write_text("{}\n", encoding="utf-8")
         (out / "codex-final.txt").write_text("done\n", encoding="utf-8")
     else:
-        write_json(out / "claude-native-validated.json", claude_native(plan, digest))
+        write_json(out / "claude-native-validated.json", claude_native(plan, digest, postflight_sha))
         write_json(out / "claude-execution.json", {"status": "completed"})
     return out
 
@@ -308,9 +332,12 @@ class RuntimeR2LocalFlowTests(unittest.TestCase):
                 collection["provider_execution_evidence"]["codex"]["runtime_binding_commit"],
                 plan["runtime_bindings"]["codex"]["commit"],
             )
+            codex_evidence = collection["provider_execution_evidence"]["codex"]
+            self.assertRegex(codex_evidence["replay_postflight_sha256"], r"^[0-9a-f]{64}$")
             claude_evidence = collection["provider_execution_evidence"]["claude-code"]
             self.assertEqual(claude_evidence["execution_context_mode"], "frozen-project-local")
             self.assertFalse(claude_evidence["user_setting_source_loaded"])
+            self.assertRegex(claude_evidence["replay_postflight_sha256"], r"^[0-9a-f]{64}$")
 
             verify_out = tmp / "verification"
             report = verify.verify_local_r2(
@@ -412,7 +439,15 @@ class RuntimeR2LocalFlowTests(unittest.TestCase):
                     tf.add(path, arcname=path.relative_to(tree).as_posix())
 
             native = json.loads((codex_dir / "codex-native.json").read_text(encoding="utf-8"))
-            native["evidence_refs"] = ["worktree-result:sha256:" + tree_digest(tree)]
+            replay_refs = [
+                item
+                for item in native["evidence_refs"]
+                if item.startswith("replay-postflight:sha256:")
+            ]
+            native["evidence_refs"] = [
+                "worktree-result:sha256:" + tree_digest(tree),
+                *replay_refs,
+            ]
             write_json(codex_dir / "codex-native.json", native)
 
             verify_out = tmp / "verification-bad"
