@@ -222,6 +222,23 @@ def _run_native_host_verification(
     if contract.get("git_metadata_required") is not False:
         raise VerificationError("frozen host verifier contract must not require git metadata")
 
+    schema_rel = _safe_result_rel(
+        contract.get("schema_ref"),
+        "host verifier schema ref",
+    )
+    schema_path = ROOT.joinpath(*schema_rel.parts)
+    if not schema_path.is_file() or schema_path.is_symlink():
+        raise VerificationError(
+            f"frozen host verifier schema missing: {schema_rel.as_posix()}"
+        )
+    expected_schema_sha = contract.get("schema_sha256")
+    if (
+        not isinstance(expected_schema_sha, str)
+        or re.fullmatch(r"[0-9a-f]{64}", expected_schema_sha) is None
+        or sha256_file(schema_path) != expected_schema_sha
+    ):
+        raise VerificationError("frozen host verifier schema digest mismatch")
+
     descriptor_rel = _safe_result_rel(
         contract.get("descriptor_path"),
         "host verifier descriptor path",
@@ -232,6 +249,23 @@ def _run_native_host_verification(
             f"result tree missing host verifier descriptor: {descriptor_rel.as_posix()}"
         )
     descriptor = load_json(descriptor_path)
+    try:
+        from jsonschema import Draft202012Validator
+    except ImportError as exc:
+        raise VerificationError(
+            "jsonschema is required for R2 host verifier descriptor validation"
+        ) from exc
+    schema = load_json(schema_path)
+    errors = sorted(
+        Draft202012Validator(schema).iter_errors(descriptor),
+        key=lambda item: list(item.absolute_path),
+    )
+    if errors:
+        first = errors[0]
+        where = ".".join(str(part) for part in first.absolute_path) or "<root>"
+        raise VerificationError(
+            f"host verifier descriptor schema validation failed at {where}: {first.message}"
+        )
     if descriptor.get("schema") != "digital-worker-runtime-r2-host-verifier/v1":
         raise VerificationError("host verifier descriptor schema is invalid")
     if descriptor.get("replay_self_contained") is not True:
