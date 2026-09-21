@@ -4,10 +4,10 @@ on:
   pull_request:
     paths:
       - '.github/workflows/runtime-r2-freeze.yml'
-      - '.github/workflows/runtime-r2-independent-review.yml'
       - '.github/workflows/runtime-r2-harness-contract.yml'
       - 'scripts/runtime_r2_evidence.py'
       - 'manifests/r2_frozen_adk_release.lock.json'
+      - 'manifests/runtime-r2-qualification-policy.json'
       - 'config/integrations/cross-repo-lock.json'
       - 'tests/unit/test_runtime_r2_evidence.py'
       - 'scripts/runtime_r2_intake.py'
@@ -24,15 +24,14 @@ on:
       - 'tests/unit/test_runtime_r2_local_flow.py'
       - 'tests/unit/test_runtime_r2_result_postflight.py'
       - 'tests/unit/test_runtime_r2_freeze_ledger.py'
-      - 'tests/unit/test_runtime_r2_independent_review_workflow.py'
   push:
     branches: [main]
     paths:
       - '.github/workflows/runtime-r2-freeze.yml'
-      - '.github/workflows/runtime-r2-independent-review.yml'
       - '.github/workflows/runtime-r2-harness-contract.yml'
       - 'scripts/runtime_r2_evidence.py'
       - 'manifests/r2_frozen_adk_release.lock.json'
+      - 'manifests/runtime-r2-qualification-policy.json'
       - 'config/integrations/cross-repo-lock.json'
       - 'tests/unit/test_runtime_r2_evidence.py'
       - 'scripts/runtime_r2_intake.py'
@@ -49,7 +48,6 @@ on:
       - 'tests/unit/test_runtime_r2_local_flow.py'
       - 'tests/unit/test_runtime_r2_result_postflight.py'
       - 'tests/unit/test_runtime_r2_freeze_ledger.py'
-      - 'tests/unit/test_runtime_r2_independent_review_workflow.py'
 
 permissions:
   contents: read
@@ -82,7 +80,6 @@ jobs:
           import pathlib, yaml
           for name in (
               'runtime-r2-freeze.yml',
-              'runtime-r2-independent-review.yml',
               'runtime-r2-harness-contract.yml',
           ):
               path=pathlib.Path('.github/workflows')/name
@@ -103,5 +100,17 @@ jobs:
         run: python -m unittest tests.unit.test_runtime_r2_local_flow -v
       - name: Validate replay result postflight
         run: python -m unittest tests.unit.test_runtime_r2_result_postflight -v
-      - name: Validate fail-closed independent R2 review contract
-        run: python -m unittest tests.unit.test_runtime_r2_independent_review_workflow -v
+      - name: Validate periodic R2 qualification policy
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json, pathlib
+          p=json.loads(pathlib.Path('manifests/runtime-r2-qualification-policy.json').read_text(encoding='utf-8'))
+          assert p['schema']=='digital-worker-runtime-r2-qualification-policy/v1'
+          assert p['scope']['repository_closure_blocking'] is False
+          assert p['scope']['product_release_blocking'] is False
+          assert p['scope']['runtime_portability_claim_requires_r2'] is True
+          assert p['campaign']['independent_human_review_required'] is False
+          assert p['campaign']['root_certifier_required'] is False
+          assert p['governance']['failed_campaigns_are_valid_evidence'] is True
+          PY
