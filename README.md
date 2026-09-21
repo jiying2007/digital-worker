@@ -4,7 +4,14 @@
 
 ## 当前阶段
 
-仓库处于 **iterative-development**，但 Edge Foundation 的架构与运行时迁移已经进入终态：
+当前必须区分两个正交阶段：
+
+- **Repository governance stage = iterative-development**：main server-side protection / Productionization gate 仍未启用；
+- **Operational adoption stage = controlled-production-rollout**：Codex CLI 已可作为正式日常研发主路径，真实 Work/Run、Pilot、Skill evidence 与周期性 R2 可持续产生。
+
+`controlled-production-rollout` 不等于 Product Ready、Release Ready 或 Productionization Ready；这些资格仍由各自独立 evaluator / server-side governance gate 决定。
+
+Edge Foundation 的架构与运行时迁移已经进入终态：
 
 ```text
 Domain（领域）
