@@ -15,6 +15,7 @@ ENGINEERING_PACKAGE = EVIDENCE_ROOT / "engineering-task-package.json"
 PILOT_RESULT = EVIDENCE_ROOT / "pilot-result.json"
 MATERIAL_MANIFEST = EVIDENCE_ROOT / "extras/material_manifest.json"
 R2_ARTIFACT_IDENTITY = EVIDENCE_ROOT / "extras/r2-artifact-identity.v1.json"
+R2_HOST_VERIFIER_SCHEMA = ROOT / "schemas/runtime-r2-host-verifier.v1.schema.json"
 CROSS_REPO_LOCK = ROOT / "config/integrations/cross-repo-lock.json"
 CONTRACT_CATALOG = ROOT / "contracts/catalog.json"
 R2_ADK_RELEASE_LOCK = ROOT / "manifests/r2_frozen_adk_release.lock.json"
@@ -209,8 +210,11 @@ def build_plan(
         "R2 frozen ADK release lock",
     )
     catalog_path = root / CONTRACT_CATALOG.relative_to(ROOT)
+    host_verifier_schema_path = root / R2_HOST_VERIFIER_SCHEMA.relative_to(ROOT)
     if not catalog_path.is_file():
         raise R2EvidenceError("contract catalog is missing")
+    if not host_verifier_schema_path.is_file():
+        raise R2EvidenceError("R2 host verifier schema is missing")
     for ref in (DOMAIN_REF, ROUTING_REF):
         if not (root / ref).is_file():
             raise R2EvidenceError(f"required governance ref is missing: {ref}")
@@ -355,6 +359,14 @@ def build_plan(
             "ref": R2_ARTIFACT_IDENTITY.relative_to(ROOT).as_posix(),
             "sha256": _file_digest(artifact_contract_path),
         },
+        "host_verifier_contract": {
+            "descriptor_path": ".r2/host-verifier.json",
+            "schema": "digital-worker-runtime-r2-host-verifier/v1",
+            "schema_ref": R2_HOST_VERIFIER_SCHEMA.relative_to(ROOT).as_posix(),
+            "schema_sha256": _file_digest(host_verifier_schema_path),
+            "replay_self_contained": True,
+            "git_metadata_required": False,
+        },
         "digital_worker_governance_identity_ref": governance_ref,
         "material_manifest": {"ref": material_ref, "sha256": material_sha},
         "knowledge_context_fingerprint": knowledge_fingerprint,
@@ -385,6 +397,10 @@ def build_plan(
         "You MUST implement the requested repository changes in the target worktree; do not stop at analysis, explanation, recommendations, or a no-op response. "
         "Provide a runnable host verifier that fails closed on malformed identity, source-identity mismatch, path traversal, "
         "size mismatch, SHA mismatch, and duplicate checksum entries; add automated negative tests for these failure modes. "
+        "The exported result tree MUST contain .r2/host-verifier.json conforming to digital-worker-runtime-r2-host-verifier/v1. "
+        "That descriptor MUST enumerate every host verification step (python, shell, or unittest), and all declared steps MUST "
+        "succeed when replayed from the exported result tree without .git metadata, local repository remotes, runtime home state, "
+        "or provider credentials. Source-identity verification MUST use frozen task/manifest data rather than live git metadata. "
         "Configure Hosted CI to run the host verifier against the real package and retain a machine receipt, but do not push. "
         "Run the required host verification locally, and do not release, write devices, or claim Verification PASS/Product Ready/Release Ready. "
         "Leave the resulting patch only in the local worktree."
