@@ -51,6 +51,8 @@ independent Digital Worker verification
 one R2 qualification receipt
 ```
 
+Each campaign therefore proves real provider execution under one frozen comparison boundary; it is not a synthetic smoke test.
+
 The four invariants are:
 
 1. both real runtimes execute the same frozen task independently;
