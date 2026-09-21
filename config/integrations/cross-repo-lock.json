@@ -46,13 +46,12 @@
       "contract": "manifests/digital_worker_runtime_pilot.json",
       "contract_version": "1.5",
       "contract_canonical_sha256": "5e353fe1bd3cacb94b9372b21fea97021a094c619a163cd868d82c574c229dfa",
-      "runtime_portability_certifier": "tools/control_plane/runtime_portability.py",
-      "runtime_portability_certifier_test": "tests/test_runtime_portability_certifier.sh",
-      "runtime_portability_qualification_manifest": "manifests/long_term_asset_qualification.json",
-      "runtime_portability_cli_contract": "tools/control_plane/cli.py",
       "runtime_portability_evidence_level": "R2-periodic-real-provider-substitution",
-      "runtime_portability_status": "periodic-qualification-ready-current-evidence-blocked",
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_R1_CODEX_CLAUDE_PERIODIC_R2_QUALIFICATION_POLICY_ACTIVE_REAL_PROVIDER_EVIDENCE_CURRENTLY_BLOCKED_REPOSITORY_HEALTH_NON_BLOCKING"
+      "runtime_portability_status": "periodic-qualification-policy-active-current-evidence-blocked",
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_OPTIONAL_EVOLUTION_OBSERVER_R1_CODEX_CLAUDE_PERIODIC_R2_QUALIFICATION_AUTHORITY_OWNED_BY_DIGITAL_WORKER_CURRENT_REAL_PROVIDER_EVIDENCE_BLOCKED_REPOSITORY_HEALTH_NON_BLOCKING",
+      "role": "optional-evolution-observer",
+      "qualification_authority": "jiying2007/digital-worker",
+      "qualification_policy": "manifests/runtime-r2-qualification-policy.json"
     }
   },
   "runtime_bindings": {
