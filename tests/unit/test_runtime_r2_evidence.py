@@ -160,6 +160,15 @@ class RuntimeR2EvidenceTests(unittest.TestCase):
         self.assertEqual(len(controlled["host_verifier_contract"]["schema_sha256"]), 64)
         self.assertTrue(controlled["host_verifier_contract"]["replay_self_contained"])
         self.assertFalse(controlled["host_verifier_contract"]["git_metadata_required"])
+        self.assertEqual(
+            controlled["host_verifier_contract"]["descriptor_shape"],
+            {
+                "top_level_fields": ["schema", "replay_self_contained", "steps"],
+                "step_fields": ["kind", "entrypoint", "args"],
+                "allowed_kinds": ["python", "shell", "unittest"],
+            },
+        )
+        self.assertIn("Do NOT use command, id, receipt, working_directory", plan["prompt"])
         self.assertIn(".r2/host-verifier.json", plan["prompt"])
         self.assertIn("without .git metadata", plan["prompt"])
         self.assertEqual(controlled["adk_release_identity_ref"], "manifests/r2_frozen_adk_release.lock.json")
