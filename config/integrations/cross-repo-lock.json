@@ -42,17 +42,17 @@
     "runtime_practice_eval": {
       "repository": "jiying2007/llm_agent",
       "ref": "main",
-      "commit": "dc77f346c9f0a8f202baf5928e90d852d46f4e54",
+      "commit": "4cdeb4a8395fd97941105c2ccc9eb765fc487726",
       "contract": "manifests/digital_worker_runtime_pilot.json",
       "contract_version": "1.5",
-      "contract_canonical_sha256": "b2c42ad31ea78d1b781bb36bd95dcbd4360a696e202b25aaa85c1846d328804f",
+      "contract_canonical_sha256": "3c6a38e75cb8e0300dedb731c52c084a6ee19b274031949f320a5585e8d8e4ab",
       "runtime_portability_certifier": "tools/control_plane/runtime_portability.py",
       "runtime_portability_certifier_test": "tests/test_runtime_portability_certifier.sh",
       "runtime_portability_qualification_manifest": "manifests/long_term_asset_qualification.json",
       "runtime_portability_cli_contract": "tools/control_plane/cli.py",
       "runtime_portability_evidence_level": "R2-real-provider-substitution",
       "runtime_portability_status": "certifier-ready-real-evidence-pending",
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_R1_CODEX_CLAUDE_R2_LOCAL_TERMINAL_SHARED_USER_HOME_POLICY_FINAL_RUNTIME_PINS_R2_CERTIFIER_READY_REAL_EVIDENCE_PENDING_BLOCKER_PRESERVED_ITERATION_READY_TERMINAL_ONLY_PENDING"
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_R1_CODEX_CLAUDE_R2_LOCAL_TERMINAL_SHARED_USER_HOME_FROZEN_BEHAVIORAL_CONTEXT_R2_CERTIFIER_READY_REAL_EVIDENCE_PENDING_BLOCKER_PRESERVED"
     }
   },
   "runtime_bindings": {
