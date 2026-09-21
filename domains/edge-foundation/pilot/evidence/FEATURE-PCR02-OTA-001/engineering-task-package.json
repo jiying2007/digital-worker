@@ -5,15 +5,56 @@
   "base_commit": "eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d",
   "dirty_baseline": null,
   "goal": "Make the existing PCR02 v1.1.21 OTA package identity machine-readable and fail-closed without changing package bytes.",
-  "non_goals": ["Do not install the OTA on a device.", "Do not claim device boot, rollback, or release readiness."],
-  "implementation_plan": ["Add a strict machine-readable OTA manifest for PCR02 v1.1.21.", "Add a stdlib fail-closed verifier for path containment, size, SHA-256 and checksum-list consistency.", "Add negative tests for malformed and conflicting identity inputs.", "Run Hosted CI against the actual OTA package and retain the verification receipt."],
-  "acceptance_criteria": ["Machine-readable manifest binds PCR02 v1.1.21 package path, size, SHA-256 and source identity.", "Verifier rejects malformed identity, path traversal, size mismatch, SHA mismatch and duplicate checksum entries.", "Hosted CI verifies the real 76,778,472-byte package and retains a machine receipt."],
-  "allowed_actions": ["A0_READ", "A1_ANALYZE", "A2_GENERATE", "A3_MODIFY_WORKTREE", "A4_BUILD_TEST"],
-  "forbidden_actions": ["A6_DEVICE_WRITE", "A7_RELEASE"],
-  "required_verification": ["host"],
-  "evidence_refs": ["jiying2007/ota_download_test@eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d", "ota_pkg_v1.1.21.tar.gz sha256:7687d8058f85271e75ff3726957385afa1618aa2078dc0a6b3215d470af4a4bb"],
+  "non_goals": [
+    "Do not install the OTA on a device.",
+    "Do not claim device boot, rollback, or release readiness."
+  ],
+  "implementation_plan": [
+    "Add a strict machine-readable OTA manifest that binds the canonical repository, exact source commit, package Git blob identity, package path, byte size and SHA-256.",
+    "Add a stdlib fail-closed verifier for source identity, path containment, size, SHA-256 and checksum-list consistency.",
+    "Add negative tests for malformed identity, source mismatch, path traversal, size/SHA mismatch and duplicate checksum entries.",
+    "Configure Hosted CI to verify the actual OTA package and retain the verification receipt."
+  ],
+  "acceptance_criteria": [
+    "Machine-readable manifest binds repository jiying2007/ota_download_test, source commit eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d, source blob dc4fe914ab618fa208287de90731bd2ca9c1c3a7, package path ota_pkg_v1.1.21.tar.gz, size 76,778,472 bytes and SHA-256 7687d8058f85271e75ff3726957385afa1618aa2078dc0a6b3215d470af4a4bb.",
+    "Verifier rejects malformed identity, path traversal, source-identity mismatch, size mismatch, SHA mismatch and duplicate checksum entries.",
+    "Hosted CI is configured to verify the real 76,778,472-byte package and retain a machine receipt."
+  ],
+  "allowed_actions": [
+    "A0_READ",
+    "A1_ANALYZE",
+    "A2_GENERATE",
+    "A3_MODIFY_WORKTREE",
+    "A4_BUILD_TEST"
+  ],
+  "forbidden_actions": [
+    "A6_DEVICE_WRITE",
+    "A7_RELEASE"
+  ],
+  "required_verification": [
+    "host"
+  ],
+  "evidence_refs": [
+    "jiying2007/ota_download_test@eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d",
+    "ota_pkg_v1.1.21.tar.gz blob:dc4fe914ab618fa208287de90731bd2ca9c1c3a7",
+    "ota_pkg_v1.1.21.tar.gz sha256:7687d8058f85271e75ff3726957385afa1618aa2078dc0a6b3215d470af4a4bb"
+  ],
   "knowledge_refs": [],
-  "risks": ["Hosted verification covers artifact identity only, not device OTA behavior."],
-  "unverified_items": ["Device download/install/boot/rollback are outside this Feature Pilot."],
-  "downstream_contract": ["Use the retained identity receipt as an input to the separate Review/Release Pilot."]
+  "risks": [
+    "Hosted verification covers artifact identity only, not device OTA behavior."
+  ],
+  "unverified_items": [
+    "Device download/install/boot/rollback are outside this Feature Pilot."
+  ],
+  "downstream_contract": [
+    "Use the retained identity receipt as an input to the separate Review/Release Pilot."
+  ],
+  "artifact_identity": {
+    "repository": "jiying2007/ota_download_test",
+    "source_commit": "eeb926bd1fff75d2a5d5abb9f0ede9c8f582cc6d",
+    "source_blob_sha": "dc4fe914ab618fa208287de90731bd2ca9c1c3a7",
+    "path": "ota_pkg_v1.1.21.tar.gz",
+    "size_bytes": 76778472,
+    "sha256": "7687d8058f85271e75ff3726957385afa1618aa2078dc0a6b3215d470af4a4bb"
+  }
 }
