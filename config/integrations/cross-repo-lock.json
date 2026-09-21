@@ -50,9 +50,9 @@
       "runtime_portability_certifier_test": "tests/test_runtime_portability_certifier.sh",
       "runtime_portability_qualification_manifest": "manifests/long_term_asset_qualification.json",
       "runtime_portability_cli_contract": "tools/control_plane/cli.py",
-      "runtime_portability_evidence_level": "R2-real-provider-substitution",
-      "runtime_portability_status": "certifier-ready-real-evidence-pending",
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_R1_CODEX_CLAUDE_R2_LOCAL_TERMINAL_SHARED_USER_HOME_POLICY_FROZEN_BEHAVIORAL_CONTEXT_REPLAY_POSTFLIGHT_REQUIRED_WORKSPACE_SCAFFOLDING_AND_BOUNDED_TURN_BUDGET_R2_CERTIFIER_READY_REAL_EVIDENCE_PENDING_BLOCKER_PRESERVED"
+      "runtime_portability_evidence_level": "R2-periodic-real-provider-substitution",
+      "runtime_portability_status": "periodic-qualification-ready-current-evidence-blocked",
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_R1_CODEX_CLAUDE_PERIODIC_R2_QUALIFICATION_POLICY_ACTIVE_REAL_PROVIDER_EVIDENCE_CURRENTLY_BLOCKED_REPOSITORY_HEALTH_NON_BLOCKING"
     }
   },
   "runtime_bindings": {
@@ -156,6 +156,13 @@
     "knowledge_closed_loop_requires_real_reuse_evidence": true,
     "single_real_reuse_does_not_imply_provider_qualification": true,
     "pin_freshness_does_not_imply_compatibility": true,
-    "pin_promotion_requires_checkout_verification": true
+    "pin_promotion_requires_checkout_verification": true,
+    "repository_closure_requires_r2": false,
+    "product_release_requires_r2": false,
+    "runtime_binding_r1_required": true,
+    "runtime_portability_qualification_requires_r2": true,
+    "r2_is_periodic_qualification": true,
+    "r2_failure_does_not_invalidate_repository_health": true,
+    "r2_current_status_must_not_upgrade_or_downgrade_other_maturity_axes": true
   }
 }
