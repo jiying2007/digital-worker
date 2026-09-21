@@ -377,7 +377,7 @@ def verify_local_r2(
         raise VerificationError(f"R2 local intake failed: {completed.stdout.strip()}")
 
     collection = load_json(intake_out / "intake-collection.json")
-    if collection.get("status") != "provider-executions-collected-pending-digital-worker-verification-review":
+    if collection.get("status") != "provider-executions-collected-pending-digital-worker-verification":
         raise VerificationError("local intake did not produce a completed provider evidence collection")
     if collection.get("verification_pass_claimed") is not False or collection.get("r2_qualified") is not False:
         raise VerificationError("runtime intake overclaimed verification or qualification authority")
@@ -387,6 +387,16 @@ def verify_local_r2(
         raise VerificationError("R2 local verification requires shared-user-home runtime mode")
     if collection.get("credential_state_in_evidence") is not False:
         raise VerificationError("R2 local verification forbids credential state in evidence")
+
+    provider_actors = collection.get("provider_execution_actors")
+    if not isinstance(provider_actors, dict) or set(provider_actors) != {"codex", "claude-code"}:
+        raise VerificationError("provider execution actors are incomplete")
+    if not verification_actor.strip():
+        raise VerificationError("verification actor is required")
+    if verification_actor in set(provider_actors.values()):
+        raise VerificationError(
+            "independent verifier must be distinct from both provider execution actors"
+        )
 
     plan = load_json(freeze_dir.resolve() / "frozen-plan.json")
     test_evidence: dict[str, str] = {}
@@ -429,6 +439,7 @@ def verify_local_r2(
             "independent-ota-artifact-identity",
         ],
         "verification_actor": verification_actor,
+        "verifier_actor_distinct_from_provider_execution_actors": True,
         "verification_pass_claimed_by_runtime": False,
         "qualification_policy_ref": "manifests/runtime-r2-qualification-policy.json",
         "qualification_status": "qualified",
