@@ -42,17 +42,17 @@
     "runtime_practice_eval": {
       "repository": "jiying2007/llm_agent",
       "ref": "main",
-      "commit": "d28677f7fc58a9720f396cd7bc8f6ef07823df66",
+      "commit": "8f07b253cba452670631964429c205dcca9c44d6",
       "contract": "manifests/digital_worker_runtime_pilot.json",
       "contract_version": "1.5",
-      "contract_canonical_sha256": "4e18113d0c72a2debea50f849efb54488d21201ff5e2186e741a75c00e93c7da",
+      "contract_canonical_sha256": "5e353fe1bd3cacb94b9372b21fea97021a094c619a163cd868d82c574c229dfa",
       "runtime_portability_certifier": "tools/control_plane/runtime_portability.py",
       "runtime_portability_certifier_test": "tests/test_runtime_portability_certifier.sh",
       "runtime_portability_qualification_manifest": "manifests/long_term_asset_qualification.json",
       "runtime_portability_cli_contract": "tools/control_plane/cli.py",
       "runtime_portability_evidence_level": "R2-real-provider-substitution",
       "runtime_portability_status": "certifier-ready-real-evidence-pending",
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_R1_CODEX_CLAUDE_R2_LOCAL_TERMINAL_SHARED_USER_HOME_POLICY_FROZEN_BEHAVIORAL_CONTEXT_REPLAY_POSTFLIGHT_REQUIRED_R2_CERTIFIER_READY_REAL_EVIDENCE_PENDING_BLOCKER_PRESERVED"
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_R1_CODEX_CLAUDE_R2_LOCAL_TERMINAL_SHARED_USER_HOME_POLICY_FROZEN_BEHAVIORAL_CONTEXT_REPLAY_POSTFLIGHT_REQUIRED_WORKSPACE_SCAFFOLDING_AND_BOUNDED_TURN_BUDGET_R2_CERTIFIER_READY_REAL_EVIDENCE_PENDING_BLOCKER_PRESERVED"
     }
   },
   "runtime_bindings": {
@@ -77,7 +77,7 @@
     "claude-code": {
       "repository": "jiying2007/claude",
       "ref": "main",
-      "commit": "6ef0c97503d2e81dae0ddbe8a477449c4961b690",
+      "commit": "5614184bde6c4a1d1feab1a6cef5030ca4adf482",
       "contract": "manifests/integrations/digital-worker-runtime-binding.json",
       "contract_version": "1.0",
       "contract_canonical_sha256": "ac220eff715a512bc93913014f79ca5364be29a01359bd90e906c8184f44695f",
@@ -94,7 +94,7 @@
       "r1_fresh_main_workflow_run": "jiying2007/claude/actions/runs/35477771868",
       "verified_runtime_execution_receipt": "PENDING",
       "r2_real_provider_substitution": "PENDING",
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_SOURCE_SET_READY_R1_R2_SHARED_USER_HOME_FROZEN_PROJECT_LOCAL_CONTEXT_USER_SETTINGS_EXCLUDED_REPLAY_POSTFLIGHT_GATED_REAL_RUNTIME_RECEIPT_PENDING"
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_SOURCE_SET_READY_R1_R2_SHARED_USER_HOME_FROZEN_PROJECT_LOCAL_CONTEXT_USER_SETTINGS_EXCLUDED_REPLAY_POSTFLIGHT_GATED_WORKSPACE_SCAFFOLDING_ALLOWED_BOUNDED_CONFIGURABLE_TURN_BUDGET_REAL_RUNTIME_RECEIPT_PENDING"
     }
   },
   "assurance_bindings": {
