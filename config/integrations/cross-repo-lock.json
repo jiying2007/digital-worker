@@ -42,13 +42,13 @@
     "runtime_practice_eval": {
       "repository": "jiying2007/llm_agent",
       "ref": "main",
-      "commit": "8f07b253cba452670631964429c205dcca9c44d6",
+      "commit": "381362d06e204143e97547d9ac690bb1c9b2eaeb",
       "contract": "manifests/digital_worker_runtime_pilot.json",
-      "contract_version": "1.5",
-      "contract_canonical_sha256": "5e353fe1bd3cacb94b9372b21fea97021a094c619a163cd868d82c574c229dfa",
+      "contract_version": "1.6",
+      "contract_canonical_sha256": "fc8be4e0de4393a9ee2efe640afa6475cc91146ddeaaa306fef26897f9001632",
       "runtime_portability_evidence_level": "R2-periodic-real-provider-substitution",
       "runtime_portability_status": "periodic-qualification-policy-active-current-evidence-blocked",
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_OPTIONAL_EVOLUTION_OBSERVER_R1_CODEX_CLAUDE_PERIODIC_R2_QUALIFICATION_AUTHORITY_OWNED_BY_DIGITAL_WORKER_CURRENT_REAL_PROVIDER_EVIDENCE_BLOCKED_REPOSITORY_HEALTH_NON_BLOCKING",
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_OPTIONAL_EVOLUTION_OBSERVER_R1_CODEX_CLAUDE_PERIODIC_R2_QUALIFICATION_AUTHORITY_OWNED_BY_DIGITAL_WORKER_ROOT_RECERTIFIER_RETIRED_CURRENT_REAL_PROVIDER_EVIDENCE_BLOCKED_REPOSITORY_HEALTH_NON_BLOCKING",
       "role": "optional-evolution-observer",
       "qualification_authority": "jiying2007/digital-worker",
       "qualification_policy": "manifests/runtime-r2-qualification-policy.json"
