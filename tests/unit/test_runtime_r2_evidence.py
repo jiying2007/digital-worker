@@ -140,6 +140,11 @@ class RuntimeR2EvidenceTests(unittest.TestCase):
         self.assertTrue(controlled["knowledge_context_fingerprint"].startswith("sha256:"))
         self.assertTrue(controlled["runtime_source_set_identity_ref"].startswith("sha256:"))
         self.assertEqual(plan["frozen_inputs_sha256"], canonical_digest(controlled))
+        self.assertEqual(
+            controlled["artifact_identity_contract"]["ref"],
+            "domains/edge-foundation/pilot/evidence/FEATURE-PCR02-OTA-001/extras/r2-artifact-identity.v1.json",
+        )
+        self.assertEqual(len(controlled["artifact_identity_contract"]["sha256"]), 64)
         self.assertEqual(controlled["adk_release_identity_ref"], "manifests/r2_frozen_adk_release.lock.json")
         self.assertEqual(plan["adk_release_identity"]["commit"], ADK_COMMIT)
         self.assertEqual(plan["adk_release_identity"]["version"], ADK_VERSION)
@@ -154,23 +159,20 @@ class RuntimeR2EvidenceTests(unittest.TestCase):
         )
 
     def test_artifact_identity_contract_rejects_source_drift(self) -> None:
-        task = {
-            "artifact_identity": {
-                "repository": "jiying2007/ota_download_test",
-                "source_commit": BASE,
-                "source_blob_sha": ARTIFACT_BLOB,
-                "path": "ota_pkg_v1.1.21.tar.gz",
-                "size_bytes": 76778472,
-                "sha256": ARTIFACT_SHA256,
-            }
+        task = {"work_item_id": "PCR02-OTA-ARTIFACT-IDENTITY-V1.1.21"}
+        package = {"repo_root": "jiying2007/ota_download_test"}
+        contract = {
+            "schema": "digital-worker-runtime-r2-artifact-identity/v1",
+            "work_item_id": task["work_item_id"],
+            "repository": package["repo_root"],
+            "source_commit": "0" * 40,
+            "source_blob_sha": ARTIFACT_BLOB,
+            "path": "ota_pkg_v1.1.21.tar.gz",
+            "size_bytes": 76778472,
+            "sha256": ARTIFACT_SHA256,
         }
-        package = {
-            "repo_root": "jiying2007/ota_download_test",
-            "artifact_identity": dict(task["artifact_identity"]),
-        }
-        package["artifact_identity"]["source_commit"] = "0" * 40
-        with self.assertRaisesRegex(module.R2EvidenceError, "contracts do not match"):
-            module._artifact_identity_contract(task, package, BASE)
+        with self.assertRaisesRegex(module.R2EvidenceError, "source commit does not match exact base"):
+            module._artifact_identity_contract(contract, task, package, BASE)
 
     def test_build_plan_rejects_wrong_or_dirty_target_baseline(self) -> None:
         with self.assertRaisesRegex(module.R2EvidenceError, "target checkout HEAD mismatch"):
