@@ -77,7 +77,7 @@
     "claude-code": {
       "repository": "jiying2007/claude",
       "ref": "main",
-      "commit": "e358b029607cf9dc5429eb7c2ca05b5d4a13c0f1",
+      "commit": "cc3044eefd42d2f95f68d2ae85024845e9edcf63",
       "contract": "manifests/integrations/digital-worker-runtime-binding.json",
       "contract_version": "1.0",
       "contract_canonical_sha256": "ac220eff715a512bc93913014f79ca5364be29a01359bd90e906c8184f44695f",
@@ -94,7 +94,7 @@
       "r1_fresh_main_workflow_run": "jiying2007/claude/actions/runs/35477771868",
       "verified_runtime_execution_receipt": "PENDING",
       "r2_real_provider_substitution": "PENDING",
-      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_SOURCE_SET_READY_R1_REAL_RUNTIME_RECEIPT_PENDING_R2_PENDING_R2_SHARED_USER_HOME_SYMLINK_AWARE"
+      "validation": "PINNED_CONTRACT_CHECKOUT_VERIFIED_SOURCE_SET_READY_R1_R2_SHARED_USER_HOME_FROZEN_PROJECT_LOCAL_CONTEXT_USER_SETTINGS_EXCLUDED_REAL_RUNTIME_RECEIPT_PENDING"
     }
   },
   "assurance_bindings": {
