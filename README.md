@@ -1,10 +1,18 @@
 # digital-worker
 
-研发中心 AI 数字员工主仓。这里维护稳定的责任、任务、工程交接、证据、验证、审查、权限和成熟度规则；不复制知识全文、通用 Agent 资产或具体 Coding Runtime。
+按需采用的领域责任与正式证据参考实现。这里维护稳定的责任、任务、工程交接、证据、验证、审查、权限和成熟度规则；不复制知识全文、通用 Agent 资产或具体 Coding Runtime。
+
+## 小团队采用范围
+
+**Digital Worker 不是小团队日常开发的必要组件。** 默认使用 **Codex CLI + ADK 导出资源 + 项目 Git/CI/审查 + Knowledge Hub**；WorkBuddy 作为可选需求/协作入口，`llm_agent` 负责维护侧研究与评估，不进入每次任务的执行前置链。
+
+普通项目使用现有 Issue/PR、源码、测试结果和责任人接受结论，不必再建立一套 Digital Worker Work/Run。只有显式选择本仓的领域/正式证据集成，才按下述合同运行；未选择该集成不等于免除项目验证、审查或发布授权。Codex L0/L1 已解除 Digital Worker 强制依赖，L2 仍保持正式材料缺失时阻断。
+
+本仓不删除、不整包并入 ADK；已有 Pilot/R2/产品证据保留原始身份。`engineering-platform` 是独立方案，不与本仓绑定。完整采用决策与资产去向见 [小团队按需采用与资产保留](docs/strategy/small-team-optional-adoption.md)。
 
 ## 当前阶段
 
-当前必须区分两个正交阶段：
+以下阶段和资格只描述本仓及显式采用本仓集成的任务，不作为所有小团队项目的全局采用门禁。当前必须区分两个正交阶段：
 
 - **Repository governance stage = iterative-development**：main server-side protection / Productionization gate 仍未启用；
 - **Operational adoption stage = controlled-production-rollout**：Codex CLI 已可作为正式日常研发主路径，真实 Work/Run、Pilot、Skill evidence 与周期性 R2 可持续产生。
@@ -40,6 +48,7 @@ Product Readiness 只描述具体产品证据轨；它与 cross-repo Terminal Ma
 
 ## 主要入口
 
+- [小团队按需采用与资产保留](docs/strategy/small-team-optional-adoption.md)：本仓非必选、日常链路与历史证据保留边界；
 - [研发中心 AI 数字员工研发流程规划](研发中心AI数字员工研发流程规划.md)：研发中心总体流程和 Provider-neutral 原则；
 - [ADR-003：Provider-neutral AI R&D Target Architecture](docs/adr/ADR-003-provider-neutral-ai-rd-target-architecture.md)：总体 Provider-neutral 架构决策；
 - [ADR-004：端侧底座数字责任架构](docs/adr/ADR-004-edge-foundation-digital-responsibility-architecture.md)：端侧责任模型与中英术语；
@@ -70,7 +79,7 @@ Product Readiness 只描述具体产品证据轨；它与 cross-repo Terminal Ma
 
 ## 长期边界
 
-稳定模型是 **责任/控制面稳定 + Runtime 可替换 + Thin Session Bootstrap**：
+显式采用本仓时，稳定模型是 **责任/控制面稳定 + Runtime 可替换 + Thin Session Bootstrap**；以下职责划分不意味着必须同时部署全部仓库：
 
 - `digital-worker`：Domain / Role / Expert / Capability / Skill、Work/Run、Gate、Action Policy、Engineering handoff、Identity/Evidence、Verification/Review Contract、Pilot/Product readiness；
 - `knowledge-hub`：Knowledge Registry、authority、ACL、freshness、context/evidence 查询与知识生命周期；
@@ -83,6 +92,8 @@ Product Readiness 只描述具体产品证据轨；它与 cross-repo Terminal Ma
 稳定原则：**Responsibility ≠ Runtime；Expert ≠ Agent；Capability 不默认等于 Agent；Knowledge index 不替代 authoritative Source；Product readiness 不决定 routing authority；Governance escalation 不提升既有 evidence 等级；Product Readiness / Terminal Maturity / Runtime Qualification / ADK Qualification 互不继承；R1 是日常 binding conformance，R2 是周期性 replaceability qualification，不进入日常生产热路径。**
 
 ## 真实 Run 最小闭环
+
+以下为显式采用 Digital Worker 的 Run 合同；普通项目复用现有项目交付记录，不必建立第二份台账。
 
 ```text
 One Work Item / Run
