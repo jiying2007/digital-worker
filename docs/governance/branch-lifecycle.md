@@ -32,12 +32,14 @@ Git history / merged PR 已提供历史，不通过长期保留任务分支实�
 治理模型：
 
 - 长期入口包含手动 `workflow_dispatch`；
+- 手动或自动执行都必须来自 `refs/heads/main`，checkout HEAD 必须等于该次 main SHA；allowlist 读取该审计快照，祖先比较绑定同一个冻结 main SHA；
 - 允许 `dry_run=true` 只校验不删除；
 - 待删除分支必须先进入 `.github/branch-gc-allowlist.txt`，因此删除范围必须经过 PR review / main history；
 - workflow 使用最小必要权限：`contents: write` + `pull-requests: read`；
 - GitHub Action 使用 immutable full-SHA pin；
-- 每个分支删除前 fail-closed 校验：branch exists、`branch != main`、not protected、open PR = 0、merged PR evidence >= 1；
-- 分支已不存在时幂等跳过；
+- 每个分支删除前 fail-closed 校验：branch exists、`branch != main`、not protected、open PR = 0，且当前 tip 是 exact merged PR head 或已被冻结 main 包含；
+- 只有成功完成远端分支列表查询才能确认分支缺席并幂等跳过；其余 API 错误阻断；
+- 删除使用显式 `--force-with-lease=refs/heads/<branch>:<checked-tip>`，只删除该 ref；检查后 tip 变化时拒绝删除，不使用无条件 REST DELETE；
 - 删除后输出剩余远端分支用于审计。
 
 ### Bootstrap 行为
@@ -72,6 +74,7 @@ Git history / merged PR 已提供历史，不通过长期保留任务分支实�
 - `main` 明确拒绝；
 - protected/open-PR/merged-PR 校验存在；
 - 删除动作仍限定 Git branch ref；
+- main-only、冻结 main SHA、exact-tip lease 由静态合同与离线行为测试共同覆盖；
 - allowlist 不含 `main`、无重复、只允许批准的任务分支前缀（含 `arch/` 与 `codex/`）。
 
 ## 8. 当前清理
