@@ -1,0 +1,23 @@
+{
+  "schema_version": 2,
+  "evaluated_at": "2026-10-23T13:48:15.621980Z",
+  "gate_event": "final",
+  "goal_id": "task-59ed8b3a11aeb688bf654a9b",
+  "status": "pass",
+  "exit_code": 0,
+  "goal_status": "completed",
+  "completion_allowed": true,
+  "gate_allowed": true,
+  "reasons": [],
+  "missing_artifacts": [],
+  "missing_evidence": [],
+  "checkpoint_evidence_missing": [],
+  "source_snapshot": "65b8b54b00f1135f1d72aff9030ea269d9f012499f051cb8224f3c907669caa5",
+  "open_items": [],
+  "evidence_ids": [
+    "repo-and-tests-r2",
+    "python-source-build-r2",
+    "independent-automatic-acceptance"
+  ],
+  "boundary": "Completed user-authorized automated local tool quality objective; no domain, product or human signoff claim"
+}
