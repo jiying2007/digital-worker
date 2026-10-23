@@ -8,7 +8,7 @@
   "properties": {
     "schema_version": {"const": 1},
     "total_runs": {"type": "integer", "minimum": 0},
-    "real_completed_runs": {"type": "integer", "minimum": 0},
+    "real_completed_runs": {"type": "integer", "minimum": 0, "description": "Legacy field name: unique result documents reporting source_type=real and outcome=PASS; not validated completed Runs."},
     "track_coverage": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
     "routing_accuracy": {"type": "number", "minimum": 0, "maximum": 1},
     "evidence_coverage": {"type": "number", "minimum": 0, "maximum": 1},
@@ -19,7 +19,7 @@
     "root_cause_accuracy": {"type": ["number", "null"], "minimum": 0, "maximum": 1},
     "unauthorized_actions": {"type": "integer", "minimum": 0},
     "audit_trace_completeness": {"type": "number", "minimum": 0, "maximum": 1},
-    "promotion_eligible": {"type": "boolean"},
+    "promotion_eligible": {"const": false, "description": "Result-only metrics never confer product qualification; use the canonical receipt evaluator."},
     "promotion_blockers": {"type": "array", "items": {"type": "string"}}
   }
 }

@@ -26,6 +26,7 @@ formal_provenance:
   required_fields:
     - report_id
     - run_id
+    - implementation_owner
     - independence_confirmed
     - independence_evidence_refs
     - reviewed_subject.execution_source_set_ref

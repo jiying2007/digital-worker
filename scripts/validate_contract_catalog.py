@@ -31,6 +31,7 @@ def main() -> None:
         "assurance-provider-evidence",
         "skill-invocation-receipt",
         "skill-evaluation-receipt",
+        "skill-semantic-evidence",
         "skill-evaluation-summary",
         "edge-foundation-review-snapshot",
     } <= ids

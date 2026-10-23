@@ -3,23 +3,19 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import os
+import sys
 from pathlib import Path
 
-import yaml
-from jsonschema import Draft202012Validator
-
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT / "scripts") not in sys.path:
+    sys.path.insert(0, str(ROOT / "scripts"))
+from embedded_pilot import safe_ref, validate_run_dir
+from pilot_support import load_json, load_yaml, validate_json, validation_scope
 EDGE = ROOT / "domains" / "edge-foundation"
 RUNTIME = EDGE / "runtime"
-
-
-def load_yaml(path: Path):
-    return yaml.safe_load(path.read_text(encoding="utf-8"))
-
-
-def load_json(path: Path):
-    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def require(condition: bool, message: str) -> None:
@@ -27,13 +23,8 @@ def require(condition: bool, message: str) -> None:
         raise AssertionError(message)
 
 
-def validate_json(instance: dict, schema_path: Path) -> None:
-    schema = load_json(schema_path)
-    Draft202012Validator.check_schema(schema)
-    Draft202012Validator(schema).validate(instance)
-
-
-def build_receipt(pilot_run_path: Path, pilot_result_path: Path | None, cross_domain_trigger: str | None) -> dict:
+@validation_scope
+def build_receipt(pilot_run_path: Path, pilot_result_path: Path | None, cross_domain_trigger: str | None, *, receipt_dir: Path | None = None) -> dict:
     pilot_run = load_json(pilot_run_path)
     validate_json(pilot_run, ROOT / "schemas" / "pilot-run.v1.schema.json")
 
@@ -81,6 +72,9 @@ def build_receipt(pilot_run_path: Path, pilot_result_path: Path | None, cross_do
             require(expert_id in known_experts, f"Cross-domain route references unknown Expert: {expert_id}")
 
     pilot_result = None
+    evidence_valid = False
+    verification_complete = False
+    review_acceptable = False
     if pilot_result_path is not None:
         pilot_result = load_json(pilot_result_path)
         validate_json(pilot_result, ROOT / "schemas" / "pilot-result.v1.schema.json")
@@ -89,6 +83,23 @@ def build_receipt(pilot_run_path: Path, pilot_result_path: Path | None, cross_do
         require(pilot_result["pilot_track"] == pilot_run["pilot_track"], "Pilot run/result pilot_track mismatch")
         require(pilot_result["route"]["actual_mode"] == workflow_mode, "Pilot result actual_mode must match pilot run workflow_mode")
 
+    if pilot_run["source_type"] == "real" and pilot_run["status"] == "completed":
+        require(pilot_run_path.name == "pilot-run.json", "real receipt requires canonical pilot-run.json")
+        validated = validate_run_dir(pilot_run_path.parent)
+        require(validated == pilot_run, "real receipt Run identity changed during validation")
+        frozen_result = safe_ref(pilot_run_path.parent, pilot_run.get("pilot_result_ref", ""))
+        require(pilot_result_path is not None and frozen_result.read_bytes() == pilot_result_path.read_bytes(),
+                "real receipt result must match the frozen Pilot result")
+        evidence_valid = True
+        verification = load_json(safe_ref(pilot_run_path.parent, pilot_run["verification_report_ref"]))
+        task = load_json(safe_ref(pilot_run_path.parent, pilot_run["task_brief_ref"]))
+        verification_complete = verification["overall"] in {"PASS", "PASS_WITH_RISK"} and all(
+            verification["layers"].get(layer) == "pass"
+            for layer, state in task["required_verification"].items() if state == "required"
+        )
+        from embedded_pilot import validate_review_policy
+        review_acceptable = validate_review_policy(pilot_run_path.parent, pilot_run)
+
     checks = {
         "source_real": pilot_run["source_type"] == "real",
         "run_completed": pilot_run["status"] == "completed",
@@ -96,6 +107,11 @@ def build_receipt(pilot_run_path: Path, pilot_result_path: Path | None, cross_do
         "outcome_pass": pilot_result is not None and pilot_result["outcome"] == "PASS",
         "no_unauthorized_actions": pilot_result is not None and pilot_result["unauthorized_actions"] == 0,
         "audit_trace_complete": pilot_result is not None and pilot_result.get("audit_trace_complete") is True,
+        "run_evidence_valid": evidence_valid,
+        "review_acceptable": review_acceptable,
+        "no_incorrect_pass": pilot_result is not None and not (pilot_result.get("expected_block", False) and pilot_result["outcome"] == "PASS"),
+        "verification_complete": verification_complete and pilot_result is not None and set(pilot_result["verification"]["required_layers"]) <= set(pilot_result["verification"]["completed_layers"]),
+        "evidence_complete": pilot_result is not None and pilot_result["evidence"]["required"] == pilot_result["evidence"]["satisfied"] and pilot_result["claims"]["unsupported"] == 0,
     }
     reasons = {
         "source_real": "synthetic-source-not-eligible",
@@ -104,6 +120,11 @@ def build_receipt(pilot_run_path: Path, pilot_result_path: Path | None, cross_do
         "outcome_pass": "pilot-outcome-not-pass",
         "no_unauthorized_actions": "unauthorized-actions-present",
         "audit_trace_complete": "audit-trace-incomplete",
+        "run_evidence_valid": "validated-frozen-run-evidence-required",
+        "review_acceptable": "independent-review-not-approved",
+        "no_incorrect_pass": "incorrect-pass-detected",
+        "verification_complete": "required-verification-incomplete",
+        "evidence_complete": "evidence-or-claims-incomplete",
     }
     eligibility_reasons = [reasons[key] for key, passed in checks.items() if not passed]
     eligible = all(checks.values())
@@ -131,6 +152,10 @@ def build_receipt(pilot_run_path: Path, pilot_result_path: Path | None, cross_do
         "eligibility_checks": checks,
         "product_readiness_eligible": eligible,
         "eligibility_reasons": eligibility_reasons,
+        "evidence": {
+            "pilot_run_ref": os.path.relpath(pilot_run_path.resolve(), (receipt_dir or pilot_run_path.parent).resolve()),
+            "pilot_run_sha256": hashlib.sha256(pilot_run_path.read_bytes()).hexdigest(),
+        },
     }
     validate_json(receipt, ROOT / "schemas" / "edge-foundation-pilot-receipt.v1.schema.json")
     return receipt
@@ -143,11 +168,12 @@ def main() -> None:
     parser.add_argument("--cross-domain-trigger")
     parser.add_argument("--output", type=Path)
     args = parser.parse_args()
-    receipt = build_receipt(args.pilot_run, args.pilot_result, args.cross_domain_trigger)
+    receipt = build_receipt(args.pilot_run, args.pilot_result, args.cross_domain_trigger,
+                            receipt_dir=args.output.parent if args.output else args.pilot_run.parent)
     rendered = json.dumps(receipt, ensure_ascii=False, indent=2) + "\n"
     if args.output:
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(rendered, encoding="utf-8")
+        from embedded_pilot import write_derived_json
+        write_derived_json(args.output, receipt)
     else:
         print(rendered, end="")
     print(

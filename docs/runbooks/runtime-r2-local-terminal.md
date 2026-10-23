@@ -168,6 +168,10 @@ python3 scripts/runtime_r2_local_verify.py \
 
 The verifier is the qualification authority. It checks both provider results against the same frozen inputs and independently replays the required target verification.
 
+Intake requires a new output directory. Existing output directories, symlinks, or paths overlapping the freeze/provider evidence inputs are rejected without deleting data. Intake validates into a temporary directory and publishes its collection only after both runtimes pass intake. Choose a new verification output directory for a rerun; a previous `intake` directory is preserved.
+
+Intake binds the postflight receipt to the actual archive SHA-256 and requires `git_metadata_present=false`. Both intake and the independent host verifier reject `.git` metadata before running result scripts. Repacking or changing an archive requires regenerating its postflight and native evidence references; an old PASS cannot accompany a changed archive. Provider and verifier actor identifiers are trimmed before comparison and recording; blank identities and self-verification remain blocked.
+
 The current verifier emits `runtime-r2-domain-verification.json`. Until the receipt schema naturally evolves, that small verifier-owned document is the canonical R2 qualification receipt.
 
 No runtime receipt may self-qualify R2.

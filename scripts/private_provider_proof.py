@@ -6,16 +6,32 @@ import hashlib
 import json
 import os
 import shutil
-import subprocess
+import bounded_subprocess as subprocess
 import tempfile
 from pathlib import Path
 from typing import Any
 
+from pilot_support import redact_text
+
 PROOF_SCHEMA = "digital-worker-private-provider-git-proof/v1"
+TRUSTED_SIGNERS = {
+    "jiying2007/knowledge-hub": (
+        "config/integrations/trust/github-web-flow.gpg.asc",
+        "968479A1AFF927E37D1A566BB5690EEEBB952194",
+    ),
+}
 
 
 class ProofError(RuntimeError):
     pass
+
+
+def _gpg_failure(message: str, result: subprocess.CompletedProcess) -> ProofError:
+    # Keep the native failure diagnosable without exposing unbounded output or
+    # URI credentials. A failed import/verification never proceeds as trusted.
+    diagnostic = redact_text(str(result.stdout or ""))[-4096:].strip()
+    detail = f" (gpg exit {result.returncode})"
+    return ProofError(message + detail + (f": {diagnostic}" if diagnostic else ""))
 
 
 def _canonical(value: Any) -> bytes:
@@ -55,16 +71,33 @@ def _verify_signature(proof: dict[str, Any], root: Path) -> dict[str, Any]:
         raise ProofError("commit_signature is missing")
     if signature.get("verified_by_github") is not True or signature.get("reason") != "valid":
         raise ProofError("captured GitHub commit verification is not valid")
-    fingerprint = str(signature.get("signer_key_fingerprint", "")).upper()
-    if len(fingerprint) != 40:
-        raise ProofError("signer key fingerprint is invalid")
-    trust_path = root / str(signature.get("trust_key_path", ""))
+    trusted = TRUSTED_SIGNERS.get(proof.get("repository"))
+    if trusted is None:
+        raise ProofError("private-provider repository has no configured trust anchor")
+    trust_ref, fingerprint = trusted
+    if signature.get("signer_key_fingerprint") != fingerprint or signature.get("trust_key_path") != trust_ref:
+        raise ProofError("private-provider signer or trust key differs from configured trust anchor")
+    trust_path = root / trust_ref
     if not trust_path.is_file():
         raise ProofError("private-provider trust key is missing")
     payload = signature.get("payload")
     detached = signature.get("signature")
     if not isinstance(payload, str) or not payload or not isinstance(detached, str) or not detached:
         raise ProofError("commit signature payload is incomplete")
+    if "\n\n" not in payload:
+        raise ProofError("commit signature payload has no header separator")
+    headers, message = payload.split("\n\n", 1)
+    if any(line.startswith("gpgsig") for line in headers.splitlines()):
+        raise ProofError("unsigned commit payload already contains a signature header")
+    # GitHub's detached signature retains its final newline as a continuation
+    # line. Also accept Git's form without that empty continuation, but only
+    # when the reconstructed object hashes to the exact expected commit.
+    objects = (
+        headers + "\ngpgsig " + detached.replace("\n", "\n ") + "\n\n" + message,
+        headers + "\ngpgsig " + detached.rstrip("\n").replace("\n", "\n ") + "\n\n" + message,
+    )
+    if proof.get("commit") not in {_git_hash("commit", obj.encode("utf-8")) for obj in objects}:
+        raise ProofError("signed Git commit object SHA does not match expected commit")
     gpg = shutil.which("gpg")
     if not gpg:
         raise ProofError("gpg is required for private-provider proof verification")
@@ -78,8 +111,10 @@ def _verify_signature(proof: dict[str, Any], root: Path) -> dict[str, Any]:
         signature_path.write_text(detached, encoding="utf-8")
         env = dict(os.environ)
         env["GNUPGHOME"] = str(home)
+        # This proof uses public keys only. Import and detached verification
+        # must not depend on spawning a private-key agent (or a dirmngr).
         imported = subprocess.run(
-            [gpg, "--batch", "--import", str(trust_path)],
+            [gpg, "--batch", "--no-autostart", "--import", str(trust_path)],
             env=env,
             text=True,
             stdout=subprocess.PIPE,
@@ -87,9 +122,9 @@ def _verify_signature(proof: dict[str, Any], root: Path) -> dict[str, Any]:
             check=False,
         )
         if imported.returncode != 0:
-            raise ProofError("unable to import private-provider trust key")
+            raise _gpg_failure("unable to import private-provider trust key", imported)
         verified = subprocess.run(
-            [gpg, "--batch", "--status-fd=1", "--verify", str(signature_path), str(payload_path)],
+            [gpg, "--batch", "--no-autostart", "--status-fd=1", "--verify", str(signature_path), str(payload_path)],
             env=env,
             text=True,
             stdout=subprocess.PIPE,
@@ -97,7 +132,7 @@ def _verify_signature(proof: dict[str, Any], root: Path) -> dict[str, Any]:
             check=False,
         )
         if verified.returncode != 0 or "[GNUPG:] GOODSIG " not in verified.stdout:
-            raise ProofError("private-provider commit signature verification failed")
+            raise _gpg_failure("private-provider commit signature verification failed", verified)
         valid_lines = [line for line in verified.stdout.splitlines() if line.startswith("[GNUPG:] VALIDSIG ")]
         if not valid_lines or fingerprint not in valid_lines[0].upper():
             raise ProofError("private-provider commit signer fingerprint mismatch")
@@ -252,4 +287,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(subprocess.cli_entry(main))

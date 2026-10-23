@@ -5,13 +5,14 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import subprocess
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
-from jsonschema import Draft202012Validator
+from jsonschema import Draft202012Validator, ValidationError
+from evaluate_skill_case import validate_semantic_evidence
+from pilot_support import error_result
 
 ROOT = Path(__file__).resolve().parents[1]
 EDGE = ROOT / "domains" / "edge-foundation"
@@ -47,14 +48,8 @@ def now_iso() -> str:
 def validate_invocation(path: Path) -> dict:
     value = load_json(path)
     validate_json(value, INVOCATION_SCHEMA)
-    checked = subprocess.run(
-        [sys.executable, str(INVOCATION_VALIDATOR), str(path)],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if checked.returncode != 0:
-        raise AssertionError((checked.stderr or checked.stdout or "Skill invocation validation failed").strip())
+    from validate_skill_invocation_receipt import validate_receipt
+    validate_receipt(path)
     return value
 
 
@@ -64,6 +59,36 @@ def expected_cases(skill_id: str) -> tuple[str, str]:
         raise AssertionError(f"Skill missing from evaluation plan: {skill_id}")
     cases = plan["skills"][skill_id]
     return cases["positive"]["id"], cases["block"]["id"]
+
+
+def consistent_evaluation(evaluation: dict, invocation: dict, skill_id: str, case_kind: str,
+                          invocation_path: Path) -> bool:
+    case = load_yaml(PLAN)["skills"][skill_id][case_kind]
+    expected = case["expected_invocation_status"]
+    observed = invocation["result"]["status"]
+    checks = {"receipt_valid": True, "skill_match": invocation["skill_id"] == skill_id,
+              "status_match": observed == expected}
+    contract_pass = all(checks.values())
+    semantic = evaluation["semantic_evaluation"]
+    try:
+        validate_semantic_evidence(semantic, invocation, case_id=evaluation["case_id"],
+                                   skill_id=skill_id, invocation_sha256=sha256(invocation_path),
+                                   base_dir=invocation_path.parent)
+        semantic_valid = True
+    except (AssertionError, OSError, ValueError, ValidationError):
+        semantic_valid = False
+    descriptor = evaluation["invocation_receipt"]
+    return (
+        semantic_valid
+        and evaluation["contract_verdict"] == {
+            "status": "PASS" if contract_pass else "FAIL",
+            "expected_invocation_status": expected, "observed_invocation_status": observed, "checks": checks,
+        }
+        and evaluation["case_evidence_eligible"] is (contract_pass and semantic["status"] == "PASS")
+        and descriptor["source_type"] == invocation["source_type"]
+        and descriptor["runtime_provider"] == invocation["runtime_binding"]["provider"]
+        and descriptor["runtime_id"] == invocation["runtime_binding"]["runtime_id"]
+    )
 
 
 def build_summary(
@@ -103,7 +128,9 @@ def build_summary(
             and neg_inv["skill_id"] == skill_id
         ),
         "case_evidence_eligible": (
-            pos_eval["case_evidence_eligible"] is True
+            consistent_evaluation(pos_eval, pos_inv, skill_id, "positive", positive_invocation_path)
+            and consistent_evaluation(neg_eval, neg_inv, skill_id, "block", block_invocation_path)
+            and pos_eval["case_evidence_eligible"] is True
             and neg_eval["case_evidence_eligible"] is True
             and pos_eval["contract_verdict"]["status"] == "PASS"
             and neg_eval["contract_verdict"]["status"] == "PASS"
@@ -203,4 +230,9 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as exc:
+        error, code = error_result(exc)
+        print(json.dumps(error, ensure_ascii=False), file=sys.stderr)
+        raise SystemExit(code)

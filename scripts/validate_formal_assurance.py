@@ -166,11 +166,11 @@ def _validate_formal_report(
     _require(isinstance(subject.get("result_identity_ref"), str) and subject["result_identity_ref"].strip(), f"Formal {kind} requires exact result_identity_ref")
 
     implementation_owner = report.get("implementation_owner")
+    _require(_nonempty_string(implementation_owner), f"Formal {kind} requires implementation_owner for independence validation")
     actor = report["decision_actor_identity_ref"]
     principal = report.get("verifier") if kind == "verification" else report.get("reviewer")
-    if isinstance(implementation_owner, str) and implementation_owner.strip():
-        _require(principal != implementation_owner, f"Formal {kind} principal cannot equal implementation_owner")
-        _require(actor != implementation_owner, f"Formal {kind} decision actor cannot equal implementation_owner")
+    _require(principal.strip() != implementation_owner.strip(), f"Formal {kind} principal cannot equal implementation_owner")
+    _require(actor.strip() != implementation_owner.strip(), f"Formal {kind} decision actor cannot equal implementation_owner")
 
     _validate_sequence(report, prior, kind)
 

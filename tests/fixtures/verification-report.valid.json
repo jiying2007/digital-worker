@@ -13,7 +13,12 @@
     "release": "not_applicable"
   },
   "overall": "PASS",
-  "evidence_refs": ["delivery-receipt.json"],
+  "review_substitute": {
+    "unavailable_reason": "Synthetic fixture has no independent reviewer.",
+    "static_checks": {"status": "pass", "evidence_ref": "fixture://CI-PILOT-001/static-checks"},
+    "hosted_ci": {"status": "pass", "evidence_ref": "fixture://CI-PILOT-001/hosted-ci"}
+  },
+  "evidence_refs": ["delivery-receipt.json", "fixture://CI-PILOT-001/static-checks", "fixture://CI-PILOT-001/hosted-ci"],
   "failures": [],
   "unverified_items": [],
   "risks": []

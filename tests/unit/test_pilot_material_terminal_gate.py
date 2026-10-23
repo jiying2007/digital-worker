@@ -20,6 +20,7 @@ def write_manifest(path: Path, *, readiness: str, log_status: str, reproduction_
         "items": [
             {"kind": "repo", "required": True, "status": "available", "source": "firmware/main"},
             {"kind": "base_commit", "required": True, "status": "available", "version": "0123456789abcdef0123456789abcdef01234567"},
+            {"kind": "test_environment", "required": True, "status": "available", "source": "fixture-host", "evidence_ref": "fixture://host/environment"},
             {"kind": "reproduction", "required": False, "status": reproduction_status},
             {"kind": "log", "required": False, "status": log_status},
         ],
@@ -32,15 +33,27 @@ def write_manifest(path: Path, *, readiness: str, log_status: str, reproduction_
 
 class PilotMaterialTerminalGateTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.run = {
+        self.run = json.loads((ROOT / "tests/fixtures/pilot-run.valid.json").read_text())
+        self.run.update({
             "run_id": "RUN-MATERIAL-001",
+            "work_item_id": "EMB-001",
             "pilot_track": "debug",
+            "repo_root": "firmware/main",
+            "task_brief_ref": "task-brief.json",
+            "status": "running",
             "extra_artifact_refs": {"material_manifest": "material-manifest.json"},
-        }
+        })
+
+    def write_context(self, root):
+        (root / "pilot-run.json").write_text(json.dumps(self.run))
+        task = json.loads((ROOT / "tests/fixtures/task-brief.valid.json").read_text())
+        task["required_verification"]["hil"] = "not_applicable"
+        (root / "task-brief.json").write_text(json.dumps(task))
 
     def test_blocked_manifest_is_allowed_while_running_but_rejected_for_terminal(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
+            self.write_context(root)
             write_manifest(
                 root / "material-manifest.json",
                 readiness="BLOCKED",
@@ -55,6 +68,7 @@ class PilotMaterialTerminalGateTests(unittest.TestCase):
     def test_authoritative_log_only_debug_manifest_is_terminal_acceptable(self):
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
+            self.write_context(root)
             write_manifest(
                 root / "material-manifest.json",
                 readiness="READY",
@@ -65,7 +79,7 @@ class PilotMaterialTerminalGateTests(unittest.TestCase):
             pilot.validate_material_manifest_ref(root, self.run, require_terminal_ready=True)
 
     def test_complete_and_completed_validate_both_ratchet_terminal_gate(self):
-        complete_source = inspect.getsource(pilot.cmd_complete)
+        complete_source = inspect.getsource(pilot._complete_candidate)
         validate_source = inspect.getsource(pilot.validate_run_dir)
         self.assertIn("validate_material_manifest_ref(run_dir, run, require_terminal_ready=True)", complete_source)
         self.assertIn('require_terminal_ready=run["status"] == "completed"', validate_source)

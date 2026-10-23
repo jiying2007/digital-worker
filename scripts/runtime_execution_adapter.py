@@ -6,7 +6,7 @@ import hashlib
 import json
 import os
 import shutil
-import subprocess
+import bounded_subprocess as subprocess
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -250,4 +250,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(subprocess.cli_entry(main))

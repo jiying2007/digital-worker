@@ -118,6 +118,8 @@ python scripts/validate_formal_assurance.py \
 
 Formal reports must bind the exact frozen `work_identity.run_id`, exact `execution_source_set.identity` and exact result identity, name the decision actor, retain independence/input evidence, and carry `report_sequence + supersedes`. A report whose Work/Run, source-set or result is stale is `BLOCKED`; do not edit or silently relabel it as current. A rerun uses a new `report_id`; sequence >1 supplies the immediately prior report with `--prior-verification-report` / `--prior-review-report` so supersession can be audited.
 
+Formal reports must explicitly name a non-empty `implementation_owner`. Missing owner identity cannot disable the independence check; verifier/reviewer and decision actor must differ from that implementation owner. Historical non-Formal report schemas retain their additive compatibility.
+
 This stronger gate is conditional on L2 Formal use. Historical/current-stage non-Formal Pilot reports remain valid under the additive v1 report schemas and are not retroactively rewritten. `formal-assurance-provenance-validation/v1` proves provenance conformance only; it does **not** imply Product Qualification, Release Ready, or release authorization.
 
 ## 6. Complete once
@@ -134,7 +136,7 @@ python scripts/edge_pilot.py complete <RUN_DIR> \
 
 Debug adds `hypothesis_registry`. Feature adds Engineering Task Package and Delivery Receipt. When Independent Review is available, attach `--review-report`; when unavailable in the current iterative Pilot stage, the explicit substitute remains Verification + static checks + Hosted CI and must not be labeled Review PASS.
 
-`complete` freezes `evidence-bundle.json`; completed/cancelled Run cannot be reopened or rebundled. Corrections require a superseding Run.
+`complete` freezes attachments and `evidence-bundle.json` in a new generation, then atomically switches Run refs. Resolve the bundle through `pilot-run.json.evidence_bundle_ref`; existing flat-layout Runs remain readable. The completed/cancelled Run cannot be reopened or rebundled. Corrections require a superseding Run. See [local tool operation](tool-quality.md) for doctor, JSON output and read-only recovery.
 
 ```bash
 python scripts/edge_pilot.py validate <RUN_DIR>

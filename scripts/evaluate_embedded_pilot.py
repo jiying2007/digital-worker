@@ -22,9 +22,11 @@ def ratio(num: int, den: int) -> float: return 0.0 if den == 0 else num / den
 
 def evaluate(paths: list[Path], plan_path: Path = DEFAULT_PLAN) -> dict:
     plan = load_yaml(plan_path); tracks = tuple(plan["tracks"]); gate = plan["promotion_gate"]
-    validator = Draft202012Validator(load_json(RESULT_SCHEMA)); results = []
+    validator = Draft202012Validator(load_json(RESULT_SCHEMA)); results = []; run_ids = set()
     for path in paths:
         item = load_json(path); validator.validate(item)
+        if item["run_id"] in run_ids: raise ValueError(f"duplicate Pilot result run_id: {item['run_id']}")
+        run_ids.add(item["run_id"])
         if item["pilot_track"] not in tracks: raise ValueError(f"pilot result references track not present in pilot plan: {item['pilot_track']}")
         results.append(item)
     total = len(results); route_ok = claims_total = unsupported = 0; evidence_required = evidence_satisfied = 0
@@ -42,8 +44,10 @@ def evaluate(paths: list[Path], plan_path: Path = DEFAULT_PLAN) -> dict:
         unauthorized += item["unauthorized_actions"]; audit_complete += 1 if item.get("audit_trace_complete", False) else 0
         if item.get("root_cause_match") is not None:
             root_known += 1; root_match += 1 if item["root_cause_match"] else 0
-        if item["source_type"] == "real": real_completed += 1; track_coverage[item["pilot_track"]] += 1
-    blockers = []
+        if item["source_type"] == "real" and item["outcome"] == "PASS":
+            real_completed += 1; track_coverage[item["pilot_track"]] += 1
+    # Result-only metrics are reported observations, never qualification evidence.
+    blockers = ["canonical-receipt-evaluation-required"]
     if real_completed < gate["minimum_total_real_completed_runs"]: blockers.append("fewer_than_minimum_real_completed_runs")
     if gate.get("require_each_track", False):
         for track, cfg in plan["tracks"].items():
@@ -59,13 +63,13 @@ def evaluate(paths: list[Path], plan_path: Path = DEFAULT_PLAN) -> dict:
         "unsupported_claim_rate": ratio(unsupported, claims_total), "incorrect_pass_rate": incorrect_rate,
         "verification_completeness": ratio(verification_completed, verification_required), "human_correction_rate": ratio(corrections, decisions),
         "root_cause_accuracy": None if root_known == 0 else ratio(root_match, root_known), "unauthorized_actions": unauthorized,
-        "audit_trace_completeness": audit_ratio, "promotion_eligible": not blockers, "promotion_blockers": blockers,
+        "audit_trace_completeness": audit_ratio, "promotion_eligible": False, "promotion_blockers": blockers,
     }
     Draft202012Validator(load_json(METRICS_SCHEMA)).validate(metrics); return metrics
 
 
 def render_markdown(metrics: dict) -> str:
-    lines = ["# Edge Foundation Pilot Metrics", "", f"- Total runs: {metrics['total_runs']}", f"- Real completed runs: {metrics['real_completed_runs']}", f"- Routing accuracy: {metrics['routing_accuracy']:.3f}", f"- Evidence coverage: {metrics['evidence_coverage']:.3f}", f"- Unsupported claim rate: {metrics['unsupported_claim_rate']:.3f}", f"- Incorrect PASS rate: {metrics['incorrect_pass_rate']:.3f}", f"- Verification completeness: {metrics['verification_completeness']:.3f}", f"- Human correction rate: {metrics['human_correction_rate']:.3f}", f"- Audit trace completeness: {metrics['audit_trace_completeness']:.3f}", f"- Unauthorized actions: {metrics['unauthorized_actions']}", f"- Product-readiness eligible: {str(metrics['promotion_eligible']).lower()}", "", "## Track coverage"]
+    lines = ["# Edge Foundation Pilot Metrics", "", f"- Total reported results: {metrics['total_runs']}", f"- Reported real PASS results: {metrics['real_completed_runs']}", f"- Routing accuracy: {metrics['routing_accuracy']:.3f}", f"- Evidence coverage: {metrics['evidence_coverage']:.3f}", f"- Unsupported claim rate: {metrics['unsupported_claim_rate']:.3f}", f"- Incorrect PASS rate: {metrics['incorrect_pass_rate']:.3f}", f"- Verification completeness: {metrics['verification_completeness']:.3f}", f"- Human correction rate: {metrics['human_correction_rate']:.3f}", f"- Audit trace completeness: {metrics['audit_trace_completeness']:.3f}", f"- Unauthorized actions: {metrics['unauthorized_actions']}", "- Qualification: canonical receipt evaluation required; these are descriptive metrics only.", "", "## Reported real PASS track coverage"]
     for track, count in metrics["track_coverage"].items(): lines.append(f"- {track}: {count}")
     lines += ["", "## Blockers"] + ([f"- {item}" for item in metrics["promotion_blockers"]] if metrics["promotion_blockers"] else ["- none (human productionization review is still required)"])
     return "\n".join(lines) + "\n"

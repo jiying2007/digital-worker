@@ -7,7 +7,7 @@ import json
 import os
 import pathlib
 import re
-import subprocess
+import bounded_subprocess as subprocess
 import sys
 from typing import Any
 
@@ -209,6 +209,11 @@ def _run_native_host_verification(
     log: pathlib.Path,
     plan: dict[str, Any],
 ) -> None:
+    from runtime_r2_intake import IntakeError, reject_git_metadata
+    try:
+        reject_git_metadata(result_tree)
+    except IntakeError as exc:
+        raise VerificationError(str(exc)) from exc
     controlled = plan.get("controlled_task")
     if not isinstance(controlled, dict):
         raise VerificationError("frozen plan controlled task is missing")
@@ -391,8 +396,12 @@ def verify_local_r2(
     provider_actors = collection.get("provider_execution_actors")
     if not isinstance(provider_actors, dict) or set(provider_actors) != {"codex", "claude-code"}:
         raise VerificationError("provider execution actors are incomplete")
-    if not verification_actor.strip():
+    verification_actor = verification_actor.strip()
+    if not verification_actor:
         raise VerificationError("verification actor is required")
+    if not all(isinstance(actor, str) and actor.strip() for actor in provider_actors.values()):
+        raise VerificationError("provider execution actors must be nonempty")
+    provider_actors = {runtime: actor.strip() for runtime, actor in provider_actors.items()}
     if verification_actor in set(provider_actors.values()):
         raise VerificationError(
             "independent verifier must be distinct from both provider execution actors"
@@ -426,7 +435,7 @@ def verify_local_r2(
         "runtime_home_mode": "shared-user-home",
         "credential_state_in_evidence": False,
         "github_provider_credentials_required": False,
-        "provider_execution_actors": collection["provider_execution_actors"],
+        "provider_execution_actors": provider_actors,
         "provider_execution_evidence": collection["provider_execution_evidence"],
         "execution_receipts": collection["execution_receipts"],
         "verification_scope": [
@@ -487,4 +496,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(subprocess.cli_entry(main))

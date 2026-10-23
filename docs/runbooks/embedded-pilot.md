@@ -54,6 +54,10 @@ Material terminal rule：
 - Debug 采用 **reproduction OR authoritative log**；
 - Material readiness 不替代 Verification 或 Review。
 
+材料校验从 task type 的 `material-requirements.yaml` 和 Task Brief 验证要求重新推导必需项，至少保留 repo、base_commit 和 test_environment；要求 Device/HIL/Release 验证时还必须具备 device_identity。删除项目或把 `required` 改成 false 不会降低门槛。历史清单中已 available 的材料可继续使用，无须改写冻结证据。
+
+终态材料验证还必须绑定 `--pilot-run <run-dir>/pilot-run.json`，比较 run_id、仓库来源与 base_commit；Pilot CLI 自动传入该上下文。独立结构检查未提供 Run 时会返回 `identity_validated=false`、`terminal_acceptable=false`；请求 `--require-terminal-ready` 而缺 Run 则阻断。仓库标识接受等价 GitHub HTTPS URL（可带 `.git` 或尾斜杠），提交比较忽略十六进制大小写。`repo.version` 可描述结果提交，不要求它等于 base commit；身份冲突不能通过 DEGRADED 放行。
+
 ## 3. Canonical Routing 与责任模型
 
 Task Type 先由 `domains/edge-foundation/routing.yaml` 映射到：
@@ -149,6 +153,28 @@ Review unavailable 时，completion substitute 必须至少包含：
 
 替代只解除当前 Pilot completion blocker，不等于 Independent Review PASS，不降低 Device/HIL/Release Evidence，不替代 A7 human release decision。
 
+工具在 Verification 的 `review_substitute` 中检查 `unavailable_reason`，以及
+`static_checks` / `hosted_ci` 的 `{ "status": "pass", "evidence_ref": "https://..." }`。
+两项引用必须同时列入 `evidence_refs`，使用无凭据 URI 或完整 `sha256:<64hex>`，
+禁止只写“CI 成功”等文字。该声明随 Verification 一起冻结；缺失时 completion、终态 validate
+和 receipt 重算均拒绝。历史 Verification 不自动迁移；新增的
+`verification-report.review-policy-v2.json` 仅结构化已有证据，不代表重新执行历史 CI。
+新增 `review_substitute` 字段需要新版 Verification schema，旧版读取器会拒绝该字段。
+迁移时保留原报告，以新增报告重建 Run；已有独立 Review 且使用旧字段集的文档继续可读。
+回退时只回退本轮代码/schema，并重新生成对应版本的派生回执，不改写既有终态证据。
+
+completed Run 的 Verification 和已提供的 Review 均须填写非空 `implementation_owner`，
+以及独立的 `verifier` / `reviewer`；仍须 `independence_confirmed=true`。
+校验会去除身份两端空白，拒绝验证者、审查者或已提供的 `decision_actor_identity_ref`
+等于实现者。不同身份字符串只是本地声明，不能替代主体认证或独立审查事实。
+缺少主体的历史报告可在非终态检查材料；终态验证和资格重算会阻断。
+应由实际责任人补齐真实报告并创建 superseding Run，不改写历史终态证据、不代填主体。
+
+终态 required 且 available 的 `device_identity`、`test_environment` 必须提供非空
+`source` 和 `evidence_ref`。planned/running 可继续使用 missing/null 表达未知信息。
+Run 内的派生报告不得覆盖 `pilot-run.json` 或任何冻结引用，输出路径不得穿过符号链接；
+写入遵守 Run 写锁并采用原子替换。
+
 ## 9. Complete 与冻结 Evidence
 
 Feature 示例：
@@ -170,7 +196,9 @@ python scripts/edge_pilot.py complete <run-dir> \
 --extra hypothesis_registry=<run-dir>/working/hypothesis-registry.json
 ```
 
-`complete` 会校验结构化 Contract、Material terminal readiness 和 required artifacts，生成 `evidence-bundle.json` 与 SHA-256。Completed run 是 terminal；修订历史证据必须创建 superseding run，禁止改写旧 run。
+`complete` 会校验结构化 Contract、Material terminal readiness 和 required artifacts，将附件和 `evidence-bundle.json` 写入独立 generation，并最后原子切换 Run 引用。消费者通过 `pilot-run.json` 的 `evidence_bundle_ref` 定位 bundle，不固定读取根目录文件；历史平铺 Run 继续可读。Completed run 是 terminal；修订历史证据必须创建 superseding run，禁止改写旧 run。写锁、错误码和只读恢复见[本地工具操作](tool-quality.md)。
+
+完成操作先在临时候选目录运行全部终态校验，通过后发布附件和 bundle，最后原子替换 Run 状态。校验失败保留原目录及可重试状态；发布过程中若发生 I/O 故障，Run 的终态标记尚未发布时可修正后重试。
 
 ```bash
 python scripts/edge_pilot.py validate <run-dir>
@@ -183,7 +211,7 @@ python scripts/edge_pilot.py validate <run-dir>
 Completed Pilot 通过 terminal integrity 后生成 canonical receipt：
 
 ```bash
-python scripts/edge_pilot.py receipt <run-dir>
+python scripts/edge_pilot.py pilot-receipt <run-dir>
 ```
 
 默认输出：
@@ -203,7 +231,11 @@ eligibility_checks
 product_readiness_eligible
 ```
 
-只有 `source_real + completed + result_provided + outcome_pass + zero unauthorized actions + audit trace complete` 全部满足，receipt 才能计入 Product readiness。
+真实 completed Run 必须重新通过完整 Run、材料及 frozen bundle 校验，提供与 bundle 一致的 Pilot result。只有来源真实、完成、结果 PASS、零未授权动作、审计完整、没有错误 PASS、必需验证完成、证据满足且无 unsupported claims，receipt 才能计入 Product readiness。
+
+`complete` 拒绝 Run 内的文件、目录和悬空符号链接，先验证独立临时副本，失败保留原 Run，成功最后发布 Run 状态。已提供的 Review 必须为 `APPROVE` 或 `APPROVE_WITH_RISK`；`BLOCKED` / `REQUEST_CHANGES` 会使 `review_acceptable=false`。Review 不可用时继续执行当前阶段的替代策略。
+
+新 receipt 的 `evidence` 保存相对于 receipt 的 Run 引用和 Run SHA-256。Product readiness 聚合时会重新加载原 Run、核验冻结附件并重算 receipt；仅有布尔资格字段或旧的无来源 real receipt 不再足以计数，必须从原始冻结 Run 重新生成。搬移证据时保留 Run 及其附件的相对目录关系。
 
 ## 11. Product Readiness
 
@@ -218,6 +250,8 @@ python scripts/edge_pilot.py product-readiness \
 
 当前门槛：Debug / Feature / Review-Release 各至少 1 个 eligible real receipt，总计至少 3；同时 `incorrect_pass_rate=0`、`unauthorized_actions=0`、`audit_trace_completeness=1.0`。
 
+安全门槛检查本次显式输入集合中的全部 real completed Run，不能通过跳过不合格 receipt 隐藏违规。三轨数量满足但集合中存在错误 PASS、未授权动作或审计缺项时仍返回 BLOCKED；synthetic 与未完成 Run 不计入真实覆盖。
+
 当前真实状态：Feature=1，Debug=0，Review/Release=0，所以 Product readiness 正确返回 BLOCKED。**该状态不控制或回退 canonical routing。** 全部满足后也只进入 Productionization Review，不自动声明 Release Ready / Production Ready。
 
 ## 12. Pilot Metrics
@@ -230,6 +264,8 @@ python scripts/evaluate_edge_pilot.py \
 ```
 
 门槛来自 `domains/edge-foundation/pilot/pilot-plan.yaml`。Synthetic 只验证工具链，不计入真实 Product readiness。
+
+该结果入口仅输出描述性统计：重复 run_id 被拒绝，BLOCKED 不计入通过数量。兼容字段 `real_completed_runs` 和 `track_coverage` 只统计自报的 real PASS 结果，不证明 Run 已完成；`promotion_eligible` 固定为 false，并包含 `canonical-receipt-evaluation-required`。产品资格使用上节 canonical receipt 聚合入口。
 
 ## 13. Knowledge Harvest
 
@@ -252,6 +288,8 @@ python scripts/edge_knowledge.py proposal-route --proposal <PROPOSAL_JSON>
 - `incorrect_pass=0` 且无 unauthorized action；
 - Knowledge Harvest finalized；
 - 新 Schema/Skill/Capability 只由重复真实缺口触发。
+
+跨仓 checkout verifier 的 `--fetch` 只接受全新目标目录，已有目录或符号链接一律保留并拒绝；先在临时目录获取 exact commit，确认 HEAD 后发布。重复验证已有 checkout 时不传 `--fetch`；需要重新获取时选择新目录。
 
 仓库仍处于 `iterative-development`，server-side protection 暂不是 real Pilot completion gate；进入 Productionization 前运行：
 

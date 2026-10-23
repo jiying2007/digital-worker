@@ -1,0 +1,3 @@
+# Python test/CLI caches; source and validation evidence remain visible.
+__pycache__/
+*.py[cod]

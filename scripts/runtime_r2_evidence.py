@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import subprocess
+import bounded_subprocess as subprocess
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -682,4 +682,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(subprocess.cli_entry(main))

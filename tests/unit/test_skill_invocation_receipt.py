@@ -155,7 +155,7 @@ class SkillInvocationReceiptTest(unittest.TestCase):
             self.assertEqual(len(completed_run["skill_invocation_refs"]), 1)
             skill_ref = completed_run["skill_invocation_refs"][0]
             self.assertTrue((run_dir / skill_ref).is_file())
-            bundle = json.loads((run_dir / "evidence-bundle.json").read_text(encoding="utf-8"))
+            bundle = json.loads((run_dir / completed_run["evidence_bundle_ref"]).read_text(encoding="utf-8"))
             matching = [item for item in bundle["artifacts"] if item["path"] == skill_ref]
             self.assertEqual(len(matching), 1)
             self.assertEqual(matching[0]["kind"], "skill_invocation:boot-chain-analysis")

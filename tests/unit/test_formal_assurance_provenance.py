@@ -251,6 +251,25 @@ class FormalAssuranceProvenanceTests(unittest.TestCase):
         with self.assertRaisesRegex(FormalAssuranceError, "principal cannot equal implementation_owner"):
             validate_formal_assurance(bootstrap=bootstrap(), verification=vr)
 
+    def test_missing_implementation_owner_cannot_disable_independence_check(self) -> None:
+        for owner in (None, "", " "):
+            with self.subTest(owner=owner):
+                vr = verification()
+                vr["implementation_owner"] = owner
+                with self.assertRaisesRegex(FormalAssuranceError, "requires implementation_owner"):
+                    validate_formal_assurance(bootstrap=bootstrap(), verification=vr)
+        vr = verification()
+        del vr["implementation_owner"]
+        with self.assertRaisesRegex(FormalAssuranceError, "requires implementation_owner"):
+            validate_formal_assurance(bootstrap=bootstrap(), verification=vr)
+
+    def test_review_requires_explicit_implementation_owner(self) -> None:
+        vr = verification()
+        rr = review(vr)
+        del rr["implementation_owner"]
+        with self.assertRaisesRegex(FormalAssuranceError, "requires implementation_owner"):
+            validate_formal_assurance(bootstrap=bootstrap(), verification=vr, review=rr)
+
     def test_sequence_two_requires_immediately_prior_report(self) -> None:
         current = verification(report_id="VR-RUN-001-2", sequence=2, supersedes="VR-RUN-001-1")
         with self.assertRaisesRegex(FormalAssuranceError, "requires the immediately prior report"):
