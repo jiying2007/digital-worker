@@ -11,6 +11,8 @@ from pathlib import Path
 
 import yaml
 from jsonschema import Draft202012Validator, ValidationError
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 from evaluate_skill_case import validate_semantic_evidence
 from pilot_support import error_result
 

@@ -7,11 +7,14 @@ import hashlib
 import json
 import os
 import re
-import bounded_subprocess as subprocess
 import sys
 from pathlib import Path
 
 import yaml
+
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+import bounded_subprocess as subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "domains" / "edge-foundation" / "knowledge" / "registry.yaml"

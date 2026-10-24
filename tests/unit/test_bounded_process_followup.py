@@ -27,6 +27,22 @@ def wait_for(path, process, timeout=5):
 
 
 class RepeatedCancellationTests(unittest.TestCase):
+    def test_kill_delivery_is_observed_before_cleanup_returns(self):
+        with patch.object(bounded, "_group_exists", return_value=True), \
+             patch.object(bounded, "_group_has_live_members", side_effect=[True, True, False]) as live, \
+             patch.object(bounded.time, "sleep") as sleep:
+            bounded._wait_group_stopped(123, 1)
+        self.assertEqual(live.call_count, 3)
+        self.assertEqual(sleep.call_count, 2)
+
+    def test_unconfirmed_kill_fails_closed_with_a_bounded_wait(self):
+        with patch.object(bounded, "_group_exists", return_value=True), \
+             patch.object(bounded, "_group_has_live_members", return_value=True), \
+             patch.object(bounded.time, "monotonic", side_effect=[0, 2]), \
+             self.assertRaises(bounded.ProcessError) as error:
+            bounded._wait_group_stopped(123, 1)
+        self.assertEqual(error.exception.code, "CLEANUP_UNCONFIRMED")
+
     def test_repeated_term_and_int_preserve_group_cleanup(self):
         for first, second in ((signal.SIGTERM, signal.SIGTERM),
                               (signal.SIGINT, signal.SIGINT),
@@ -95,6 +111,28 @@ class ProviderBudgetTests(unittest.TestCase):
         with patch.object(bounded._sp, "Popen") as spawn, self.assertRaises(ValueError):
             bounded.run([sys.executable, "-c", "pass"], category="unknown")
         spawn.assert_not_called()
+
+
+class StandaloneImportTests(unittest.TestCase):
+    def test_helpers_resolve_without_test_discovery_path_side_effects(self):
+        names = ("runtime_execution_adapter", "runtime_r2_evidence", "runtime_r2_intake",
+                 "runtime_r2_local_verify", "private_provider_proof", "verify_cross_repo_checkouts",
+                 "embedded_pilot", "validate_material_manifest", "validate_skill_invocation_receipt",
+                 "evaluate_skill_case", "evaluate_skill_maturity", "embedded_knowledge",
+                 "embedded_pilot_source_probe", "bounded_subprocess")
+        code = (
+            "import sys,importlib,importlib.util,pathlib; root=pathlib.Path(sys.argv[1]); "
+            "sys.path.insert(0,str(root)); name=sys.argv[2]; "
+            "spec=importlib.util.spec_from_file_location('isolated_'+name,root/'scripts'/(name+'.py')); "
+            "module=importlib.util.module_from_spec(spec); "
+            "spec.loader.exec_module(module) if sys.argv[3]=='spec' else importlib.import_module('scripts.'+name)"
+        )
+        for name in names:
+            for mode in ("spec", "package"):
+                with self.subTest(module=name, mode=mode):
+                    result = subprocess.run([sys.executable, "-I", "-c", code, str(ROOT), name, mode],
+                                            cwd="/tmp", capture_output=True, text=True, timeout=15)
+                    self.assertEqual(result.returncode, 0, result.stderr)
 
 
 if __name__ == "__main__":

@@ -16,6 +16,8 @@ import time
 from contextlib import ExitStack, contextmanager
 from pathlib import Path
 
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 from pilot_support import PilotError, redact_text
 
 PIPE, STDOUT, DEVNULL = _sp.PIPE, _sp.STDOUT, _sp.DEVNULL
@@ -74,6 +76,30 @@ def _terminate_group(process, grace):
     except ProcessLookupError:
         pass
     process.wait()
+    # SIGKILL delivery is asynchronous. Reaping only the leader can return
+    # while an orphaned descendant is still running on another CPU.
+    _wait_group_stopped(process.pid, max(1.0, grace))
+
+
+def _group_has_live_members(pgid):
+    for path in Path("/proc").iterdir():
+        if not path.name.isdigit():
+            continue
+        try:
+            fields = (path / "stat").read_text().rsplit(")", 1)[1].split()
+        except (FileNotFoundError, ProcessLookupError):
+            continue
+        if int(fields[2]) == pgid and fields[0] not in {"Z", "X", "x"}:
+            return True
+    return False
+
+
+def _wait_group_stopped(pgid, seconds):
+    deadline = time.monotonic() + seconds
+    while _group_exists(pgid) and _group_has_live_members(pgid):
+        if time.monotonic() >= deadline:
+            raise ProcessError("CLEANUP_UNCONFIRMED", "Process group still has live members after KILL", exit_code=1)
+        time.sleep(0.01)
 
 
 def _group_exists(pid):

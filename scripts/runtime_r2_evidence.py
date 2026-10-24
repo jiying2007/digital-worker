@@ -4,11 +4,15 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import bounded_subprocess as subprocess
+import sys
 from pathlib import Path
 from typing import Any, Mapping
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT / "scripts") not in sys.path:
+    sys.path.insert(0, str(ROOT / "scripts"))
+import bounded_subprocess as subprocess
+
 EVIDENCE_ROOT = ROOT / "domains/edge-foundation/pilot/evidence/FEATURE-PCR02-OTA-001"
 TASK_BRIEF = EVIDENCE_ROOT / "task-brief.json"
 ENGINEERING_PACKAGE = EVIDENCE_ROOT / "engineering-task-package.json"

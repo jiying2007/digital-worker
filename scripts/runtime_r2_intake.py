@@ -6,12 +6,15 @@ import hashlib
 import json
 import re
 import shutil
-import bounded_subprocess as subprocess
 import sys
 import tarfile
 import tempfile
 from pathlib import Path
 from typing import Any, Mapping
+
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+import bounded_subprocess as subprocess
 
 FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")

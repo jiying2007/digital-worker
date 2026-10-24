@@ -5,9 +5,12 @@ from __future__ import annotations
 import argparse
 import json
 import re
+import sys
 from pathlib import Path
 
 import yaml
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 from pilot_support import load_json, validate_json, validation_scope
 
 ROOT = Path(__file__).resolve().parents[1]

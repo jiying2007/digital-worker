@@ -6,12 +6,16 @@ import hashlib
 import json
 import os
 import shutil
-import bounded_subprocess as subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
+if str(ROOT / "scripts") not in sys.path:
+    sys.path.insert(0, str(ROOT / "scripts"))
+import bounded_subprocess as subprocess
+
 PROFILE_PATH = ROOT / "config/integrations/runtime-execution-profiles.json"
 
 

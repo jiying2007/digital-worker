@@ -9,10 +9,13 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import sys
 import tempfile
-import bounded_subprocess as subprocess
 from pathlib import Path
 
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+import bounded_subprocess as subprocess
 from private_provider_proof import ProofError, verify_proof
 
 ROOT = Path(__file__).resolve().parents[1]

@@ -12,6 +12,8 @@ from pathlib import Path
 
 import yaml
 from jsonschema import Draft202012Validator
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
 from pilot_support import error_result
 
 ROOT = Path(__file__).resolve().parents[1]

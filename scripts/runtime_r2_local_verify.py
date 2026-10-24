@@ -7,11 +7,13 @@ import json
 import os
 import pathlib
 import re
-import bounded_subprocess as subprocess
 import sys
 from typing import Any
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+if str(ROOT / "scripts") not in sys.path:
+    sys.path.insert(0, str(ROOT / "scripts"))
+import bounded_subprocess as subprocess
 
 
 class VerificationError(RuntimeError):

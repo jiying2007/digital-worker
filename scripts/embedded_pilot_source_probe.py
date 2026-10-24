@@ -12,9 +12,12 @@ import argparse
 import hashlib
 import json
 import re
-import bounded_subprocess as subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+import bounded_subprocess as subprocess
 from pilot_support import sanitize_uri, redact_text
 
 

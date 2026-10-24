@@ -49,6 +49,9 @@ Digital Worker 按需采用。小任务仍可直接使用项目 CLI、ADK 与项
 
 命令自身必须等待其子进程。leader退出后仍有遗留进程组时返回 `ORPHANED_PROCESS_GROUP` 并清理整组，不能将丢失迟到输出的结果当作成功；该入口不支持遗留后台worker。
 
+KILL 发出后还会等待 `/proc` 确认该组没有活动成员；僵尸由其父进程回收。
+确认等待有界，若仍有活动成员则返回 `CLEANUP_UNCONFIRMED`，不把“已发信号”当作清理完成。
+
 输出先流式写入临时文件，默认总上限64MiB，可用 `DW_MAX_OUTPUT_BYTES` 设置有限正值。超过上限返回 `OUTPUT_LIMIT`，不以截断结果继续解析或授予资格。成功机器输出保持完整；失败诊断最多携带64KiB脱敏尾部。临时spool在调用结束时关闭，需保留的正式日志仍由原调用方写入既有日志路径。
 
 来源URI输出移除userinfo、query、fragment；这不表示任意Runtime原始日志都已自动脱敏。

@@ -6,11 +6,14 @@ import hashlib
 import json
 import os
 import shutil
-import bounded_subprocess as subprocess
+import sys
 import tempfile
 from pathlib import Path
 from typing import Any
 
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+import bounded_subprocess as subprocess
 from pilot_support import redact_text
 
 PROOF_SCHEMA = "digital-worker-private-provider-git-proof/v1"
