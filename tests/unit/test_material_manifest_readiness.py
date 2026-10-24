@@ -22,6 +22,24 @@ validator = load_module("validate_material_manifest", ROOT / "scripts" / "valida
 
 
 class MaterialManifestReadinessTests(unittest.TestCase):
+    def test_empty_and_downgraded_manifests_are_rejected(self):
+        for track in ("debug", "feature", "review_release"):
+            with self.subTest(track=track), self.assertRaisesRegex(AssertionError, "missing required item"):
+                validator.validate_manifest({"run_id": "x", "items": [], "readiness": "READY"}, track, True)
+        manifest = self._debug_manifest()
+        next(item for item in manifest["items"] if item["kind"] == "repo").update(required=False, status="missing")
+        with self.assertRaisesRegex(AssertionError, "missing_critical drift"):
+            validator.validate_manifest(manifest, "debug")
+
+    def test_task_policy_and_device_verification_requirements_are_enforced(self):
+        manifest = json.loads((ROOT / "tests/fixtures/material-manifest.valid.json").read_text())
+        manifest["items"] = [item for item in manifest["items"] if item["kind"] != "firmware"]
+        with self.assertRaisesRegex(AssertionError, "required item: firmware"):
+            validator.validate_manifest(manifest, "review_release", True, task_type="release_ota")
+        manifest["items"] = [item for item in manifest["items"] if item["kind"] != "device_identity"]
+        with self.assertRaisesRegex(AssertionError, "required item: device_identity"):
+            validator.validate_manifest(manifest, "feature", True, task={"required_verification": {"hil": "required"}})
+
     def _debug_manifest(self):
         run = {
             "run_id": "REAL-DEBUG-001",
@@ -69,7 +87,9 @@ class MaterialManifestReadinessTests(unittest.TestCase):
         )
         manifest["missing_critical"] = []
         manifest["readiness"] = "READY"
-        result = validator.validate_manifest(manifest, "debug", require_terminal_ready=True)
+        result = validator.validate_manifest(manifest, "debug", require_terminal_ready=True,
+                                             pilot_run={"run_id": manifest["run_id"], "repo_root": "firmware/pcr02",
+                                                        "base_commit": "0123456789abcdef0123456789abcdef01234567"})
         self.assertTrue(result["terminal_acceptable"])
         self.assertEqual(result["blockers"], [])
 
@@ -80,7 +100,9 @@ class MaterialManifestReadinessTests(unittest.TestCase):
 
     def test_existing_ready_fixture_is_terminal_acceptable(self):
         manifest = json.loads((ROOT / "tests" / "fixtures" / "material-manifest.valid.json").read_text(encoding="utf-8"))
-        result = validator.validate_manifest(manifest, "feature", require_terminal_ready=True)
+        result = validator.validate_manifest(manifest, "feature", require_terminal_ready=True,
+                                             pilot_run={"run_id": manifest["run_id"], "repo_root": "firmware/main",
+                                                        "base_commit": "0123456789abcdef0123456789abcdef01234567"})
         self.assertEqual(result["readiness"], "READY")
         self.assertTrue(result["terminal_acceptable"])
 

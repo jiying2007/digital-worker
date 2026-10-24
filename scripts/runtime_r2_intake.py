@@ -6,11 +6,15 @@ import hashlib
 import json
 import re
 import shutil
-import subprocess
 import sys
 import tarfile
+import tempfile
 from pathlib import Path
 from typing import Any, Mapping
+
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+import bounded_subprocess as subprocess
 
 FULL_SHA = re.compile(r"^[0-9a-f]{40}$")
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
@@ -76,8 +80,7 @@ def git_head(root: Path) -> str:
 
 
 def safe_extract_tar(archive: Path, destination: Path) -> None:
-    if destination.exists():
-        shutil.rmtree(destination)
+    require(not destination.exists() and not destination.is_symlink(), "extraction destination already exists")
     destination.mkdir(parents=True)
     try:
         with tarfile.open(archive, "r:gz") as tf:
@@ -103,6 +106,11 @@ def tree_digest(root: Path) -> str:
     for path in sorted(x for x in root.rglob("*") if x.is_file() and ".git" not in x.parts):
         rows.append((path.relative_to(root).as_posix(), sha256_file(path)))
     return hashlib.sha256(json.dumps(rows, separators=(",", ":")).encode()).hexdigest()
+
+
+def reject_git_metadata(root: Path) -> None:
+    require(not any(".git" in path.relative_to(root).parts for path in root.rglob("*")),
+            "result tree contains forbidden Git metadata (.git)")
 
 
 def expected_tree_digest(native: Mapping[str, Any], runtime: str) -> str:
@@ -224,7 +232,8 @@ def validate_runtime(
             "claude-code user setting source must not enter controlled R2 execution",
         )
     actor = auth.get("actor")
-    require(isinstance(actor, str) and actor, f"{runtime} provider actor missing")
+    require(isinstance(actor, str) and bool(actor.strip()), f"{runtime} provider actor missing")
+    actor = actor.strip()
 
     native_path = choose_native(evidence_dir, runtime)
     native = load_json(native_path, f"{runtime} native receipt")
@@ -247,6 +256,11 @@ def validate_runtime(
         f"{runtime} replay postflight digest does not match result-postflight.json",
     )
     postflight = load_json(postflight_path, f"{runtime} result postflight")
+    require(postflight.get("schema") == "digital-worker-runtime-r2-result-postflight/v1",
+            f"{runtime} result postflight schema invalid")
+    require(postflight.get("result_archive_sha256") == sha256_file(result_archive),
+            f"{runtime} postflight archive digest mismatch")
+    require(postflight.get("git_metadata_present") is False, f"{runtime} postflight must exclude Git metadata")
     require(postflight.get("status") == "pass", f"{runtime} replay postflight must pass")
     require(postflight.get("replay_self_contained") is True, f"{runtime} replay postflight must be self-contained")
     require(postflight.get("verification_pass_claimed") is False, f"{runtime} replay postflight must disclaim Verification PASS")
@@ -268,6 +282,7 @@ def validate_runtime(
 
     result_tree = runtime_out / "result-tree"
     safe_extract_tar(result_archive, result_tree)
+    reject_git_metadata(result_tree)
     actual_tree = tree_digest(result_tree)
     require(actual_tree == expected_tree_digest(native, runtime), f"{runtime} result tree digest mismatch")
 
@@ -300,7 +315,7 @@ def validate_runtime(
     }
 
 
-def intake(
+def _collect_intake(
     root: Path,
     freeze_dir: Path,
     codex_evidence_dir: Path,
@@ -310,8 +325,6 @@ def intake(
     root = root.resolve()
     out = out.resolve()
     campaign, plan, frozen_plan, verification_tool_commit = validate_freeze(root, freeze_dir)
-    if out.exists():
-        shutil.rmtree(out)
     out.mkdir(parents=True)
 
     runtime_dirs = {
@@ -360,6 +373,33 @@ def intake(
     return collection
 
 
+def intake(
+    root: Path,
+    freeze_dir: Path,
+    codex_evidence_dir: Path,
+    claude_evidence_dir: Path,
+    out: Path,
+) -> dict[str, Any]:
+    require(not out.is_symlink(), "intake output must not be a symlink")
+    out = out.resolve()
+    require(".git" not in out.parts, "intake output must not target Git metadata")
+    for source in (freeze_dir, codex_evidence_dir, claude_evidence_dir):
+        source = source.resolve()
+        require(out != source and out not in source.parents and source not in out.parents,
+                "intake output overlaps an input directory")
+    repo = root.resolve()
+    require(out != repo and out not in repo.parents, "intake output contains the repository")
+    require(not out.exists(), "intake output already exists; choose a new output directory")
+    validate_freeze(repo, freeze_dir)
+    out.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=".r2-intake-", dir=out.parent) as tmp:
+        staged = Path(tmp) / "collection"
+        collection = _collect_intake(repo, freeze_dir, codex_evidence_dir, claude_evidence_dir, staged)
+        require(not out.exists(), "intake output appeared during validation")
+        staged.rename(out)
+    return collection
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Validate local-terminal R2 runtime evidence before Digital Worker Verification")
     parser.add_argument("--root", default=".", type=Path)
@@ -388,4 +428,4 @@ def main(argv: list[str] | None = None) -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    raise SystemExit(subprocess.cli_entry(main))

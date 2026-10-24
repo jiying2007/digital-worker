@@ -72,13 +72,37 @@ def invocation(status: str = "COMPLETED", runtime_id: str = "skill-eval-harness-
     }
 
 
+def semantic_evidence(path: Path, invocation_path: Path, case_id: str,
+                      evaluator_kind="independent-evaluator", evaluator_id="semantic-review-fixture",
+                      status="PASS") -> tuple[Path, str]:
+    value = json.loads(invocation_path.read_text(encoding="utf-8"))
+    evidence = {
+        "schema_version": 1, "case_id": case_id, "skill_id": value["skill_id"],
+        "evaluation_plan_sha256": hashlib.sha256((EDGE / "evaluation/skill-evaluation-plan.yaml").read_bytes()).hexdigest(),
+        "invocation_receipt_sha256": hashlib.sha256(invocation_path.read_bytes()).hexdigest(),
+        "evaluator_kind": evaluator_kind, "evaluator_id": evaluator_id,
+        "independence_confirmed": True, "status": status,
+        "summary": "Synthetic independent semantic review fixture; not real usage evidence.",
+        "evidence_refs": ["fixture://boot-materials"],
+    }
+    path.write_text(json.dumps(evidence), encoding="utf-8")
+    return path, hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 class SkillEvaluationTest(unittest.TestCase):
-    def run_case(self, case_id: str, value: dict, *extra: str) -> tuple[subprocess.CompletedProcess, dict | None]:
+    def run_case(self, case_id: str, value: dict, *extra: str, materialize=False) -> tuple[subprocess.CompletedProcess, dict | None]:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
             invocation_path = root / "invocation.json"
             output_path = root / "evaluation.json"
             invocation_path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
+            if materialize:
+                kind = extra[extra.index("--semantic-evaluator-kind") + 1]
+                actor = extra[extra.index("--semantic-evaluator-id") + 1]
+                evidence_path, digest = semantic_evidence(root / "semantic.json", invocation_path,
+                                                         case_id, kind, actor)
+                extra = (*extra, "--semantic-evidence-ref", str(evidence_path),
+                         "--semantic-evidence-sha256", digest)
             completed = subprocess.run(
                 [
                     sys.executable,
@@ -115,9 +139,8 @@ class SkillEvaluationTest(unittest.TestCase):
             "--semantic-status", "PASS",
             "--semantic-evaluator-kind", "independent-evaluator",
             "--semantic-evaluator-id", "reviewer-fixture",
-            "--semantic-evidence-ref", "review://boot-positive",
-            "--semantic-evidence-sha256", "2" * 64,
             "--require-case-eligible",
+            materialize=True,
         )
         self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
         self.assertTrue(receipt["case_evidence_eligible"])
@@ -129,9 +152,8 @@ class SkillEvaluationTest(unittest.TestCase):
             "--semantic-status", "PASS",
             "--semantic-evaluator-kind", "human-review",
             "--semantic-evaluator-id", "human-reviewer-fixture",
-            "--semantic-evidence-ref", "review://boot-block",
-            "--semantic-evidence-sha256", "3" * 64,
             "--require-case-eligible",
+            materialize=True,
         )
         self.assertEqual(completed.returncode, 0, completed.stderr or completed.stdout)
         self.assertEqual(receipt["contract_verdict"]["observed_invocation_status"], "BLOCKED")
@@ -144,9 +166,8 @@ class SkillEvaluationTest(unittest.TestCase):
             "--semantic-status", "PASS",
             "--semantic-evaluator-kind", "human-review",
             "--semantic-evaluator-id", "human-reviewer-fixture",
-            "--semantic-evidence-ref", "review://wrong-status",
-            "--semantic-evidence-sha256", "4" * 64,
             "--require-case-eligible",
+            materialize=True,
         )
         self.assertEqual(completed.returncode, 2, completed.stderr or completed.stdout)
         self.assertEqual(receipt["contract_verdict"]["status"], "FAIL")
@@ -180,13 +201,14 @@ class SkillEvaluationTest(unittest.TestCase):
                 ("SEC-BOOT-CHAIN-POS", pos_inv_path, pos_eval_path, "5" * 64),
                 ("SEC-BOOT-CHAIN-BLOCK", neg_inv_path, neg_eval_path, "6" * 64),
             ]:
+                evidence_path, digest = semantic_evidence(root / (case_id + "-semantic.json"), inv_path, case_id)
                 completed = subprocess.run(
                     [
                         sys.executable, str(EVALUATOR), case_id, str(inv_path),
                         "--semantic-status", "PASS",
                         "--semantic-evaluator-kind", "independent-evaluator",
                         "--semantic-evaluator-id", "semantic-review-fixture",
-                        "--semantic-evidence-ref", f"review://{case_id}",
+                        "--semantic-evidence-ref", str(evidence_path),
                         "--semantic-evidence-sha256", digest,
                         "--output", str(out_path),
                         "--require-case-eligible",
@@ -229,13 +251,15 @@ class SkillEvaluationTest(unittest.TestCase):
                 ("SEC-BOOT-CHAIN-POS", pos_inv_path, pos_eval_path, "7" * 64),
                 ("SEC-BOOT-CHAIN-BLOCK", neg_inv_path, neg_eval_path, "8" * 64),
             ]:
+                evidence_path, digest = semantic_evidence(root / (case_id + "-semantic.json"), inv_path,
+                                                         case_id, "human-review", "reviewer-fixture")
                 completed = subprocess.run(
                     [
                         sys.executable, str(EVALUATOR), case_id, str(inv_path),
                         "--semantic-status", "PASS",
                         "--semantic-evaluator-kind", "human-review",
                         "--semantic-evaluator-id", "reviewer-fixture",
-                        "--semantic-evidence-ref", f"review://{case_id}",
+                        "--semantic-evidence-ref", str(evidence_path),
                         "--semantic-evidence-sha256", digest,
                         "--output", str(out_path),
                     ],

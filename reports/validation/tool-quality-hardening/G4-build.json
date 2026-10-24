@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "verification_date": "2026-10-23",
+  "verifier": "author-run-local-acceptance",
+  "layer": "Python source compilation and workflow parsing; no firmware or package release claim",
+  "validated_code_snapshot": "65b8b54b00f1135f1d72aff9030ea269d9f012499f051cb8224f3c907669caa5",
+  "status": "PASS",
+  "exit_code": 0,
+  "python_sources_compiled": 46,
+  "workflows_parsed": 8,
+  "method": "compile(each scripts/*.py bytes, path, exec); yaml.safe_load(each .github/workflows/*.yml)",
+  "retained_binary_artifact": false
+}

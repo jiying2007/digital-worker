@@ -5,13 +5,16 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import subprocess
+import re
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
 import yaml
 from jsonschema import Draft202012Validator
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+from pilot_support import error_result
 
 ROOT = Path(__file__).resolve().parents[1]
 PLAN = ROOT / "domains" / "edge-foundation" / "evaluation" / "skill-evaluation-plan.yaml"
@@ -19,6 +22,7 @@ INVOCATION_SCHEMA = ROOT / "schemas" / "skill-invocation-receipt.v1.schema.json"
 EVALUATION_SCHEMA = ROOT / "schemas" / "skill-evaluation-receipt.v1.schema.json"
 INVOCATION_VALIDATOR = ROOT / "scripts" / "validate_skill_invocation_receipt.py"
 PLAN_REL = "domains/edge-foundation/evaluation/skill-evaluation-plan.yaml"
+SEMANTIC_SCHEMA = ROOT / "schemas" / "skill-semantic-evidence.v1.schema.json"
 
 
 def load_json(path: Path):
@@ -58,6 +62,51 @@ def find_case(case_id: str) -> tuple[str, str, dict]:
     raise AssertionError(f"unknown Skill evaluation case: {case_id}")
 
 
+def validate_semantic_evidence(semantic: dict, invocation: dict, *, case_id: str,
+                               skill_id: str, invocation_sha256: str,
+                               base_dir: Path) -> str | None:
+    """Re-read materialized evidence; a URI or a declared digest is not proof.
+
+    This validates the local attestation and known identity conflicts, not the
+    authenticity of an actor or the correctness of a human's technical verdict.
+    """
+    if semantic["status"] == "NOT_EVALUATED":
+        require(semantic["evaluator_kind"] == "none" and
+                all(semantic.get(key) is None for key in
+                    ("evaluator_id", "evidence_ref", "evidence_sha256")),
+                "NOT_EVALUATED must not invent evaluator/evidence")
+        return None
+    require(semantic["status"] in {"PASS", "FAIL"}, "unsupported semantic status")
+    require(semantic["evaluator_kind"] in {"human-review", "independent-evaluator"},
+            "semantic PASS/FAIL requires independent evaluator kind")
+    evaluator = semantic.get("evaluator_id")
+    require(isinstance(evaluator, str) and bool(evaluator.strip()), "semantic PASS/FAIL requires evaluator_id")
+    actors = {str(invocation["runtime_binding"].get(key) or "").strip()
+              for key in ("runtime_id", "execution_identity")}
+    require(evaluator.strip() not in actors, "semantic evaluator cannot equal invocation runtime or execution identity")
+    ref, digest = semantic.get("evidence_ref"), semantic.get("evidence_sha256")
+    require(isinstance(ref, str) and bool(ref.strip()) and "://" not in ref,
+            "semantic evidence_ref must be a materialized local JSON file; import external evidence first")
+    require(isinstance(digest, str) and re.fullmatch(r"[0-9a-f]{64}", digest) is not None,
+            "semantic PASS/FAIL requires evidence_sha256")
+    path = Path(ref)
+    path = (base_dir / path).resolve() if not path.is_absolute() else path.resolve()
+    require(path.is_file(), "semantic evidence file is missing")
+    # Hash and parse the same bytes; never validate one read and hash another.
+    raw = path.read_bytes()
+    require(hashlib.sha256(raw).hexdigest() == digest, "semantic evidence SHA256 mismatch")
+    evidence = json.loads(raw)
+    validate_json(evidence, SEMANTIC_SCHEMA)
+    require(evidence["case_id"] == case_id and evidence["skill_id"] == skill_id,
+            "semantic evidence case or Skill identity mismatch")
+    require(evidence["evaluation_plan_sha256"] == sha256(PLAN), "semantic evidence evaluation plan digest mismatch")
+    require(evidence["invocation_receipt_sha256"] == invocation_sha256,
+            "semantic evidence invocation digest mismatch")
+    for key in ("status", "evaluator_kind", "evaluator_id"):
+        require(evidence[key] == semantic[key], f"semantic evidence {key} mismatch")
+    return path.as_posix()
+
+
 def evaluate(
     case_id: str,
     invocation_path: Path,
@@ -69,16 +118,13 @@ def evaluate(
     semantic_notes: str | None,
 ) -> dict:
     invocation_path = invocation_path.resolve()
-    invocation = load_json(invocation_path)
+    invocation_raw = invocation_path.read_bytes()
+    invocation = json.loads(invocation_raw)
+    invocation_digest = hashlib.sha256(invocation_raw).hexdigest()
     validate_json(invocation, INVOCATION_SCHEMA)
 
-    checked = subprocess.run(
-        [sys.executable, str(INVOCATION_VALIDATOR), str(invocation_path)],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    require(checked.returncode == 0, (checked.stderr or checked.stdout or "Skill invocation receipt validation failed").strip())
+    from validate_skill_invocation_receipt import validate_receipt
+    validate_receipt(invocation_path)
 
     skill_id, case_kind, case = find_case(case_id)
     skill_match = invocation["skill_id"] == skill_id
@@ -87,14 +133,13 @@ def evaluate(
     status_match = observed_status == expected_status
     contract_pass = skill_match and status_match
 
-    if semantic_status == "NOT_EVALUATED":
-        require(semantic_evaluator_kind == "none", "NOT_EVALUATED semantic status requires evaluator_kind=none")
-        require(semantic_evaluator_id is None and semantic_evidence_ref is None and semantic_evidence_sha256 is None, "NOT_EVALUATED must not invent evaluator/evidence")
-    else:
-        require(semantic_evaluator_kind in {"human-review", "independent-evaluator"}, "semantic PASS/FAIL requires independent evaluator kind")
-        require(bool(semantic_evaluator_id), "semantic PASS/FAIL requires evaluator_id")
-        require(bool(semantic_evidence_ref), "semantic PASS/FAIL requires evidence_ref")
-        require(bool(semantic_evidence_sha256) and len(semantic_evidence_sha256) == 64, "semantic PASS/FAIL requires evidence_sha256")
+    semantic = {"status": semantic_status, "evaluator_kind": semantic_evaluator_kind,
+                "evaluator_id": semantic_evaluator_id, "evidence_ref": semantic_evidence_ref,
+                "evidence_sha256": semantic_evidence_sha256, "notes": semantic_notes}
+    semantic["evidence_ref"] = validate_semantic_evidence(
+        semantic, invocation, case_id=case_id, skill_id=skill_id,
+        invocation_sha256=invocation_digest, base_dir=invocation_path.parent)
+    require(sha256(invocation_path) == invocation_digest, "invocation changed during evaluation")
 
     case_eligible = contract_pass and semantic_status == "PASS"
 
@@ -107,7 +152,7 @@ def evaluate(
         "plan": {"path": PLAN_REL, "sha256": sha256(PLAN)},
         "invocation_receipt": {
             "ref": invocation_path.as_posix(),
-            "sha256": sha256(invocation_path),
+            "sha256": invocation_digest,
             "source_type": invocation["source_type"],
             "runtime_provider": invocation["runtime_binding"]["provider"],
             "runtime_id": invocation["runtime_binding"]["runtime_id"],
@@ -123,14 +168,7 @@ def evaluate(
                 "status_match": status_match,
             },
         },
-        "semantic_evaluation": {
-            "status": semantic_status,
-            "evaluator_kind": semantic_evaluator_kind,
-            "evaluator_id": semantic_evaluator_id,
-            "evidence_ref": semantic_evidence_ref,
-            "evidence_sha256": semantic_evidence_sha256,
-            "notes": semantic_notes,
-        },
+        "semantic_evaluation": semantic,
         "case_evidence_eligible": case_eligible,
         "generated_at": now_iso(),
     }
@@ -145,7 +183,7 @@ def main() -> None:
     parser.add_argument("--semantic-status", choices=["NOT_EVALUATED", "PASS", "FAIL"], default="NOT_EVALUATED")
     parser.add_argument("--semantic-evaluator-kind", choices=["none", "human-review", "independent-evaluator"], default="none")
     parser.add_argument("--semantic-evaluator-id")
-    parser.add_argument("--semantic-evidence-ref")
+    parser.add_argument("--semantic-evidence-ref", help="Local semantic evidence JSON; relative to invocation directory. External receipts must be materialized first.")
     parser.add_argument("--semantic-evidence-sha256")
     parser.add_argument("--semantic-notes")
     parser.add_argument("--output", type=Path)
@@ -180,4 +218,9 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except Exception as exc:
+        error, code = error_result(exc)
+        print(json.dumps(error, ensure_ascii=False), file=sys.stderr)
+        raise SystemExit(code)

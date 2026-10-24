@@ -7,11 +7,14 @@ import hashlib
 import json
 import os
 import re
-import subprocess
 import sys
 from pathlib import Path
 
 import yaml
+
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+import bounded_subprocess as subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY = ROOT / "domains" / "edge-foundation" / "knowledge" / "registry.yaml"
@@ -107,7 +110,8 @@ def hub_root(args) -> Path:
 def run_hub(args, wrapper: str, wrapper_args: list[str]):
     root = hub_root(args); tool = root / "tools" / wrapper
     if not tool.is_file(): print(json.dumps({"status": "BLOCKED", "reason": f"Knowledge Hub surface missing: {wrapper}"}, ensure_ascii=False)); raise SystemExit(2)
-    completed = subprocess.run(["bash", str(tool), *wrapper_args], cwd=root, text=True, check=False)
+    completed = subprocess.run(["bash", str(tool), *wrapper_args], cwd=root, text=True, check=False,
+                               category="PROVIDER")
     if completed.returncode != 0: raise SystemExit(completed.returncode)
 
 def cmd_adapter_status(args):
@@ -160,4 +164,4 @@ def build_parser():
 def main():
     args = build_parser().parse_args(); args.func(args)
 
-if __name__ == "__main__": main()
+if __name__ == "__main__": raise SystemExit(subprocess.cli_entry(main))

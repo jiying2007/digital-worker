@@ -3,28 +3,20 @@ name: Real Feature Pilot Evidence
 on:
   pull_request:
     paths:
-      - 'domains/edge-foundation/pilot/evidence/FEATURE-PCR02-OTA-001/**'
-      - 'domains/edge-foundation/pilot/**'
-      - 'domains/edge-foundation/runtime/**'
-      - 'domains/edge-foundation/schemas/**'
-      - 'domains/edge-foundation/routing.yaml'
-      - 'scripts/embedded_pilot.py'
-      - 'scripts/edge_pilot.py'
-      - 'scripts/evaluate_edge_foundation_pilot.py'
-      - 'scripts/evaluate_edge_foundation_product_readiness.py'
+      - 'requirements-dev.txt'
+      - 'schemas/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'domains/edge-foundation/**'
       - '.github/workflows/real-feature-pilot-evidence.yml'
   push:
     branches: [main]
     paths:
-      - 'domains/edge-foundation/pilot/evidence/FEATURE-PCR02-OTA-001/**'
-      - 'domains/edge-foundation/pilot/**'
-      - 'domains/edge-foundation/runtime/**'
-      - 'domains/edge-foundation/schemas/**'
-      - 'domains/edge-foundation/routing.yaml'
-      - 'scripts/embedded_pilot.py'
-      - 'scripts/edge_pilot.py'
-      - 'scripts/evaluate_edge_foundation_pilot.py'
-      - 'scripts/evaluate_edge_foundation_product_readiness.py'
+      - 'requirements-dev.txt'
+      - 'schemas/**'
+      - 'scripts/**'
+      - 'tests/**'
+      - 'domains/edge-foundation/**'
       - '.github/workflows/real-feature-pilot-evidence.yml'
 
 permissions:
@@ -40,7 +32,7 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install exact validator dependencies
-        run: python -m pip install --disable-pip-version-check 'PyYAML==6.0.3' 'jsonschema==4.26.0'
+        run: python -m pip install --disable-pip-version-check -r requirements-dev.txt
       - name: Materialize and freeze real Feature Pilot on canonical target runtime
         shell: bash
         run: |
@@ -62,7 +54,7 @@ jobs:
           python scripts/edge_pilot.py complete "$run_dir" \
             --engineering-task-package "$source_dir/engineering-task-package.json" \
             --delivery-receipt "$source_dir/delivery-receipt.json" \
-            --verification-report "$source_dir/verification-report.json" \
+            --verification-report "$source_dir/verification-report.review-policy-v2.json" \
             --pilot-result "$source_dir/pilot-result.json" \
             --extra material_manifest="$source_dir/extras/material_manifest.json" \
             --extra acceptance_evidence_matrix="$source_dir/extras/acceptance_evidence_matrix.md" \

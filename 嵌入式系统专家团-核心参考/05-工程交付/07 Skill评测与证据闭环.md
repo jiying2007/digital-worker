@@ -123,6 +123,36 @@ NOT_EVALUATED
 
 只有这时 `case_evidence_eligible=true`。
 
+语义证据须先由评测者提供为可读取的本地 JSON 文件，契约为
+`schemas/skill-semantic-evidence.v1.schema.json`。其中必须包含 `schema_version=1`、
+`case_id`、`skill_id`、当前 `evaluation_plan_sha256`、被评 invocation 文件的
+`invocation_receipt_sha256`、`evaluator_kind`、`evaluator_id`、
+`independence_confirmed=true`、`status`、非空 `summary` 和非空 `evidence_refs`。
+
+`--semantic-evidence-ref` 接受本地路径；相对路径以 invocation 所在目录为基准，
+新 receipt 保存解析后的绝对路径。`--semantic-evidence-sha256` 必须是该 JSON 文件实际字节的
+SHA-256；状态、评测种类、身份和被评对象均须与命令及 invocation 一致。
+例如先由独立评测者准备 `semantic-review.json`，再运行：
+
+```bash
+sha256sum /path/to/semantic-review.json
+python scripts/evaluate_skill_case.py SEC-BOOT-CHAIN-POS /path/to/invocation.json \
+  --semantic-status PASS --semantic-evaluator-kind independent-evaluator \
+  --semantic-evaluator-id reviewer-id \
+  --semantic-evidence-ref /path/to/semantic-review.json \
+  --semantic-evidence-sha256 <上一步实际摘要> --output /path/to/evaluation.json
+```
+
+评测者身份去除两端空白后，不得与 invocation 的 `runtime_id` 或已提供的
+`execution_identity` 相同。不同字符串不证明实际主体独立；本地校验确认材料绑定与
+显式身份冲突，评测真实性和技术判断仍由实际独立评测者负责。
+
+外部 URL、`review://` 或仅有摘要的记录不能直接取得资格；应先按来源授权将实际独立
+评测报告材料化为上述本地文件，保留原始引用并核验来源，不由 evaluator 自动联网获取或
+将旧声明包装成新的独立评测。移动证据时须显式更新文件引用并重新生成派生回执。
+历史记录仍保留；未补齐可核验材料时不能继续计入 `EVALUATED`。
+默认 `NOT_EVALUATED` 的调用不要求额外文件。
+
 ## 5. 为什么单张 case PASS 仍不等于 EVALUATED
 
 一个 Skill 可能会“正常材料时答得很好”，但在关键材料缺失时仍然编造结论。
@@ -142,6 +172,10 @@ NOT_EVALUATED
 6. 两边 Runtime provider/runtime_id 一致；
 7. 两边 source type 一致；
 8. evaluation→invocation hashes 没漂移。
+
+聚合时重新读取语义证据，复核其摘要、当前 plan、case、invocation、状态和身份；
+证据缺失、篡改或出现身份冲突时返回 `DEFINED`，`--require-evaluated` 退出2。
+单 case 入口的无效语义材料直接报错，不能输出一张可计入成熟度的 PASS 回执。
 
 全部成立才输出：
 

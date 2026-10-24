@@ -6,10 +6,13 @@ import argparse
 import hashlib
 import json
 import re
+import sys
 from pathlib import Path
 
 import yaml
-from jsonschema import Draft202012Validator
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+from pilot_support import load_json, load_yaml, validate_json, validation_scope
 
 ROOT = Path(__file__).resolve().parents[1]
 EDGE = ROOT / "domains" / "edge-foundation"
@@ -19,23 +22,9 @@ SKILLS = EDGE / "skills.yaml"
 ACTION_POLICY = EDGE / "runtime" / "action-policy.yaml"
 
 
-def load_json(path: Path):
-    return json.loads(path.read_text(encoding="utf-8"))
-
-
-def load_yaml(path: Path):
-    return yaml.safe_load(path.read_text(encoding="utf-8"))
-
-
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise AssertionError(message)
-
-
-def validate_json(instance: dict, schema_path: Path) -> None:
-    schema = load_json(schema_path)
-    Draft202012Validator.check_schema(schema)
-    Draft202012Validator(schema).validate(instance)
 
 
 def sha256(path: Path) -> str:
@@ -58,7 +47,8 @@ def action_rank(level: str) -> int:
     return int(match.group(1))
 
 
-def validate_receipt(receipt_path: Path, pilot_run_path: Path | None = None) -> dict:
+@validation_scope
+def validate_receipt(receipt_path: Path, pilot_run_path: Path | None = None, *, pilot_run: dict | None = None) -> dict:
     receipt = load_json(receipt_path)
     validate_json(receipt, SCHEMA)
 
@@ -88,8 +78,8 @@ def validate_receipt(receipt_path: Path, pilot_run_path: Path | None = None) -> 
         require(receipt["attestation"]["producer"] == "runtime-binding", "real Skill receipt requires runtime-binding attestation")
         require(bool(receipt["runtime_binding"].get("execution_identity")), "real Skill receipt requires runtime execution_identity")
 
-    if pilot_run_path is not None:
-        pilot = load_json(pilot_run_path)
+    if pilot_run_path is not None or pilot_run is not None:
+        pilot = load_json(pilot_run_path) if pilot_run is None else pilot_run
         validate_json(pilot, PILOT_SCHEMA)
         require(receipt["run_id"] == pilot["run_id"], "Skill receipt/pilot run_id mismatch")
         require(receipt["work_item_id"] == pilot["work_item_id"], "Skill receipt/pilot work_item_id mismatch")

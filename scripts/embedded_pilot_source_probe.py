@@ -12,9 +12,13 @@ import argparse
 import hashlib
 import json
 import re
-import subprocess
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+import bounded_subprocess as subprocess
+from pilot_support import sanitize_uri, redact_text
 
 
 def now_iso() -> str:
@@ -45,7 +49,7 @@ def git(repo_root: Path, *args: str, allow_missing: bool = False) -> str | None:
     if allow_missing:
         return None
     detail = (completed.stderr or completed.stdout or "git command failed").strip()
-    raise ValueError(f"git {' '.join(args)} failed: {detail}")
+    raise ValueError(redact_text(f"git {' '.join(args)} failed: {detail}"))
 
 
 def parse_evidence(values: list[str]) -> list[tuple[str, Path]]:
@@ -108,7 +112,7 @@ def build_report(repo_root: Path, evidence: list[tuple[str, Path]]) -> dict:
             "requested_root": str(requested_root),
             "git_top_level": str(top_level),
             "head_sha": head,
-            "remote_origin": remote_origin,
+            "remote_origin": sanitize_uri(remote_origin),
             "working_tree_clean": clean,
             "dirty_entry_count": len(dirty_lines),
             "dirty_status_sha256": sha256_text(status) if dirty_lines else None,
@@ -157,4 +161,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(subprocess.cli_entry(main))

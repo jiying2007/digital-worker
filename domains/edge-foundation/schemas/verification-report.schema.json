@@ -41,10 +41,31 @@
       "additionalProperties": false
     },
     "overall": {"enum": ["PASS", "PASS_WITH_RISK", "FAIL", "BLOCKED"]},
+    "review_substitute": {
+      "type": "object",
+      "required": ["unavailable_reason", "static_checks", "hosted_ci"],
+      "properties": {
+        "unavailable_reason": {"type": "string", "pattern": "\\S"},
+        "static_checks": {"$ref": "#/$defs/substitute_evidence"},
+        "hosted_ci": {"$ref": "#/$defs/substitute_evidence"}
+      },
+      "additionalProperties": false
+    },
     "evidence_refs": {"type": "array", "items": {"type": "string"}},
     "failures": {"type": "array", "items": {"type": "string"}},
     "unverified_items": {"type": "array", "items": {"type": "string"}},
     "risks": {"type": "array", "items": {"type": "string"}}
   },
-  "additionalProperties": false
+  "additionalProperties": false,
+  "$defs": {
+    "substitute_evidence": {
+      "type": "object",
+      "required": ["status", "evidence_ref"],
+      "properties": {
+        "status": {"const": "pass"},
+        "evidence_ref": {"type": "string", "pattern": "\\S"}
+      },
+      "additionalProperties": false
+    }
+  }
 }

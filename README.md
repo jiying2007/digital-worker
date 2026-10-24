@@ -48,6 +48,7 @@ Product Readiness 只描述具体产品证据轨；它与 cross-repo Terminal Ma
 
 ## 主要入口
 
+- [本地工具环境与可靠操作](docs/runbooks/tool-quality.md)：Python与依赖、doctor、机器输出、并发锁及中断恢复；
 - [小团队按需采用与资产保留](docs/strategy/small-team-optional-adoption.md)：本仓非必选、日常链路与历史证据保留边界；
 - [研发中心 AI 数字员工研发流程规划](研发中心AI数字员工研发流程规划.md)：研发中心总体流程和 Provider-neutral 原则；
 - [ADR-003：Provider-neutral AI R&D Target Architecture](docs/adr/ADR-003-provider-neutral-ai-rd-target-architecture.md)：总体 Provider-neutral 架构决策；

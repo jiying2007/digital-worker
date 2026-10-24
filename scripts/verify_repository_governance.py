@@ -6,6 +6,7 @@ import argparse
 import json
 import os
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -24,6 +25,18 @@ def api(url: str, token: str | None):
     request = urllib.request.Request(url, headers=headers)
     with urllib.request.urlopen(request, timeout=20) as response:
         return json.load(response)
+
+
+def api_list(url: str, token: str | None) -> list:
+    items = []
+    for page in range(1, 101):
+        batch = api(f"{url}?per_page=100&page={page}", token)
+        if not isinstance(batch, list):
+            raise ValueError("governance API did not return a list")
+        items.extend(batch)
+        if len(batch) < 100:
+            return items
+    raise ValueError("governance API pagination exceeds bounded audit limit")
 
 
 def main() -> None:
@@ -57,8 +70,12 @@ def main() -> None:
     }
 
     try:
-        branch = api(f"{base}/branches/{contract['default_branch']}", token)
-        rulesets = api(f"{base}/rulesets", token)
+        branch_name = urllib.parse.quote(contract["default_branch"], safe="")
+        branch = api(f"{base}/branches/{branch_name}", token)
+        rulesets = api_list(f"{base}/rulesets", token)
+        # GitHub resolves includes, exclusions, target and organization rules.
+        # This endpoint only returns active rules applying to this exact branch.
+        effective_rules = api_list(f"{base}/rules/branches/{branch_name}", token)
         result["checks"]["branch_protected"] = bool(branch.get("protected"))
         result["checks"]["ruleset_count"] = len(rulesets)
 
@@ -88,13 +105,17 @@ def main() -> None:
 
         result["active_rulesets"] = active_details
         required_checks = set(required["required_status_checks"])
-        ruleset_pass = any(
-            "pull_request" in detail["rule_types"]
-            and "non_fast_forward" in detail["rule_types"]
-            and "deletion" in detail["rule_types"]
-            and required_checks.issubset(set(detail["status_contexts"]))
-            for detail in active_details
-        )
+        effective_types = {rule.get("type") for rule in effective_rules}
+        effective_checks = {
+            check["context"]
+            for rule in effective_rules if rule.get("type") == "required_status_checks"
+            for check in rule.get("parameters", {}).get("required_status_checks", []) if check.get("context")
+        }
+        result["effective_branch_rule_types"] = sorted(x for x in effective_types if x)
+        result["effective_branch_status_contexts"] = sorted(effective_checks)
+        ruleset_pass = (result["checks"]["branch_protected"] and
+                       {"pull_request", "non_fast_forward", "deletion"} <= effective_types and
+                       required_checks <= effective_checks)
         result["checks"]["active_ruleset_contract_pass"] = ruleset_pass
 
         if ruleset_pass:
@@ -107,7 +128,7 @@ def main() -> None:
                 "Server-side main protection is intentionally advisory during iterative development; "
                 "run with --strict before productionization."
             )
-    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError) as exc:
+    except (urllib.error.URLError, urllib.error.HTTPError, TimeoutError, ValueError) as exc:
         result["error"] = str(exc)
         if enforcement_required:
             result["status"] = "BLOCKED_GOVERNANCE_API"

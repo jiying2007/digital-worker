@@ -1,0 +1,89 @@
+{
+  "schema_version": 2,
+  "head": "6160b33862a3b077fe8d2a21ab1a15416491cf0b",
+  "validated_code_snapshot": "65b8b54b00f1135f1d72aff9030ea269d9f012499f051cb8224f3c907669caa5",
+  "verification_scope": "user-authorized automated local tool quality acceptance",
+  "completion_allowed": true,
+  "open_items": [],
+  "reports": {
+    "G0-baseline.json": "f4aad7679a0b23e6dd07fba42b8a75f84bf7ac8c7d621d0acced9a96b3ae78f0",
+    "G1-lifecycle.json": "8164bd6cfddecf9b75cda9cb3525f36152645504f5dbe8f1be66b92a3a9c06a2",
+    "G2-cli-compatibility.json": "24d2b17a163e0eaf013df904562256c22159b7649879ed0901c2dc02e15f4fb0",
+    "G3-benchmark.json": "ea10294e4d8cfb4e2c9e6ccb45d9cab451e8a1e80e2ca2e1a7599c3c4c168900",
+    "G3-process-lifecycle.json": "5bf94ffd2c2b7f31b080ea35d07fd0419c70e6c104e76898d2ec67a596b8c3f2",
+    "G4-regression.json": "679c8de14e55041ebabbce10b3f751cf3b562af52d4aa62a42c1654542ebec45",
+    "G4-build.json": "3fa7ce888a591a4c51ec5a16b6b0397ddb0a38f410dab7ba03842e4cc2704afe",
+    "G5-user-journeys.json": "d8a06570fbb8775bd45bd310fb1d4a507efd526d406a68994629b9a27b75337c",
+    "independent-round-2.json": "07b3d1029922802a15a5e507f445ee35b7a5e7c8a3cb49c983d88961f461bdcf",
+    "independent-round-1.md": "8ad7168bf506d4cbf67ce729fd3ad168dbd2aab8c86e35e8915e4a5edaf06034",
+    "G4-review.md": "acf479065982ba6225e8140336d6dc484b60c4b1d5b5a42757e74d398fb15e6b",
+    "G5-user-acceptance.md": "63e5f48382d76c7139bf67f283af686a6ad4ab987bbe6816bd51ad50ccdaf861",
+    "runtime-final-gate.json": "6b787c21fee435db8c9d6bf2c6f67902d386d0d09b0043d7bc9623483cfbc559"
+  },
+  "required_checks": {
+    "unit_tests": {
+      "status": "passed",
+      "exit_code": 0,
+      "count": 253,
+      "seconds": 111.67,
+      "evidence_path": "G4-regression.json"
+    },
+    "behavioral_regressions": {
+      "status": "passed",
+      "exit_code": 0,
+      "count": 35,
+      "evidence_path": "G1-lifecycle.json"
+    },
+    "acceptance_suite": {
+      "status": "passed",
+      "exit_code": 0,
+      "count": 5,
+      "seconds": 257.31
+    },
+    "source_build": {
+      "status": "passed",
+      "exit_code": 0,
+      "python_sources_compiled": 46,
+      "workflows_parsed": 8,
+      "evidence_path": "G4-build.json"
+    },
+    "performance": {
+      "status": "passed",
+      "evidence_path": "G3-benchmark.json"
+    },
+    "independent_review": {
+      "status": "passed",
+      "verifier": "/root/independent_review",
+      "evidence_path": "independent-round-2.json"
+    },
+    "automatic_usage_acceptance": {
+      "status": "passed",
+      "verifier": "/root/independent_acceptance",
+      "scenarios": 17,
+      "evidence_path": "independent-round-2.json"
+    },
+    "runtime_final_gate": {
+      "status": "passed",
+      "exit_code": 0,
+      "evidence_path": "runtime-final-gate.json"
+    }
+  },
+  "external_boundaries": {
+    "python_3_12": "CI configured; not locally executed",
+    "network_checkout_verification": "not executed locally; mandatory CI retained",
+    "physical_power_cut": "not executed",
+    "new_device_or_runtime_qualification": "not claimed",
+    "knowledge_activity_capture": {
+      "status": "BLOCKED",
+      "exit_code": 2,
+      "persisted": false,
+      "write_performed": false,
+      "reason_codes": [
+        "PROVIDER_RESPONSE_INVALID"
+      ]
+    },
+    "human_usability_research": "not performed; not required for user-authorized automated local acceptance"
+  },
+  "runtime_gate": "PASS",
+  "authority_note": "Author journey receipt retains pending independent/human fields; independent signoff is supplied separately by independent-round-2.json under explicit user authorization."
+}

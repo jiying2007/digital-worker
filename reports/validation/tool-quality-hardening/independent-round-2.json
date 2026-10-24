@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "date": "2026-10-23",
+  "authorization": "用户明确授权自动审查验收",
+  "head": "6160b33862a3b077fe8d2a21ab1a15416491cf0b",
+  "source_snapshot": "65b8b54b00f1135f1d72aff9030ea269d9f012499f051cb8224f3c907669caa5",
+  "scope": "local software tool quality only",
+  "technical_review": {
+    "verifier": "/root/independent_review",
+    "independence": "independent automated reviewer",
+    "review_round": 2,
+    "modes": ["targeted-finding-review", "whole-diff-review", "whole-lifecycle-review"],
+    "spec_verdict": "PASS",
+    "quality_verdict": "PASS",
+    "closed_major_findings": ["scaffold-path-and-write-boundary", "process-group-termination-and-output-completeness"],
+    "reopened": 0,
+    "new_findings": 0,
+    "consecutive_clean_reviews": 1,
+    "tests": {"command": "rtk /tmp/llm_agent_py311_venv/bin/python -m unittest discover -s tests/unit -p test_tool_quality.py", "count": 35, "seconds": 17.107, "exit_code": 0},
+    "additional_probes": ["working symlink with force rejected; external sentinel unchanged", "leader exit 0 and 7 with lingering group both fail closed; descendants terminated"],
+    "diff_check_exit_code": 0,
+    "snapshot_readback_before_after_equal": true
+  },
+  "usage_acceptance": {
+    "verifier": "/root/independent_acceptance",
+    "independence": "independent automated usage acceptance",
+    "verdict": "PASS",
+    "snapshot_readback_before_after_equal": true,
+    "cases": [
+      {"case": "normal scaffold", "expected_exit": 0, "observed_exit": 0},
+      {"case": "repeat refuses overwrite", "expected_exit": 2, "observed_exit": 2, "unchanged": true},
+      {"case": "working directory symlink", "expected_exit": 1, "observed_exit": 1, "outside_unchanged": true},
+      {"case": "output leaf symlink with force", "expected_exit": 1, "observed_exit": 1, "outside_unchanged": true},
+      {"case": "later-output conflict preflight", "expected_exit": 2, "observed_exit": 2, "unchanged": true},
+      {"case": "terminal with force", "expected_exit": 1, "observed_exit": 1, "unchanged": true},
+      {"case": "scaffold Run writer lock", "expected_exit": 2, "observed_exit": 2, "unchanged": true},
+      {"case": "Run path symlink", "expected_exit": 1, "observed_exit": 1},
+      {"case": "force breaks hardlink", "expected_exit": 0, "observed_exit": 0, "original_artifact_unchanged": true},
+      {"case": "retained Feature validation and receipt", "expected_exit": 0, "observed_exit": 0, "eligible": true},
+      {"case": "overall product require-ready", "expected_exit": 2, "observed_exit": 2, "status": "BLOCKED"},
+      {"case": "Debug repaired synthetic flow", "expected_exit": 0, "observed_exit": 0, "eligible": false},
+      {"case": "Review REQUEST_CHANGES", "expected_exit": 0, "observed_exit": 0, "eligible": false},
+      {"case": "interruption recovery preview", "expected_exit": 0, "observed_exit": 0, "marker_unchanged": true},
+      {"case": "interruption retry", "expected_exit": 0, "observed_exit": 0, "status": "completed"},
+      {"case": "missing Run JSON", "expected_exit": 1, "observed_exit": 1, "single_json": true},
+      {"case": "schema error JSON", "expected_exit": 1, "observed_exit": 1, "stdout_characters": 181, "private_placeholder_not_echoed": true}
+    ]
+  },
+  "evidence_source": "two independent collaboration final responses; sanitized parent integration",
+  "repository_writes_by_reviewers": false,
+  "raw_transcript_retained": false,
+  "not_claimed": ["human usability research", "human owner signoff", "Python 3.12 CI execution", "external service or device integration", "physical power cut", "product or R2 qualification"]
+}

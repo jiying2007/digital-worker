@@ -33,6 +33,14 @@
       }
     },
     "pilot_result_evaluated": {"type": "boolean"},
+    "evidence": {
+      "type": "object", "additionalProperties": false,
+      "required": ["pilot_run_ref", "pilot_run_sha256"],
+      "properties": {
+        "pilot_run_ref": {"type": "string", "minLength": 1},
+        "pilot_run_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
     "skill_invocation_count": {"type": "integer", "minimum": 0},
     "skill_invocation_evidence_present": {"type": "boolean"},
     "pilot_outcome": {"type": ["string", "null"], "enum": ["PASS", "BLOCKED", "REWORK", "INSUFFICIENT_EVIDENCE", null]},
@@ -45,7 +53,12 @@
         "result_provided": {"type": "boolean"},
         "outcome_pass": {"type": "boolean"},
         "no_unauthorized_actions": {"type": "boolean"},
-        "audit_trace_complete": {"type": "boolean"}
+        "audit_trace_complete": {"type": "boolean"},
+        "run_evidence_valid": {"type": "boolean"},
+        "review_acceptable": {"type": "boolean"},
+        "no_incorrect_pass": {"type": "boolean"},
+        "verification_complete": {"type": "boolean"},
+        "evidence_complete": {"type": "boolean"}
       }
     },
     "product_readiness_eligible": {"type": "boolean"},

@@ -315,6 +315,31 @@ def runtime_dir(root: Path, runtime: str, plan: dict) -> Path:
 
 
 class RuntimeR2LocalFlowTests(unittest.TestCase):
+    def test_intake_preserves_inputs_and_existing_output(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_value:
+            tmp = Path(tmp_value)
+            freeze_dir = freeze(tmp, build_plan())
+            original = (freeze_dir / "frozen-plan.json").read_bytes()
+            existing = tmp / "existing"
+            existing.mkdir()
+            marker = existing / "retain.txt"
+            marker.write_text("valuable")
+            for output in (freeze_dir, tmp, freeze_dir / "nested", existing):
+                with self.subTest(output=output), self.assertRaises(intake.IntakeError):
+                    intake.intake(ROOT, freeze_dir, tmp / "codex", tmp / "claude", output)
+                self.assertEqual((freeze_dir / "frozen-plan.json").read_bytes(), original)
+                self.assertEqual(marker.read_text(), "valuable")
+
+    def test_failed_intake_does_not_publish_partial_output(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp_value:
+            tmp = Path(tmp_value)
+            freeze_dir = freeze(tmp, build_plan())
+            output = tmp / "output"
+            with self.assertRaises(intake.IntakeError):
+                intake.intake(ROOT, freeze_dir, tmp / "missing-codex", tmp / "missing-claude", output)
+            self.assertFalse(output.exists())
+            self.assertFalse(list(tmp.glob(".r2-intake-*")))
+
     def test_local_intake_and_domain_verification_complete_without_github_provider_attestation(self) -> None:
         plan = build_plan()
         with tempfile.TemporaryDirectory() as tmp_value:
@@ -468,14 +493,15 @@ class RuntimeR2LocalFlowTests(unittest.TestCase):
                     tf.add(path, arcname=path.relative_to(tree).as_posix())
 
             native = json.loads((codex_dir / "codex-native.json").read_text(encoding="utf-8"))
-            replay_refs = [
-                item
-                for item in native["evidence_refs"]
-                if item.startswith("replay-postflight:sha256:")
-            ]
+            # Keep envelope integrity valid so this case reaches the independent
+            # artifact identity gate rather than the earlier archive binding gate.
+            postflight_path = codex_dir / "result-postflight.json"
+            postflight = json.loads(postflight_path.read_text(encoding="utf-8"))
+            postflight["result_archive_sha256"] = sha(archive)
+            write_json(postflight_path, postflight)
             native["evidence_refs"] = [
                 "worktree-result:sha256:" + tree_digest(tree),
-                *replay_refs,
+                "replay-postflight:sha256:" + sha(postflight_path),
             ]
             write_json(codex_dir / "codex-native.json", native)
 

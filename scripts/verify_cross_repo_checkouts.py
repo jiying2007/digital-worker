@@ -9,10 +9,13 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
-import shutil
-import subprocess
+import sys
+import tempfile
 from pathlib import Path
 
+if str(Path(__file__).resolve().parent) not in sys.path:
+    sys.path.insert(0, str(Path(__file__).resolve().parent))
+import bounded_subprocess as subprocess
 from private_provider_proof import ProofError, verify_proof
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -43,13 +46,34 @@ def canonical_digest(path: Path) -> str:
 
 
 def checkout(repo: str, commit: str, destination: Path) -> None:
-    if destination.exists():
-        shutil.rmtree(destination)
-    destination.mkdir(parents=True)
-    run("git", "init", "--quiet", str(destination))
-    run("git", "-C", str(destination), "remote", "add", "origin", f"https://github.com/{repo}.git")
-    run("git", "-C", str(destination), "fetch", "--quiet", "--depth=1", "origin", commit)
-    run("git", "-C", str(destination), "checkout", "--quiet", "--detach", "FETCH_HEAD")
+    if destination.exists() or destination.is_symlink():
+        fail(f"checkout destination already exists; choose a new directory: {destination}")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.TemporaryDirectory(prefix=".provider-checkout-", dir=destination.parent) as tmp:
+        staged = Path(tmp) / "checkout"
+        staged.mkdir()
+        run("git", "init", "--quiet", str(staged))
+        run("git", "-C", str(staged), "remote", "add", "origin", f"https://github.com/{repo}.git")
+        run("git", "-C", str(staged), "fetch", "--quiet", "--depth=1", "origin", commit)
+        run("git", "-C", str(staged), "checkout", "--quiet", "--detach", "FETCH_HEAD")
+        if run("git", "-C", str(staged), "rev-parse", "HEAD").lower() != commit.lower():
+            fail("fetched checkout HEAD does not match exact locked commit")
+        if destination.exists() or destination.is_symlink():
+            fail(f"checkout destination already exists during publication: {destination}")
+        # Reserve the name atomically; rename must never replace someone else's
+        # pre-existing empty directory after a check/rename race.
+        destination.mkdir()
+        reserved = destination.stat()
+        try:
+            staged.rename(destination)
+        except OSError:
+            try:
+                current = destination.lstat()
+                if (current.st_dev, current.st_ino) == (reserved.st_dev, reserved.st_ino):
+                    destination.rmdir()  # Only our still-empty reservation.
+            except OSError:
+                pass
+            raise
 
 
 def fetch_exact_tag(destination: Path, tag: str) -> None:
@@ -550,4 +574,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(subprocess.cli_entry(main))

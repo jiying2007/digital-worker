@@ -3,4 +3,4 @@
 from embedded_knowledge import *  # noqa: F401,F403
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(subprocess.cli_entry(main))
