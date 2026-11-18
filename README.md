@@ -1,5 +1,7 @@
 # digital-worker
 
+> **日常采用收敛 / 退役候选**（2026-11-18）：本仓已不应成为个人或小团队研发的执行依赖。三类任务模板正在转入 `engineering-platform/tool/examples/templates/`，对应 [PR #308](https://github.com/jiying2007/engineering-platform/pull/308)。迁移完成后，应直接从 `eng` 发行包使用模板，或继续直接用已有 CLI + ADK。**本仓保留的 Formal L2 证据集成、历史记录和唯一来源资料尚未完成退出核验，暂时不能删除仓库。** 具体边界见[退役与证据保全清单](docs/strategy/retirement-path.md)。
+
 给个人和小团队使用的工程任务模板、嵌入式工作方法与证据参考。选择下面一种模板，放进现有项目的 Issue、PR/MR 或任务文件，即可沿用自己的模型 CLI、ADK、Git 和项目 CI 开始工作。
 
 ## 从一个实际任务开始
