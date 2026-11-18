@@ -37,7 +37,7 @@ jobs:
           git -C "$mirror" bundle verify "$out/digital-worker.bundle" > "$out/bundle-verify.txt" 2>&1
           git clone --mirror "$out/digital-worker.bundle" "$RUNNER_TEMP/digital-worker-restored.git"
           git -C "$RUNNER_TEMP/digital-worker-restored.git" fsck --full --strict
-          expected="$(git rev-parse HEAD)"
+          expected="$(git -C "$mirror" rev-parse refs/heads/main)"
           restored="$(git -C "$RUNNER_TEMP/digital-worker-restored.git" rev-parse refs/heads/main)"
           test "$restored" = "$expected"
           {
