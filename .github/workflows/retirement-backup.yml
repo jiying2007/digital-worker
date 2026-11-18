@@ -1,0 +1,101 @@
+name: Digital Worker deletion-preflight backup
+
+on:
+  push:
+    branches:
+      - backup/digital-worker-final-20261118
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+  actions: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+          fetch-tags: true
+      - name: Capture and restore-test a complete Git mirror, including PR head refs
+        shell: bash
+        run: |
+          set -euo pipefail
+          export GIT_TERMINAL_PROMPT=0
+          export GH_PAGER=
+          out="$RUNNER_TEMP/digital-worker-archive"
+          mkdir -p "$out"
+          mirror="$RUNNER_TEMP/digital-worker-mirror.git"
+          git clone --mirror "https://github.com/$GITHUB_REPOSITORY.git" "$mirror"
+          git -C "$mirror" fetch --no-tags origin '+refs/pull/*/head:refs/retained-pull/*'
+          git -C "$mirror" fsck --full --strict
+          git -C "$mirror" bundle create "$out/digital-worker.bundle" --all
+          git -C "$mirror" bundle verify "$out/digital-worker.bundle" > "$out/bundle-verify.txt" 2>&1
+          git clone --mirror "$out/digital-worker.bundle" "$RUNNER_TEMP/digital-worker-restored.git"
+          git -C "$RUNNER_TEMP/digital-worker-restored.git" fsck --full --strict
+          expected="$(git rev-parse HEAD)"
+          restored="$(git -C "$RUNNER_TEMP/digital-worker-restored.git" rev-parse refs/heads/main)"
+          test "$restored" = "$expected"
+          {
+            printf 'source_repository=%s\nsource_head=%s\nrestored_main=%s\n' "$GITHUB_REPOSITORY" "$expected" "$restored"
+            printf 'backup_refs=%s\n' "$(git -C "$mirror" show-ref | wc -l)"
+            printf 'retained_pull_heads=%s\n' "$(git -C "$mirror" for-each-ref --format='%(refname)' refs/retained-pull | wc -l)"
+            printf 'restore_git_fsck=passed\n'
+          } > "$out/restore-check.txt"
+          test "$(git -C "$mirror" for-each-ref --format='%(refname)' refs/retained-pull | wc -l)" -gt 0
+          cat "$out/restore-check.txt"
+      - name: Export issue, pull request, review and release metadata
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/digital-worker-archive"
+          repo="$GITHUB_REPOSITORY"
+          for kind in issues pulls issues/comments pulls/comments releases actions/workflows; do
+            target="${kind//\//-}"
+            gh api --paginate --slurp "repos/$repo/$kind?state=all&per_page=100" > "$out/$target-pages.json"
+            jq -e 'type=="array"' "$out/$target-pages.json" >/dev/null
+          done
+          : > "$out/pull-reviews.jsonl"
+          jq -r '.[][] | .number // empty' "$out/pulls-pages.json" | while IFS= read -r pr; do
+            gh api --paginate --slurp "repos/$repo/pulls/$pr/reviews?per_page=100" |
+              jq -c --argjson pr "$pr" '{pull_number:$pr,pages:.}' >> "$out/pull-reviews.jsonl"
+          done
+          jq -n --arg repo "$repo" --arg head "$(git rev-parse HEAD)" \
+            --argjson issue_pages "$(jq 'length' "$out/issues-pages.json")" \
+            --argjson pull_count "$(jq '[.[][]] | length' "$out/pulls-pages.json")" \
+            '{repository:$repo,source_head:$head,issue_pages:$issue_pages,pull_count:$pull_count,model_invoked:false,contains_git_bundle:true,includes_pull_head_refs:true,repository_admin_secrets_and_live_actions_artifacts_not_included:true}' > "$out/summary.json"
+      - name: Retain integrity manifest and exact restore procedure
+        shell: bash
+        run: |
+          set -euo pipefail
+          out="$RUNNER_TEMP/digital-worker-archive"
+          cat > "$out/RESTORE.txt" <<'EOF'
+          This ZIP is an offsite transfer artifact, NOT an enduring backup while
+          hosted in the original GitHub repository; deleting the repository
+          also deletes its hosted Actions artifacts.
+          Verify sha256sum -c SHA256SUMS inside this directory.
+          Restore history with:
+             git clone --mirror digital-worker.bundle restored-digital-worker.git
+             git -C restored-digital-worker.git fsck --full --strict
+             git -C restored-digital-worker.git rev-parse refs/heads/main
+          Issues, PRs, comments, reviews, releases and workflows are exported
+          as JSON/JSONL metadata, not as GitHub-restorable objects.
+          This does not include repository secrets, team permissions, raw
+          historical Actions artifacts, deleted refs or GitHub audit logs.
+          EOF
+          (cd "$out" && find . -type f ! -name SHA256SUMS -print0 | LC_ALL=C sort -z | xargs -0 sha256sum > SHA256SUMS)
+          (cd "$out" && sha256sum -c SHA256SUMS)
+      - name: Upload transferable backup (must copy off GitHub before deletion)
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: digital-worker-offsite-transfer-${{ github.sha }}
+          path: ${{ runner.temp }}/digital-worker-archive
+          if-no-files-found: error
+          retention-days: 90
+          compression-level: 3
