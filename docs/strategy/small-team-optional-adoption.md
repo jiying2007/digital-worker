@@ -1,11 +1,24 @@
 # 小团队按需采用与资产保留
 
 Decision date: 2026-09-24
-Status: accepted adoption direction; runtime evidence remains independently evaluated
+Adoption scope refined: 2026-11-18
+Status: accepted; daily entry is three task templates, formal integration remains explicit
+
+## 直接使用
+
+从[排查与修复](../templates/debug-fix.md)、[功能与变更](../templates/feature-change.md)、[审查与发布准备](../templates/review-release.md)选择一页，复制进项目已有的 Issue、PR/MR 或任务文件。保留目标、相关材料和验收条件即可；不相关项可删除。源码、实际检查结果和责任人的接受留在原项目，不要求手写本仓回执。
+
+模板不需要安装 Python、本仓 Runtime adapter 或任何其它仓库。模型和工具链继续使用项目已获准的环境。材料不足可以先交付有边界的分析；若原验收要求设备行为，缺少设备时仍待处理，除非责任人明确缩小任务范围。
+
+## 当前维护投入
+
+维护三类模板、可直接复用的方法、准确的操作入口，以及现有正式消费者能够复现的问题。暂停扩建第二套日常执行器、需求台账、全员安装链、领域层级和资格体系；不因模板整理而更改正式合同或历史状态。
+
+新增方法先与 ADK 去重，只在真实任务说明缺口和收益后通过独立变更吸收。排障经验按需进入 Knowledge Hub 的候选/复核过程。当前变更不修改 ADK，也不把本仓整包并入其它仓库。现有资料的用途和版本边界见[参考与历史索引](../reference-index.md)。
 
 ## 决策与适用范围
 
-小团队直接使用 Codex CLI + ADK 导出资源。Digital Worker 不是日常开发、ADK 资产安装、项目 Git/CI 验收或 Knowledge Hub 使用的必要组件。本仓保留为按需采用的领域责任与正式证据参考实现，而不是要求每个成员安装的生产前置系统。
+小团队直接使用已获准的模型 CLI + ADK 导出资源。Digital Worker 不是日常开发、ADK 资产安装、项目 Git/CI 验收或 Knowledge Hub 使用的必要组件。本仓保留为按需采用的领域责任与正式证据参考实现，而不是要求每个成员安装的生产前置系统。
 
 本决策收紧的是采用范围，不改写已有正式 Run 的合同。ADR-003/004/005、Edge Foundation、Work/Run、Verification、receipt 与 Product readiness 继续适用于显式选择本仓集成的任务；不得据此要求未采用本仓的普通项目建立平行 Work/Run 台账。
 
@@ -13,7 +26,7 @@ engineering-platform 是独立方案，不并入、不绑定、不迁移到本�
 
 ## 小团队主线
 
-维护与分发：`llm_agent -> agent-dev-kit -> Codex 资源发行 -> CLI`。
+方法装载复用现有 ADK 安装与发行方式；采用本仓模板无需新增资产分发链。
 
 日常研发：需求/Issue -> 工程师直接使用 CLI -> 项目源码与构建/测试 -> 审查和责任人接受 -> 可复用经验进入 Knowledge Hub。
 
@@ -21,9 +34,9 @@ WorkBuddy 可以产生需求和协作材料，不因发起任务而获得工程�
 
 ADK 负责可复用能力与资产发布，不接管具体项目运行状态。项目 Git/CI/HIL/设备是工程事实来源；项目负责人的接受结论不由 ADK Release、Runtime receipt、知识检索或本仓文档代替。Knowledge Hub 保留自己的来源、权限、复核与知识提升边界。
 
-## Codex 集成
+## 已有 Codex 集成参考
 
-Codex 的 Session Bootstrap contract 1.3 在 `jiying2007/codex` PR #28 落地：L0/L1 不读取 Digital Worker checkout 或集成配置，L1 仍保留 ADK source identity 与 Knowledge Provider 要求。普通 runtime identity 从既有 ADK lock 派生，不新增一份跨仓身份源。
+下述记录对应已有集成的版本和范围，不代表本次重新验证了 Runtime。Codex 的 Session Bootstrap contract 1.3 在 `jiying2007/codex` PR #28 落地：L0/L1 不读取 Digital Worker checkout 或集成配置，L1 仍保留 ADK source identity 与 Knowledge Provider 要求。普通 runtime identity 从既有 ADK lock 派生，不新增一份跨仓身份源。
 
 L2 仍是显式选用的 Digital Worker 正式证据路径。缺少 ETP、exact governance、Knowledge pin 或其它正式材料时必须阻断，不得为完成日常任务而伪造这些材料，也不得将 L2 失败静默降级成 L1。
 

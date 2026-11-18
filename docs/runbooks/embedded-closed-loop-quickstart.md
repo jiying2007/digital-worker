@@ -7,6 +7,11 @@
 - Scope: real Debug / Feature / Review-Release runs
 - Product readiness: independent from routing authority
 
+This runbook is for tasks that explicitly adopt the retained Formal Pilot contracts.
+For ordinary project work, start with the [three task templates](../../README.md#从一个实际任务开始)
+and keep the project Issue/PR as the task record. The commands below register and
+freeze supplied evidence; they do not execute an engineering Runtime or device test.
+
 ## 1. Register the real task
 
 Use the Embedded Expert Pilot issue template. A real task must have stable `work_item_id`, human owner, repo root and a **full 40-hex immutable base commit SHA**. Branch names, tags and short SHAs are not accepted as real-run source identity.
@@ -145,7 +150,7 @@ python scripts/edge_pilot.py validate <RUN_DIR>
 ## 7. Generate canonical receipt
 
 ```bash
-python scripts/edge_pilot.py receipt <RUN_DIR>
+python scripts/edge_pilot.py pilot-receipt <RUN_DIR>
 ```
 
 Receipt must state `routing_authority=edge-foundation` and `canonical_routing=true`. A real completed PASS with zero unauthorized action and complete audit trace may set `product_readiness_eligible=true`.
