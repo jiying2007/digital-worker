@@ -2,11 +2,11 @@
 
 日期：2026-11-18
 基线：`7decf126ee8a83cfc609401c12ebd85153205cea`
-状态：**日常使用可退出；正式证据消费者未完全解除；不能永久删除**。
+状态（2026-11-20 复核）：**公开主线活跃消费者已大幅解除；历史消费仍需保全，私有主机未核验，暂不永久删除**。
 
 ## 决策
 
-个人和小团队的实际工程任务由项目的 Git/CI + 已授权 Runtime/ADK 执行，也可使用独立的 `engineering-platform/tool/eng`。本仓不是任何日常任务、CLI 登录、构建、验收或 Knowledge Hub 的依赖。停止建设第二套日常执行器、中心台账、专家协调服务和额外安装系统。
+个人和小团队的实际工程任务由项目的 Git/CI + 已授权 Codex CLI/ADK 执行；远程飞书服务由现有 `jiying2007/codex` 维护。`engineering-platform/tool/eng` 也已进入退出主线。本仓不是任何日常任务、CLI 登录、构建、验收或 Knowledge Hub 的依赖。停止建设第二套日常执行器、中心台账、专家协调服务和额外安装系统。
 
 这不是否定原始嵌入式参考资料或改变已冻结的 Formal Pilot 结论。已有证明缺口（包括 Debug、Review/Release、Skill 评测和 R2）保持未完成，不为“仓库退役”批量关闭 Issue，也不把 BLOCKED 改为 PASS。
 
@@ -22,20 +22,22 @@
 
 截至此基线，本仓有 9 个未关闭 Issue（#6、#8、#12、#16、#17、#18、#26、#131、#132）。关闭/迁移要按真实任务所有权和证据完成情况处理，不能因为退役而假装问题解决。
 
-## 已查到的显式消费者与替换条件
+## 2026-11-20 已核对的消费者状态
 
-1. **Agent Dev Kit**：`jiying2007/agent-dev-kit/manifests/integrations/digital-worker.json` 目前仍为 `status: active`，`.github/contracts/digital_worker_contract.py` 和 `.github/workflows/digital-worker-contract.yml` 有专门校验。若本消费方完全退役，需在 ADK 独立 PR 中同步调整/移除现行合同、CI 触发与文档，保持 ADK 对其他 consumer 的独立可用；不能简单删除 JSON 再声称旧 CI 绿色。
-2. **Codex Runtime Binding**：`jiying2007/codex/manifests/integrations/digital-worker-runtime-binding.json` 仍为 active；`scripts/validate-runtime-binding.py` 和 `docs/session-bootstrap.md` 定义了显式 L2 Formal Evidence 路径。L0/L1 已不要求本仓，但 L2 需要精确的 Digital Worker Governance Identity/ETP。必须先决定停止提供 L2 还是由独立的保全证据入口接续，并在 Codex 独立 PR 验证“不再引用本仓”的新行为；不能静默降级 L2 到 L1。
-3. **engineering-platform**：主线 `eng` 不依赖本仓 Runtime；[PR #308](https://github.com/jiying2007/engineering-platform/pull/308) 已合并为 `f172435397f84055e5ab7b8db99212c2c4160f76`。日常文档直接引用新仓库内置的三类模板，PR 的真实发行包安装烟测已通过，且没有启动模型或设备。
+1. **Agent Dev Kit**：当前 \`main\` Tree 已不含此前的 \`manifests/integrations/digital-worker.json\`、\`.github/contracts/digital_worker_contract.py\`、\`.github/workflows/digital-worker-contract.yml\`；存在对应旧消费者退役变更记录。历史提交与 evidence 仍然可追溯；不能仅由当前文件缺席推断所有私有外部消费者已退出。
+2. **Codex**：当前 \`manifests/session_bootstrap.json\` 与 \`docs/session-bootstrap.md\` 仅保留 L0/L1；L2 参数被显式拒绝，旧 Runtime Receipt v2 schema 仅用于历史验证。日常链路不再依赖 Digital Worker。
+3. **llm_agent**：\`manifests/digital_worker_runtime_pilot.json\` 为 \`retired-historical-only\`、\`report-only\`，保留旧资格合同断言作为证据审计，不再有活跃 R2 资格权威；旧链接不应当作新的启动要求。
+4. **engineering-platform**：历史三模板曾经合入，但 \`eng\` 执行器也不再是建议的新日常入口。参见其 Final 1.5 决策 PR #312。
+5. **未知领域**：尚未在实际主机、非公开 GitLab/局域网仓库、自动化、设备和工作区内完成搜索/停机核验。这是退出前的明确阻塞，不能称为“全部消费者为零”。
 
-未检索到的本机/私有仓库消费者不能仅凭以上公开仓库检查假定不存在。永久删除前，应在正在使用的工作主机和项目上核查引用、安装脚本、定时任务及当前执行者。
+详细逐项映射见 [absorption-map-20261120.md](absorption-map-20261120.md)。历史冻结 R2/L2/产品资格决策不改写为 PASS。
 
 ## 明确的退出门槛
 
 | 阶段 | 完成条件 | 当前 |
 |---|---|---|
 | A. 日常独立 | 三个模板随 `eng` 包发行；日常文档不再指向本仓；真实无模型安装通过 | **源码/PR 安装烟测完成**（#308，`f1724353`）；真实开发机任务采用另属阶段 D |
-| B. 正式消费者退场 | ADK active consumer 合同和 Codex L2 的实际调用/准入路径已独立调整并验证；不伪造原 Formal 事实 | 未完成 |
+| B. 正式消费者退场 | ADK 专属合同和 Codex L2 活动入口切断，llm_agent 保留只读历史，其他实际消费主机待核对 | **公开当前代码路径已收敛；全环境未完成** |
 | C. 历史证据保全 | 不可变的 Git 历史、完整有价值材料、证据/Issue 映射以及可恢复副本经过核对 | 未完成 |
 | D. 使用主机切换 | 实际检查、备份及退出仍运行的旧进程/计划；必要时完成真实项目试用 | 未执行 |
 | E. 仓库归档 | A—D 核验后使用 GitHub Archive 设为只读，保留历史 URL 与 commit 身份 | 未执行 |
