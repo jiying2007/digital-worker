@@ -1,6 +1,6 @@
 # digital-worker
 
-> **日常采用收敛 / 退役候选**（2026-11-18）：本仓已不应成为个人或小团队研发的执行依赖。三类任务模板已通过 [engineering-platform PR #308](https://github.com/jiying2007/engineering-platform/pull/308) 合入 `tool/examples/templates/`，并经过 PR 的发行包安装烟测；现在直接从 `eng` 发行包使用模板，或继续直接用已有 CLI + ADK。**本仓保留的 Formal L2 证据集成、历史记录和唯一来源资料尚未完成退出核验，暂时不能删除仓库。** 具体边界见[退役与证据保全清单](docs/strategy/retirement-path.md)。
+> **退役推进中（2026-11-20）**：本仓不再是日常工程执行依赖。直接使用已获准的 Codex CLI/VS Code + ADK + 项目 Git/CI；飞书无人值守入口由 `jiying2007/codex` 维护，旧 `eng` 也停止产品化。原三类模板曾迁入 eng，但 eng 已退出未来主线，不必安装。**历史 Formal Evidence、9 个未完成 Issue、私有主机依赖仍须保全和核验，不能据此声明已删除或已归档。** 见[退役核对](docs/strategy/retirement-path.md)与[选择性吸收映射](docs/strategy/absorption-map-20261120.md)。
 
 给个人和小团队使用的工程任务模板、嵌入式工作方法与证据参考。选择下面一种模板，放进现有项目的 Issue、PR/MR 或任务文件，即可沿用自己的模型 CLI、ADK、Git 和项目 CI 开始工作。
 
